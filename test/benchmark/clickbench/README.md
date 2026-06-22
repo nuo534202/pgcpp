@@ -1,152 +1,152 @@
-# ClickBench 本地测试说明
+# ClickBench Local Testing Guide
 
-本目录用于在本地环境中，对修改后数据库源代码进行 ClickBench 风格的功能正确性与基础性能测试。
+This directory is used to perform ClickBench-style functional correctness and basic performance tests on modified database source code in a local environment.
 
-这里的测试不是官方 ClickBench 提交流程，也不用于和其他数据库系统做公开性能对比。它的主要目标是：在真实 ClickBench 数据集过大、不方便在虚拟机中完整运行的情况下，使用 `generate_series` 和 `random()` 生成一份较小规模的合成数据，快速验证数据库的查询执行是否正确、是否稳定、是否存在明显回归或崩溃问题。
+These tests are not part of the official ClickBench submission process, nor are they intended for public performance comparisons with other database systems. Their main goal is to quickly verify whether database query execution is correct and stable, and whether there are obvious regressions or crash issues, when the real ClickBench dataset is too large and inconvenient to run fully in a virtual machine. To achieve this, a smaller synthetic dataset is generated using `generate_series` and `random()`.
 
-## 目录文件说明
+## Directory File Description
 
-本目录包含以下文件：
+This directory contains the following files:
 
-| 文件 | 说明 |
+| File | Description |
 | --- | --- |
-| `README.md` | 当前说明文档，包含数据集说明、测试目标和测试步骤。 |
-| `create.sql` | 创建 ClickBench 兼容的 `hits` 表结构。 |
-| `random_generate_data.sql` | 使用内置函数随机生成测试数据，默认生成 10,000,000 行。 |
-| `queries.sql` | ClickBench 风格查询集合，共 43 条查询，用于测试聚合、过滤、排序、分组、去重、字符串匹配等场景。 |
+| `README.md` | The current documentation file, containing dataset information, test objectives, and test steps. |
+| `create.sql` | Creates a ClickBench-compatible `hits` table schema. |
+| `random_generate_data.sql` | Randomly generates test data using built-in functions. By default, it generates 10,000,000 rows. |
+| `queries.sql` | A collection of ClickBench-style queries, containing 43 queries in total, used to test scenarios such as aggregation, filtering, sorting, grouping, deduplication, and string matching. |
 
-## 测试目标
+## Test Objectives
 
-本测试主要用于以下场景：
+This test is mainly used for the following scenarios:
 
-1. 验证数据库源码能否正常编译、启动和执行查询。
-2. 验证宽表、大批量数据写入和扫描是否正常。
-3. 验证常见 OLAP 查询场景是否可以正常执行，包括：
-   - 全表扫描；
-   - 条件过滤；
-   - `GROUP BY` 聚合；
-   - `COUNT(DISTINCT ...)`；
-   - `ORDER BY ... LIMIT`；
-   - 字符串匹配，如 `LIKE` 和 `REGEXP_REPLACE`；
-   - 日期过滤和时间截断，如 `DATE_TRUNC`；
-   - 多列表达式计算。
-4. 为执行器、优化器、表达式计算、聚合、排序、Hash 表、并行查询等相关修改提供一个本地回归测试入口。
+1. Verify whether the database source code can be compiled, started, and used to execute queries normally.
+2. Verify whether wide-table operations, large-scale data insertion, and scanning work properly.
+3. Verify whether common OLAP query scenarios can be executed normally, including:
+    - full table scans;
+    - conditional filtering;
+    - `GROUP BY` aggregation;
+    - `COUNT(DISTINCT ...)`;
+    - `ORDER BY ... LIMIT`;
+    - string matching, such as `LIKE` and `REGEXP_REPLACE`;
+    - date filtering and time truncation, such as `DATE_TRUNC`;
+    - multi-column expression calculation.
+4. Provide a local regression testing entry point for changes related to the executor, optimizer, expression evaluation, aggregation, sorting, hash tables, parallel queries, and other related components.
 
-## 数据集说明
+## Dataset Description
 
-### 原始 ClickBench 数据集
+### Original ClickBench Dataset
 
-ClickBench 原始数据集来自大规模 Web Analytics 场景中的真实流量记录，经过匿名化处理后发布。原始数据集保留了较真实的数据分布，适合用于数据库系统之间的分析型查询性能比较。
+The original ClickBench dataset comes from real traffic records in large-scale web analytics scenarios and is released after anonymization. The original dataset preserves relatively realistic data distributions and is suitable for comparing analytical query performance across database systems.
 
-ClickBench 的核心表为单张宽表 `hits`，包含大量与网页访问、用户、设备、来源、搜索词、URL、时间、地域和广告相关的字段。官方查询集合覆盖了典型的点击流分析、Web 分析、结构化日志和事件数据分析场景。
+The core table of ClickBench is a single wide table named `hits`, which contains many fields related to web visits, users, devices, traffic sources, search terms, URLs, time, geography, and advertising. The official query set covers typical scenarios in clickstream analytics, web analytics, structured logs, and event data analysis.
 
-### 本目录使用的合成数据
+### Synthetic Data Used in This Directory
 
-由于官方 ClickBench 数据量较大，在普通虚拟机中完整下载、加载和运行成本较高，本目录使用 `random_generate_data.sql` 生成一份合成数据。
+Because the official ClickBench dataset is large, and fully downloading, loading, and running it in a regular virtual machine is costly, this directory uses `random_generate_data.sql` to generate a synthetic dataset.
 
-默认生成规模：
+Default generated scale:
 
 ```text
 10,000,000 rows
 ```
 
-生成方式：
+Generation method:
 
 ```sql
 FROM generate_series(1, 10000000)
 ```
 
-并结合：
+Combined with:
 
 ```sql
 random()
 floor()
 CASE WHEN
-字符串拼接
-时间区间随机生成
+string concatenation
+random time-range generation
 ```
 
-生成 `hits` 表中各字段的测试值。
+These are used to generate test values for each field in the `hits` table.
 
-### 合成数据的特点
+### Characteristics of the Synthetic Data
 
-这份合成数据具有以下特点：
+This synthetic dataset has the following characteristics:
 
-1. 字段结构与 `create.sql` 中的 `hits` 表保持一致。
-2. 数据规模明显小于官方 ClickBench 数据集，更适合虚拟机环境。
-3. 会刻意生成部分可命中 `queries.sql` 中特定过滤条件的数据，例如：
-   - `CounterID = 62`
-   - `EventDate` 位于 `2013-07-01` 到 `2013-07-31`
-   - `URL LIKE '%google%'`
-   - 特定 `UserID`
-   - 特定 `URLHash`
-   - 特定 `RefererHash`
-4. 适合用于正确性测试、稳定性测试和本地调试。
-5. 不适合用于正式性能排名或与官方 ClickBench 结果对比。
+1. Its field structure is consistent with the `hits` table defined in `create.sql`.
+2. Its data scale is significantly smaller than the official ClickBench dataset, making it more suitable for virtual machine environments.
+3. It intentionally generates some data that can match specific filtering conditions in `queries.sql`, such as:
+    - `CounterID = 62`
+    - `EventDate` between `2013-07-01` and `2013-07-31`
+    - `URL LIKE '%google%'`
+    - specific `UserID`
+    - specific `URLHash`
+    - specific `RefererHash`
+4. It is suitable for correctness testing, stability testing, and local debugging.
+5. It is not suitable for official performance ranking or comparison with official ClickBench results.
 
-需要注意的是，合成数据的分布是随机生成的，不能完全模拟官方 ClickBench 数据中的真实业务分布、压缩特征、倾斜分布和字段相关性。因此，本测试更适合作为 PostgreSQL 修改后的 smoke test 或回归测试，而不是标准 benchmark。
+Note that the distribution of the synthetic data is randomly generated and cannot fully simulate the real business distribution, compression characteristics, skewed distribution, or field correlations of the official ClickBench dataset. Therefore, this test is more suitable as a smoke test or regression test after PostgreSQL modifications, rather than as a standard benchmark.
 
-## 测试步骤
+## Test Steps
 
-1. 利用 `create.sql` 创建测试表
-2. 利用 `random_generate_data.sql` 生成随机测试数据
-3. 执行 `queries.sql` 中的查询，并将结果输出到文件里面
+1. Use `create.sql` to create the test table.
+2. Use `random_generate_data.sql` to generate random test data.
+3. Execute the queries in `queries.sql` and output the results to files.
 
-## 常见问题
+## FAQ
 
-### 1. 插入 10,000,000 行太慢怎么办？
+### 1. What should I do if inserting 10,000,000 rows is too slow?
 
-可以先把 `random_generate_data.sql` 中的行数调小，例如：
+You can first reduce the number of rows in `random_generate_data.sql`, for example:
 
 ```sql
 FROM generate_series(1, 1000000)
 ```
 
-先用 100 万行验证正确性。确认无误后，再扩大到 1000 万行。
+Use 1 million rows first to verify correctness. After confirming there are no issues, increase the scale to 10 million rows.
 
-### 2. 磁盘空间不足怎么办？
+### 2. What should I do if disk space is insufficient?
 
-可以使用较小的数据规模，或者清理旧数据库：
+You can use a smaller data scale or clean up old databases:
 
 ```bash
 dropdb clickbench_test
 ```
 
-也可以检查 PostgreSQL 数据目录所在磁盘：
+You can also check the disk where the PostgreSQL data directory is located:
 
 ```bash
 df -h
 ```
 
-### 3. 查询结果为空是否一定是错误？
+### 3. Does an empty query result always indicate an error?
 
-不一定。
+Not necessarily.
 
-由于这里使用的是随机合成数据，不同字段之间不一定具有真实业务相关性。某些过滤条件组合较强的查询，可能返回较少结果甚至空结果。为了减少这种情况，`random_generate_data.sql` 中已经对部分关键过滤条件进行了埋点，但它仍然不能保证所有查询都具有与官方数据相同的结果分布。
+Because randomly generated synthetic data is used here, different fields do not necessarily have real business correlations. Some queries with strong combinations of filtering conditions may return only a few results or even empty results. To reduce this situation, `random_generate_data.sql` already includes embedded data for some key filtering conditions, but it still cannot guarantee that all queries will have the same result distribution as the official dataset.
 
-### 4. 这份结果能不能和官方 ClickBench 排行榜对比？
+### 4. Can these results be compared with the official ClickBench leaderboard?
 
-不能。
+No.
 
-原因包括：
+The reasons include:
 
-1. 数据不是官方 ClickBench 原始数据。
-2. 数据规模不同。
-3. 数据分布不同。
-4. 虚拟机硬件环境不同。
-6. 测试流程未严格执行官方 benchmark 规则。
+1. The data is not the original official ClickBench data.
+2. The data scale is different.
+3. The data distribution is different.
+4. The virtual machine hardware environment is different.
+5. The test process does not strictly follow the official benchmark rules.
 
-因此，本目录更适合本地开发和调试，不适合发布为正式 benchmark 结果。
+Therefore, this directory is more suitable for local development and debugging, and is not suitable for publishing as official benchmark results.
 
-### 5. 如何验证结果是否正确
+### 5. How to verify whether the results are correct?
 
-1. 先将 MyToyDB 测试数据表的数据导出
-2. 利用 `create.sql` 在 PostGreSQL 数据库中创建数据表
-3. 将 MyToyDB 导出的数据表导入到 PostGreSQL 对应的数据表中
-4. 在 PostGreSQL 中执行 `queries.sql` 的查询
-5. 比较 PostGreSQL 的查询输出与 MyToyDB 的查询输出是否一致（假设 PostGreSQL 的执行数据绝对正确）
+1. First export the data from the MyToyDB test data table.
+2. Use `create.sql` to create the data table in a PostgreSQL database.
+3. Import the data table exported from MyToyDB into the corresponding PostgreSQL data table.
+4. Execute the queries in `queries.sql` in PostgreSQL.
+5. Compare whether the query output from PostgreSQL is consistent with the query output from MyToyDB, assuming that the execution results from PostgreSQL are absolutely correct.
 
-## 测试结果记录
+**## Test Result Recording**
 
-1. 用文件记录每一个查询的输出结果
-2. 记录查询没有正确执行语句的编号
+1. Record the output result of each query in a file.
+2. Record the IDs of queries that failed to execute correctly.
