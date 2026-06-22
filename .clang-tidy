@@ -1,0 +1,45 @@
+---
+# MyToyDB clang-tidy configuration
+# Enables Google-style checks plus selected modernize/cppcoreguidelines checks.
+
+Checks: >
+  google-*,
+  cppcoreguidelines-pro-type-cstyle-cast,
+  cppcoreguidelines-pro-type-static-cast-downcast,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  modernize-use-nullptr,
+  modernize-use-override,
+  modernize-use-using,
+  modernize-use-emplace,
+  modernize-redundant-void-arg,
+  modernize-use-default-member-init,
+  performance-*,
+  readability-identifier-naming,
+  bugprone-*
+
+WarningsAsErrors: ''
+
+HeaderFilterRegex: ".*mytoydb/.*"
+
+CheckOptions:
+  - key:   readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key:   readability-identifier-naming.StructCase
+    value: CamelCase
+  - key:   readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key:   readability-identifier-naming.VariableCase
+    value: lower_case
+  - key:   readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key:   readability-identifier-naming.ConstantCase
+    value: CamelCase
+  - key:   readability-identifier-naming.ConstantPrefix
+    value: k
+  - key:   readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key:   readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key:   readability-identifier-naming.NamespaceCase
+    value: lower_case

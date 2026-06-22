@@ -1,0 +1,68 @@
+# src/CMakeLists.txt - MyToyDB source library
+#
+# Builds the mytoydb_core static library from all module sources. New source
+# files are added here as modules are converted from PostgreSQL C to C++20.
+
+# ---------------------------------------------------------------------------
+# Flex / Bison — generate scanner and parser for the SQL parser (M5)
+# ---------------------------------------------------------------------------
+find_package(BISON 3.0 REQUIRED)
+find_package(FLEX 2.6 REQUIRED)
+
+# Bison generates parser.cpp and parser.hpp from gram.yy
+# Use C++ skeleton (lalr1.cc) for clean C++ integration.
+BISON_TARGET(
+    mytoydb_parser
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser/gram.yy
+    ${CMAKE_CURRENT_BINARY_DIR}/parser/gram.tab.cpp
+    DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser/gram.tab.hpp
+    COMPILE_FLAGS "-Wno-conflicts-sr -Wno-conflicts-rr"
+)
+
+# Flex generates scanner.cpp from scan.ll
+# Use C++ mode for clean C++ integration.
+FLEX_TARGET(
+    mytoydb_scanner
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser/scan.ll
+    ${CMAKE_CURRENT_BINARY_DIR}/parser/lex.yy.cpp
+    COMPILE_FLAGS "--c++"
+)
+
+set(MYTOYDB_CORE_SOURCES
+    common/memory/memory_context.cpp
+    common/memory/alloc_set.cpp
+    common/error/elog.cpp
+    common/containers/node.cpp
+    common/containers/list.cpp
+    common/containers/string_info.cpp
+    types/builtins.cpp
+    types/datetime.cpp
+    types/string_funcs.cpp
+    catalog/catalog.cpp
+    catalog/syscache.cpp
+    parser/keywords.cpp
+    parser/parser.cpp
+    ${BISON_mytoydb_parser_OUTPUTS}
+    ${FLEX_mytoydb_scanner_OUTPUTS}
+)
+
+add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})
+
+target_compile_features(mytoydb_core PUBLIC cxx_std_20)
+target_include_directories(mytoydb_core
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}/parser
+)
+
+# Apply warning flags from the root CMakeLists.txt
+target_compile_options(mytoydb_core PRIVATE -Wall -Wextra -Wpedantic)
+
+# Generated Flex/Bison code triggers various warnings; suppress them.
+set_source_files_properties(
+    ${BISON_mytoydb_parser_OUTPUTS}
+    ${FLEX_mytoydb_scanner_OUTPUTS}
+    PROPERTIES
+        COMPILE_OPTIONS "-Wno-unused;-Wno-sign-compare;-Wno-old-style-cast"
