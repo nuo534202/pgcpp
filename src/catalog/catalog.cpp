@@ -10,8 +10,13 @@
 #include <cstring>
 #include <utility>
 
+#include "mytoydb/catalog/pg_aggregate.h"
 #include "mytoydb/catalog/pg_attribute.h"
+#include "mytoydb/catalog/pg_cast.h"
 #include "mytoydb/catalog/pg_class.h"
+#include "mytoydb/catalog/pg_collation.h"
+#include "mytoydb/catalog/pg_operator.h"
+#include "mytoydb/catalog/pg_proc.h"
 #include "mytoydb/catalog/pg_type.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/memory_context.h"
@@ -185,6 +190,156 @@ const FormData_pg_type* Catalog::GetTypeByName(const std::string& name) const {
         if (row->typname == name) {
             return row;
         }
+    }
+    return nullptr;
+}
+
+// --- Catalog: pg_operator ---
+
+Oid Catalog::InsertOperator(FormData_pg_operator* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertOperator: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_operator_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_operator* Catalog::GetOperatorByOid(Oid oid) const {
+    for (const auto* row : pg_operator_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_operator*>
+Catalog::GetOperatorsByName(const std::string& name) const {
+    std::vector<const FormData_pg_operator*> result;
+    for (const auto* row : pg_operator_rows_) {
+        if (row->oprname == name) result.push_back(row);
+    }
+    return result;
+}
+
+const FormData_pg_operator*
+Catalog::GetOperator(const std::string& name, Oid left_type, Oid right_type) const {
+    for (const auto* row : pg_operator_rows_) {
+        if (row->oprname == name &&
+            row->oprleft == left_type &&
+            row->oprright == right_type) {
+            return row;
+        }
+    }
+    return nullptr;
+}
+
+// --- Catalog: pg_proc ---
+
+Oid Catalog::InsertProc(FormData_pg_proc* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertProc: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    // Compute pronargs from proargtypes if not set.
+    if (row->pronargs == 0 && !row->proargtypes.empty()) {
+        row->pronargs = static_cast<int16_t>(row->proargtypes.size());
+    }
+    pg_proc_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_proc* Catalog::GetProcByOid(Oid oid) const {
+    for (const auto* row : pg_proc_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_proc*>
+Catalog::GetProcsByName(const std::string& name) const {
+    std::vector<const FormData_pg_proc*> result;
+    for (const auto* row : pg_proc_rows_) {
+        if (row->proname == name) result.push_back(row);
+    }
+    return result;
+}
+
+// --- Catalog: pg_cast ---
+
+Oid Catalog::InsertCast(FormData_pg_cast* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertCast: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_cast_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_cast*
+Catalog::GetCast(Oid source_type, Oid target_type) const {
+    for (const auto* row : pg_cast_rows_) {
+        if (row->castsource == source_type && row->casttarget == target_type) {
+            return row;
+        }
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_cast*>
+Catalog::GetCastsBySource(Oid source_type) const {
+    std::vector<const FormData_pg_cast*> result;
+    for (const auto* row : pg_cast_rows_) {
+        if (row->castsource == source_type) result.push_back(row);
+    }
+    return result;
+}
+
+// --- Catalog: pg_aggregate ---
+
+void Catalog::InsertAggregate(FormData_pg_aggregate* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertAggregate: row is null");
+    }
+    pg_aggregate_rows_.push_back(row);
+}
+
+const FormData_pg_aggregate* Catalog::GetAggregate(Oid aggfnoid) const {
+    for (const auto* row : pg_aggregate_rows_) {
+        if (row->aggfnoid == aggfnoid) return row;
+    }
+    return nullptr;
+}
+
+// --- Catalog: pg_collation ---
+
+Oid Catalog::InsertCollation(FormData_pg_collation* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertCollation: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_collation_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_collation* Catalog::GetCollationByOid(Oid oid) const {
+    for (const auto* row : pg_collation_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+const FormData_pg_collation*
+Catalog::GetCollationByName(const std::string& name) const {
+    for (const auto* row : pg_collation_rows_) {
+        if (row->collname == name) return row;
     }
     return nullptr;
 }

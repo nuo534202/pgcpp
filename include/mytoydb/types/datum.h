@@ -22,6 +22,7 @@ constexpr uint32_t kVarcharOid = 1043;
 constexpr uint32_t kDateOid = 1082;
 constexpr uint32_t kTimestampOid = 1114;
 constexpr uint32_t kTimestamptzOid = 1184;
+constexpr uint32_t kNumericOid = 1700;  // numeric
 
 // DatumGet* / *GetDatum conversions (inline constexpr / inline)
 inline bool DatumGetBool(Datum x) {

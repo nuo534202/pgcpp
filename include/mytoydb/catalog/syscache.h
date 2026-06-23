@@ -14,12 +14,21 @@ namespace mytoydb::catalog {
 // (catalog, index) pair and the cache key arity.
 enum class SysCacheIdentifier : int {
     kInvalid = 0,
-    kClassName,        // pg_class by (name, namespace)
-    kClassOid,         // pg_class by oid
-    kAttributeRelidName,  // pg_attribute by (relid, name)
-    kAttributeRelidNum,   // pg_attribute by (relid, attnum)
-    kTypeName,         // pg_type by (name, namespace)
-    kTypeOid,          // pg_type by oid
+    kClassName,            // pg_class by (name, namespace)
+    kClassOid,             // pg_class by oid
+    kAttributeRelidName,   // pg_attribute by (relid, name)
+    kAttributeRelidNum,    // pg_attribute by (relid, attnum)
+    kTypeName,             // pg_type by (name, namespace)
+    kTypeOid,              // pg_type by oid
+    kOperatorNameLrN,      // pg_operator by (name, left, right, namespace)
+    kOperatorOid,          // pg_operator by oid
+    kProcNameArgsNsp,      // pg_proc by (name, argtypes, namespace)
+    kProcOid,              // pg_proc by oid
+    kCastSourceTarget,     // pg_cast by (source, target)
+    kCastOid,              // pg_cast by oid
+    kAggregateFnoid,       // pg_aggregate by aggfnoid
+    kCollationNameEncNsp,  // pg_collation by (name, encoding, namespace)
+    kCollationOid,         // pg_collation by oid
 };
 
 // SysCache — the in-memory system cache.

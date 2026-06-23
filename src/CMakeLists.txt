@@ -38,10 +38,25 @@ set(MYTOYDB_CORE_SOURCES
     types/builtins.cpp
     types/datetime.cpp
     types/string_funcs.cpp
+    catalog/bootstrap_catalog.cpp
     catalog/catalog.cpp
     catalog/syscache.cpp
     parser/keywords.cpp
     parser/parser.cpp
+    parser/scanner.cpp
+    parser/parsenodes.cpp
+    parser/primnodes.cpp
+    parser/parse_node.cpp
+    parser/parse_type.cpp
+    parser/parse_coerce.cpp
+    parser/parse_oper.cpp
+    parser/parse_func.cpp
+    parser/parse_relation.cpp
+    parser/parse_expr.cpp
+    parser/parse_target.cpp
+    parser/parse_clause.cpp
+    parser/parse_agg.cpp
+    parser/analyze.cpp
     ${BISON_mytoydb_parser_OUTPUTS}
     ${FLEX_mytoydb_scanner_OUTPUTS}
 )
@@ -66,3 +81,4 @@ set_source_files_properties(
     ${FLEX_mytoydb_scanner_OUTPUTS}
     PROPERTIES
         COMPILE_OPTIONS "-Wno-unused;-Wno-sign-compare;-Wno-old-style-cast"
+)
