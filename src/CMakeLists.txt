@@ -64,6 +64,12 @@ set(MYTOYDB_CORE_SOURCES
     storage/buffer/bufpage.cpp
     storage/buffer/bufmgr.cpp
     storage/buffer/freelist.cpp
+    transaction/transam.cpp
+    transaction/xact.cpp
+    transaction/snapshot.cpp
+    transaction/visibility.cpp
+    transaction/lock.cpp
+    transaction/lmgr.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})

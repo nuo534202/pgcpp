@@ -25,6 +25,7 @@
 #include <cstddef>
 
 #include "mytoydb/storage/block.h"
+#include "mytoydb/transaction/transam.h"
 
 namespace mytoydb::storage {
 
@@ -69,9 +70,10 @@ constexpr uint16_t kPageSizeVersion = static_cast<uint16_t>(kBlckSz) | kPageLayo
 // affecting this page. In MyToyDB (no WAL yet), this is always 0.
 using PageXLogRecPtr = uint64_t;
 
-// TransactionId — placeholder for the transaction ID type (Phase 7).
-// Used in pd_prune_xid. Always 0 until MVCC is implemented.
-using TransactionId = uint32_t;
+// TransactionId — re-exported from the transaction namespace for use in
+// page headers (pd_prune_xid). PostgreSQL uses a global typedef; MyToyDB
+// keeps it in mytoydb::transaction and aliases it here for convenience.
+using TransactionId = mytoydb::transaction::TransactionId;
 
 // PageHeaderData — the fixed-size header at the start of every page.
 struct PageHeaderData {
