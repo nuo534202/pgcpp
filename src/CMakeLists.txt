@@ -59,6 +59,11 @@ set(MYTOYDB_CORE_SOURCES
     parser/analyze.cpp
     ${BISON_mytoydb_parser_OUTPUTS}
     ${FLEX_mytoydb_scanner_OUTPUTS}
+    storage/smgr/smgr.cpp
+    storage/smgr/md.cpp
+    storage/buffer/bufpage.cpp
+    storage/buffer/bufmgr.cpp
+    storage/buffer/freelist.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})

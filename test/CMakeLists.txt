@@ -45,3 +45,8 @@ mytoydb_add_test(string_funcs_test unit/types/string_funcs_test.cpp)
 # Phase 5 tests (M5: parser)
 mytoydb_add_test(parser_test unit/parser/parser_test.cpp)
 mytoydb_add_test(parse_analysis_test unit/parser/parse_analysis_test.cpp)
+
+# Phase 6 tests (M6: storage / buffer manager)
+mytoydb_add_test(bufpage_test unit/storage/bufpage_test.cpp)
+mytoydb_add_test(smgr_test unit/storage/smgr_test.cpp)
+mytoydb_add_test(bufmgr_test unit/storage/bufmgr_test.cpp)
