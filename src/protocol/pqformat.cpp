@@ -173,14 +173,15 @@ Message BuildReadyForQuery(TransactionStatus status) {
 
 Message BuildErrorResponse(const std::string& message) {
     MessageWriter w;
+    // Each field is: field-type (1 byte) + field-value (null-terminated string).
     // Severity field.
-    w.WriteString("S");
+    w.WriteByte('S');
     w.WriteString("ERROR");
     // Error code field (SQLSTATE). "XX000" = internal error.
-    w.WriteString("C");
+    w.WriteByte('C');
     w.WriteString("XX000");
     // Message field.
-    w.WriteString("M");
+    w.WriteByte('M');
     w.WriteString(message);
     // Terminator.
     w.WriteByte('\0');

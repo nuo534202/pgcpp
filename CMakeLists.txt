@@ -39,3 +39,7 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
     add_subdirectory(test)
 endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/CMakeLists.txt")
+    add_subdirectory(tools)
+endif()

@@ -71,3 +71,6 @@ mytoydb_add_test(protocol_test unit/protocol/protocol_test.cpp)
 
 # Phase 12 tests (M12: postmaster / bootstrap)
 mytoydb_add_test(server_test unit/server/server_test.cpp)
+
+# Phase 13 tests (M13: client tools)
+mytoydb_add_test(tools_test unit/tools/tools_test.cpp)

@@ -98,6 +98,7 @@ set(MYTOYDB_CORE_SOURCES
     server/postmaster.cpp
     server/bootstrap.cpp
     server/options.cpp
+    tools/psql_client.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})
