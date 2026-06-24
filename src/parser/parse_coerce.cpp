@@ -14,15 +14,15 @@ namespace mytoydb::parser {
 
 using mytoydb::catalog::kInvalidOid;
 using mytoydb::types::kBoolOid;
+using mytoydb::types::kDateOid;
+using mytoydb::types::kFloat4Oid;
+using mytoydb::types::kFloat8Oid;
 using mytoydb::types::kInt2Oid;
 using mytoydb::types::kInt4Oid;
 using mytoydb::types::kInt8Oid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
 using mytoydb::types::kTextOid;
-using mytoydb::types::kVarcharOid;
-using mytoydb::types::kDateOid;
 using mytoydb::types::kTimestampOid;
+using mytoydb::types::kVarcharOid;
 
 static constexpr Oid kUnknownOid = 705;
 
@@ -40,8 +40,10 @@ enum class TypeCategory {
 };
 
 static TypeCategory GetTypeCategory(Oid type_oid) {
-    if (type_oid == kUnknownOid) return TypeCategory::kUnknown;
-    if (type_oid == kBoolOid) return TypeCategory::kBoolean;
+    if (type_oid == kUnknownOid)
+        return TypeCategory::kUnknown;
+    if (type_oid == kBoolOid)
+        return TypeCategory::kBoolean;
     if (type_oid == kInt2Oid || type_oid == kInt4Oid || type_oid == kInt8Oid ||
         type_oid == kFloat4Oid || type_oid == kFloat8Oid)
         return TypeCategory::kNumeric;
@@ -55,11 +57,16 @@ static TypeCategory GetTypeCategory(Oid type_oid) {
 // Get the preferred type in a category (for resolving unknowns).
 static Oid GetPreferredType(TypeCategory cat) {
     switch (cat) {
-        case TypeCategory::kBoolean: return kBoolOid;
-        case TypeCategory::kNumeric: return kFloat8Oid;  // float8 is preferred
-        case TypeCategory::kString: return kTextOid;     // text is preferred
-        case TypeCategory::kDatetime: return kTimestampOid;
-        default: return kInvalidOid;
+        case TypeCategory::kBoolean:
+            return kBoolOid;
+        case TypeCategory::kNumeric:
+            return kFloat8Oid;  // float8 is preferred
+        case TypeCategory::kString:
+            return kTextOid;  // text is preferred
+        case TypeCategory::kDatetime:
+            return kTimestampOid;
+        default:
+            return kInvalidOid;
     }
 }
 
@@ -68,10 +75,12 @@ static Oid GetPreferredType(TypeCategory cat) {
 // ---------------------------------------------------------------------------
 
 bool IsBinaryCoercible(Oid srctype, Oid targettype) {
-    if (srctype == targettype) return true;
+    if (srctype == targettype)
+        return true;
 
     // unknown can be coerced to anything
-    if (srctype == kUnknownOid) return true;
+    if (srctype == kUnknownOid)
+        return true;
 
     // varchar <-> text are binary-compatible
     if ((srctype == kTextOid && targettype == kVarcharOid) ||
@@ -101,17 +110,19 @@ bool can_coerce_type(int nargs, const Oid* input_typeids, const Oid* target_type
         Oid input = input_typeids[i];
         Oid target = target_typeids[i];
 
-        if (input == target) continue;
+        if (input == target)
+            continue;
 
         // unknown can always be coerced
-        if (input == kUnknownOid) continue;
+        if (input == kUnknownOid)
+            continue;
 
         // Binary-coercible?
-        if (IsBinaryCoercible(input, target)) continue;
+        if (IsBinaryCoercible(input, target))
+            continue;
 
         // Assignment cast: allow widening numeric conversions
-        if (ccontext == CoercionContext::kAssignment ||
-            ccontext == CoercionContext::kImplicit) {
+        if (ccontext == CoercionContext::kAssignment || ccontext == CoercionContext::kImplicit) {
             TypeCategory in_cat = GetTypeCategory(input);
             TypeCategory tgt_cat = GetTypeCategory(target);
 
@@ -160,9 +171,8 @@ bool can_coerce_type(int nargs, const Oid* input_typeids, const Oid* target_type
 // coerce_type — coerce an expression to the target type.
 // ---------------------------------------------------------------------------
 
-Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid,
-                  Oid target_typeid, int target_typmod,
-                  CoercionContext ccontext, CoercionForm cformat, int location) {
+Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid, Oid target_typeid,
+                  int target_typmod, CoercionContext ccontext, CoercionForm cformat, int location) {
     if (input_typeid == target_typeid) {
         // No coercion needed, but may need a RelabelType for typmod
         return node;
@@ -187,14 +197,12 @@ Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid,
                 const char* str = reinterpret_cast<const char*>(con->constvalue);
                 if (str != nullptr) {
                     if (target_typeid == kInt4Oid) {
-                        con->constvalue = mytoydb::types::Int32GetDatum(
-                            static_cast<int32_t>(std::atoll(str)));
+                        con->constvalue =
+                            mytoydb::types::Int32GetDatum(static_cast<int32_t>(std::atoll(str)));
                     } else if (target_typeid == kInt8Oid) {
-                        con->constvalue = mytoydb::types::Int64GetDatum(
-                            std::atoll(str));
+                        con->constvalue = mytoydb::types::Int64GetDatum(std::atoll(str));
                     } else {
-                        con->constvalue = mytoydb::types::Float8GetDatum(
-                            std::strtod(str, nullptr));
+                        con->constvalue = mytoydb::types::Float8GetDatum(std::strtod(str, nullptr));
                     }
                     con->consttype = target_typeid;
                     con->constlen = get_typlen(target_typeid);
@@ -289,21 +297,21 @@ Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid,
 // coerce_to_target_type — coerce an expression to a target type/modifier.
 // ---------------------------------------------------------------------------
 
-Node* coerce_to_target_type(ParseState* pstate, Node* expr, Oid expr_type,
-                            Oid target_type, int target_typmod,
-                            CoercionContext ccontext, CoercionForm cformat,
+Node* coerce_to_target_type(ParseState* pstate, Node* expr, Oid expr_type, Oid target_type,
+                            int target_typmod, CoercionContext ccontext, CoercionForm cformat,
                             int location) {
-    return coerce_type(pstate, expr, expr_type, target_type, target_typmod,
-                       ccontext, cformat, location);
+    return coerce_type(pstate, expr, expr_type, target_type, target_typmod, ccontext, cformat,
+                       location);
 }
 
 // ---------------------------------------------------------------------------
 // select_common_type — select a common type for a list of expressions.
 // ---------------------------------------------------------------------------
 
-Oid select_common_type(ParseState* pstate, const std::vector<Node*>& exprs,
-                       const char* context, Node** which_expr) {
-    if (exprs.empty()) return kInvalidOid;
+Oid select_common_type(ParseState* pstate, const std::vector<Node*>& exprs, const char* context,
+                       Node** which_expr) {
+    if (exprs.empty())
+        return kInvalidOid;
 
     Oid common_type = kUnknownOid;
     bool have_unknown = false;
@@ -321,7 +329,8 @@ Oid select_common_type(ParseState* pstate, const std::vector<Node*>& exprs,
 
         if (common_type == kUnknownOid) {
             common_type = expr_type;
-            if (which_expr) *which_expr = expr;
+            if (which_expr)
+                *which_expr = expr;
         } else {
             // Find a common type
             TypeCategory a = GetTypeCategory(common_type);
@@ -354,8 +363,10 @@ Oid select_common_type(ParseState* pstate, const std::vector<Node*>& exprs,
             }
         }
 
-        if (type_is_numeric(expr_type)) have_numeric = true;
-        if (type_is_string(expr_type)) have_string = true;
+        if (type_is_numeric(expr_type))
+            have_numeric = true;
+        if (type_is_string(expr_type))
+            have_string = true;
     }
 
     // If all expressions were unknown, resolve to text
@@ -370,17 +381,15 @@ Oid select_common_type(ParseState* pstate, const std::vector<Node*>& exprs,
 // coerce_to_common_type — coerce an expression to a common type.
 // ---------------------------------------------------------------------------
 
-Node* coerce_to_common_type(ParseState* pstate, Node* node, Oid common_type,
-                            const char* context) {
+Node* coerce_to_common_type(ParseState* pstate, Node* node, Oid common_type, const char* context) {
     Oid node_type = exprType(node);
-    if (node_type == common_type) return node;
+    if (node_type == common_type)
+        return node;
 
-    Node* result = coerce_type(pstate, node, node_type, common_type, -1,
-                               CoercionContext::kImplicit,
+    Node* result = coerce_type(pstate, node, node_type, common_type, -1, CoercionContext::kImplicit,
                                CoercionForm::kImplicit, -1);
     if (result == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "cannot coerce to common type");
+        ereport(mytoydb::error::LogLevel::kError, "cannot coerce to common type");
     }
     return result;
 }
@@ -389,7 +398,8 @@ Node* coerce_to_common_type(ParseState* pstate, Node* node, Oid common_type,
 // exprType — get the type OID of an expression node.
 // This is a utility function used throughout parse analysis.
 Oid exprType(const Node* expr) {
-    if (expr == nullptr) return kUnknownOid;
+    if (expr == nullptr)
+        return kUnknownOid;
 
     using mytoydb::nodes::NodeTag;
     switch (expr->GetTag()) {
@@ -459,7 +469,8 @@ Oid exprType(const Node* expr) {
 
 // exprTypmod — get the type modifier of an expression node.
 int exprTypmod(const Node* expr) {
-    if (expr == nullptr) return -1;
+    if (expr == nullptr)
+        return -1;
 
     using mytoydb::nodes::NodeTag;
     switch (expr->GetTag()) {

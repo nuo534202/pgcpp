@@ -18,16 +18,15 @@ using mytoydb::nodes::Node;
 
 // FuncLookupResult — result of looking up a function by name and arg types.
 struct FuncLookupResult {
-    Oid funcid = 0;          // function OID
-    Oid rettype = 0;         // return type OID
-    bool retset = false;     // returns set?
-    bool is_aggregate = false; // is this an aggregate function?
+    Oid funcid = 0;             // function OID
+    Oid rettype = 0;            // return type OID
+    bool retset = false;        // returns set?
+    bool is_aggregate = false;  // is this an aggregate function?
 };
 
 // LookupFuncName — look up a function by name and argument types.
 // Returns true if found, false otherwise.
-bool LookupFuncName(const std::vector<std::string>& funcname,
-                    int nargs, const Oid* argtypes,
+bool LookupFuncName(const std::vector<std::string>& funcname, int nargs, const Oid* argtypes,
                     FuncLookupResult* result);
 
 // transformFuncCall — transform a FuncCall (raw parse tree) into a

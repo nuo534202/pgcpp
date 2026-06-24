@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/parser/analyze.h"
 #include "mytoydb/parser/parse_clause.h"
 #include "mytoydb/parser/parse_coerce.h"
@@ -26,12 +26,12 @@ using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::Value;
 using mytoydb::nodes::nodeTag;
+using mytoydb::nodes::Value;
 using mytoydb::types::kBoolOid;
+using mytoydb::types::kFloat8Oid;
 using mytoydb::types::kInt4Oid;
 using mytoydb::types::kInt8Oid;
-using mytoydb::types::kFloat8Oid;
 using mytoydb::types::kTextOid;
 
 static constexpr Oid kUnknownOid = 705;
@@ -53,7 +53,8 @@ static Node* transformParamRef(ParseState* pstate, ParamRef* pref);
 // ---------------------------------------------------------------------------
 
 Node* transformExpr(ParseState* pstate, Node* expr, ParseExprKind exprKind) {
-    if (expr == nullptr) return nullptr;
+    if (expr == nullptr)
+        return nullptr;
 
     ParseExprKind save_kind = pstate->p_expr_kind;
     pstate->p_expr_kind = exprKind;
@@ -69,7 +70,8 @@ Node* transformExpr(ParseState* pstate, Node* expr, ParseExprKind exprKind) {
 // ---------------------------------------------------------------------------
 
 Node* transformExprRecurse(ParseState* pstate, Node* expr) {
-    if (expr == nullptr) return nullptr;
+    if (expr == nullptr)
+        return nullptr;
 
     NodeTag tag = nodeTag(expr);
     switch (tag) {
@@ -118,7 +120,8 @@ Node* transformExprRecurse(ParseState* pstate, Node* expr) {
 // ---------------------------------------------------------------------------
 
 static Node* transformColumnRef(ParseState* pstate, ColumnRef* cref) {
-    if (cref == nullptr || cref->fields.empty()) return nullptr;
+    if (cref == nullptr || cref->fields.empty())
+        return nullptr;
 
     int num_fields = static_cast<int>(cref->fields.size());
 
@@ -131,10 +134,10 @@ static Node* transformColumnRef(ParseState* pstate, ColumnRef* cref) {
 
             // Search the namespace for the column
             Node* var = scanNameSpaceForColumn(pstate, colname, cref->location);
-            if (var != nullptr) return var;
+            if (var != nullptr)
+                return var;
 
-            ereport(mytoydb::error::LogLevel::kError,
-                    "column does not exist");
+            ereport(mytoydb::error::LogLevel::kError, "column does not exist");
             return nullptr;
         }
     }
@@ -144,8 +147,7 @@ static Node* transformColumnRef(ParseState* pstate, ColumnRef* cref) {
         Node* field0 = cref->fields[0];
         Node* field1 = cref->fields[1];
 
-        if (nodeTag(field0) == NodeTag::kString &&
-            nodeTag(field1) == NodeTag::kString) {
+        if (nodeTag(field0) == NodeTag::kString && nodeTag(field1) == NodeTag::kString) {
             auto* tbl_val = static_cast<Value*>(field0);
             auto* col_val = static_cast<Value*>(field1);
             const std::string& tblname = tbl_val->GetString();
@@ -153,18 +155,15 @@ static Node* transformColumnRef(ParseState* pstate, ColumnRef* cref) {
 
             // Find the RTE by table name
             int sublevels_up = 0;
-            RangeTblEntry* rte = refnameRangeTblEntry(pstate, tblname.c_str(),
-                                                       &sublevels_up);
+            RangeTblEntry* rte = refnameRangeTblEntry(pstate, tblname.c_str(), &sublevels_up);
             if (rte == nullptr) {
-                ereport(mytoydb::error::LogLevel::kError,
-                        "table does not exist");
+                ereport(mytoydb::error::LogLevel::kError, "table does not exist");
                 return nullptr;
             }
 
             Node* var = scanRTEForColumn(pstate, rte, colname, cref->location);
             if (var == nullptr) {
-                ereport(mytoydb::error::LogLevel::kError,
-                        "column does not exist in table");
+                ereport(mytoydb::error::LogLevel::kError, "column does not exist in table");
                 return nullptr;
             }
 
@@ -188,8 +187,7 @@ static Node* transformColumnRef(ParseState* pstate, ColumnRef* cref) {
         }
     }
 
-    ereport(mytoydb::error::LogLevel::kError,
-            "unrecognized column reference");
+    ereport(mytoydb::error::LogLevel::kError, "unrecognized column reference");
     return nullptr;
 }
 
@@ -215,7 +213,8 @@ static Node* transformAExpr(ParseState* pstate, AExpr* a) {
         for (Node* n : a->name) {
             if (nodeTag(n) == NodeTag::kString) {
                 auto* v = static_cast<Value*>(n);
-                if (!opname.empty()) opname += " ";
+                if (!opname.empty())
+                    opname += " ";
                 opname += v->GetString();
             }
         }
@@ -226,21 +225,18 @@ static Node* transformAExpr(ParseState* pstate, AExpr* a) {
             // Handle boolean operators AND/OR/NOT as BoolExpr
             if (opname == "AND" && lexpr != nullptr && rexpr != nullptr) {
                 std::vector<Node*> args = {lexpr, rexpr};
-                auto* b = static_cast<BoolExpr*>(
-                    mytoydb::parser::make_andclause(std::move(args)));
+                auto* b = static_cast<BoolExpr*>(mytoydb::parser::make_andclause(std::move(args)));
                 b->location = a->location;
                 return b;
             }
             if (opname == "OR" && lexpr != nullptr && rexpr != nullptr) {
                 std::vector<Node*> args = {lexpr, rexpr};
-                auto* b = static_cast<BoolExpr*>(
-                    mytoydb::parser::make_orclause(std::move(args)));
+                auto* b = static_cast<BoolExpr*>(mytoydb::parser::make_orclause(std::move(args)));
                 b->location = a->location;
                 return b;
             }
             if (opname == "NOT" && rexpr != nullptr) {
-                auto* b = static_cast<BoolExpr*>(
-                    mytoydb::parser::make_notclause(rexpr));
+                auto* b = static_cast<BoolExpr*>(mytoydb::parser::make_notclause(rexpr));
                 b->location = a->location;
                 return b;
             }
@@ -254,16 +250,14 @@ static Node* transformAExpr(ParseState* pstate, AExpr* a) {
         case AExprKind::kOpAny: {
             // expr op ANY (array)
             if (lexpr != nullptr && rexpr != nullptr) {
-                return make_scalar_array_op(pstate, opname, true, lexpr, rexpr,
-                                            a->location);
+                return make_scalar_array_op(pstate, opname, true, lexpr, rexpr, a->location);
             }
             break;
         }
         case AExprKind::kOpAll: {
             // expr op ALL (array)
             if (lexpr != nullptr && rexpr != nullptr) {
-                return make_scalar_array_op(pstate, opname, false, lexpr, rexpr,
-                                            a->location);
+                return make_scalar_array_op(pstate, opname, false, lexpr, rexpr, a->location);
             }
             break;
         }
@@ -271,8 +265,8 @@ static Node* transformAExpr(ParseState* pstate, AExpr* a) {
             // expr IN (list/subquery) — opname is "=" for IN, "<>" for NOT IN
             if (lexpr != nullptr && rexpr != nullptr) {
                 bool use_or = (opname == "=");
-                return make_scalar_array_op(pstate, use_or ? "=" : "<>",
-                                            use_or, lexpr, rexpr, a->location);
+                return make_scalar_array_op(pstate, use_or ? "=" : "<>", use_or, lexpr, rexpr,
+                                            a->location);
             }
             break;
         }
@@ -323,8 +317,7 @@ static Node* transformAExpr(ParseState* pstate, AExpr* a) {
             break;
     }
 
-    ereport(mytoydb::error::LogLevel::kError,
-            "unsupported expression type in transformAExpr");
+    ereport(mytoydb::error::LogLevel::kError, "unsupported expression type in transformAExpr");
     return nullptr;
 }
 
@@ -373,7 +366,8 @@ static Node* transformNullTest(ParseState* pstate, NullTest* n) {
 
 static Node* transformTypeCast(ParseState* pstate, TypeCast* tc) {
     Node* expr = tc->arg ? transformExprRecurse(pstate, tc->arg) : nullptr;
-    if (expr == nullptr) return nullptr;
+    if (expr == nullptr)
+        return nullptr;
 
     // Get the target type from the TypeName
     Oid target_type = kUnknownOid;
@@ -399,8 +393,7 @@ static Node* transformTypeCast(ParseState* pstate, TypeCast* tc) {
 
     Oid expr_type = exprType(expr);
     return coerce_type(pstate, expr, expr_type, target_type, target_typmod,
-                       CoercionContext::kExplicit, CoercionForm::kExplicit,
-                       tc->location);
+                       CoercionContext::kExplicit, CoercionForm::kExplicit, tc->location);
 }
 
 // ---------------------------------------------------------------------------
@@ -460,7 +453,8 @@ static Node* transformSubLink(ParseState* pstate, SubLink* sublink) {
     auto* result = makeNode<SubLink>();
     result->sublinktype = sublink->sublinktype;
     result->sublinkid = sublink->sublinkid;
-    result->testexpr = sublink->testexpr ? transformExprRecurse(pstate, sublink->testexpr) : nullptr;
+    result->testexpr =
+        sublink->testexpr ? transformExprRecurse(pstate, sublink->testexpr) : nullptr;
     result->opername = sublink->opername;
     result->location = sublink->location;
 

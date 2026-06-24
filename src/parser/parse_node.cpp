@@ -11,23 +11,23 @@
 #include <new>
 #include <string>
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/common/containers/node.h"
 #include "mytoydb/types/datum.h"
 
 namespace mytoydb::parser {
 
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::Value;
 using mytoydb::nodes::nodeTag;
+using mytoydb::nodes::Value;
+using mytoydb::types::BoolGetDatum;
 using mytoydb::types::Datum;
 using mytoydb::types::DatumGetInt32;
+using mytoydb::types::Float8GetDatum;
 using mytoydb::types::Int32GetDatum;
 using mytoydb::types::Int64GetDatum;
-using mytoydb::types::BoolGetDatum;
-using mytoydb::types::Float8GetDatum;
 
 // UNKNOWNOID — PostgreSQL's OID for the "unknown" type (705).
 // Used for string literals before type coercion resolves them.
@@ -50,7 +50,8 @@ ParseState* make_parsestate(ParseState* parent) {
 }
 
 void free_parsestate(ParseState* pstate) {
-    if (pstate == nullptr) return;
+    if (pstate == nullptr)
+        return;
     // In C++ we call the destructor explicitly then pfree.
     pstate->~ParseState();
     mytoydb::memory::pfree(pstate);
@@ -63,8 +64,7 @@ void free_parsestate(ParseState* pstate) {
 Const* make_const(ParseState* pstate, AConst* aconst) {
     if (aconst->isnull) {
         // Return a null const of unknown type.
-        auto* con = makeConst(kUnknownOid, -1, 0, -2, 0, true, false,
-                              aconst->location);
+        auto* con = makeConst(kUnknownOid, -1, 0, -2, 0, true, false, aconst->location);
         return con;
     }
 
@@ -73,15 +73,13 @@ Const* make_const(ParseState* pstate, AConst* aconst) {
         auto* v = static_cast<Value*>(aconst->val);
         bool bval = (v->GetInteger() != 0);
         auto* con = makeConst(mytoydb::types::kBoolOid, -1, 0, 1,
-                              mytoydb::types::BoolGetDatum(bval),
-                              false, true, aconst->location);
+                              mytoydb::types::BoolGetDatum(bval), false, true, aconst->location);
         return con;
     }
 
     Node* val = aconst->val;
     if (val == nullptr) {
-        auto* con = makeConst(kUnknownOid, -1, 0, -2, 0, true, false,
-                              aconst->location);
+        auto* con = makeConst(kUnknownOid, -1, 0, -2, 0, true, false, aconst->location);
         return con;
     }
 
@@ -159,13 +157,11 @@ Const* make_const(ParseState* pstate, AConst* aconst) {
             break;
         }
         default:
-            ereport(mytoydb::error::LogLevel::kError,
-                    "unrecognized constant type in make_const");
+            ereport(mytoydb::error::LogLevel::kError, "unrecognized constant type in make_const");
             return nullptr;  // keep compiler quiet
     }
 
-    auto* con = makeConst(typeid_, -1, 0, typelen, datum, false, typebyval,
-                          aconst->location);
+    auto* con = makeConst(typeid_, -1, 0, typelen, datum, false, typebyval, aconst->location);
     return con;
 }
 
@@ -211,8 +207,10 @@ Node* make_notclause(Node* arg) {
 }
 
 Node* make_ands_implicit(std::vector<Node*> andclauses) {
-    if (andclauses.empty()) return nullptr;
-    if (andclauses.size() == 1) return andclauses[0];
+    if (andclauses.empty())
+        return nullptr;
+    if (andclauses.size() == 1)
+        return andclauses[0];
     return make_andclause(std::move(andclauses));
 }
 

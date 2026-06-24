@@ -10,14 +10,14 @@
 #include <new>
 #include <utility>
 
-#include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::parser {
 
-using mytoydb::nodes::Node;
 using mytoydb::nodes::copyObject;
 using mytoydb::nodes::equal;
+using mytoydb::nodes::Node;
 
 namespace {
 
@@ -39,9 +39,11 @@ bool EqNode(const Node* a, const Node* b) {
 }
 
 bool EqVec(const std::vector<Node*>& a, const std::vector<Node*>& b) {
-    if (a.size() != b.size()) return false;
+    if (a.size() != b.size())
+        return false;
     for (size_t i = 0; i < a.size(); ++i) {
-        if (!EqNode(a[i], b[i])) return false;
+        if (!EqNode(a[i], b[i]))
+            return false;
     }
     return true;
 }
@@ -59,12 +61,12 @@ Node* Var::Clone() const {
 }
 
 bool Var::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const Var&>(other);
     return varno == o.varno && varattno == o.varattno && vartype == o.vartype &&
-           vartypmod == o.vartypmod && varcollid == o.varcollid &&
-           varlevelsup == o.varlevelsup && varnosyn == o.varnosyn &&
-           varattnosyn == o.varattnosyn && location == o.location;
+           vartypmod == o.vartypmod && varcollid == o.varcollid && varlevelsup == o.varlevelsup &&
+           varnosyn == o.varnosyn && varattnosyn == o.varattnosyn && location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -78,12 +80,12 @@ Node* Const::Clone() const {
 }
 
 bool Const::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const Const&>(other);
     return consttype == o.consttype && consttypmod == o.consttypmod &&
-           constcollid == o.constcollid && constlen == o.constlen &&
-           constvalue == o.constvalue && constisnull == o.constisnull &&
-           constbyval == o.constbyval && location == o.location;
+           constcollid == o.constcollid && constlen == o.constlen && constvalue == o.constvalue &&
+           constisnull == o.constisnull && constbyval == o.constbyval && location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,11 +99,11 @@ Node* Param::Clone() const {
 }
 
 bool Param::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const Param&>(other);
-    return paramkind == o.paramkind && paramid == o.paramid &&
-           paramtype == o.paramtype && paramtypmod == o.paramtypmod &&
-           paramcollid == o.paramcollid && location == o.location;
+    return paramkind == o.paramkind && paramid == o.paramid && paramtype == o.paramtype &&
+           paramtypmod == o.paramtypmod && paramcollid == o.paramcollid && location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,11 +118,11 @@ Node* OpExpr::Clone() const {
 }
 
 bool OpExpr::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const OpExpr&>(other);
-    return opno == o.opno && opfuncid == o.opfuncid &&
-           opresulttype == o.opresulttype && opretset == o.opretset &&
-           opcollid == o.opcollid && inputcollid == o.inputcollid &&
+    return opno == o.opno && opfuncid == o.opfuncid && opresulttype == o.opresulttype &&
+           opretset == o.opretset && opcollid == o.opcollid && inputcollid == o.inputcollid &&
            EqVec(args, o.args) && location == o.location;
 }
 
@@ -136,12 +138,12 @@ Node* FuncExpr::Clone() const {
 }
 
 bool FuncExpr::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const FuncExpr&>(other);
-    return funcid == o.funcid && funcresulttype == o.funcresulttype &&
-           funcretset == o.funcretset && funcvariadic == o.funcvariadic &&
-           funcformat == o.funcformat && funccollid == o.funccollid &&
-           inputcollid == o.inputcollid && EqVec(args, o.args) &&
+    return funcid == o.funcid && funcresulttype == o.funcresulttype && funcretset == o.funcretset &&
+           funcvariadic == o.funcvariadic && funcformat == o.funcformat &&
+           funccollid == o.funccollid && inputcollid == o.inputcollid && EqVec(args, o.args) &&
            location == o.location;
 }
 
@@ -162,19 +164,17 @@ Node* Aggref::Clone() const {
 }
 
 bool Aggref::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const Aggref&>(other);
-    return aggfnoid == o.aggfnoid && aggtype == o.aggtype &&
-           aggcollid == o.aggcollid && inputcollid == o.inputcollid &&
-           aggtranstype == o.aggtranstype &&
-           EqVec(aggargtypes, o.aggargtypes) &&
-           EqVec(aggdirectargs, o.aggdirectargs) && EqVec(args, o.args) &&
-           EqVec(aggorder, o.aggorder) && EqVec(aggdistinct, o.aggdistinct) &&
-           EqNode(aggfilter, o.aggfilter) && aggstar == o.aggstar &&
-           aggvariadic == o.aggvariadic && aggkind == o.aggkind &&
-           agglevelsup == o.agglevelsup && aggsplit == o.aggsplit &&
-           aggno == o.aggno && aggtransno == o.aggtransno &&
-           location == o.location;
+    return aggfnoid == o.aggfnoid && aggtype == o.aggtype && aggcollid == o.aggcollid &&
+           inputcollid == o.inputcollid && aggtranstype == o.aggtranstype &&
+           EqVec(aggargtypes, o.aggargtypes) && EqVec(aggdirectargs, o.aggdirectargs) &&
+           EqVec(args, o.args) && EqVec(aggorder, o.aggorder) &&
+           EqVec(aggdistinct, o.aggdistinct) && EqNode(aggfilter, o.aggfilter) &&
+           aggstar == o.aggstar && aggvariadic == o.aggvariadic && aggkind == o.aggkind &&
+           agglevelsup == o.agglevelsup && aggsplit == o.aggsplit && aggno == o.aggno &&
+           aggtransno == o.aggtransno && location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -189,7 +189,8 @@ Node* BoolExpr::Clone() const {
 }
 
 bool BoolExpr::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const BoolExpr&>(other);
     return boolop == o.boolop && EqVec(args, o.args) && location == o.location;
 }
@@ -206,10 +207,11 @@ Node* NullTest::Clone() const {
 }
 
 bool NullTest::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const NullTest&>(other);
-    return EqNode(arg, o.arg) && nulltesttype == o.nulltesttype &&
-           argisrow == o.argisrow && location == o.location;
+    return EqNode(arg, o.arg) && nulltesttype == o.nulltesttype && argisrow == o.argisrow &&
+           location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -224,10 +226,10 @@ Node* BooleanTest::Clone() const {
 }
 
 bool BooleanTest::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const BooleanTest&>(other);
-    return EqNode(arg, o.arg) && booltesttype == o.booltesttype &&
-           location == o.location;
+    return EqNode(arg, o.arg) && booltesttype == o.booltesttype && location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -244,11 +246,11 @@ Node* CaseExpr::Clone() const {
 }
 
 bool CaseExpr::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const CaseExpr&>(other);
-    return casetype == o.casetype && casecollid == o.casecollid &&
-           EqNode(arg, o.arg) && EqVec(args, o.args) &&
-           EqNode(defresult, o.defresult) && location == o.location;
+    return casetype == o.casetype && casecollid == o.casecollid && EqNode(arg, o.arg) &&
+           EqVec(args, o.args) && EqNode(defresult, o.defresult) && location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -264,10 +266,10 @@ Node* CaseWhen::Clone() const {
 }
 
 bool CaseWhen::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const CaseWhen&>(other);
-    return EqNode(expr, o.expr) && EqNode(result, o.result) &&
-           location == o.location;
+    return EqNode(expr, o.expr) && EqNode(result, o.result) && location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -284,7 +286,8 @@ Node* SubLink::Clone() const {
 }
 
 bool SubLink::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const SubLink&>(other);
     return sublinktype == o.sublinktype && sublinkid == o.sublinkid &&
            EqNode(testexpr, o.testexpr) && EqVec(opername, o.opername) &&
@@ -303,11 +306,12 @@ Node* RelabelType::Clone() const {
 }
 
 bool RelabelType::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const RelabelType&>(other);
-    return EqNode(arg, o.arg) && resulttype == o.resulttype &&
-           resulttypmod == o.resulttypmod && resultcollid == o.resultcollid &&
-           relabelformat == o.relabelformat && location == o.location;
+    return EqNode(arg, o.arg) && resulttype == o.resulttype && resulttypmod == o.resulttypmod &&
+           resultcollid == o.resultcollid && relabelformat == o.relabelformat &&
+           location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -322,11 +326,11 @@ Node* CoerceViaIO::Clone() const {
 }
 
 bool CoerceViaIO::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const CoerceViaIO&>(other);
-    return EqNode(arg, o.arg) && resulttype == o.resulttype &&
-           resultcollid == o.resultcollid && coerceformat == o.coerceformat &&
-           location == o.location;
+    return EqNode(arg, o.arg) && resulttype == o.resulttype && resultcollid == o.resultcollid &&
+           coerceformat == o.coerceformat && location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -341,11 +345,11 @@ Node* ScalarArrayOpExpr::Clone() const {
 }
 
 bool ScalarArrayOpExpr::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const ScalarArrayOpExpr&>(other);
-    return opno == o.opno && opfuncid == o.opfuncid &&
-           hashfuncid == o.hashfuncid && negfuncid == o.negfuncid &&
-           use_or == o.use_or && inputcollid == o.inputcollid &&
+    return opno == o.opno && opfuncid == o.opfuncid && hashfuncid == o.hashfuncid &&
+           negfuncid == o.negfuncid && use_or == o.use_or && inputcollid == o.inputcollid &&
            EqVec(args, o.args) && location == o.location;
 }
 
@@ -361,11 +365,12 @@ Node* CoerceToDomain::Clone() const {
 }
 
 bool CoerceToDomain::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const CoerceToDomain&>(other);
-    return EqNode(arg, o.arg) && resulttype == o.resulttype &&
-           resulttypmod == o.resulttypmod && resultcollid == o.resultcollid &&
-           coercionformat == o.coercionformat && location == o.location;
+    return EqNode(arg, o.arg) && resulttype == o.resulttype && resulttypmod == o.resulttypmod &&
+           resultcollid == o.resultcollid && coercionformat == o.coercionformat &&
+           location == o.location;
 }
 
 // ---------------------------------------------------------------------------
@@ -380,7 +385,8 @@ Node* TargetEntry::Clone() const {
 }
 
 bool TargetEntry::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const TargetEntry&>(other);
     return EqNode(expr, o.expr) && resno == o.resno && resname == o.resname &&
            ressortgroupref == o.ressortgroupref && resorigtbl == o.resorigtbl &&
@@ -397,7 +403,8 @@ Node* RangeTblRef::Clone() const {
 }
 
 bool RangeTblRef::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const RangeTblRef&>(other);
     return rtindex == o.rtindex;
 }
@@ -417,12 +424,12 @@ Node* JoinExpr::Clone() const {
 }
 
 bool JoinExpr::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const JoinExpr&>(other);
-    return jointype == o.jointype && is_natural == o.is_natural &&
-           EqNode(larg, o.larg) && EqNode(rarg, o.rarg) &&
-           EqVec(using_clause, o.using_clause) &&
-           EqNode(quals, o.quals) && rtindex == o.rtindex;
+    return jointype == o.jointype && is_natural == o.is_natural && EqNode(larg, o.larg) &&
+           EqNode(rarg, o.rarg) && EqVec(using_clause, o.using_clause) && EqNode(quals, o.quals) &&
+           rtindex == o.rtindex;
 }
 
 // ---------------------------------------------------------------------------
@@ -438,7 +445,8 @@ Node* FromExpr::Clone() const {
 }
 
 bool FromExpr::Equals(const Node& other) const {
-    if (GetTag() != other.GetTag()) return false;
+    if (GetTag() != other.GetTag())
+        return false;
     const auto& o = static_cast<const FromExpr&>(other);
     return EqVec(fromlist, o.fromlist) && EqNode(quals, o.quals);
 }
@@ -447,8 +455,8 @@ bool FromExpr::Equals(const Node& other) const {
 // Convenience constructors
 // ---------------------------------------------------------------------------
 
-Var* makeVar(int varno, int varattno, Oid vartype, int vartypmod,
-             Oid varcollid, int varlevelsup, int location) {
+Var* makeVar(int varno, int varattno, Oid vartype, int vartypmod, Oid varcollid, int varlevelsup,
+             int location) {
     auto* var = makeNode<Var>();
     var->varno = varno;
     var->varattno = varattno;
@@ -463,8 +471,8 @@ Var* makeVar(int varno, int varattno, Oid vartype, int vartypmod,
 }
 
 Const* makeConst(Oid consttype, int consttypmod, Oid constcollid, int constlen,
-                 mytoydb::types::Datum constvalue, bool constisnull,
-                 bool constbyval, int location) {
+                 mytoydb::types::Datum constvalue, bool constisnull, bool constbyval,
+                 int location) {
     auto* con = makeNode<Const>();
     con->consttype = consttype;
     con->consttypmod = consttypmod;

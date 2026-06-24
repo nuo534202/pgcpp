@@ -33,15 +33,15 @@ namespace mytoydb::transaction {
 // LockMode — the strength of a lock.
 // Values match PostgreSQL's LockMode enum for compatibility.
 enum class LockMode : int {
-    kNoLock = 0,                // InvalidLockMode
-    kAccessShareLock = 1,       // SELECT
-    kRowShareLock = 2,          // SELECT FOR UPDATE/SHARE
-    kRowExclusiveLock = 3,      // INSERT/UPDATE/DELETE
-    kShareUpdateExclusiveLock = 4, // VACUUM, ANALYZE
-    kShareLock = 5,             // CREATE INDEX
-    kShareRowExclusiveLock = 6, // CREATE TRIGGER
-    kExclusiveLock = 7,         // ALTER TABLE
-    kAccessExclusiveLock = 8,   // DROP, TRUNCATE
+    kNoLock = 0,                    // InvalidLockMode
+    kAccessShareLock = 1,           // SELECT
+    kRowShareLock = 2,              // SELECT FOR UPDATE/SHARE
+    kRowExclusiveLock = 3,          // INSERT/UPDATE/DELETE
+    kShareUpdateExclusiveLock = 4,  // VACUUM, ANALYZE
+    kShareLock = 5,                 // CREATE INDEX
+    kShareRowExclusiveLock = 6,     // CREATE TRIGGER
+    kExclusiveLock = 7,             // ALTER TABLE
+    kAccessExclusiveLock = 8,       // DROP, TRUNCATE
 };
 
 // Number of lock modes (excluding kNoLock).
@@ -52,7 +52,7 @@ constexpr int kNumLockModes = 8;
 // MyToyDB uses a simpler struct for relation locks only.
 struct LockTag {
     mytoydb::catalog::Oid relid = 0;  // relation OID
-    int locktag_type = 0;              // LOCKTAG_RELATION
+    int locktag_type = 0;             // LOCKTAG_RELATION
 
     bool operator==(const LockTag&) const = default;
 };
@@ -60,8 +60,7 @@ struct LockTag {
 // LockTagHash — hash function for LockTag.
 struct LockTagHash {
     std::size_t operator()(const LockTag& t) const {
-        return std::hash<uint32_t>()(t.relid) ^
-               (std::hash<int>()(t.locktag_type) << 1);
+        return std::hash<uint32_t>()(t.relid) ^ (std::hash<int>()(t.locktag_type) << 1);
     }
 };
 

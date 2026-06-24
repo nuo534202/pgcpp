@@ -9,14 +9,14 @@
 #include <new>
 #include <utility>
 
-#include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::parser {
 
-using mytoydb::nodes::Node;
 using mytoydb::nodes::copyObject;
 using mytoydb::nodes::equal;
+using mytoydb::nodes::Node;
 
 namespace {
 
@@ -69,12 +69,12 @@ Node* TypeName::Clone() const {
 }
 
 bool TypeName::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const TypeName&>(other);
     return EqVec(names, o.names) && type_oid == o.type_oid && setof == o.setof &&
-           pct_type == o.pct_type && EqVec(typmods, o.typmods) &&
-           typemod == o.typemod && EqVec(array_bounds, o.array_bounds) &&
-           location == o.location;
+           pct_type == o.pct_type && EqVec(typmods, o.typmods) && typemod == o.typemod &&
+           EqVec(array_bounds, o.array_bounds) && location == o.location;
 }
 
 Node* ColumnRef::Clone() const {
@@ -85,7 +85,8 @@ Node* ColumnRef::Clone() const {
 }
 
 bool ColumnRef::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ColumnRef&>(other);
     return EqVec(fields, o.fields) && location == o.location;
 }
@@ -96,7 +97,8 @@ Node* ParamRef::Clone() const {
 }
 
 bool ParamRef::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ParamRef&>(other);
     return number == o.number && location == o.location;
 }
@@ -115,7 +117,8 @@ Node* AExpr::Clone() const {
 }
 
 bool AExpr::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AExpr&>(other);
     return kind == o.kind && EqVec(name, o.name) && EqNode(lexpr, o.lexpr) &&
            EqNode(rexpr, o.rexpr) && location == o.location;
@@ -129,10 +132,10 @@ Node* AConst::Clone() const {
 }
 
 bool AConst::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AConst&>(other);
-    return isnull == o.isnull && isbool == o.isbool &&
-           location == o.location &&
+    return isnull == o.isnull && isbool == o.isbool && location == o.location &&
            (isnull || EqNode(val, o.val));
 }
 
@@ -145,10 +148,10 @@ Node* TypeCast::Clone() const {
 }
 
 bool TypeCast::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const TypeCast&>(other);
-    return EqNode(arg, o.arg) && EqNode(type_name, o.type_name) &&
-           location == o.location;
+    return EqNode(arg, o.arg) && EqNode(type_name, o.type_name) && location == o.location;
 }
 
 Node* CollateClause::Clone() const {
@@ -160,10 +163,10 @@ Node* CollateClause::Clone() const {
 }
 
 bool CollateClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CollateClause&>(other);
-    return EqNode(arg, o.arg) && EqVec(collname, o.collname) &&
-           location == o.location;
+    return EqNode(arg, o.arg) && EqVec(collname, o.collname) && location == o.location;
 }
 
 Node* RoleSpec::Clone() const {
@@ -172,10 +175,10 @@ Node* RoleSpec::Clone() const {
 }
 
 bool RoleSpec::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RoleSpec&>(other);
-    return roletype == o.roletype && rolename == o.rolename &&
-           location == o.location;
+    return roletype == o.roletype && rolename == o.rolename && location == o.location;
 }
 
 Node* FuncCall::Clone() const {
@@ -190,14 +193,14 @@ Node* FuncCall::Clone() const {
 }
 
 bool FuncCall::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const FuncCall&>(other);
-    return EqVec(funcname, o.funcname) && EqVec(args, o.args) &&
-           EqVec(agg_order, o.agg_order) && EqNode(agg_filter, o.agg_filter) &&
-           EqNode(over, o.over) && agg_within_group == o.agg_within_group &&
-           agg_star == o.agg_star && agg_distinct == o.agg_distinct &&
-           func_variadic == o.func_variadic && funcformat == o.funcformat &&
-           location == o.location;
+    return EqVec(funcname, o.funcname) && EqVec(args, o.args) && EqVec(agg_order, o.agg_order) &&
+           EqNode(agg_filter, o.agg_filter) && EqNode(over, o.over) &&
+           agg_within_group == o.agg_within_group && agg_star == o.agg_star &&
+           agg_distinct == o.agg_distinct && func_variadic == o.func_variadic &&
+           funcformat == o.funcformat && location == o.location;
 }
 
 Node* AStar::Clone() const {
@@ -218,10 +221,10 @@ Node* AIndices::Clone() const {
 }
 
 bool AIndices::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AIndices&>(other);
-    return is_slice == o.is_slice && EqNode(lidx, o.lidx) &&
-           EqNode(uidx, o.uidx);
+    return is_slice == o.is_slice && EqNode(lidx, o.lidx) && EqNode(uidx, o.uidx);
 }
 
 Node* AIndirection::Clone() const {
@@ -233,7 +236,8 @@ Node* AIndirection::Clone() const {
 }
 
 bool AIndirection::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AIndirection&>(other);
     return EqNode(arg, o.arg) && EqVec(indirection, o.indirection);
 }
@@ -246,7 +250,8 @@ Node* AArrayExpr::Clone() const {
 }
 
 bool AArrayExpr::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AArrayExpr&>(other);
     return EqVec(elements, o.elements) && location == o.location;
 }
@@ -260,10 +265,11 @@ Node* ResTarget::Clone() const {
 }
 
 bool ResTarget::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ResTarget&>(other);
-    return name == o.name && EqVec(indirection, o.indirection) &&
-           EqNode(val, o.val) && location == o.location;
+    return name == o.name && EqVec(indirection, o.indirection) && EqNode(val, o.val) &&
+           location == o.location;
 }
 
 Node* MultiAssignRef::Clone() const {
@@ -274,10 +280,10 @@ Node* MultiAssignRef::Clone() const {
 }
 
 bool MultiAssignRef::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const MultiAssignRef&>(other);
-    return EqNode(source, o.source) && colno == o.colno &&
-           ncolumns == o.ncolumns;
+    return EqNode(source, o.source) && colno == o.colno && ncolumns == o.ncolumns;
 }
 
 Node* SortBy::Clone() const {
@@ -289,11 +295,11 @@ Node* SortBy::Clone() const {
 }
 
 bool SortBy::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const SortBy&>(other);
-    return EqNode(node, o.node) && sortby_dir == o.sortby_dir &&
-           sortby_nulls == o.sortby_nulls && EqVec(use_op, o.use_op) &&
-           location == o.location;
+    return EqNode(node, o.node) && sortby_dir == o.sortby_dir && sortby_nulls == o.sortby_nulls &&
+           EqVec(use_op, o.use_op) && location == o.location;
 }
 
 Node* WindowDef::Clone() const {
@@ -307,14 +313,13 @@ Node* WindowDef::Clone() const {
 }
 
 bool WindowDef::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const WindowDef&>(other);
-    return name == o.name && refname == o.refname &&
-           EqVec(partition_clause, o.partition_clause) &&
-           EqVec(order_clause, o.order_clause) &&
-           frame_options == o.frame_options &&
-           EqNode(start_offset, o.start_offset) &&
-           EqNode(end_offset, o.end_offset) && location == o.location;
+    return name == o.name && refname == o.refname && EqVec(partition_clause, o.partition_clause) &&
+           EqVec(order_clause, o.order_clause) && frame_options == o.frame_options &&
+           EqNode(start_offset, o.start_offset) && EqNode(end_offset, o.end_offset) &&
+           location == o.location;
 }
 
 // ===========================================================================
@@ -330,10 +335,10 @@ Node* RangeSubselect::Clone() const {
 }
 
 bool RangeSubselect::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RangeSubselect&>(other);
-    return lateral == o.lateral && EqNode(subquery, o.subquery) &&
-           EqNode(alias, o.alias);
+    return lateral == o.lateral && EqNode(subquery, o.subquery) && EqNode(alias, o.alias);
 }
 
 Node* RangeFunction::Clone() const {
@@ -346,11 +351,12 @@ Node* RangeFunction::Clone() const {
 }
 
 bool RangeFunction::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RangeFunction&>(other);
-    return lateral == o.lateral && ordinality == o.ordinality &&
-           is_rowsfrom == o.is_rowsfrom && EqVec(functions, o.functions) &&
-           EqNode(alias, o.alias) && EqVec(coldeflist, o.coldeflist);
+    return lateral == o.lateral && ordinality == o.ordinality && is_rowsfrom == o.is_rowsfrom &&
+           EqVec(functions, o.functions) && EqNode(alias, o.alias) &&
+           EqVec(coldeflist, o.coldeflist);
 }
 
 Node* ColumnDef::Clone() const {
@@ -359,25 +365,22 @@ Node* ColumnDef::Clone() const {
     copy->type_name = static_cast<TypeName*>(CloneNode(type_name));
     copy->raw_default = CloneNode(raw_default);
     copy->cooked_default = CloneNode(cooked_default);
-    copy->identity_sequence =
-        static_cast<RangeVar*>(CloneNode(identity_sequence));
-    copy->coll_clause =
-        static_cast<CollateClause*>(CloneNode(coll_clause));
+    copy->identity_sequence = static_cast<RangeVar*>(CloneNode(identity_sequence));
+    copy->coll_clause = static_cast<CollateClause*>(CloneNode(coll_clause));
     copy->constraints = CloneVec(constraints);
     copy->fdwoptions = CloneVec(fdwoptions);
     return copy;
 }
 
 bool ColumnDef::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ColumnDef&>(other);
-    return colname == o.colname && EqNode(type_name, o.type_name) &&
-           compression == o.compression && inhcount == o.inhcount &&
-           is_local == o.is_local && is_not_null == o.is_not_null &&
+    return colname == o.colname && EqNode(type_name, o.type_name) && compression == o.compression &&
+           inhcount == o.inhcount && is_local == o.is_local && is_not_null == o.is_not_null &&
            is_from_type == o.is_from_type && storage == o.storage &&
-           EqNode(raw_default, o.raw_default) &&
-           EqNode(cooked_default, o.cooked_default) && identity == o.identity &&
-           EqNode(identity_sequence, o.identity_sequence) &&
+           EqNode(raw_default, o.raw_default) && EqNode(cooked_default, o.cooked_default) &&
+           identity == o.identity && EqNode(identity_sequence, o.identity_sequence) &&
            generated == o.generated && EqNode(coll_clause, o.coll_clause) &&
            coll_oid == o.coll_oid && EqVec(constraints, o.constraints) &&
            EqVec(fdwoptions, o.fdwoptions) && location == o.location;
@@ -394,12 +397,13 @@ Node* IndexElem::Clone() const {
 }
 
 bool IndexElem::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const IndexElem&>(other);
-    return name == o.name && EqNode(expr, o.expr) &&
-           indexcolname == o.indexcolname && EqVec(collation, o.collation) &&
-           EqVec(opclass, o.opclass) && EqVec(opclassopts, o.opclassopts) &&
-           ordering == o.ordering && nulls_ordering == o.nulls_ordering;
+    return name == o.name && EqNode(expr, o.expr) && indexcolname == o.indexcolname &&
+           EqVec(collation, o.collation) && EqVec(opclass, o.opclass) &&
+           EqVec(opclassopts, o.opclassopts) && ordering == o.ordering &&
+           nulls_ordering == o.nulls_ordering;
 }
 
 Node* DefElem::Clone() const {
@@ -410,11 +414,11 @@ Node* DefElem::Clone() const {
 }
 
 bool DefElem::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const DefElem&>(other);
-    return defnamespace == o.defnamespace && defname == o.defname &&
-           EqNode(arg, o.arg) && defaction == o.defaction &&
-           location == o.location;
+    return defnamespace == o.defnamespace && defname == o.defname && EqNode(arg, o.arg) &&
+           defaction == o.defaction && location == o.location;
 }
 
 Node* LockingClause::Clone() const {
@@ -425,7 +429,8 @@ Node* LockingClause::Clone() const {
 }
 
 bool LockingClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const LockingClause&>(other);
     return EqVec(locked_rels, o.locked_rels) && strength == o.strength &&
            wait_policy == o.wait_policy;
@@ -440,10 +445,11 @@ Node* XmlSerialize::Clone() const {
 }
 
 bool XmlSerialize::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const XmlSerialize&>(other);
-    return xmloption == o.xmloption && EqNode(expr, o.expr) &&
-           EqNode(type_name, o.type_name) && location == o.location;
+    return xmloption == o.xmloption && EqNode(expr, o.expr) && EqNode(type_name, o.type_name) &&
+           location == o.location;
 }
 
 // ===========================================================================
@@ -460,11 +466,11 @@ Node* PartitionElem::Clone() const {
 }
 
 bool PartitionElem::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const PartitionElem&>(other);
-    return name == o.name && EqNode(expr, o.expr) &&
-           EqVec(collation, o.collation) && EqVec(opclass, o.opclass) &&
-           location == o.location;
+    return name == o.name && EqNode(expr, o.expr) && EqVec(collation, o.collation) &&
+           EqVec(opclass, o.opclass) && location == o.location;
 }
 
 Node* PartitionSpec::Clone() const {
@@ -475,10 +481,10 @@ Node* PartitionSpec::Clone() const {
 }
 
 bool PartitionSpec::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const PartitionSpec&>(other);
-    return strategy == o.strategy && EqVec(part_params, o.part_params) &&
-           location == o.location;
+    return strategy == o.strategy && EqVec(part_params, o.part_params) && location == o.location;
 }
 
 Node* PartitionBoundSpec::Clone() const {
@@ -491,12 +497,13 @@ Node* PartitionBoundSpec::Clone() const {
 }
 
 bool PartitionBoundSpec::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const PartitionBoundSpec&>(other);
-    return strategy == o.strategy && is_default == o.is_default &&
-           modulus == o.modulus && remainder == o.remainder &&
-           EqVec(listdatums, o.listdatums) && EqVec(lowerdatums, o.lowerdatums) &&
-           EqVec(upperdatums, o.upperdatums) && location == o.location;
+    return strategy == o.strategy && is_default == o.is_default && modulus == o.modulus &&
+           remainder == o.remainder && EqVec(listdatums, o.listdatums) &&
+           EqVec(lowerdatums, o.lowerdatums) && EqVec(upperdatums, o.upperdatums) &&
+           location == o.location;
 }
 
 Node* PartitionRangeDatum::Clone() const {
@@ -507,7 +514,8 @@ Node* PartitionRangeDatum::Clone() const {
 }
 
 bool PartitionRangeDatum::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const PartitionRangeDatum&>(other);
     return kind == o.kind && EqNode(value, o.value) && location == o.location;
 }
@@ -521,10 +529,10 @@ Node* PartitionCmd::Clone() const {
 }
 
 bool PartitionCmd::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const PartitionCmd&>(other);
-    return EqNode(name, o.name) && EqNode(bound, o.bound) &&
-           concurrent == o.concurrent;
+    return EqNode(name, o.name) && EqNode(bound, o.bound) && concurrent == o.concurrent;
 }
 
 // ===========================================================================
@@ -534,8 +542,7 @@ bool PartitionCmd::Equals(const Node& other) const {
 Node* RangeTblEntry::Clone() const {
     void* mem = mytoydb::memory::palloc(sizeof(RangeTblEntry));
     auto* copy = new (mem) RangeTblEntry(*this);
-    copy->tablesample =
-        static_cast<TableSampleClause*>(CloneNode(tablesample));
+    copy->tablesample = static_cast<TableSampleClause*>(CloneNode(tablesample));
     copy->subquery = static_cast<Query*>(CloneNode(subquery));
     copy->joinaliasvars = CloneVec(joinaliasvars);
     copy->joinleftcols = CloneVec(joinleftcols);
@@ -554,33 +561,26 @@ Node* RangeTblEntry::Clone() const {
 }
 
 bool RangeTblEntry::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RangeTblEntry&>(other);
     return rtekind == o.rtekind && relid == o.relid && relkind == o.relkind &&
            rellockmode == o.rellockmode && EqNode(tablesample, o.tablesample) &&
-           EqNode(subquery, o.subquery) &&
-           security_barrier == o.security_barrier && jointype == o.jointype &&
-           joinmergedcols == o.joinmergedcols &&
-           EqVec(joinaliasvars, o.joinaliasvars) &&
-           EqVec(joinleftcols, o.joinleftcols) &&
-           EqVec(joinrightcols, o.joinrightcols) &&
-           EqNode(join_using_alias, o.join_using_alias) &&
-           EqVec(functions, o.functions) &&
-           funcordinality == o.funcordinality && EqNode(tablefunc, o.tablefunc) &&
-           EqVec(values_lists, o.values_lists) && ctename == o.ctename &&
-           ctelevelsup == o.ctelevelsup &&
-           self_reference == o.self_reference &&
-           EqVec(coltypes, o.coltypes) && EqVec(coltypmods, o.coltypmods) &&
-           EqVec(colcollations, o.colcollations) && enrname == o.enrname &&
-           enrtuples == o.enrtuples && EqNode(alias, o.alias) &&
+           EqNode(subquery, o.subquery) && security_barrier == o.security_barrier &&
+           jointype == o.jointype && joinmergedcols == o.joinmergedcols &&
+           EqVec(joinaliasvars, o.joinaliasvars) && EqVec(joinleftcols, o.joinleftcols) &&
+           EqVec(joinrightcols, o.joinrightcols) && EqNode(join_using_alias, o.join_using_alias) &&
+           EqVec(functions, o.functions) && funcordinality == o.funcordinality &&
+           EqNode(tablefunc, o.tablefunc) && EqVec(values_lists, o.values_lists) &&
+           ctename == o.ctename && ctelevelsup == o.ctelevelsup &&
+           self_reference == o.self_reference && EqVec(coltypes, o.coltypes) &&
+           EqVec(coltypmods, o.coltypmods) && EqVec(colcollations, o.colcollations) &&
+           enrname == o.enrname && enrtuples == o.enrtuples && EqNode(alias, o.alias) &&
            EqNode(eref, o.eref) && lateral == o.lateral && inh == o.inh &&
            in_from_cl == o.in_from_cl && required_perms == o.required_perms &&
-           check_as_user == o.check_as_user &&
-           selected_cols == o.selected_cols &&
-           inserted_cols == o.inserted_cols &&
-           updated_cols == o.updated_cols &&
-           extra_updated_cols == o.extra_updated_cols &&
-           EqVec(security_quals, o.security_quals);
+           check_as_user == o.check_as_user && selected_cols == o.selected_cols &&
+           inserted_cols == o.inserted_cols && updated_cols == o.updated_cols &&
+           extra_updated_cols == o.extra_updated_cols && EqVec(security_quals, o.security_quals);
 }
 
 Node* RangeTblFunction::Clone() const {
@@ -595,14 +595,13 @@ Node* RangeTblFunction::Clone() const {
 }
 
 bool RangeTblFunction::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RangeTblFunction&>(other);
     return EqNode(funcexpr, o.funcexpr) && funccolcount == o.funccolcount &&
-           EqVec(funccolnames, o.funccolnames) &&
-           EqVec(funccoltypes, o.funccoltypes) &&
+           EqVec(funccolnames, o.funccolnames) && EqVec(funccoltypes, o.funccoltypes) &&
            EqVec(funccoltypmods, o.funccoltypmods) &&
-           EqVec(funccolcollations, o.funccolcollations) &&
-           funcparams == o.funcparams;
+           EqVec(funccolcollations, o.funccolcollations) && funcparams == o.funcparams;
 }
 
 Node* TableSampleClause::Clone() const {
@@ -614,10 +613,10 @@ Node* TableSampleClause::Clone() const {
 }
 
 bool TableSampleClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const TableSampleClause&>(other);
-    return tsmhandler == o.tsmhandler && EqVec(args, o.args) &&
-           EqNode(repeatable, o.repeatable);
+    return tsmhandler == o.tsmhandler && EqVec(args, o.args) && EqNode(repeatable, o.repeatable);
 }
 
 Node* WithCheckOption::Clone() const {
@@ -628,10 +627,11 @@ Node* WithCheckOption::Clone() const {
 }
 
 bool WithCheckOption::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const WithCheckOption&>(other);
-    return kind == o.kind && relname == o.relname && polname == o.polname &&
-           EqNode(qual, o.qual) && cascaded == o.cascaded;
+    return kind == o.kind && relname == o.relname && polname == o.polname && EqNode(qual, o.qual) &&
+           cascaded == o.cascaded;
 }
 
 // ===========================================================================
@@ -644,11 +644,11 @@ Node* SortGroupClause::Clone() const {
 }
 
 bool SortGroupClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const SortGroupClause&>(other);
-    return tle_sort_group_ref == o.tle_sort_group_ref && eqop == o.eqop &&
-           sortop == o.sortop && nulls_first == o.nulls_first &&
-           hashable == o.hashable;
+    return tle_sort_group_ref == o.tle_sort_group_ref && eqop == o.eqop && sortop == o.sortop &&
+           nulls_first == o.nulls_first && hashable == o.hashable;
 }
 
 Node* GroupingSet::Clone() const {
@@ -659,7 +659,8 @@ Node* GroupingSet::Clone() const {
 }
 
 bool GroupingSet::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const GroupingSet&>(other);
     return kind == o.kind && EqVec(content, o.content) && location == o.location;
 }
@@ -676,20 +677,15 @@ Node* WindowClause::Clone() const {
 }
 
 bool WindowClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const WindowClause&>(other);
-    return name == o.name && refname == o.refname &&
-           EqVec(partition_clause, o.partition_clause) &&
-           EqVec(order_clause, o.order_clause) &&
-           frame_options == o.frame_options &&
-           EqNode(start_offset, o.start_offset) &&
-           EqNode(end_offset, o.end_offset) &&
-           EqVec(run_condition, o.run_condition) &&
-           start_in_range_func == o.start_in_range_func &&
-           end_in_range_func == o.end_in_range_func &&
-           in_range_coll == o.in_range_coll &&
-           in_range_asc == o.in_range_asc &&
-           in_range_nulls_first == o.in_range_nulls_first &&
+    return name == o.name && refname == o.refname && EqVec(partition_clause, o.partition_clause) &&
+           EqVec(order_clause, o.order_clause) && frame_options == o.frame_options &&
+           EqNode(start_offset, o.start_offset) && EqNode(end_offset, o.end_offset) &&
+           EqVec(run_condition, o.run_condition) && start_in_range_func == o.start_in_range_func &&
+           end_in_range_func == o.end_in_range_func && in_range_coll == o.in_range_coll &&
+           in_range_asc == o.in_range_asc && in_range_nulls_first == o.in_range_nulls_first &&
            winref == o.winref && copied_order == o.copied_order;
 }
 
@@ -699,10 +695,11 @@ Node* RowMarkClause::Clone() const {
 }
 
 bool RowMarkClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RowMarkClause&>(other);
-    return rti == o.rti && strength == o.strength &&
-           wait_policy == o.wait_policy && pushed_down == o.pushed_down;
+    return rti == o.rti && strength == o.strength && wait_policy == o.wait_policy &&
+           pushed_down == o.pushed_down;
 }
 
 // ===========================================================================
@@ -717,10 +714,10 @@ Node* WithClause::Clone() const {
 }
 
 bool WithClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const WithClause&>(other);
-    return EqVec(ctes, o.ctes) && recursive == o.recursive &&
-           location == o.location;
+    return EqVec(ctes, o.ctes) && recursive == o.recursive && location == o.location;
 }
 
 Node* InferClause::Clone() const {
@@ -732,11 +729,11 @@ Node* InferClause::Clone() const {
 }
 
 bool InferClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const InferClause&>(other);
-    return EqVec(index_elems, o.index_elems) &&
-           EqNode(where_clause, o.where_clause) && conname == o.conname &&
-           location == o.location;
+    return EqVec(index_elems, o.index_elems) && EqNode(where_clause, o.where_clause) &&
+           conname == o.conname && location == o.location;
 }
 
 Node* OnConflictClause::Clone() const {
@@ -749,10 +746,10 @@ Node* OnConflictClause::Clone() const {
 }
 
 bool OnConflictClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const OnConflictClause&>(other);
-    return action == o.action && EqNode(infer, o.infer) &&
-           EqVec(target_list, o.target_list) &&
+    return action == o.action && EqNode(infer, o.infer) && EqVec(target_list, o.target_list) &&
            EqNode(where_clause, o.where_clause) && location == o.location;
 }
 
@@ -771,17 +768,15 @@ Node* CommonTableExpr::Clone() const {
 }
 
 bool CommonTableExpr::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CommonTableExpr&>(other);
     return ctename == o.ctename && EqVec(aliascolnames, o.aliascolnames) &&
-           ctematerialized == o.ctematerialized &&
-           EqNode(ctequery, o.ctequery) &&
-           EqNode(search_clause, o.search_clause) &&
-           EqNode(cycle_clause, o.cycle_clause) && location == o.location &&
-           cterecursive == o.cterecursive && cterefcount == o.cterefcount &&
-           EqVec(ctecolnames, o.ctecolnames) &&
-           EqVec(ctecoltypes, o.ctecoltypes) &&
-           EqVec(ctecoltypmods, o.ctecoltypmods) &&
+           ctematerialized == o.ctematerialized && EqNode(ctequery, o.ctequery) &&
+           EqNode(search_clause, o.search_clause) && EqNode(cycle_clause, o.cycle_clause) &&
+           location == o.location && cterecursive == o.cterecursive &&
+           cterefcount == o.cterefcount && EqVec(ctecolnames, o.ctecolnames) &&
+           EqVec(ctecoltypes, o.ctecoltypes) && EqVec(ctecoltypmods, o.ctecoltypmods) &&
            EqVec(ctecolcollations, o.ctecolcollations);
 }
 
@@ -799,7 +794,8 @@ Node* MergeWhenClause::Clone() const {
 }
 
 bool MergeWhenClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const MergeWhenClause&>(other);
     return matched == o.matched && command_type == o.command_type &&
            override_kind == o.override_kind && EqNode(condition, o.condition) &&
@@ -816,12 +812,12 @@ Node* MergeAction::Clone() const {
 }
 
 bool MergeAction::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const MergeAction&>(other);
     return matched == o.matched && command_type == o.command_type &&
            override_kind == o.override_kind && EqNode(qual, o.qual) &&
-           EqVec(target_list, o.target_list) &&
-           EqVec(update_colnos, o.update_colnos);
+           EqVec(target_list, o.target_list) && EqVec(update_colnos, o.update_colnos);
 }
 
 Node* TriggerTransition::Clone() const {
@@ -830,7 +826,8 @@ Node* TriggerTransition::Clone() const {
 }
 
 bool TriggerTransition::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const TriggerTransition&>(other);
     return name == o.name && is_new == o.is_new && is_table == o.is_table;
 }
@@ -847,7 +844,8 @@ Node* AccessPriv::Clone() const {
 }
 
 bool AccessPriv::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AccessPriv&>(other);
     return priv_name == o.priv_name && EqVec(cols, o.cols);
 }
@@ -864,7 +862,8 @@ Node* Alias::Clone() const {
 }
 
 bool Alias::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const Alias&>(other);
     return aliasname == o.aliasname && EqVec(colnames, o.colnames);
 }
@@ -877,11 +876,11 @@ Node* RangeVar::Clone() const {
 }
 
 bool RangeVar::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RangeVar&>(other);
-    return catalogname == o.catalogname && schemaname == o.schemaname &&
-           relname == o.relname && inh == o.inh &&
-           relpersistence == o.relpersistence && EqNode(alias, o.alias) &&
+    return catalogname == o.catalogname && schemaname == o.schemaname && relname == o.relname &&
+           inh == o.inh && relpersistence == o.relpersistence && EqNode(alias, o.alias) &&
            location == o.location;
 }
 
@@ -896,7 +895,8 @@ Node* IntoClause::Clone() const {
 }
 
 bool IntoClause::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const IntoClause&>(other);
     return EqNode(rel, o.rel) && EqVec(col_names, o.col_names) &&
            access_method == o.access_method && EqVec(options, o.options) &&
@@ -916,10 +916,10 @@ Node* RawStmt::Clone() const {
 }
 
 bool RawStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RawStmt&>(other);
-    return EqNode(stmt, o.stmt) && stmt_location == o.stmt_location &&
-           stmt_len == o.stmt_len;
+    return EqNode(stmt, o.stmt) && stmt_location == o.stmt_location && stmt_len == o.stmt_len;
 }
 
 Node* InsertStmt::Clone() const {
@@ -928,21 +928,19 @@ Node* InsertStmt::Clone() const {
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->cols = CloneVec(cols);
     copy->select_stmt = CloneNode(select_stmt);
-    copy->on_conflict_clause =
-        static_cast<OnConflictClause*>(CloneNode(on_conflict_clause));
+    copy->on_conflict_clause = static_cast<OnConflictClause*>(CloneNode(on_conflict_clause));
     copy->returning_list = CloneVec(returning_list);
     copy->with_clause = static_cast<WithClause*>(CloneNode(with_clause));
     return copy;
 }
 
 bool InsertStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const InsertStmt&>(other);
     return EqNode(relation, o.relation) && EqVec(cols, o.cols) &&
-           EqNode(select_stmt, o.select_stmt) &&
-           EqNode(on_conflict_clause, o.on_conflict_clause) &&
-           EqVec(returning_list, o.returning_list) &&
-           EqNode(with_clause, o.with_clause) &&
+           EqNode(select_stmt, o.select_stmt) && EqNode(on_conflict_clause, o.on_conflict_clause) &&
+           EqVec(returning_list, o.returning_list) && EqNode(with_clause, o.with_clause) &&
            override_kind == o.override_kind;
 }
 
@@ -958,11 +956,11 @@ Node* DeleteStmt::Clone() const {
 }
 
 bool DeleteStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const DeleteStmt&>(other);
     return EqNode(relation, o.relation) && EqVec(using_clause, o.using_clause) &&
-           EqNode(where_clause, o.where_clause) &&
-           EqVec(returning_list, o.returning_list) &&
+           EqNode(where_clause, o.where_clause) && EqVec(returning_list, o.returning_list) &&
            EqNode(with_clause, o.with_clause);
 }
 
@@ -979,13 +977,12 @@ Node* UpdateStmt::Clone() const {
 }
 
 bool UpdateStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const UpdateStmt&>(other);
     return EqNode(relation, o.relation) && EqVec(target_list, o.target_list) &&
-           EqNode(where_clause, o.where_clause) &&
-           EqVec(from_clause, o.from_clause) &&
-           EqVec(returning_list, o.returning_list) &&
-           EqNode(with_clause, o.with_clause);
+           EqNode(where_clause, o.where_clause) && EqVec(from_clause, o.from_clause) &&
+           EqVec(returning_list, o.returning_list) && EqNode(with_clause, o.with_clause);
 }
 
 Node* SelectStmt::Clone() const {
@@ -1015,32 +1012,28 @@ Node* SelectStmt::Clone() const {
 }
 
 bool SelectStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const SelectStmt&>(other);
-    return EqVec(distinct_clause, o.distinct_clause) &&
-           EqNode(into_clause, o.into_clause) &&
-           EqVec(target_list, o.target_list) &&
-           EqVec(from_clause, o.from_clause) &&
-           EqNode(where_clause, o.where_clause) &&
-           EqVec(group_clause, o.group_clause) &&
-           group_distinct == o.group_distinct &&
-           EqNode(having_clause, o.having_clause) &&
+    return EqVec(distinct_clause, o.distinct_clause) && EqNode(into_clause, o.into_clause) &&
+           EqVec(target_list, o.target_list) && EqVec(from_clause, o.from_clause) &&
+           EqNode(where_clause, o.where_clause) && EqVec(group_clause, o.group_clause) &&
+           group_distinct == o.group_distinct && EqNode(having_clause, o.having_clause) &&
            EqVec(window_clause, o.window_clause) &&
            // values_lists is a vector of vectors — compare each inner list.
            [&]() {
-               if (values_lists.size() != o.values_lists.size()) return false;
+               if (values_lists.size() != o.values_lists.size())
+                   return false;
                for (std::size_t i = 0; i < values_lists.size(); ++i) {
-                   if (!EqVec(values_lists[i], o.values_lists[i])) return false;
+                   if (!EqVec(values_lists[i], o.values_lists[i]))
+                       return false;
                }
                return true;
            }() &&
-           EqVec(sort_clause, o.sort_clause) &&
-           EqNode(limit_offset, o.limit_offset) &&
-           EqNode(limit_count, o.limit_count) &&
-           limit_option == o.limit_option &&
-           EqVec(locking_clause, o.locking_clause) &&
-           EqNode(with_clause, o.with_clause) && op == o.op && all == o.all &&
-           EqNode(larg, o.larg) && EqNode(rarg, o.rarg);
+           EqVec(sort_clause, o.sort_clause) && EqNode(limit_offset, o.limit_offset) &&
+           EqNode(limit_count, o.limit_count) && limit_option == o.limit_option &&
+           EqVec(locking_clause, o.locking_clause) && EqNode(with_clause, o.with_clause) &&
+           op == o.op && all == o.all && EqNode(larg, o.larg) && EqNode(rarg, o.rarg);
 }
 
 Node* CreateStmt::Clone() const {
@@ -1058,16 +1051,15 @@ Node* CreateStmt::Clone() const {
 }
 
 bool CreateStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreateStmt&>(other);
     return EqNode(relation, o.relation) && EqVec(table_elts, o.table_elts) &&
-           EqVec(inh_relations, o.inh_relations) &&
-           EqNode(partbound, o.partbound) && EqNode(partspec, o.partspec) &&
-           EqNode(of_typename, o.of_typename) &&
+           EqVec(inh_relations, o.inh_relations) && EqNode(partbound, o.partbound) &&
+           EqNode(partspec, o.partspec) && EqNode(of_typename, o.of_typename) &&
            EqVec(constraints, o.constraints) && EqVec(options, o.options) &&
            oncommit == o.oncommit && tablespacename == o.tablespacename &&
-           access_method == o.access_method &&
-           if_not_exists == o.if_not_exists;
+           access_method == o.access_method && if_not_exists == o.if_not_exists;
 }
 
 Node* CreateSchemaStmt::Clone() const {
@@ -1079,11 +1071,11 @@ Node* CreateSchemaStmt::Clone() const {
 }
 
 bool CreateSchemaStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreateSchemaStmt&>(other);
     return schemaname == o.schemaname && EqNode(authrole, o.authrole) &&
-           EqVec(schema_elts, o.schema_elts) &&
-           if_not_exists == o.if_not_exists;
+           EqVec(schema_elts, o.schema_elts) && if_not_exists == o.if_not_exists;
 }
 
 Node* AlterTableStmt::Clone() const {
@@ -1095,10 +1087,11 @@ Node* AlterTableStmt::Clone() const {
 }
 
 bool AlterTableStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AlterTableStmt&>(other);
-    return EqNode(relation, o.relation) && EqVec(cmds, o.cmds) &&
-           objtype == o.objtype && missing_ok == o.missing_ok;
+    return EqNode(relation, o.relation) && EqVec(cmds, o.cmds) && objtype == o.objtype &&
+           missing_ok == o.missing_ok;
 }
 
 Node* AlterTableCmd::Clone() const {
@@ -1110,13 +1103,12 @@ Node* AlterTableCmd::Clone() const {
 }
 
 bool AlterTableCmd::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AlterTableCmd&>(other);
-    return subtype == o.subtype && name == o.name && newname == o.newname &&
-           num == o.num &&
-           EqNode(newowner, o.newowner) && EqNode(def, o.def) &&
-           behavior == o.behavior && missing_ok == o.missing_ok &&
-           recurse == o.recurse;
+    return subtype == o.subtype && name == o.name && newname == o.newname && num == o.num &&
+           EqNode(newowner, o.newowner) && EqNode(def, o.def) && behavior == o.behavior &&
+           missing_ok == o.missing_ok && recurse == o.recurse;
 }
 
 Node* DropStmt::Clone() const {
@@ -1127,11 +1119,11 @@ Node* DropStmt::Clone() const {
 }
 
 bool DropStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const DropStmt&>(other);
-    return EqVec(objects, o.objects) && remove_type == o.remove_type &&
-           behavior == o.behavior && missing_ok == o.missing_ok &&
-           concurrent == o.concurrent;
+    return EqVec(objects, o.objects) && remove_type == o.remove_type && behavior == o.behavior &&
+           missing_ok == o.missing_ok && concurrent == o.concurrent;
 }
 
 // ===========================================================================
@@ -1146,10 +1138,11 @@ Node* TransactionStmt::Clone() const {
 }
 
 bool TransactionStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const TransactionStmt&>(other);
-    return kind == o.kind && savepoint_name == o.savepoint_name &&
-           EqVec(options, o.options) && gid == o.gid;
+    return kind == o.kind && savepoint_name == o.savepoint_name && EqVec(options, o.options) &&
+           gid == o.gid;
 }
 
 Node* TruncateStmt::Clone() const {
@@ -1160,7 +1153,8 @@ Node* TruncateStmt::Clone() const {
 }
 
 bool TruncateStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const TruncateStmt&>(other);
     return EqVec(relations, o.relations) && restart_seqs == o.restart_seqs &&
            behavior == o.behavior;
@@ -1175,7 +1169,8 @@ Node* ExplainStmt::Clone() const {
 }
 
 bool ExplainStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ExplainStmt&>(other);
     return EqNode(query, o.query) && EqVec(options, o.options);
 }
@@ -1188,7 +1183,8 @@ Node* CommentStmt::Clone() const {
 }
 
 bool CommentStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CommentStmt&>(other);
     return objtype == o.objtype && EqVec(object, o.object) && comment == o.comment;
 }
@@ -1205,14 +1201,13 @@ Node* IndexStmt::Clone() const {
 }
 
 bool IndexStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const IndexStmt&>(other);
     return idxname == o.idxname && EqNode(relation, o.relation) &&
-           access_method == o.access_method &&
-           EqVec(index_params, o.index_params) &&
-           EqVec(index_including_params, o.index_including_params) &&
-           EqVec(options, o.options) && EqVec(where_clause, o.where_clause) &&
-           unique == o.unique && primary == o.primary &&
+           access_method == o.access_method && EqVec(index_params, o.index_params) &&
+           EqVec(index_including_params, o.index_including_params) && EqVec(options, o.options) &&
+           EqVec(where_clause, o.where_clause) && unique == o.unique && primary == o.primary &&
            concurrent == o.concurrent && if_not_exists == o.if_not_exists;
 }
 
@@ -1227,11 +1222,12 @@ Node* ViewStmt::Clone() const {
 }
 
 bool ViewStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ViewStmt&>(other);
-    return EqNode(view, o.view) && EqVec(aliases, o.aliases) &&
-           EqNode(query, o.query) && replace == o.replace &&
-           EqVec(options, o.options) && with_check_option == o.with_check_option;
+    return EqNode(view, o.view) && EqVec(aliases, o.aliases) && EqNode(query, o.query) &&
+           replace == o.replace && EqVec(options, o.options) &&
+           with_check_option == o.with_check_option;
 }
 
 Node* CreateAsStmt::Clone() const {
@@ -1243,10 +1239,10 @@ Node* CreateAsStmt::Clone() const {
 }
 
 bool CreateAsStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreateAsStmt&>(other);
-    return EqNode(into, o.into) && EqNode(query, o.query) &&
-           is_select_into == o.is_select_into &&
+    return EqNode(into, o.into) && EqNode(query, o.query) && is_select_into == o.is_select_into &&
            if_not_exists == o.if_not_exists;
 }
 
@@ -1259,10 +1255,10 @@ Node* VacuumStmt::Clone() const {
 }
 
 bool VacuumStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const VacuumStmt&>(other);
-    return EqVec(options, o.options) && EqVec(rels, o.rels) &&
-           is_vacuumcmd == o.is_vacuumcmd;
+    return EqVec(options, o.options) && EqVec(rels, o.rels) && is_vacuumcmd == o.is_vacuumcmd;
 }
 
 Node* VariableSetStmt::Clone() const {
@@ -1273,10 +1269,10 @@ Node* VariableSetStmt::Clone() const {
 }
 
 bool VariableSetStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const VariableSetStmt&>(other);
-    return kind == o.kind && name == o.name && EqVec(args, o.args) &&
-           is_local == o.is_local;
+    return kind == o.kind && name == o.name && EqVec(args, o.args) && is_local == o.is_local;
 }
 
 Node* ClusterStmt::Clone() const {
@@ -1287,10 +1283,10 @@ Node* ClusterStmt::Clone() const {
 }
 
 bool ClusterStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ClusterStmt&>(other);
-    return EqNode(relation, o.relation) && indexname == o.indexname &&
-           verbose == o.verbose;
+    return EqNode(relation, o.relation) && indexname == o.indexname && verbose == o.verbose;
 }
 
 Node* LockStmt::Clone() const {
@@ -1301,7 +1297,8 @@ Node* LockStmt::Clone() const {
 }
 
 bool LockStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const LockStmt&>(other);
     return EqVec(relations, o.relations) && mode == o.mode && nowait == o.nowait;
 }
@@ -1313,7 +1310,8 @@ Node* DiscardStmt::Clone() const {
 }
 
 bool DiscardStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const DiscardStmt&>(other);
     return target == o.target;
 }
@@ -1325,7 +1323,8 @@ Node* NotifyStmt::Clone() const {
 }
 
 bool NotifyStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const NotifyStmt&>(other);
     return conditionname == o.conditionname && payload == o.payload;
 }
@@ -1337,7 +1336,8 @@ Node* ListenStmt::Clone() const {
 }
 
 bool ListenStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ListenStmt&>(other);
     return conditionname == o.conditionname;
 }
@@ -1349,7 +1349,8 @@ Node* UnlistenStmt::Clone() const {
 }
 
 bool UnlistenStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const UnlistenStmt&>(other);
     return conditionname == o.conditionname;
 }
@@ -1372,7 +1373,8 @@ Node* ReindexStmt::Clone() const {
 }
 
 bool ReindexStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ReindexStmt&>(other);
     return kind == o.kind && name == o.name && EqVec(options, o.options) &&
            concurrently == o.concurrently;
@@ -1385,7 +1387,8 @@ Node* DeallocateStmt::Clone() const {
 }
 
 bool DeallocateStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const DeallocateStmt&>(other);
     return name == o.name;
 }
@@ -1399,7 +1402,8 @@ Node* PrepareStmt::Clone() const {
 }
 
 bool PrepareStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const PrepareStmt&>(other);
     return name == o.name && EqVec(argtypes, o.argtypes) && EqNode(query, o.query);
 }
@@ -1412,7 +1416,8 @@ Node* ExecuteStmt::Clone() const {
 }
 
 bool ExecuteStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const ExecuteStmt&>(other);
     return name == o.name && EqVec(params, o.params);
 }
@@ -1424,7 +1429,8 @@ Node* LoadStmt::Clone() const {
 }
 
 bool LoadStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const LoadStmt&>(other);
     return filename == o.filename;
 }
@@ -1437,7 +1443,8 @@ Node* CallStmt::Clone() const {
 }
 
 bool CallStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CallStmt&>(other);
     return EqNode(funccall, o.funccall);
 }
@@ -1451,12 +1458,12 @@ Node* RenameStmt::Clone() const {
 }
 
 bool RenameStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RenameStmt&>(other);
     return rename_type == o.rename_type && relation_type == o.relation_type &&
-           EqNode(relation, o.relation) && EqVec(object, o.object) &&
-           subname == o.subname && newname == o.newname &&
-           behavior == o.behavior && missing_ok == o.missing_ok;
+           EqNode(relation, o.relation) && EqVec(object, o.object) && subname == o.subname &&
+           newname == o.newname && behavior == o.behavior && missing_ok == o.missing_ok;
 }
 
 Node* AlterOwnerStmt::Clone() const {
@@ -1468,10 +1475,10 @@ Node* AlterOwnerStmt::Clone() const {
 }
 
 bool AlterOwnerStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AlterOwnerStmt&>(other);
-    return object_type == o.object_type && EqVec(object, o.object) &&
-           EqNode(newowner, o.newowner);
+    return object_type == o.object_type && EqVec(object, o.object) && EqNode(newowner, o.newowner);
 }
 
 Node* CreateSeqStmt::Clone() const {
@@ -1483,7 +1490,8 @@ Node* CreateSeqStmt::Clone() const {
 }
 
 bool CreateSeqStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreateSeqStmt&>(other);
     return EqNode(sequence, o.sequence) && EqVec(options, o.options) &&
            for_identity == o.for_identity && if_not_exists == o.if_not_exists;
@@ -1498,7 +1506,8 @@ Node* AlterSeqStmt::Clone() const {
 }
 
 bool AlterSeqStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AlterSeqStmt&>(other);
     return EqNode(sequence, o.sequence) && EqVec(options, o.options) &&
            for_identity == o.for_identity && missing_ok == o.missing_ok;
@@ -1515,11 +1524,12 @@ Node* CreateFunctionStmt::Clone() const {
 }
 
 bool CreateFunctionStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreateFunctionStmt&>(other);
-    return is_procedure == o.is_procedure && replace == o.replace &&
-           EqVec(funcname, o.funcname) && EqVec(parameters, o.parameters) &&
-           EqNode(return_type, o.return_type) && EqVec(options, o.options);
+    return is_procedure == o.is_procedure && replace == o.replace && EqVec(funcname, o.funcname) &&
+           EqVec(parameters, o.parameters) && EqNode(return_type, o.return_type) &&
+           EqVec(options, o.options);
 }
 
 Node* AlterFunctionStmt::Clone() const {
@@ -1532,10 +1542,10 @@ Node* AlterFunctionStmt::Clone() const {
 }
 
 bool AlterFunctionStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AlterFunctionStmt&>(other);
-    return EqVec(funcname, o.funcname) && EqVec(args, o.args) &&
-           EqVec(actions, o.actions);
+    return EqVec(funcname, o.funcname) && EqVec(args, o.args) && EqVec(actions, o.actions);
 }
 
 Node* CreateTrigStmt::Clone() const {
@@ -1551,16 +1561,14 @@ Node* CreateTrigStmt::Clone() const {
 }
 
 bool CreateTrigStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreateTrigStmt&>(other);
-    return replace == o.replace && isconstraint == o.isconstraint &&
-           trigname == o.trigname && EqNode(relation, o.relation) &&
-           EqVec(funcname, o.funcname) && EqVec(args, o.args) &&
-           row == o.row && timing == o.timing && events == o.events &&
-           EqVec(columns, o.columns) && EqNode(when_clause, o.when_clause) &&
-           EqVec(transition_rels, o.transition_rels) &&
-           deferrable == o.deferrable && initdeferred == o.initdeferred &&
-           constrrel == o.constrrel;
+    return replace == o.replace && isconstraint == o.isconstraint && trigname == o.trigname &&
+           EqNode(relation, o.relation) && EqVec(funcname, o.funcname) && EqVec(args, o.args) &&
+           row == o.row && timing == o.timing && events == o.events && EqVec(columns, o.columns) &&
+           EqNode(when_clause, o.when_clause) && EqVec(transition_rels, o.transition_rels) &&
+           deferrable == o.deferrable && initdeferred == o.initdeferred && constrrel == o.constrrel;
 }
 
 Node* CreateRoleStmt::Clone() const {
@@ -1571,7 +1579,8 @@ Node* CreateRoleStmt::Clone() const {
 }
 
 bool CreateRoleStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreateRoleStmt&>(other);
     return stmt_type == o.stmt_type && role == o.role && EqVec(options, o.options);
 }
@@ -1585,7 +1594,8 @@ Node* AlterRoleStmt::Clone() const {
 }
 
 bool AlterRoleStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AlterRoleStmt&>(other);
     return EqNode(role, o.role) && EqVec(options, o.options) && action == o.action;
 }
@@ -1598,7 +1608,8 @@ Node* DropRoleStmt::Clone() const {
 }
 
 bool DropRoleStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const DropRoleStmt&>(other);
     return EqVec(roles, o.roles) && missing_ok == o.missing_ok;
 }
@@ -1613,12 +1624,12 @@ Node* GrantStmt::Clone() const {
 }
 
 bool GrantStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const GrantStmt&>(other);
-    return is_grant == o.is_grant && targtype == o.targtype &&
-           objtype == o.objtype && EqVec(privileges, o.privileges) &&
-           EqVec(targobjs, o.targobjs) && grant_option == o.grant_option &&
-           EqVec(grantees, o.grantees) && behavior == o.behavior;
+    return is_grant == o.is_grant && targtype == o.targtype && objtype == o.objtype &&
+           EqVec(privileges, o.privileges) && EqVec(targobjs, o.targobjs) &&
+           grant_option == o.grant_option && EqVec(grantees, o.grantees) && behavior == o.behavior;
 }
 
 Node* GrantRoleStmt::Clone() const {
@@ -1631,11 +1642,11 @@ Node* GrantRoleStmt::Clone() const {
 }
 
 bool GrantRoleStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const GrantRoleStmt&>(other);
-    return EqVec(granted_roles, o.granted_roles) &&
-           EqVec(grantee_roles, o.grantee_roles) && is_grant == o.is_grant &&
-           admin_opt == o.admin_opt && EqNode(grantor, o.grantor) &&
+    return EqVec(granted_roles, o.granted_roles) && EqVec(grantee_roles, o.grantee_roles) &&
+           is_grant == o.is_grant && admin_opt == o.admin_opt && EqNode(grantor, o.grantor) &&
            behavior == o.behavior;
 }
 
@@ -1650,11 +1661,11 @@ Node* CopyStmt::Clone() const {
 }
 
 bool CopyStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CopyStmt&>(other);
-    return EqNode(relation, o.relation) && EqVec(attlist, o.attlist) &&
-           is_from == o.is_from && is_program == o.is_program &&
-           filename == o.filename && EqVec(options, o.options) &&
+    return EqNode(relation, o.relation) && EqVec(attlist, o.attlist) && is_from == o.is_from &&
+           is_program == o.is_program && filename == o.filename && EqVec(options, o.options) &&
            EqNode(query, o.query);
 }
 
@@ -1666,10 +1677,10 @@ Node* RefreshMatViewStmt::Clone() const {
 }
 
 bool RefreshMatViewStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const RefreshMatViewStmt&>(other);
-    return concurrent == o.concurrent && skip_data == o.skip_data &&
-           EqNode(relation, o.relation);
+    return concurrent == o.concurrent && skip_data == o.skip_data && EqNode(relation, o.relation);
 }
 
 Node* CreateTableSpaceStmt::Clone() const {
@@ -1681,10 +1692,11 @@ Node* CreateTableSpaceStmt::Clone() const {
 }
 
 bool CreateTableSpaceStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreateTableSpaceStmt&>(other);
-    return tablespacename == o.tablespacename && EqNode(owner, o.owner) &&
-           location == o.location && EqVec(options, o.options);
+    return tablespacename == o.tablespacename && EqNode(owner, o.owner) && location == o.location &&
+           EqVec(options, o.options);
 }
 
 Node* DropTableSpaceStmt::Clone() const {
@@ -1694,7 +1706,8 @@ Node* DropTableSpaceStmt::Clone() const {
 }
 
 bool DropTableSpaceStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const DropTableSpaceStmt&>(other);
     return tablespacename == o.tablespacename && missing_ok == o.missing_ok;
 }
@@ -1707,7 +1720,8 @@ Node* CreatedbStmt::Clone() const {
 }
 
 bool CreatedbStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const CreatedbStmt&>(other);
     return dbname == o.dbname && EqVec(options, o.options);
 }
@@ -1720,10 +1734,10 @@ Node* DropdbStmt::Clone() const {
 }
 
 bool DropdbStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const DropdbStmt&>(other);
-    return dbname == o.dbname && missing_ok == o.missing_ok &&
-           EqVec(options, o.options);
+    return dbname == o.dbname && missing_ok == o.missing_ok && EqVec(options, o.options);
 }
 
 Node* AlterDatabaseStmt::Clone() const {
@@ -1734,7 +1748,8 @@ Node* AlterDatabaseStmt::Clone() const {
 }
 
 bool AlterDatabaseStmt::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const AlterDatabaseStmt&>(other);
     return dbname == o.dbname && EqVec(options, o.options);
 }
@@ -1770,42 +1785,30 @@ Node* Query::Clone() const {
 }
 
 bool Query::Equals(const Node& other) const {
-    if (other.GetTag() != GetTag()) return false;
+    if (other.GetTag() != GetTag())
+        return false;
     const auto& o = static_cast<const Query&>(other);
-    return command_type == o.command_type &&
-           query_source == o.query_source && query_id == o.query_id &&
-           can_set_tag == o.can_set_tag && EqNode(utility_stmt, o.utility_stmt) &&
-           result_relation == o.result_relation && has_aggs == o.has_aggs &&
-           has_window_funcs == o.has_window_funcs &&
-           has_target_srfs == o.has_target_srfs &&
-           has_sub_links == o.has_sub_links &&
-           has_distinct_on == o.has_distinct_on &&
-           has_recursive == o.has_recursive &&
-           has_modifying_cte == o.has_modifying_cte &&
-           has_for_update == o.has_for_update &&
-           has_row_security == o.has_row_security &&
-           is_return == o.is_return && EqVec(cte_list, o.cte_list) &&
-           EqVec(rtable, o.rtable) && EqNode(jointree, o.jointree) &&
+    return command_type == o.command_type && query_source == o.query_source &&
+           query_id == o.query_id && can_set_tag == o.can_set_tag &&
+           EqNode(utility_stmt, o.utility_stmt) && result_relation == o.result_relation &&
+           has_aggs == o.has_aggs && has_window_funcs == o.has_window_funcs &&
+           has_target_srfs == o.has_target_srfs && has_sub_links == o.has_sub_links &&
+           has_distinct_on == o.has_distinct_on && has_recursive == o.has_recursive &&
+           has_modifying_cte == o.has_modifying_cte && has_for_update == o.has_for_update &&
+           has_row_security == o.has_row_security && is_return == o.is_return &&
+           EqVec(cte_list, o.cte_list) && EqVec(rtable, o.rtable) && EqNode(jointree, o.jointree) &&
            EqVec(merge_action_list, o.merge_action_list) &&
-           merge_use_outer_join == o.merge_use_outer_join &&
-           EqVec(target_list, o.target_list) &&
-           override_kind == o.override_kind &&
-           EqNode(on_conflict, o.on_conflict) &&
-           EqVec(returning_list, o.returning_list) &&
-           EqVec(group_clause, o.group_clause) &&
-           group_distinct == o.group_distinct &&
-           EqVec(grouping_sets, o.grouping_sets) &&
-           EqNode(having_qual, o.having_qual) &&
-           EqVec(window_clause, o.window_clause) &&
-           EqVec(distinct_clause, o.distinct_clause) &&
-           EqVec(sort_clause, o.sort_clause) &&
-           EqNode(limit_offset, o.limit_offset) &&
-           EqNode(limit_count, o.limit_count) &&
+           merge_use_outer_join == o.merge_use_outer_join && EqVec(target_list, o.target_list) &&
+           override_kind == o.override_kind && EqNode(on_conflict, o.on_conflict) &&
+           EqVec(returning_list, o.returning_list) && EqVec(group_clause, o.group_clause) &&
+           group_distinct == o.group_distinct && EqVec(grouping_sets, o.grouping_sets) &&
+           EqNode(having_qual, o.having_qual) && EqVec(window_clause, o.window_clause) &&
+           EqVec(distinct_clause, o.distinct_clause) && EqVec(sort_clause, o.sort_clause) &&
+           EqNode(limit_offset, o.limit_offset) && EqNode(limit_count, o.limit_count) &&
            limit_option == o.limit_option && EqVec(row_marks, o.row_marks) &&
-           EqNode(set_operations, o.set_operations) &&
-           EqVec(constraint_deps, o.constraint_deps) &&
-           EqVec(with_check_options, o.with_check_options) &&
-           stmt_location == o.stmt_location && stmt_len == o.stmt_len;
+           EqNode(set_operations, o.set_operations) && EqVec(constraint_deps, o.constraint_deps) &&
+           EqVec(with_check_options, o.with_check_options) && stmt_location == o.stmt_location &&
+           stmt_len == o.stmt_len;
 }
 
 }  // namespace mytoydb::parser

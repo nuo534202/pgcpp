@@ -45,8 +45,7 @@ struct RelFileNodeBackendHash {
         // Simple combining hash; collisions are handled by linear search.
         return std::hash<uint32_t>()(r.node.spc_node) ^
                (std::hash<uint32_t>()(r.node.db_node) << 1) ^
-               (std::hash<uint32_t>()(r.node.rel_node) << 2) ^
-               (std::hash<int>()(r.backend) << 3);
+               (std::hash<uint32_t>()(r.node.rel_node) << 2) ^ (std::hash<int>()(r.backend) << 3);
     }
 };
 
@@ -88,8 +87,7 @@ std::string relpathbackend(RelFileNodeBackend rnode, ForkNumber fork_num) {
             path += "_init";
             break;
         default:
-            ereport(mytoydb::error::LogLevel::kError,
-                    "invalid fork number");
+            ereport(mytoydb::error::LogLevel::kError, "invalid fork number");
             break;
     }
     return path;
@@ -152,18 +150,17 @@ void smgrcreate(SmgrRelation reln, ForkNumber fork_num, bool is_redo) {
     reln->mdcreate(fork_num, is_redo);
 }
 
-void smgrread(SmgrRelation reln, ForkNumber fork_num,
-              BlockNumber block_num, char* buffer) {
+void smgrread(SmgrRelation reln, ForkNumber fork_num, BlockNumber block_num, char* buffer) {
     reln->mdread(fork_num, block_num, buffer);
 }
 
-void smgrwrite(SmgrRelation reln, ForkNumber fork_num,
-               BlockNumber block_num, const char* buffer, bool skip_fsync) {
+void smgrwrite(SmgrRelation reln, ForkNumber fork_num, BlockNumber block_num, const char* buffer,
+               bool skip_fsync) {
     reln->mdwrite(fork_num, block_num, buffer, skip_fsync);
 }
 
-void smgrextend(SmgrRelation reln, ForkNumber fork_num,
-                BlockNumber block_num, const char* buffer, bool skip_fsync) {
+void smgrextend(SmgrRelation reln, ForkNumber fork_num, BlockNumber block_num, const char* buffer,
+                bool skip_fsync) {
     reln->mdextend(fork_num, block_num, buffer, skip_fsync);
 }
 
@@ -171,8 +168,7 @@ BlockNumber smgrnblocks(SmgrRelation reln, ForkNumber fork_num) {
     return reln->mdnblocks(fork_num);
 }
 
-void smgrtruncate(SmgrRelation reln, ForkNumber fork_num,
-                  BlockNumber nblocks) {
+void smgrtruncate(SmgrRelation reln, ForkNumber fork_num, BlockNumber nblocks) {
     reln->mdtruncate(fork_num, nblocks);
 }
 

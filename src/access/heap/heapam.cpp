@@ -39,46 +39,46 @@ using mytoydb::memory::palloc;
 using mytoydb::memory::pfree;
 using mytoydb::storage::BlockNumber;
 using mytoydb::storage::Buffer;
+using mytoydb::storage::BufferGetPage;
 using mytoydb::storage::ForkNumber;
 using mytoydb::storage::Item;
 using mytoydb::storage::kBlckSz;
 using mytoydb::storage::kInvalidBuffer;
 using mytoydb::storage::kInvalidOffsetNumber;
 using mytoydb::storage::kPageHeaderSize;
+using mytoydb::storage::MarkBufferDirty;
 using mytoydb::storage::OffsetNumber;
 using mytoydb::storage::Page;
 using mytoydb::storage::PageAddItem;
-using mytoydb::storage::BufferGetPage;
 using mytoydb::storage::PageGetHeapFreeSpace;
-using mytoydb::storage::PageGetItemId;
 using mytoydb::storage::PageGetItem;
+using mytoydb::storage::PageGetItemId;
 using mytoydb::storage::PageGetMaxOffsetNumber;
 using mytoydb::storage::PageInit;
 using mytoydb::storage::ReadBuffer;
 using mytoydb::storage::ReadBufferMode;
 using mytoydb::storage::ReleaseBuffer;
-using mytoydb::storage::MarkBufferDirty;
+using mytoydb::transaction::CommandCounterIncrement;
 using mytoydb::transaction::CommandId;
 using mytoydb::transaction::GetCurrentCommandId;
 using mytoydb::transaction::GetCurrentTransactionId;
-using mytoydb::transaction::HeapTupleHeaderData;
-using mytoydb::transaction::HeapTupleSatisfiesMVCC;
-using mytoydb::transaction::HeapTupleHeaderSetXmin;
-using mytoydb::transaction::HeapTupleHeaderSetXmax;
-using mytoydb::transaction::HeapTupleHeaderSetCid;
-using mytoydb::transaction::HeapTupleHeaderSetTid;
-using mytoydb::transaction::HeapTupleHeaderSetNatts;
-using mytoydb::transaction::HeapTupleData;
 using mytoydb::transaction::HeapTuple;
+using mytoydb::transaction::HeapTupleData;
+using mytoydb::transaction::HeapTupleHeaderData;
+using mytoydb::transaction::HeapTupleHeaderSetCid;
+using mytoydb::transaction::HeapTupleHeaderSetNatts;
+using mytoydb::transaction::HeapTupleHeaderSetTid;
+using mytoydb::transaction::HeapTupleHeaderSetXmax;
+using mytoydb::transaction::HeapTupleHeaderSetXmin;
+using mytoydb::transaction::HeapTupleSatisfiesMVCC;
 using mytoydb::transaction::ItemPointerData;
-using mytoydb::transaction::Snapshot;
-using mytoydb::transaction::SnapshotData;
-using mytoydb::transaction::TransactionId;
 using mytoydb::transaction::kHeapHasNull;
 using mytoydb::transaction::kHeapHasVarWidth;
 using mytoydb::transaction::kHeapTupleHeaderSize;
 using mytoydb::transaction::kInvalidTransactionId;
-using mytoydb::transaction::CommandCounterIncrement;
+using mytoydb::transaction::Snapshot;
+using mytoydb::transaction::SnapshotData;
+using mytoydb::transaction::TransactionId;
 using mytoydb::types::Datum;
 using mytoydb::types::DatumGetTextP;
 using mytoydb::types::VARSIZE;
@@ -89,10 +89,8 @@ Buffer CreateAndReadNewPage(Relation relation, BlockNumber block_num) {
     std::memset(pagebuf, 0, kBlckSz);
     PageInit(pagebuf, kBlckSz, 0);
     relation->rd_smgr = RelationGetSmgr(relation);
-    mytoydb::storage::smgrextend(relation->rd_smgr, ForkNumber::kMain,
-                                 block_num, pagebuf, false);
-    return ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num,
-                      ReadBufferMode::kNormal);
+    mytoydb::storage::smgrextend(relation->rd_smgr, ForkNumber::kMain, block_num, pagebuf, false);
+    return ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
 }
 
 }  // namespace
@@ -119,11 +117,11 @@ uint32_t att_align_max(uint32_t offset) {
 
 // --- Tuple formation ---
 
-uint32_t heap_compute_data_size(TupleDesc tupdesc, const Datum* values,
-                                const bool* isnull) {
+uint32_t heap_compute_data_size(TupleDesc tupdesc, const Datum* values, const bool* isnull) {
     uint32_t data_size = 0;
     for (int i = 0; i < tupdesc->natts; i++) {
-        if (isnull != nullptr && isnull[i]) continue;
+        if (isnull != nullptr && isnull[i])
+            continue;
         const auto& attr = tupdesc->attrs[i];
         data_size = att_align(data_size, attr.attalign);
         if (attr.attlen == -1) {
@@ -136,8 +134,7 @@ uint32_t heap_compute_data_size(TupleDesc tupdesc, const Datum* values,
     return data_size;
 }
 
-HeapTuple heap_form_tuple(TupleDesc tupdesc, const Datum* values,
-                          const bool* isnull) {
+HeapTuple heap_form_tuple(TupleDesc tupdesc, const Datum* values, const bool* isnull) {
     // Check for nulls.
     bool hasnull = false;
     for (int i = 0; i < tupdesc->natts; i++) {
@@ -175,8 +172,7 @@ HeapTuple heap_form_tuple(TupleDesc tupdesc, const Datum* values,
 
     // Fill null bitmap.
     if (hasnull) {
-        uint8_t* null_bitmap = reinterpret_cast<uint8_t*>(
-            data + kHeapTupleHeaderSize);
+        uint8_t* null_bitmap = reinterpret_cast<uint8_t*>(data + kHeapTupleHeaderSize);
         for (int i = 0; i < tupdesc->natts; i++) {
             if (isnull != nullptr && isnull[i]) {
                 null_bitmap[i / 8] |= static_cast<uint8_t>(1 << (i % 8));
@@ -187,7 +183,8 @@ HeapTuple heap_form_tuple(TupleDesc tupdesc, const Datum* values,
     // Copy data values.
     uint32_t offset = hoff;
     for (int i = 0; i < tupdesc->natts; i++) {
-        if (isnull != nullptr && isnull[i]) continue;
+        if (isnull != nullptr && isnull[i])
+            continue;
         const auto& attr = tupdesc->attrs[i];
         offset = att_align(offset, attr.attalign);
 
@@ -205,8 +202,7 @@ HeapTuple heap_form_tuple(TupleDesc tupdesc, const Datum* values,
             offset += attr.attlen;
         } else {
             // by-reference, fixed length: copy from the pointer.
-            std::memcpy(data + offset, reinterpret_cast<void*>(values[i]),
-                        attr.attlen);
+            std::memcpy(data + offset, reinterpret_cast<void*>(values[i]), attr.attlen);
             offset += attr.attlen;
             header->t_infomask |= kHeapHasVarWidth;
         }
@@ -220,8 +216,7 @@ HeapTuple heap_form_tuple(TupleDesc tupdesc, const Datum* values,
     return tuple;
 }
 
-void heap_deform_tuple(HeapTuple tuple, TupleDesc tupdesc, Datum* values,
-                       bool* isnull) {
+void heap_deform_tuple(HeapTuple tuple, TupleDesc tupdesc, Datum* values, bool* isnull) {
     HeapTupleHeaderData* header = tuple->t_data;
     char* data = reinterpret_cast<char*>(header);
     uint32_t hoff = header->t_hoff;
@@ -229,17 +224,18 @@ void heap_deform_tuple(HeapTuple tuple, TupleDesc tupdesc, Datum* values,
     bool hasnull = (header->t_infomask & kHeapHasNull) != 0;
     uint8_t* null_bitmap = nullptr;
     if (hasnull) {
-        null_bitmap = reinterpret_cast<uint8_t*>(
-            data + kHeapTupleHeaderSize);
+        null_bitmap = reinterpret_cast<uint8_t*>(data + kHeapTupleHeaderSize);
     }
 
     uint32_t offset = hoff;
     for (int i = 0; i < tupdesc->natts; i++) {
-        if (isnull != nullptr) isnull[i] = false;
+        if (isnull != nullptr)
+            isnull[i] = false;
 
         if (hasnull && (null_bitmap[i / 8] & (1 << (i % 8)))) {
             values[i] = 0;
-            if (isnull != nullptr) isnull[i] = true;
+            if (isnull != nullptr)
+                isnull[i] = true;
             continue;
         }
 
@@ -264,9 +260,9 @@ void heap_deform_tuple(HeapTuple tuple, TupleDesc tupdesc, Datum* values,
     }
 }
 
-Datum heap_getattr(HeapTuple tuple, int attnum, TupleDesc tupdesc,
-                   bool* isnull) {
-    if (isnull != nullptr) *isnull = false;
+Datum heap_getattr(HeapTuple tuple, int attnum, TupleDesc tupdesc, bool* isnull) {
+    if (isnull != nullptr)
+        *isnull = false;
 
     HeapTupleHeaderData* header = tuple->t_data;
     char* data = reinterpret_cast<char*>(header);
@@ -275,8 +271,7 @@ Datum heap_getattr(HeapTuple tuple, int attnum, TupleDesc tupdesc,
     bool hasnull = (header->t_infomask & kHeapHasNull) != 0;
     uint8_t* null_bitmap = nullptr;
     if (hasnull) {
-        null_bitmap = reinterpret_cast<uint8_t*>(
-            data + kHeapTupleHeaderSize);
+        null_bitmap = reinterpret_cast<uint8_t*>(data + kHeapTupleHeaderSize);
     }
 
     // Walk to the requested attribute (attributes are 1-based).
@@ -285,7 +280,8 @@ Datum heap_getattr(HeapTuple tuple, int attnum, TupleDesc tupdesc,
         if (i == attnum - 1) {
             // This is the attribute we want.
             if (hasnull && (null_bitmap[i / 8] & (1 << (i % 8)))) {
-                if (isnull != nullptr) *isnull = true;
+                if (isnull != nullptr)
+                    *isnull = true;
                 return 0;
             }
             const auto& attr = tupdesc->attrs[i];
@@ -315,12 +311,14 @@ Datum heap_getattr(HeapTuple tuple, int attnum, TupleDesc tupdesc,
         }
     }
 
-    if (isnull != nullptr) *isnull = true;
+    if (isnull != nullptr)
+        *isnull = true;
     return 0;
 }
 
 void heap_freetuple(HeapTuple tuple) {
-    if (tuple == nullptr) return;
+    if (tuple == nullptr)
+        return;
     if (tuple->t_data != nullptr) {
         pfree(tuple->t_data);
     }
@@ -357,11 +355,10 @@ static ItemPointerData heap_insert_internal(Relation relation, HeapTuple tup) {
     } else {
         // Try the last block first.
         target_block = nblocks - 1;
-        buffer = ReadBuffer(relation->rd_smgr, ForkNumber::kMain,
-                            target_block, ReadBufferMode::kNormal);
+        buffer =
+            ReadBuffer(relation->rd_smgr, ForkNumber::kMain, target_block, ReadBufferMode::kNormal);
         page = BufferGetPage(buffer);
-        if (static_cast<int>(PageGetHeapFreeSpace(page)) <
-            static_cast<int>(tuple_len)) {
+        if (static_cast<int>(PageGetHeapFreeSpace(page)) < static_cast<int>(tuple_len)) {
             // Not enough space; extend the relation.
             ReleaseBuffer(buffer);
             target_block = nblocks;
@@ -370,13 +367,12 @@ static ItemPointerData heap_insert_internal(Relation relation, HeapTuple tup) {
     }
 
     page = BufferGetPage(buffer);
-    OffsetNumber offset = PageAddItem(page, reinterpret_cast<Item>(header),
-                                      tuple_len, kInvalidOffsetNumber, true);
+    OffsetNumber offset =
+        PageAddItem(page, reinterpret_cast<Item>(header), tuple_len, kInvalidOffsetNumber, true);
     if (offset == kInvalidOffsetNumber) {
         ReleaseBuffer(buffer);
         ereport(mytoydb::error::LogLevel::kError,
-                "heap_insert: failed to add item to page " +
-                std::to_string(target_block));
+                "heap_insert: failed to add item to page " + std::to_string(target_block));
     }
 
     // Set the TID.
@@ -403,13 +399,13 @@ void heap_delete(Relation relation, const ItemPointerData& tid) {
     OffsetNumber offset = tid.ip_posid;
 
     relation->rd_smgr = RelationGetSmgr(relation);
-    Buffer buffer = ReadBuffer(relation->rd_smgr, ForkNumber::kMain,
-                               block_num, ReadBufferMode::kNormal);
+    Buffer buffer =
+        ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
     Page page = BufferGetPage(buffer);
 
     auto* item_id = PageGetItemId(page, offset);
-    HeapTupleHeaderData* header = reinterpret_cast<HeapTupleHeaderData*>(
-        PageGetItem(page, item_id));
+    HeapTupleHeaderData* header =
+        reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
 
     TransactionId xid = GetCurrentTransactionId();
     CommandId cid = GetCurrentCommandId();
@@ -422,8 +418,7 @@ void heap_delete(Relation relation, const ItemPointerData& tid) {
     CommandCounterIncrement();
 }
 
-ItemPointerData heap_update(Relation relation, const ItemPointerData& otid,
-                            HeapTuple tup) {
+ItemPointerData heap_update(Relation relation, const ItemPointerData& otid, HeapTuple tup) {
     // Insert the new tuple first (without CID increment).
     ItemPointerData new_tid = heap_insert_internal(relation, tup);
 
@@ -432,13 +427,13 @@ ItemPointerData heap_update(Relation relation, const ItemPointerData& otid,
     OffsetNumber offset = otid.ip_posid;
 
     relation->rd_smgr = RelationGetSmgr(relation);
-    Buffer buffer = ReadBuffer(relation->rd_smgr, ForkNumber::kMain,
-                               block_num, ReadBufferMode::kNormal);
+    Buffer buffer =
+        ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
     Page page = BufferGetPage(buffer);
 
     auto* item_id = PageGetItemId(page, offset);
-    HeapTupleHeaderData* header = reinterpret_cast<HeapTupleHeaderData*>(
-        PageGetItem(page, item_id));
+    HeapTupleHeaderData* header =
+        reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
 
     TransactionId xid = GetCurrentTransactionId();
     CommandId cid = GetCurrentCommandId();
@@ -487,8 +482,8 @@ static void heap_scan_page(HeapScanDesc scan, BlockNumber block_num) {
     }
 
     scan->rs_cblock = block_num;
-    scan->rs_cbuf = ReadBuffer(relation->rd_smgr, ForkNumber::kMain,
-                               block_num, ReadBufferMode::kNormal);
+    scan->rs_cbuf =
+        ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
     Page page = BufferGetPage(scan->rs_cbuf);
 
     scan->rs_ntuples = 0;
@@ -499,11 +494,11 @@ static void heap_scan_page(HeapScanDesc scan, BlockNumber block_num) {
 
     for (OffsetNumber offset = 1; offset <= max_offset; offset++) {
         auto* item_id = PageGetItemId(page, offset);
-        if (!mytoydb::storage::ItemIdIsNormal(item_id)) continue;
+        if (!mytoydb::storage::ItemIdIsNormal(item_id))
+            continue;
 
         HeapTupleHeaderData* header =
-            reinterpret_cast<HeapTupleHeaderData*>(
-                PageGetItem(page, item_id));
+            reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
 
         if (HeapTupleSatisfiesMVCC(header, snap)) {
             if (scan->rs_ntuples < kHeapTuplesPerPage) {
@@ -543,8 +538,8 @@ HeapTuple heap_getnext(HeapScanDesc scan) {
 
     Page page = BufferGetPage(scan->rs_cbuf);
     auto* item_id = PageGetItemId(page, offset);
-    HeapTupleHeaderData* header = reinterpret_cast<HeapTupleHeaderData*>(
-        PageGetItem(page, item_id));
+    HeapTupleHeaderData* header =
+        reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
 
     // Fill in the scan's tuple descriptor.
     scan->rs_ctup.t_len = mytoydb::storage::ItemIdGetLength(item_id);
@@ -556,7 +551,8 @@ HeapTuple heap_getnext(HeapScanDesc scan) {
 }
 
 void heap_endscan(HeapScanDesc scan) {
-    if (scan == nullptr) return;
+    if (scan == nullptr)
+        return;
 
     if (scan->rs_cbuf != kInvalidBuffer) {
         ReleaseBuffer(scan->rs_cbuf);

@@ -56,11 +56,11 @@ Datum extract(const char* field, Datum timestamp);
 // Convert a Timestamp to broken-down components (year, month, day, etc.).
 struct TimestampParts {
     int year;
-    int month;   // 1-12
-    int day;     // 1-31
-    int hour;    // 0-23
-    int minute;  // 0-59
-    int second;  // 0-59 (integer part)
+    int month;     // 1-12
+    int day;       // 1-31
+    int hour;      // 0-23
+    int minute;    // 0-59
+    int second;    // 0-59 (integer part)
     int microsec;  // 0-999999
 };
 TimestampParts TimestampToParts(Timestamp ts);

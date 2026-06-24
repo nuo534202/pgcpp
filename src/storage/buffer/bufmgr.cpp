@@ -38,15 +38,17 @@ namespace {
 BufferPool* g_buffer_pool = nullptr;
 }
 
-BufferPool* GetBufferPool() { return g_buffer_pool; }
-void SetBufferPool(BufferPool* pool) { g_buffer_pool = pool; }
+BufferPool* GetBufferPool() {
+    return g_buffer_pool;
+}
+void SetBufferPool(BufferPool* pool) {
+    g_buffer_pool = pool;
+}
 
 // --- BufferPool construction/destruction ---
 
 BufferPool::BufferPool(int n_buffers)
-    : n_buffers_(n_buffers),
-      descriptors_(n_buffers),
-      blocks_(n_buffers, nullptr) {
+    : n_buffers_(n_buffers), descriptors_(n_buffers), blocks_(n_buffers, nullptr) {
     // Allocate page memory for each buffer slot.
     for (int i = 0; i < n_buffers; ++i) {
         blocks_[i] = static_cast<char*>(mytoydb::memory::palloc(kBlckSz));
@@ -83,8 +85,7 @@ BufferPool::~BufferPool() {
 Page BufferPool::GetBufferPage(Buffer buffer) {
     int buf_id = buffer - 1;
     if (buf_id < 0 || buf_id >= n_buffers_) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "invalid buffer handle");
+        ereport(mytoydb::error::LogLevel::kError, "invalid buffer handle");
     }
     return blocks_[buf_id];
 }
@@ -109,7 +110,8 @@ Buffer BufferPool::LookupBuffer(const BufferTag& tag) {
 
 void BufferPool::PinBuffer(Buffer buffer) {
     int buf_id = buffer - 1;
-    if (buf_id < 0 || buf_id >= n_buffers_) return;
+    if (buf_id < 0 || buf_id >= n_buffers_)
+        return;
     ++descriptors_[buf_id].refcount;
     // Bump usage count (capped at kMaxUsageCount).
     if (descriptors_[buf_id].usage_count < kMaxUsageCount) {
@@ -119,7 +121,8 @@ void BufferPool::PinBuffer(Buffer buffer) {
 
 void BufferPool::UnpinBuffer(Buffer buffer) {
     int buf_id = buffer - 1;
-    if (buf_id < 0 || buf_id >= n_buffers_) return;
+    if (buf_id < 0 || buf_id >= n_buffers_)
+        return;
     if (descriptors_[buf_id].refcount > 0) {
         --descriptors_[buf_id].refcount;
     }
@@ -153,12 +156,14 @@ Buffer BufferPool::InsertBuffer(const BufferTag& tag, int victim_id) {
 
 void BufferPool::MarkBufferDirty(Buffer buffer) {
     int buf_id = buffer - 1;
-    if (buf_id < 0 || buf_id >= n_buffers_) return;
+    if (buf_id < 0 || buf_id >= n_buffers_)
+        return;
     descriptors_[buf_id].SetDirty();
 }
 
 void BufferPool::FlushBuffer(int buf_id, bool release) {
-    if (buf_id < 0 || buf_id >= n_buffers_) return;
+    if (buf_id < 0 || buf_id >= n_buffers_)
+        return;
 
     BufferDesc& desc = descriptors_[buf_id];
 
@@ -171,8 +176,7 @@ void BufferPool::FlushBuffer(int buf_id, bool release) {
 
     // Write the page to disk via the storage manager.
     SmgrRelation reln = smgropen(RelFileNodeBackend{desc.tag.rnode, 0});
-    smgrwrite(reln, desc.tag.fork_num, desc.tag.block_num,
-              blocks_[buf_id], false);
+    smgrwrite(reln, desc.tag.fork_num, desc.tag.block_num, blocks_[buf_id], false);
 
     desc.ClearDirty();
 
@@ -197,7 +201,8 @@ void BufferPool::FlushRelationBuffers(RelFileNode rnode) {
 int BufferPool::NumPinned() const {
     int count = 0;
     for (const auto& d : descriptors_) {
-        if (d.refcount > 0) ++count;
+        if (d.refcount > 0)
+            ++count;
     }
     return count;
 }
@@ -205,20 +210,19 @@ int BufferPool::NumPinned() const {
 int BufferPool::NumDirty() const {
     int count = 0;
     for (const auto& d : descriptors_) {
-        if (d.IsDirty()) ++count;
+        if (d.IsDirty())
+            ++count;
     }
     return count;
 }
 
 // --- Public API ---
 
-Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num,
-                  BlockNumber block_num, ReadBufferMode mode,
-                  BufferAccessStrategy /*strategy*/) {
+Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block_num,
+                  ReadBufferMode mode, BufferAccessStrategy /*strategy*/) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "buffer pool not initialized");
+        ereport(mytoydb::error::LogLevel::kError, "buffer pool not initialized");
     }
 
     // Build the buffer tag.
@@ -269,54 +273,61 @@ Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num,
     return buffer;
 }
 
-Buffer ReadBufferExtended(SmgrRelation smgr_reln, ForkNumber fork_num,
-                          BlockNumber block_num, ReadBufferMode mode,
-                          BufferAccessStrategy strategy) {
+Buffer ReadBufferExtended(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block_num,
+                          ReadBufferMode mode, BufferAccessStrategy strategy) {
     return ReadBuffer(smgr_reln, fork_num, block_num, mode, strategy);
 }
 
 void ReleaseBuffer(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
-    if (pool == nullptr) return;
+    if (pool == nullptr)
+        return;
     pool->UnpinBuffer(buffer);
 }
 
 void MarkBufferDirty(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
-    if (pool == nullptr) return;
+    if (pool == nullptr)
+        return;
     pool->MarkBufferDirty(buffer);
 }
 
 Page BufferGetPage(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
-    if (pool == nullptr) return nullptr;
+    if (pool == nullptr)
+        return nullptr;
     return pool->GetBufferPage(buffer);
 }
 
 BlockNumber BufferGetBlockNumber(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
-    if (pool == nullptr) return kInvalidBlockNumber;
+    if (pool == nullptr)
+        return kInvalidBlockNumber;
     BufferDesc* desc = pool->GetBufferDesc(buffer);
-    if (desc == nullptr) return kInvalidBlockNumber;
+    if (desc == nullptr)
+        return kInvalidBlockNumber;
     return desc->tag.block_num;
 }
 
 void FlushBuffer(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
-    if (pool == nullptr) return;
+    if (pool == nullptr)
+        return;
     int buf_id = buffer - 1;
     pool->FlushBuffer(buf_id, false);
 }
 
 void FlushRelationBuffers(SmgrRelation smgr_reln) {
     BufferPool* pool = GetBufferPool();
-    if (pool == nullptr) return;
+    if (pool == nullptr)
+        return;
     pool->FlushRelationBuffers(smgr_reln->smgr_rnode.node);
 }
 
 void DropRelationBuffers(RelFileNode rnode) {
     BufferPool* pool = GetBufferPool();
-    if (pool == nullptr) return;
+    if (pool == nullptr)
+        return;
 
     // Iterate through all buffers and remove matching ones.
     // We need to access the hash table and descriptors directly.
@@ -345,9 +356,11 @@ void DropRelationBuffers(RelFileNode rnode) {
 
 bool BufferIsPinned(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
-    if (pool == nullptr) return false;
+    if (pool == nullptr)
+        return false;
     BufferDesc* desc = pool->GetBufferDesc(buffer);
-    if (desc == nullptr) return false;
+    if (desc == nullptr)
+        return false;
     return desc->refcount > 0;
 }
 

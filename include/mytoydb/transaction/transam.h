@@ -119,10 +119,10 @@ bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 // XidStatus records the state of a transaction in the commit log.
 // Matches PostgreSQL's XidStatus enum values.
 enum class XidStatus : uint8_t {
-    kInProgress = 0,  // TRANSACTION_STATUS_IN_PROGRESS
-    kCommitted = 1,   // TRANSACTION_STATUS_COMMITTED
-    kAborted = 2,     // TRANSACTION_STATUS_ABORTED
-    kSubCommitted = 3, // TRANSACTION_STATUS_SUB_COMMITTED
+    kInProgress = 0,    // TRANSACTION_STATUS_IN_PROGRESS
+    kCommitted = 1,     // TRANSACTION_STATUS_COMMITTED
+    kAborted = 2,       // TRANSACTION_STATUS_ABORTED
+    kSubCommitted = 3,  // TRANSACTION_STATUS_SUB_COMMITTED
 };
 
 // --- Commit log API ---

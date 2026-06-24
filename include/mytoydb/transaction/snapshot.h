@@ -36,10 +36,10 @@ namespace mytoydb::transaction {
 
 // SnapshotType — the kind of snapshot (PostgreSQL's SnapshotType).
 enum class SnapshotType {
-    kMVCC,        // normal MVCC snapshot
-    kSelf,        // see only my own changes (for CREATE INDEX CONCURRENTLY)
-    kAny,         // see everything (for VACUUM)
-    kToast,       // special snapshot for TOAST table access
+    kMVCC,   // normal MVCC snapshot
+    kSelf,   // see only my own changes (for CREATE INDEX CONCURRENTLY)
+    kAny,    // see everything (for VACUUM)
+    kToast,  // special snapshot for TOAST table access
 };
 
 // SnapshotData — the snapshot structure used by visibility checks.
@@ -68,7 +68,8 @@ struct SnapshotData {
     // taken (i.e., xid is in the xip list).
     bool XidInSnapshot(TransactionId xid) const {
         for (TransactionId x : xip) {
-            if (x == xid) return true;
+            if (x == xid)
+                return true;
         }
         return false;
     }
@@ -80,8 +81,7 @@ struct SnapshotData {
 
     // XidGexmax — true if `xid` is >= xmax (didn't exist at snapshot time).
     bool XidGeXmax(TransactionId xid) const {
-        return TransactionIdIsValid(xmax) &&
-               TransactionIdFollowsOrEquals(xid, xmax);
+        return TransactionIdIsValid(xmax) && TransactionIdFollowsOrEquals(xid, xmax);
     }
 };
 

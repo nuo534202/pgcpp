@@ -19,16 +19,16 @@ enum class CastContext : char {
 
 // castmethod values: how the cast is performed.
 enum class CastMethod : char {
-    kFunction = 'f',    // use a cast function
-    kBinary = 'b',      // types are binary-compatible
-    kInOut = 'i',       // use type input/output functions
+    kFunction = 'f',  // use a cast function
+    kBinary = 'b',    // types are binary-compatible
+    kInOut = 'i',     // use type input/output functions
 };
 
 struct FormData_pg_cast {
-    Oid oid = kInvalidOid;          // cast OID
-    Oid castsource = kInvalidOid;   // source datatype OID
-    Oid casttarget = kInvalidOid;   // destination datatype OID
-    Oid castfunc = kInvalidOid;     // cast function OID (0 = binary coercible)
+    Oid oid = kInvalidOid;         // cast OID
+    Oid castsource = kInvalidOid;  // source datatype OID
+    Oid casttarget = kInvalidOid;  // destination datatype OID
+    Oid castfunc = kInvalidOid;    // cast function OID (0 = binary coercible)
     CastContext castcontext = CastContext::kExplicit;
     CastMethod castmethod = CastMethod::kFunction;
 };

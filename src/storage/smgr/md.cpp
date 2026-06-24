@@ -16,25 +16,24 @@
 // All I/O is synchronous (MyToyDB is single-process). Errors are reported
 // via ereport(ERROR), which longjmps to the nearest PG_CATCH handler.
 
-#include "mytoydb/storage/smgr.h"
-
-#include <cerrno>
-#include <cstdio>
-#include <cstring>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+
 #include "mytoydb/common/error/elog.h"
+#include "mytoydb/storage/smgr.h"
 
 namespace mytoydb::storage {
 
 namespace {
 
 // Build the full filesystem path for a segment file.
-std::string BuildFullPath(const std::string& base_dir,
-                          const RelFileNodeBackend& rnode,
+std::string BuildFullPath(const std::string& base_dir, const RelFileNodeBackend& rnode,
                           ForkNumber fork_num, int segno) {
     std::string path = base_dir;
     path += '/';
@@ -52,7 +51,8 @@ std::string BuildFullPath(const std::string& base_dir,
 void EnsureParentDir(const std::string& file_path) {
     // Find the last '/' and create the directory.
     std::size_t pos = file_path.find_last_of('/');
-    if (pos == std::string::npos || pos == 0) return;
+    if (pos == std::string::npos || pos == 0)
+        return;
 
     std::string dir = file_path.substr(0, pos);
 
@@ -61,7 +61,8 @@ void EnsureParentDir(const std::string& file_path) {
     std::size_t start = 0;
     while (start < dir.size()) {
         std::size_t next = dir.find('/', start + 1);
-        if (next == std::string::npos) next = dir.size();
+        if (next == std::string::npos)
+            next = dir.size();
         std::string component = dir.substr(0, next);
 
         // Try to create; ignore EEXIST.
@@ -70,8 +71,7 @@ void EnsureParentDir(const std::string& file_path) {
             struct stat st;
             if (stat(component.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
                 ereport(mytoydb::error::LogLevel::kError,
-                        "could not create directory " + component +
-                        ": " + std::strerror(errno));
+                        "could not create directory " + component + ": " + std::strerror(errno));
             }
         }
         start = next;
@@ -81,13 +81,13 @@ void EnsureParentDir(const std::string& file_path) {
 // Open a file for reading/writing, creating if requested.
 int OpenFile(const std::string& path, bool create) {
     int flags = O_RDWR;
-    if (create) flags |= O_CREAT;
+    if (create)
+        flags |= O_CREAT;
 
     int fd = open(path.c_str(), flags, 0600);
     if (fd < 0) {
         ereport(mytoydb::error::LogLevel::kError,
-                "could not open file " + path + ": " +
-                std::strerror(errno));
+                "could not open file " + path + ": " + std::strerror(errno));
     }
     return fd;
 }
@@ -107,8 +107,7 @@ void FileReadBlock(int fd, off_t offset, char* buffer) {
     if (n < kBlckSz) {
         // Short read: this means the block doesn't exist yet.
         // PostgreSQL treats this as an error for mdread (block should exist).
-        ereport(mytoydb::error::LogLevel::kError,
-                "could not read block: unexpected end of file");
+        ereport(mytoydb::error::LogLevel::kError, "could not read block: unexpected end of file");
     }
 }
 
@@ -124,8 +123,7 @@ void FileWriteBlock(int fd, off_t offset, const char* buffer) {
                 std::string("write failed: ") + std::strerror(errno));
     }
     if (n < kBlckSz) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "could not write block: short write");
+        ereport(mytoydb::error::LogLevel::kError, "could not write block: short write");
     }
 }
 
@@ -174,12 +172,10 @@ void SmgrRelationData::mdcreate(ForkNumber fork_num, bool /*is_redo*/) {
     if (fd < 0) {
         if (errno == EEXIST) {
             // PostgreSQL: if is_redo, silently ignore. Otherwise error.
-            ereport(mytoydb::error::LogLevel::kError,
-                    "relation file already exists: " + path);
+            ereport(mytoydb::error::LogLevel::kError, "relation file already exists: " + path);
         }
         ereport(mytoydb::error::LogLevel::kError,
-                "could not create file " + path + ": " +
-                std::strerror(errno));
+                "could not create file " + path + ": " + std::strerror(errno));
     }
     close(fd);
 
@@ -199,8 +195,7 @@ void SmgrRelationData::mdclose(ForkNumber fork_num) {
     fds.clear();
 }
 
-void SmgrRelationData::mdread(ForkNumber fork_num, BlockNumber block_num,
-                               char* buffer) {
+void SmgrRelationData::mdread(ForkNumber fork_num, BlockNumber block_num, char* buffer) {
     // Compute segment number and offset within segment.
     int segno = static_cast<int>(block_num / kRelSegSize);
     BlockNumber block_in_seg = block_num % kRelSegSize;
@@ -210,8 +205,8 @@ void SmgrRelationData::mdread(ForkNumber fork_num, BlockNumber block_num,
     FileReadBlock(fd, offset, buffer);
 }
 
-void SmgrRelationData::mdwrite(ForkNumber fork_num, BlockNumber block_num,
-                                const char* buffer, bool /*skip_fsync*/) {
+void SmgrRelationData::mdwrite(ForkNumber fork_num, BlockNumber block_num, const char* buffer,
+                               bool /*skip_fsync*/) {
     int segno = static_cast<int>(block_num / kRelSegSize);
     BlockNumber block_in_seg = block_num % kRelSegSize;
     off_t offset = static_cast<off_t>(block_in_seg) * kBlckSz;
@@ -220,8 +215,8 @@ void SmgrRelationData::mdwrite(ForkNumber fork_num, BlockNumber block_num,
     FileWriteBlock(fd, offset, buffer);
 }
 
-void SmgrRelationData::mdextend(ForkNumber fork_num, BlockNumber block_num,
-                                 const char* buffer, bool skip_fsync) {
+void SmgrRelationData::mdextend(ForkNumber fork_num, BlockNumber block_num, const char* buffer,
+                                bool skip_fsync) {
     // mdextend writes a new block at the end of the file.
     // The block must be exactly the next block after the current EOF.
     int segno = static_cast<int>(block_num / kRelSegSize);

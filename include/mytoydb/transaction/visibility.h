@@ -52,15 +52,13 @@ bool HeapTupleSatisfiesAny(HeapTupleHeaderData* tup);
 // HeapTupleIsSurelyDead — return true if the tuple is definitely dead
 // (deleted by a committed transaction older than the snapshot's xmin).
 // Used by VACUUM to decide which tuples can be reclaimed.
-bool HeapTupleIsSurelyDead(const HeapTupleHeaderData* tup,
-                           const SnapshotData& snapshot);
+bool HeapTupleIsSurelyDead(const HeapTupleHeaderData* tup, const SnapshotData& snapshot);
 
 // --- Visibility helpers (used internally, exposed for testing) ---
 
 // XidVisibleInSnapshot — determine if a transaction ID is visible (committed)
 // under the given snapshot. Returns true if committed and not in-progress.
 // Sets *hint_committed if the XID is committed (for hint flag setting).
-bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot,
-                          bool* hint_committed);
+bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot, bool* hint_committed);
 
 }  // namespace mytoydb::transaction

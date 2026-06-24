@@ -26,8 +26,7 @@ bool LockRelation(mytoydb::catalog::Oid relid, LockMode lockmode);
 bool UnlockRelation(mytoydb::catalog::Oid relid, LockMode lockmode);
 
 // UnlockRelations — release locks on multiple relations.
-void UnlockRelations(const std::vector<mytoydb::catalog::Oid>& relids,
-                     LockMode lockmode);
+void UnlockRelations(const std::vector<mytoydb::catalog::Oid>& relids, LockMode lockmode);
 
 // LockRelationIdForSession — acquire a session-level lock (persists
 // across transactions). Used by LOCK TABLE and advisory locks.

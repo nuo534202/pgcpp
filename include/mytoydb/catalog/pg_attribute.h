@@ -14,10 +14,10 @@ namespace mytoydb::catalog {
 
 // attstorage / attalign values (PostgreSQL 'char' codes).
 enum class AttStorage : char {
-    kPlain = 'p',      // stored uncompressed
-    kExternal = 'e',   // stored externally (TOAST)
-    kExtended = 'x',   // try compress, then external
-    kMain = 'm',       // try compress, but keep inline
+    kPlain = 'p',     // stored uncompressed
+    kExternal = 'e',  // stored externally (TOAST)
+    kExtended = 'x',  // try compress, then external
+    kMain = 'm',      // try compress, but keep inline
 };
 
 enum class AttAlign : char {
@@ -43,11 +43,11 @@ struct FormData_pg_attribute {
     bool attnotnull = false;  // has NOT NULL constraint
     bool atthasdef = false;   // has DEFAULT expression
     bool atthasmissing = false;
-    char attidentity = '\0';    // generated identity ('' = none)
-    char attgenerated = '\0';   // generated stored ('' = none)
-    bool attisdropped = false;  // column has been dropped
-    bool attislocal = true;     // column is local to relation
-    int16_t attinhcount = 0;    // number of times inherited
+    char attidentity = '\0';         // generated identity ('' = none)
+    char attgenerated = '\0';        // generated stored ('' = none)
+    bool attisdropped = false;       // column has been dropped
+    bool attislocal = true;          // column is local to relation
+    int16_t attinhcount = 0;         // number of times inherited
     Oid attcollation = kInvalidOid;  // column's collation OID
 };
 

@@ -10,114 +10,114 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/parser/analyze.h"
-#include "mytoydb/parser/parser.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/parser/primnodes.h"
-#include "mytoydb/parser/parse_node.h"
-#include "mytoydb/parser/parse_coerce.h"
-#include "mytoydb/parser/parse_func.h"
-#include "mytoydb/parser/parse_oper.h"
-#include "mytoydb/parser/parse_type.h"
-#include "mytoydb/catalog/catalog.h"
 #include "mytoydb/catalog/bootstrap_catalog.h"
-#include "mytoydb/catalog/syscache.h"
+#include "mytoydb/catalog/catalog.h"
 #include "mytoydb/catalog/pg_attribute.h"
 #include "mytoydb/catalog/pg_class.h"
 #include "mytoydb/catalog/pg_type.h"
+#include "mytoydb/catalog/syscache.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/common/error/elog.h"
+#include "mytoydb/parser/analyze.h"
+#include "mytoydb/parser/parse_coerce.h"
+#include "mytoydb/parser/parse_func.h"
+#include "mytoydb/parser/parse_node.h"
+#include "mytoydb/parser/parse_oper.h"
+#include "mytoydb/parser/parse_type.h"
+#include "mytoydb/parser/parsenodes.h"
+#include "mytoydb/parser/parser.h"
+#include "mytoydb/parser/primnodes.h"
 #include "mytoydb/types/datum.h"
 
-using mytoydb::parser::raw_parser;
-using mytoydb::parser::parse_analyze;
-using mytoydb::parser::transformStmt;
-using mytoydb::parser::make_parsestate;
-using mytoydb::parser::free_parsestate;
-using mytoydb::parser::makeConst;
-using mytoydb::parser::ParseState;
-using mytoydb::parser::RawStmt;
-using mytoydb::parser::SelectStmt;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::parser::Const;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::FuncExpr;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::CoerceViaIO;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::JoinExpr;
-using mytoydb::parser::exprType;
-using mytoydb::parser::exprTypmod;
-using mytoydb::parser::typenameTypeId;
-using mytoydb::parser::IsBinaryCoercible;
-using mytoydb::parser::can_coerce_type;
-using mytoydb::parser::lookup_operator;
-using mytoydb::parser::make_op;
-using mytoydb::parser::make_scalar_array_op;
-using mytoydb::parser::OperatorResult;
-using mytoydb::parser::ScalarArrayOpExpr;
-using mytoydb::parser::CoercionContext;
-using mytoydb::parser::CoercionForm;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::AExpr;
-using mytoydb::parser::AExprKind;
-using mytoydb::parser::ColumnRef;
-using mytoydb::parser::AConst;
-using mytoydb::parser::ResTarget;
-using mytoydb::parser::RangeVar;
-using mytoydb::parser::Alias;
-using mytoydb::parser::TypeName;
-using mytoydb::parser::TypeCast;
-using mytoydb::parser::FuncCall;
-using mytoydb::parser::SortBy;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::ParseExprKind;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::NullTestType;
-using mytoydb::parser::LookupFuncName;
-using mytoydb::parser::FuncLookupResult;
-using mytoydb::parser::IsAggregateFunction;
-using mytoydb::catalog::Catalog;
 using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::SysCache;
+using mytoydb::catalog::Catalog;
 using mytoydb::catalog::FormData_pg_attribute;
 using mytoydb::catalog::FormData_pg_class;
 using mytoydb::catalog::FormData_pg_type;
 using mytoydb::catalog::GetCatalog;
 using mytoydb::catalog::GetSysCache;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
 using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
+using mytoydb::catalog::RelKind;
+using mytoydb::catalog::RelPersistence;
+using mytoydb::catalog::SetCatalog;
+using mytoydb::catalog::SetSysCache;
+using mytoydb::catalog::SysCache;
+using mytoydb::memory::AllocSetContext;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
 using mytoydb::nodes::nodeTag;
-using mytoydb::memory::AllocSetContext;
+using mytoydb::parser::AConst;
+using mytoydb::parser::AExpr;
+using mytoydb::parser::AExprKind;
+using mytoydb::parser::Aggref;
+using mytoydb::parser::Alias;
+using mytoydb::parser::BoolExpr;
+using mytoydb::parser::BoolExprType;
+using mytoydb::parser::can_coerce_type;
+using mytoydb::parser::CmdType;
+using mytoydb::parser::CoerceViaIO;
+using mytoydb::parser::CoercionContext;
+using mytoydb::parser::CoercionForm;
+using mytoydb::parser::ColumnRef;
+using mytoydb::parser::Const;
+using mytoydb::parser::exprType;
+using mytoydb::parser::exprTypmod;
+using mytoydb::parser::free_parsestate;
+using mytoydb::parser::FromExpr;
+using mytoydb::parser::FuncCall;
+using mytoydb::parser::FuncExpr;
+using mytoydb::parser::FuncLookupResult;
+using mytoydb::parser::IsAggregateFunction;
+using mytoydb::parser::IsBinaryCoercible;
+using mytoydb::parser::JoinExpr;
+using mytoydb::parser::lookup_operator;
+using mytoydb::parser::LookupFuncName;
+using mytoydb::parser::make_op;
+using mytoydb::parser::make_parsestate;
+using mytoydb::parser::make_scalar_array_op;
+using mytoydb::parser::makeConst;
+using mytoydb::parser::NullTestType;
+using mytoydb::parser::OperatorResult;
+using mytoydb::parser::OpExpr;
+using mytoydb::parser::parse_analyze;
+using mytoydb::parser::ParseExprKind;
+using mytoydb::parser::ParseState;
+using mytoydb::parser::Query;
+using mytoydb::parser::RangeTblEntry;
+using mytoydb::parser::RangeTblRef;
+using mytoydb::parser::RangeVar;
+using mytoydb::parser::raw_parser;
+using mytoydb::parser::RawStmt;
+using mytoydb::parser::RelabelType;
+using mytoydb::parser::ResTarget;
+using mytoydb::parser::RTEKind;
+using mytoydb::parser::ScalarArrayOpExpr;
+using mytoydb::parser::SelectStmt;
+using mytoydb::parser::SortBy;
+using mytoydb::parser::SortGroupClause;
+using mytoydb::parser::TargetEntry;
+using mytoydb::parser::transformStmt;
+using mytoydb::parser::TypeCast;
+using mytoydb::parser::TypeName;
+using mytoydb::parser::typenameTypeId;
+using mytoydb::parser::Var;
+using mytoydb::types::Float8GetDatum;
+using mytoydb::types::Int32GetDatum;
+using mytoydb::types::Int64GetDatum;
 using mytoydb::types::kBoolOid;
+using mytoydb::types::kDateOid;
+using mytoydb::types::kFloat4Oid;
+using mytoydb::types::kFloat8Oid;
 using mytoydb::types::kInt2Oid;
 using mytoydb::types::kInt4Oid;
 using mytoydb::types::kInt8Oid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kVarcharOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kTimestampOid;
 using mytoydb::types::kNumericOid;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::Float8GetDatum;
+using mytoydb::types::kTextOid;
+using mytoydb::types::kTimestampOid;
+using mytoydb::types::kVarcharOid;
 
 namespace {
 
@@ -157,8 +157,8 @@ protected:
 
     void SetupTestTable() {
         // Create a pg_class entry for "hits"
-        auto* class_row = static_cast<FormData_pg_class*>(
-            mytoydb::memory::palloc(sizeof(FormData_pg_class)));
+        auto* class_row =
+            static_cast<FormData_pg_class*>(mytoydb::memory::palloc(sizeof(FormData_pg_class)));
         new (class_row) FormData_pg_class();
         class_row->relname = "hits";
         class_row->oid = 16384;
@@ -176,8 +176,7 @@ protected:
         AddAttribute(16384, "price", 8, kFloat8Oid);
     }
 
-    void AddAttribute(Oid relid, const std::string& name, int16_t attnum,
-                      Oid typid) {
+    void AddAttribute(Oid relid, const std::string& name, int16_t attnum, Oid typid) {
         auto* attr = static_cast<FormData_pg_attribute*>(
             mytoydb::memory::palloc(sizeof(FormData_pg_attribute)));
         new (attr) FormData_pg_attribute();
@@ -192,9 +191,11 @@ protected:
     // Helper: parse and analyze a SQL string, returning the first Query.
     Query* AnalyzeSingle(const std::string& sql) {
         auto stmts = raw_parser(sql);
-        if (stmts.empty()) return nullptr;
+        if (stmts.empty())
+            return nullptr;
         auto queries = parse_analyze(stmts, sql.c_str());
-        if (queries.empty()) return nullptr;
+        if (queries.empty())
+            return nullptr;
         return queries[0];
     }
 
@@ -287,15 +288,13 @@ TEST_F(ParseAnalysisTest, IsBinaryCoercibleNotCoercible) {
 TEST_F(ParseAnalysisTest, CanCoerceTypeImplicit) {
     Oid input = kInt4Oid;
     Oid target = kFloat8Oid;
-    EXPECT_TRUE(can_coerce_type(1, &input, &target,
-                                CoercionContext::kImplicit));
+    EXPECT_TRUE(can_coerce_type(1, &input, &target, CoercionContext::kImplicit));
 }
 
 TEST_F(ParseAnalysisTest, CanCoerceTypeExplicit) {
     Oid input = kTextOid;
     Oid target = kInt4Oid;
-    EXPECT_TRUE(can_coerce_type(1, &input, &target,
-                                CoercionContext::kExplicit));
+    EXPECT_TRUE(can_coerce_type(1, &input, &target, CoercionContext::kExplicit));
 }
 
 // ===========================================================================
@@ -303,9 +302,8 @@ TEST_F(ParseAnalysisTest, CanCoerceTypeExplicit) {
 // ===========================================================================
 
 TEST_F(ParseAnalysisTest, ExprTypeOfConst) {
-    auto* con = mytoydb::parser::makeConst(kInt4Oid, -1, 0, 4,
-                                            mytoydb::types::Int32GetDatum(42),
-                                            false, true, -1);
+    auto* con = mytoydb::parser::makeConst(kInt4Oid, -1, 0, 4, mytoydb::types::Int32GetDatum(42),
+                                           false, true, -1);
     EXPECT_EQ(exprType(con), kInt4Oid);
     EXPECT_EQ(exprTypmod(con), -1);
 }
@@ -718,8 +716,8 @@ TEST_F(ParseAnalysisTest, AnalyzeLimitOffset) {
 
 TEST_F(ParseAnalysisTest, AnalyzeJoin) {
     // Add a second table for joining
-    auto* class_row = static_cast<FormData_pg_class*>(
-        mytoydb::memory::palloc(sizeof(FormData_pg_class)));
+    auto* class_row =
+        static_cast<FormData_pg_class*>(mytoydb::memory::palloc(sizeof(FormData_pg_class)));
     new (class_row) FormData_pg_class();
     class_row->relname = "users";
     class_row->oid = 16385;
@@ -728,7 +726,8 @@ TEST_F(ParseAnalysisTest, AnalyzeJoin) {
     AddAttribute(16385, "user_id", 1, kInt4Oid);
     AddAttribute(16385, "name", 2, kTextOid);
 
-    Query* qry = AnalyzeSingle("SELECT hits.id, users.name FROM hits JOIN users ON hits.user_id = users.user_id");
+    Query* qry = AnalyzeSingle(
+        "SELECT hits.id, users.name FROM hits JOIN users ON hits.user_id = users.user_id");
     ASSERT_NE(qry, nullptr);
     EXPECT_EQ(qry->rtable.size(), 2u);
 }
@@ -738,7 +737,8 @@ TEST_F(ParseAnalysisTest, AnalyzeJoin) {
 // ===========================================================================
 
 TEST_F(ParseAnalysisTest, AnalyzeHavingClause) {
-    Query* qry = AnalyzeSingle("SELECT event_type, COUNT(*) FROM hits GROUP BY event_type HAVING COUNT(*) > 1");
+    Query* qry = AnalyzeSingle(
+        "SELECT event_type, COUNT(*) FROM hits GROUP BY event_type HAVING COUNT(*) > 1");
     ASSERT_NE(qry, nullptr);
     ASSERT_NE(qry->having_qual, nullptr);
     EXPECT_TRUE(qry->has_aggs);
@@ -876,15 +876,13 @@ TEST_F(ParseAnalysisTest, AnalyzeDelete) {
 // ===========================================================================
 
 TEST_F(ParseAnalysisTest, AnalyzeClickBenchLikeQuery1) {
-    Query* qry = AnalyzeSingle(
-        "SELECT COUNT(*) FROM hits");
+    Query* qry = AnalyzeSingle("SELECT COUNT(*) FROM hits");
     ASSERT_NE(qry, nullptr);
     EXPECT_TRUE(qry->has_aggs);
 }
 
 TEST_F(ParseAnalysisTest, AnalyzeClickBenchLikeQuery2) {
-    Query* qry = AnalyzeSingle(
-        "SELECT MIN(event_date), MAX(event_date) FROM hits");
+    Query* qry = AnalyzeSingle("SELECT MIN(event_date), MAX(event_date) FROM hits");
     ASSERT_NE(qry, nullptr);
     EXPECT_TRUE(qry->has_aggs);
     EXPECT_EQ(qry->target_list.size(), 2u);
@@ -905,8 +903,7 @@ TEST_F(ParseAnalysisTest, AnalyzeClickBenchLikeQuery3) {
 }
 
 TEST_F(ParseAnalysisTest, AnalyzeClickBenchLikeQuery4) {
-    Query* qry = AnalyzeSingle(
-        "SELECT SUM(price) FROM hits WHERE event_date = '2020-01-01'");
+    Query* qry = AnalyzeSingle("SELECT SUM(price) FROM hits WHERE event_date = '2020-01-01'");
     ASSERT_NE(qry, nullptr);
     EXPECT_TRUE(qry->has_aggs);
 }
@@ -1225,9 +1222,7 @@ TEST_F(ParseAnalysisTest, MakeOpNonexistentOperatorErrors) {
     Const* left = MakeIntConst(kInt4Oid);
     Const* right = MakeIntConst(kInt4Oid);
 
-    EXPECT_TRUE(RaisesError([&] {
-        make_op(pstate, "@", left, right, 0);
-    }));
+    EXPECT_TRUE(RaisesError([&] { make_op(pstate, "@", left, right, 0); }));
 
     free_parsestate(pstate);
 }
@@ -1300,9 +1295,7 @@ TEST_F(ParseAnalysisTest, MakeScalarArrayOpNonexistentOperatorErrors) {
     Const* left = MakeIntConst(kInt4Oid);
     Const* right = MakeIntConst(kInt4Oid);
 
-    EXPECT_TRUE(RaisesError([&] {
-        make_scalar_array_op(pstate, "@", true, left, right, 0);
-    }));
+    EXPECT_TRUE(RaisesError([&] { make_scalar_array_op(pstate, "@", true, left, right, 0); }));
 
     free_parsestate(pstate);
 }
@@ -1430,8 +1423,7 @@ TEST_F(ParseAnalysisTest, TransformFuncCallLengthText) {
 }
 
 TEST_F(ParseAnalysisTest, TransformFuncCallDateTrunc) {
-    Query* qry = AnalyzeSingle(
-        "SELECT DATE_TRUNC('hour', event_time) FROM hits");
+    Query* qry = AnalyzeSingle("SELECT DATE_TRUNC('hour', event_time) FROM hits");
     ASSERT_NE(qry, nullptr);
     ASSERT_FALSE(qry->target_list.empty());
     auto* tle = static_cast<TargetEntry*>(qry->target_list[0]);
@@ -1459,9 +1451,8 @@ TEST_F(ParseAnalysisTest, TransformFuncCallUnknownLiteralResolvesToText) {
 }
 
 TEST_F(ParseAnalysisTest, TransformFuncCallNonexistentErrors) {
-    EXPECT_TRUE(RaisesError([&] {
-        AnalyzeSingle("SELECT nonexistent_func(event_type) FROM hits");
-    }));
+    EXPECT_TRUE(
+        RaisesError([&] { AnalyzeSingle("SELECT nonexistent_func(event_type) FROM hits"); }));
 }
 
 // --- transformFuncCall: aggregate function tests ---
@@ -1600,8 +1591,7 @@ TEST_F(ParseAnalysisTest, TransformFuncCallCountDistinct) {
 
 TEST_F(ParseAnalysisTest, TransformFuncCallAggregateWithFilter) {
     // COUNT(*) FILTER (WHERE count > 0) — should set aggfilter.
-    Query* qry = AnalyzeSingle(
-        "SELECT COUNT(*) FILTER (WHERE count > 0) FROM hits");
+    Query* qry = AnalyzeSingle("SELECT COUNT(*) FILTER (WHERE count > 0) FROM hits");
     ASSERT_NE(qry, nullptr);
     ASSERT_FALSE(qry->target_list.empty());
     auto* tle = static_cast<TargetEntry*>(qry->target_list[0]);
@@ -1612,8 +1602,7 @@ TEST_F(ParseAnalysisTest, TransformFuncCallAggregateWithFilter) {
 
 TEST_F(ParseAnalysisTest, TransformFuncCallAggregateWithOrderBy) {
     // SUM(count ORDER BY count) — should set aggorder.
-    Query* qry = AnalyzeSingle(
-        "SELECT SUM(count ORDER BY count) FROM hits");
+    Query* qry = AnalyzeSingle("SELECT SUM(count ORDER BY count) FROM hits");
     ASSERT_NE(qry, nullptr);
     ASSERT_FALSE(qry->target_list.empty());
     auto* tle = static_cast<TargetEntry*>(qry->target_list[0]);
@@ -1641,8 +1630,7 @@ TEST_F(ParseAnalysisTest, TransformFuncCallResolvesOverloadedSubstring) {
     // Uses regular function-call syntax; the SQL-standard SUBSTRING(str FROM
     // start) syntax is handled by the grammar's substr_list rule, which is
     // expanded in Phase O.
-    Query* qry = AnalyzeSingle(
-        "SELECT substr(url, 1) FROM hits");
+    Query* qry = AnalyzeSingle("SELECT substr(url, 1) FROM hits");
     ASSERT_NE(qry, nullptr);
     ASSERT_FALSE(qry->target_list.empty());
     auto* tle = static_cast<TargetEntry*>(qry->target_list[0]);
@@ -1651,8 +1639,7 @@ TEST_F(ParseAnalysisTest, TransformFuncCallResolvesOverloadedSubstring) {
 }
 
 TEST_F(ParseAnalysisTest, TransformFuncCallRegexpReplaceThreeArgs) {
-    Query* qry = AnalyzeSingle(
-        "SELECT REGEXP_REPLACE(url, 'a', 'b') FROM hits");
+    Query* qry = AnalyzeSingle("SELECT REGEXP_REPLACE(url, 'a', 'b') FROM hits");
     ASSERT_NE(qry, nullptr);
     ASSERT_FALSE(qry->target_list.empty());
     auto* tle = static_cast<TargetEntry*>(qry->target_list[0]);

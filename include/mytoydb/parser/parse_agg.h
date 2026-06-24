@@ -14,8 +14,8 @@ using mytoydb::nodes::Node;
 
 // transformAggregateCall — transform an aggregate function call.
 // Called from transformFuncCall when the function is an aggregate.
-Node* transformAggregateCall(ParseState* pstate, Aggref* agg,
-                             std::vector<Node*>& args, int location);
+Node* transformAggregateCall(ParseState* pstate, Aggref* agg, std::vector<Node*>& args,
+                             int location);
 
 // parseCheckAggregates — check aggregate placement and set query flags.
 // Called after the target list, WHERE, HAVING are all transformed.

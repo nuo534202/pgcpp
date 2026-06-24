@@ -105,12 +105,12 @@ TEST_F(DatetimeTest, TimestampOutBasic) {
 
 TEST_F(DatetimeTest, TimestampRoundTrip) {
     const char* inputs[] = {
-        "2000-01-01 00:00:00",     // epoch
-        "2013-07-15 23:59:59",     // end of day
-        "1999-12-31 23:59:59",     // before epoch
-        "2020-02-29 12:00:00",     // leap day
-        "1900-01-01 00:00:00",     // far past
-        "2100-01-01 00:00:00",     // far future (non-leap century)
+        "2000-01-01 00:00:00",  // epoch
+        "2013-07-15 23:59:59",  // end of day
+        "1999-12-31 23:59:59",  // before epoch
+        "2020-02-29 12:00:00",  // leap day
+        "1900-01-01 00:00:00",  // far past
+        "2100-01-01 00:00:00",  // far future (non-leap century)
     };
     for (const char* input : inputs) {
         Datum d = timestamp_in(input);
@@ -151,11 +151,9 @@ TEST_F(DatetimeTest, DateEpochIsZero) {
 TEST_F(DatetimeTest, DateRoundTrip) {
     const char* inputs[] = {
         "2000-01-01",  // epoch
-        "2013-07-15",
-        "1999-12-31",
+        "2013-07-15", "1999-12-31",
         "2020-02-29",  // leap day
-        "1900-01-01",
-        "2100-01-01",
+        "1900-01-01", "2100-01-01",
     };
     for (const char* input : inputs) {
         Datum d = date_in(input);

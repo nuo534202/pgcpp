@@ -40,16 +40,16 @@ using BufferId = int;
 // These correspond to PostgreSQL's BM_LOCKED, BM_DIRTY, BM_VALID, etc.
 // In PostgreSQL they're packed into a single atomic uint32; here we use
 // a plain uint32_t since there's no concurrency.
-constexpr uint32_t kBMDirty = 0x000001;       // buffer needs writing
-constexpr uint32_t kBMValid = 0x000002;       // buffer has valid data
-constexpr uint32_t kBMTagged = 0x000004;      // buffer is in the hash table
-constexpr uint32_t kBMPermanent = 0x000008;   // buffer belongs to permanent rel
+constexpr uint32_t kBMDirty = 0x000001;      // buffer needs writing
+constexpr uint32_t kBMValid = 0x000002;      // buffer has valid data
+constexpr uint32_t kBMTagged = 0x000004;     // buffer is in the hash table
+constexpr uint32_t kBMPermanent = 0x000008;  // buffer belongs to permanent rel
 
 // BufferTag — uniquely identifies a page in the buffer pool.
 // Matches PostgreSQL's BufferTag struct.
 struct BufferTag {
-    RelFileNode rnode;       // relation file identifier
-    ForkNumber fork_num = ForkNumber::kInvalid;  // fork number
+    RelFileNode rnode;                            // relation file identifier
+    ForkNumber fork_num = ForkNumber::kInvalid;   // fork number
     BlockNumber block_num = kInvalidBlockNumber;  // block number within fork
 
     bool operator==(const BufferTag&) const = default;
@@ -72,11 +72,11 @@ struct BufferTagHash {
 // MyToyDB (single-process), plain fields suffice. The structure preserves
 // PostgreSQL's fields for architectural fidelity.
 struct BufferDesc {
-    BufferTag tag;              // page identifier (valid if state & kBMTagged)
-    BufferId buf_id = 0;        // index in the buffer pool (0-based)
-    uint32_t state = 0;         // state flags (kBMDirty, kBMValid, etc.)
-    int refcount = 0;           // pin count (can't evict if > 0)
-    int usage_count = 0;        // clock sweep usage count (0-5)
+    BufferTag tag;        // page identifier (valid if state & kBMTagged)
+    BufferId buf_id = 0;  // index in the buffer pool (0-based)
+    uint32_t state = 0;   // state flags (kBMDirty, kBMValid, etc.)
+    int refcount = 0;     // pin count (can't evict if > 0)
+    int usage_count = 0;  // clock sweep usage count (0-5)
 
     // Linked list of free buffers (next free buffer index, or -1 if none).
     int free_next = -1;

@@ -59,10 +59,10 @@ std::string to_lower(const std::string& s) {
 // Mirrors PostgreSQL's FuncnameGetCandidates (namespace search omitted;
 // MyToyDB has a single namespace for built-ins). Returns candidates in
 // catalog insertion order, which matters for tie-breaking.
-std::vector<const FormData_pg_proc*>
-FuncnameGetCandidates(const std::string& funcname, int nargs) {
+std::vector<const FormData_pg_proc*> FuncnameGetCandidates(const std::string& funcname, int nargs) {
     Catalog* cat = GetCatalog();
-    if (cat == nullptr) return {};
+    if (cat == nullptr)
+        return {};
     auto all = cat->GetProcsByName(funcname);
     std::vector<const FormData_pg_proc*> result;
     for (const auto* proc : all) {
@@ -80,13 +80,13 @@ FuncnameGetCandidates(const std::string& funcname, int nargs) {
 // binary-coercible to the declared type. Sets *exact_count to the number
 // of exact matches and *coerce_count to the number of coercion matches.
 // Returns true if the candidate is viable.
-bool func_match_argtypes(const FormData_pg_proc* candidate,
-                         const std::vector<Oid>& input_types,
+bool func_match_argtypes(const FormData_pg_proc* candidate, const std::vector<Oid>& input_types,
                          int* exact_count, int* coerce_count) {
     *exact_count = 0;
     *coerce_count = 0;
     const auto& decl_types = candidate->proargtypes;
-    if (decl_types.size() != input_types.size()) return false;
+    if (decl_types.size() != input_types.size())
+        return false;
     for (size_t i = 0; i < input_types.size(); ++i) {
         if (input_types[i] == decl_types[i]) {
             ++(*exact_count);
@@ -108,10 +108,10 @@ bool func_match_argtypes(const FormData_pg_proc* candidate,
 //   3. If there's a tie, return the first one. (PostgreSQL errors on
 //      ambiguity; MyToyDB's limited type set makes this rare and the
 //      fallback avoids false errors.)
-const FormData_pg_proc*
-func_select_candidate(const std::vector<const FormData_pg_proc*>& candidates,
-                      const std::vector<Oid>& input_types) {
-    if (candidates.empty()) return nullptr;
+const FormData_pg_proc* func_select_candidate(
+    const std::vector<const FormData_pg_proc*>& candidates, const std::vector<Oid>& input_types) {
+    if (candidates.empty())
+        return nullptr;
 
     // Step 1: find viable candidates and track the best exact-match count.
     std::vector<const FormData_pg_proc*> viable;
@@ -120,20 +120,25 @@ func_select_candidate(const std::vector<const FormData_pg_proc*>& candidates,
         int exact = 0, coerce = 0;
         if (func_match_argtypes(cand, input_types, &exact, &coerce)) {
             viable.push_back(cand);
-            if (exact > best_exact) best_exact = exact;
+            if (exact > best_exact)
+                best_exact = exact;
         }
     }
-    if (viable.empty()) return nullptr;
-    if (viable.size() == 1) return viable[0];
+    if (viable.empty())
+        return nullptr;
+    if (viable.size() == 1)
+        return viable[0];
 
     // Step 2: keep only candidates with the most exact matches.
     std::vector<const FormData_pg_proc*> best;
     for (const auto* cand : viable) {
         int exact = 0, coerce = 0;
         func_match_argtypes(cand, input_types, &exact, &coerce);
-        if (exact == best_exact) best.push_back(cand);
+        if (exact == best_exact)
+            best.push_back(cand);
     }
-    if (best.size() == 1) return best[0];
+    if (best.size() == 1)
+        return best[0];
 
     // Step 3: return the first candidate (PostgreSQL errors on ambiguity).
     return best[0];
@@ -146,17 +151,17 @@ func_select_candidate(const std::vector<const FormData_pg_proc*>& candidates,
 // (when matched via binary-coercibility). This inserts implicit coercion
 // nodes (RelabelType for binary-compatible, CoerceViaIO otherwise) so the
 // executor receives arguments of the declared types.
-void make_fn_arguments(ParseState* pstate, std::vector<Node*>& args,
-                       const FormData_pg_proc* proc, int location) {
+void make_fn_arguments(ParseState* pstate, std::vector<Node*>& args, const FormData_pg_proc* proc,
+                       int location) {
     const auto& decl_types = proc->proargtypes;
     for (size_t i = 0; i < args.size() && i < decl_types.size(); ++i) {
         Oid actual_type = exprType(args[i]);
         if (actual_type != decl_types[i]) {
-            Node* coerced = coerce_type(pstate, args[i], actual_type,
-                                        decl_types[i], -1,
-                                        CoercionContext::kImplicit,
-                                        CoercionForm::kImplicit, location);
-            if (coerced != nullptr) args[i] = coerced;
+            Node* coerced =
+                coerce_type(pstate, args[i], actual_type, decl_types[i], -1,
+                            CoercionContext::kImplicit, CoercionForm::kImplicit, location);
+            if (coerced != nullptr)
+                args[i] = coerced;
         }
     }
 }
@@ -172,10 +177,12 @@ void make_fn_arguments(ParseState* pstate, std::vector<Node*>& args,
 
 bool IsAggregateFunction(const std::string& funcname) {
     Catalog* cat = GetCatalog();
-    if (cat == nullptr) return false;
+    if (cat == nullptr)
+        return false;
     auto procs = cat->GetProcsByName(to_lower(funcname));
     for (const auto* proc : procs) {
-        if (proc->prokind == ProKind::kAggregate) return true;
+        if (proc->prokind == ProKind::kAggregate)
+            return true;
     }
     return false;
 }
@@ -187,20 +194,23 @@ bool IsAggregateFunction(const std::string& funcname) {
 // and fills *result if a matching function is found, false otherwise.
 // ---------------------------------------------------------------------------
 
-bool LookupFuncName(const std::vector<std::string>& funcname,
-                    int nargs, const Oid* argtypes,
+bool LookupFuncName(const std::vector<std::string>& funcname, int nargs, const Oid* argtypes,
                     FuncLookupResult* result) {
-    if (funcname.empty()) return false;
+    if (funcname.empty())
+        return false;
     Catalog* cat = GetCatalog();
-    if (cat == nullptr) return false;
+    if (cat == nullptr)
+        return false;
 
     std::string name = to_lower(funcname.back());
     auto candidates = FuncnameGetCandidates(name, nargs);
-    if (candidates.empty()) return false;
+    if (candidates.empty())
+        return false;
 
     std::vector<Oid> input_types(argtypes, argtypes + nargs);
     const FormData_pg_proc* proc = func_select_candidate(candidates, input_types);
-    if (proc == nullptr) return false;
+    if (proc == nullptr)
+        return false;
 
     result->funcid = proc->oid;
     result->rettype = proc->prorettype;
@@ -229,7 +239,8 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
     std::string funcname;
     for (size_t i = 0; i < fn->funcname.size(); ++i) {
         auto* v = static_cast<Value*>(fn->funcname[i]);
-        if (i > 0) funcname += ".";
+        if (i > 0)
+            funcname += ".";
         funcname += v->GetString();
     }
     funcname = to_lower(funcname);
@@ -260,8 +271,7 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
 
         // Handle FILTER clause (same as the general aggregate path below).
         if (fn->agg_filter != nullptr) {
-            agg->aggfilter = transformExpr(pstate, fn->agg_filter,
-                                           ParseExprKind::kFilter);
+            agg->aggfilter = transformExpr(pstate, fn->agg_filter, ParseExprKind::kFilter);
         }
 
         pstate->p_has_aggs = true;
@@ -271,8 +281,7 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
     // Step 4: find candidate functions by name and arg count.
     auto candidates = FuncnameGetCandidates(funcname, nargs);
     if (candidates.empty()) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "function does not exist");
+        ereport(mytoydb::error::LogLevel::kError, "function does not exist");
         return nullptr;
     }
 
@@ -309,15 +318,13 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
 
         // Handle FILTER clause.
         if (fn->agg_filter != nullptr) {
-            agg->aggfilter = transformExpr(pstate, fn->agg_filter,
-                                           ParseExprKind::kFilter);
+            agg->aggfilter = transformExpr(pstate, fn->agg_filter, ParseExprKind::kFilter);
         }
 
         // Handle ORDER BY within aggregate.
         if (!fn->agg_order.empty()) {
             for (Node* sortnode : fn->agg_order) {
-                Node* transformed = transformExpr(pstate, sortnode,
-                                                  ParseExprKind::kOrderBy);
+                Node* transformed = transformExpr(pstate, sortnode, ParseExprKind::kOrderBy);
                 agg->aggorder.push_back(transformed);
             }
         }

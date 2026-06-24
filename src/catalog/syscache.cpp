@@ -118,7 +118,7 @@ const FormData_pg_class* SysCache::SearchClassByOid(Oid oid) const {
 }
 
 const FormData_pg_class* SysCache::SearchClassByName(const std::string& name,
-                                                      Oid namespace_oid) const {
+                                                     Oid namespace_oid) const {
     auto key = MakeKey(name, namespace_oid);
     auto it = class_by_name_.find(key);
     if (it != class_by_name_.end()) {
@@ -160,7 +160,7 @@ const FormData_pg_attribute* SysCache::SearchAttributeByNum(Oid relid, int16_t a
 }
 
 const FormData_pg_attribute* SysCache::SearchAttributeByName(Oid relid,
-                                                              const std::string& name) const {
+                                                             const std::string& name) const {
     auto key = MakeKey(name, relid);
     auto it = attribute_by_relid_name_.find(key);
     if (it != attribute_by_relid_name_.end()) {
@@ -209,7 +209,7 @@ const FormData_pg_type* SysCache::SearchTypeByOid(Oid oid) const {
 }
 
 const FormData_pg_type* SysCache::SearchTypeByName(const std::string& name,
-                                                    Oid namespace_oid) const {
+                                                   Oid namespace_oid) const {
     auto key = MakeKey(name, namespace_oid);
     auto it = type_by_name_.find(key);
     if (it != type_by_name_.end()) {

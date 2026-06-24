@@ -19,13 +19,14 @@
 
 namespace mytoydb::transaction {
 
-bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot,
-                          bool* hint_committed) {
-    if (hint_committed != nullptr) *hint_committed = false;
+bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot, bool* hint_committed) {
+    if (hint_committed != nullptr)
+        *hint_committed = false;
 
     // Special XIDs (bootstrap, frozen) are always considered committed.
     if (!TransactionIdIsNormal(xid)) {
-        if (hint_committed != nullptr) *hint_committed = true;
+        if (hint_committed != nullptr)
+            *hint_committed = true;
         return true;
     }
 
@@ -38,7 +39,8 @@ bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot,
     if (snapshot.XidLtXmin(xid)) {
         // Look up the commit log to determine the final status.
         if (TransactionIdDidCommit(xid)) {
-            if (hint_committed != nullptr) *hint_committed = true;
+            if (hint_committed != nullptr)
+                *hint_committed = true;
             return true;
         }
         return false;  // aborted
@@ -51,7 +53,8 @@ bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot,
 
     // XID is in [xmin, xmax) and not in xip — it was committed.
     if (TransactionIdDidCommit(xid)) {
-        if (hint_committed != nullptr) *hint_committed = true;
+        if (hint_committed != nullptr)
+            *hint_committed = true;
         return true;
     }
 
@@ -59,9 +62,9 @@ bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot,
     return false;
 }
 
-bool HeapTupleSatisfiesMVCC(HeapTupleHeaderData* tup,
-                            const SnapshotData& snapshot) {
-    if (tup == nullptr) return false;
+bool HeapTupleSatisfiesMVCC(HeapTupleHeaderData* tup, const SnapshotData& snapshot) {
+    if (tup == nullptr)
+        return false;
 
     TransactionId xmin = HeapTupleHeaderGetXmin(tup);
     TransactionId xmax = HeapTupleHeaderGetXmax(tup);
@@ -235,31 +238,37 @@ bool HeapTupleSatisfiesMVCC(HeapTupleHeaderData* tup,
 }
 
 bool HeapTupleSatisfiesSelf(HeapTupleHeaderData* tup) {
-    if (tup == nullptr) return false;
+    if (tup == nullptr)
+        return false;
 
     TransactionId xmin = HeapTupleHeaderGetXmin(tup);
     TransactionId xmax = HeapTupleHeaderGetXmax(tup);
 
     // Check t_xmin
-    if (!TransactionIdIsValid(xmin)) return false;
+    if (!TransactionIdIsValid(xmin))
+        return false;
 
     if (TransactionIdIsCurrentTransactionId(xmin)) {
         uint32_t cid = HeapTupleHeaderGetCid(tup);
-        if (cid > GetCurrentCommandId(false)) return false;
+        if (cid > GetCurrentCommandId(false))
+            return false;
     } else if (!TransactionIdDidCommit(xmin)) {
         return false;
     }
 
     // Check t_xmax
-    if (!TransactionIdIsValid(xmax)) return true;
+    if (!TransactionIdIsValid(xmax))
+        return true;
 
     if (TransactionIdIsCurrentTransactionId(xmax)) {
         uint32_t cid = HeapTupleHeaderGetCid(tup);
-        if (cid > GetCurrentCommandId(false)) return true;
+        if (cid > GetCurrentCommandId(false))
+            return true;
         return false;
     }
 
-    if (!TransactionIdDidCommit(xmax)) return true;
+    if (!TransactionIdDidCommit(xmax))
+        return true;
 
     return false;
 }
@@ -269,21 +278,24 @@ bool HeapTupleSatisfiesAny(HeapTupleHeaderData* /*tup*/) {
     return true;
 }
 
-bool HeapTupleIsSurelyDead(const HeapTupleHeaderData* tup,
-                           const SnapshotData& snapshot) {
-    if (tup == nullptr) return false;
+bool HeapTupleIsSurelyDead(const HeapTupleHeaderData* tup, const SnapshotData& snapshot) {
+    if (tup == nullptr)
+        return false;
 
     TransactionId xmax = HeapTupleHeaderGetXmax(tup);
 
     // Not deleted — not dead.
-    if (!TransactionIdIsValid(xmax)) return false;
+    if (!TransactionIdIsValid(xmax))
+        return false;
 
     // If xmax is not committed, the tuple is not surely dead.
-    if (!TransactionIdDidCommit(xmax)) return false;
+    if (!TransactionIdDidCommit(xmax))
+        return false;
 
     // If xmax >= snapshot.xmin, the deletion might not be visible to all
     // active transactions — can't reclaim yet.
-    if (!TransactionIdPrecedes(xmax, snapshot.xmin)) return false;
+    if (!TransactionIdPrecedes(xmax, snapshot.xmin))
+        return false;
 
     // xmax is committed and older than snapshot.xmin — surely dead.
     return true;

@@ -13,8 +13,8 @@
 #include "mytoydb/catalog/pg_attribute.h"
 #include "mytoydb/catalog/pg_class.h"
 #include "mytoydb/catalog/syscache.h"
-#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/parser/parse_coerce.h"
 #include "mytoydb/parser/parse_type.h"
 #include "mytoydb/types/datum.h"
@@ -30,8 +30,8 @@ using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::Value;
 using mytoydb::nodes::nodeTag;
+using mytoydb::nodes::Value;
 
 static constexpr Oid kUnknownOid = 705;
 
@@ -39,8 +39,7 @@ static constexpr Oid kUnknownOid = 705;
 // buildRangeTblEntry — construct an RTE for a relation.
 // ---------------------------------------------------------------------------
 
-RangeTblEntry* buildRangeTblEntry(RangeVar* relation, Alias* alias,
-                                  bool inh, bool in_from_cl) {
+RangeTblEntry* buildRangeTblEntry(RangeVar* relation, Alias* alias, bool inh, bool in_from_cl) {
     auto* rte = makeNode<RangeTblEntry>();
     rte->rtekind = RTEKind::kRelation;
     rte->alias = alias;
@@ -53,8 +52,7 @@ RangeTblEntry* buildRangeTblEntry(RangeVar* relation, Alias* alias,
     char relkind = 'r';
 
     if (GetCatalog() != nullptr) {
-        const FormData_pg_class* rel =
-            GetCatalog()->GetClassByName(relation->relname);
+        const FormData_pg_class* rel = GetCatalog()->GetClassByName(relation->relname);
         if (rel != nullptr) {
             relid = rel->oid;
             relkind = static_cast<char>(rel->relkind);
@@ -62,8 +60,7 @@ RangeTblEntry* buildRangeTblEntry(RangeVar* relation, Alias* alias,
     }
 
     if (relid == kInvalidOid && GetSysCache() != nullptr) {
-        const FormData_pg_class* rel =
-            GetSysCache()->SearchClassByName(relation->relname, 0);
+        const FormData_pg_class* rel = GetSysCache()->SearchClassByName(relation->relname, 0);
         if (rel != nullptr) {
             relid = rel->oid;
             relkind = static_cast<char>(rel->relkind);
@@ -98,9 +95,8 @@ RangeTblEntry* buildRangeTblEntry(RangeVar* relation, Alias* alias,
 // addRangeTableEntry — create an RTE for a relation and add it to pstate.
 // ---------------------------------------------------------------------------
 
-RangeTblEntry* addRangeTableEntry(ParseState* pstate, RangeVar* relation,
-                                  Alias* alias, bool inh, bool in_from_cl,
-                                  int* rtindex) {
+RangeTblEntry* addRangeTableEntry(ParseState* pstate, RangeVar* relation, Alias* alias, bool inh,
+                                  bool in_from_cl, int* rtindex) {
     RangeTblEntry* rte = buildRangeTblEntry(relation, alias, inh, in_from_cl);
 
     // Add to the range table
@@ -114,10 +110,8 @@ RangeTblEntry* addRangeTableEntry(ParseState* pstate, RangeVar* relation,
 // addRangeTableEntryForSubquery — create an RTE for a subquery.
 // ---------------------------------------------------------------------------
 
-RangeTblEntry* addRangeTableEntryForSubquery(ParseState* pstate,
-                                             Query* subquery, Alias* alias,
-                                             bool lateral, bool in_from_cl,
-                                             int* rtindex) {
+RangeTblEntry* addRangeTableEntryForSubquery(ParseState* pstate, Query* subquery, Alias* alias,
+                                             bool lateral, bool in_from_cl, int* rtindex) {
     auto* rte = makeNode<RangeTblEntry>();
     rte->rtekind = RTEKind::kSubquery;
     rte->subquery = subquery;
@@ -149,9 +143,9 @@ RangeTblEntry* addRangeTableEntryForSubquery(ParseState* pstate,
 // refnameRangeTblEntry — find an RTE by alias name in the range table.
 // ---------------------------------------------------------------------------
 
-RangeTblEntry* refnameRangeTblEntry(ParseState* pstate, const char* refname,
-                                    int* sublevels_up) {
-    if (sublevels_up) *sublevels_up = 0;
+RangeTblEntry* refnameRangeTblEntry(ParseState* pstate, const char* refname, int* sublevels_up) {
+    if (sublevels_up)
+        *sublevels_up = 0;
 
     for (size_t i = 0; i < pstate->p_rtable.size(); ++i) {
         RangeTblEntry* rte = static_cast<RangeTblEntry*>(pstate->p_rtable[i]);
@@ -170,11 +164,13 @@ RangeTblEntry* refnameRangeTblEntry(ParseState* pstate, const char* refname,
         for (size_t i = 0; i < parent->p_rtable.size(); ++i) {
             RangeTblEntry* rte = static_cast<RangeTblEntry*>(parent->p_rtable[i]);
             if (rte->alias && rte->alias->aliasname == refname) {
-                if (sublevels_up) *sublevels_up = level;
+                if (sublevels_up)
+                    *sublevels_up = level;
                 return rte;
             }
             if (rte->eref && rte->eref->aliasname == refname) {
-                if (sublevels_up) *sublevels_up = level;
+                if (sublevels_up)
+                    *sublevels_up = level;
                 return rte;
             }
         }
@@ -189,15 +185,15 @@ RangeTblEntry* refnameRangeTblEntry(ParseState* pstate, const char* refname,
 // scanRTEForColumn — search an RTE for a column matching the given name.
 // ---------------------------------------------------------------------------
 
-Node* scanRTEForColumn(ParseState* pstate, RangeTblEntry* rte,
-                       const std::string& colname, int location) {
-    if (rte == nullptr) return nullptr;
+Node* scanRTEForColumn(ParseState* pstate, RangeTblEntry* rte, const std::string& colname,
+                       int location) {
+    if (rte == nullptr)
+        return nullptr;
 
     // For relation RTEs, look up the column in the catalog
     if (rte->rtekind == RTEKind::kRelation && rte->relid != kInvalidOid) {
         if (GetCatalog() != nullptr) {
-            const FormData_pg_attribute* attr =
-                GetCatalog()->GetAttribute(rte->relid, 0);
+            const FormData_pg_attribute* attr = GetCatalog()->GetAttribute(rte->relid, 0);
             (void)attr;  // placeholder
 
             // Search through all attributes
@@ -212,8 +208,7 @@ Node* scanRTEForColumn(ParseState* pstate, RangeTblEntry* rte,
                             break;
                         }
                     }
-                    return makeVar(rtindex, a->attnum, a->atttypid,
-                                   a->atttypmod, 0, 0, location);
+                    return makeVar(rtindex, a->attnum, a->atttypid, a->atttypmod, 0, 0, location);
                 }
             }
         }
@@ -231,8 +226,7 @@ Node* scanRTEForColumn(ParseState* pstate, RangeTblEntry* rte,
                 Oid vartype = attr->atttypid;
                 int vartypmod = attr->atttypmod;
                 GetSysCache()->Release(attr);
-                return makeVar(rtindex, attr->attnum, vartype, vartypmod,
-                               0, 0, location);
+                return makeVar(rtindex, attr->attnum, vartype, vartypmod, 0, 0, location);
             }
         }
     }
@@ -251,8 +245,8 @@ Node* scanRTEForColumn(ParseState* pstate, RangeTblEntry* rte,
                             break;
                         }
                     }
-                    return makeVar(rtindex, attnum, exprType(tle->expr),
-                                   exprTypmod(tle->expr), 0, 0, location);
+                    return makeVar(rtindex, attnum, exprType(tle->expr), exprTypmod(tle->expr), 0,
+                                   0, location);
                 }
             }
             ++attnum;
@@ -294,12 +288,14 @@ Node* scanRTEForColumn(ParseState* pstate, RangeTblEntry* rte,
 // colNameToVar — search the namespace for a column matching the given name.
 // ---------------------------------------------------------------------------
 
-Node* colNameToVar(ParseState* pstate, const std::string& colname,
-                   bool localonly, int* sublevels_up) {
-    if (sublevels_up) *sublevels_up = 0;
+Node* colNameToVar(ParseState* pstate, const std::string& colname, bool localonly,
+                   int* sublevels_up) {
+    if (sublevels_up)
+        *sublevels_up = 0;
 
     for (ParseNamespaceItem* nsitem : pstate->p_namespace) {
-        if (nsitem == nullptr || !nsitem->p_cols_visible) continue;
+        if (nsitem == nullptr || !nsitem->p_cols_visible)
+            continue;
 
         Node* var = scanRTEForColumn(pstate, nsitem->p_rte, colname, -1);
         if (var != nullptr) {
@@ -317,14 +313,16 @@ Node* colNameToVar(ParseState* pstate, const std::string& colname,
         int level = 1;
         while (parent != nullptr) {
             for (ParseNamespaceItem* nsitem : parent->p_namespace) {
-                if (nsitem == nullptr || !nsitem->p_cols_visible) continue;
+                if (nsitem == nullptr || !nsitem->p_cols_visible)
+                    continue;
                 Node* var = scanRTEForColumn(parent, nsitem->p_rte, colname, -1);
                 if (var != nullptr) {
                     if (nodeTag(var) == NodeTag::kVar) {
                         auto* v = static_cast<Var*>(var);
                         v->varlevelsup = level;
                     }
-                    if (sublevels_up) *sublevels_up = level;
+                    if (sublevels_up)
+                        *sublevels_up = level;
                     return var;
                 }
             }
@@ -340,13 +338,13 @@ Node* colNameToVar(ParseState* pstate, const std::string& colname,
 // scanNameSpaceForColumn — search the namespace for an unqualified column.
 // ---------------------------------------------------------------------------
 
-Node* scanNameSpaceForColumn(ParseState* pstate, const std::string& colname,
-                             int location) {
+Node* scanNameSpaceForColumn(ParseState* pstate, const std::string& colname, int location) {
     Node* result = nullptr;
     int count = 0;
 
     for (ParseNamespaceItem* nsitem : pstate->p_namespace) {
-        if (nsitem == nullptr || !nsitem->p_cols_visible) continue;
+        if (nsitem == nullptr || !nsitem->p_cols_visible)
+            continue;
 
         Node* var = scanRTEForColumn(pstate, nsitem->p_rte, colname, location);
         if (var != nullptr) {
@@ -356,8 +354,7 @@ Node* scanNameSpaceForColumn(ParseState* pstate, const std::string& colname,
     }
 
     if (count > 1) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "column reference is ambiguous");
+        ereport(mytoydb::error::LogLevel::kError, "column reference is ambiguous");
     }
 
     return result;
@@ -367,8 +364,7 @@ Node* scanNameSpaceForColumn(ParseState* pstate, const std::string& colname,
 // expandRTE — expand a range table entry into a list of Vars (for SELECT *).
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> expandRTE(ParseState* pstate, RangeTblEntry* rte,
-                             int rtindex, int location) {
+std::vector<Node*> expandRTE(ParseState* pstate, RangeTblEntry* rte, int rtindex, int location) {
     std::vector<Node*> result;
 
     if (rte->rtekind == RTEKind::kRelation && rte->relid != kInvalidOid) {
@@ -376,8 +372,8 @@ std::vector<Node*> expandRTE(ParseState* pstate, RangeTblEntry* rte,
             auto attrs = GetCatalog()->GetAttributes(rte->relid);
             for (const auto* attr : attrs) {
                 if (attr->attnum > 0) {
-                    auto* var = makeVar(rtindex, attr->attnum, attr->atttypid,
-                                        attr->atttypmod, 0, 0, location);
+                    auto* var = makeVar(rtindex, attr->attnum, attr->atttypid, attr->atttypmod, 0,
+                                        0, location);
                     result.push_back(var);
                 }
             }
@@ -387,8 +383,8 @@ std::vector<Node*> expandRTE(ParseState* pstate, RangeTblEntry* rte,
         for (Node* tle_node : rte->subquery->target_list) {
             if (nodeTag(tle_node) == NodeTag::kTargetEntry) {
                 auto* tle = static_cast<TargetEntry*>(tle_node);
-                auto* var = makeVar(rtindex, attnum, exprType(tle->expr),
-                                    exprTypmod(tle->expr), 0, 0, location);
+                auto* var = makeVar(rtindex, attnum, exprType(tle->expr), exprTypmod(tle->expr), 0,
+                                    0, location);
                 result.push_back(var);
             }
             ++attnum;
@@ -402,8 +398,8 @@ std::vector<Node*> expandRTE(ParseState* pstate, RangeTblEntry* rte,
 // expandRelAttrs — expand a relation's attributes into Vars (for SELECT *).
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> expandRelAttrs(ParseState* pstate, RangeTblEntry* rte,
-                                  int rtindex, int location) {
+std::vector<Node*> expandRelAttrs(ParseState* pstate, RangeTblEntry* rte, int rtindex,
+                                  int location) {
     return expandRTE(pstate, rte, rtindex, location);
 }
 
@@ -411,8 +407,7 @@ std::vector<Node*> expandRelAttrs(ParseState* pstate, RangeTblEntry* rte,
 // addRTEToQuery — add an RTE to the namespace and joinlist.
 // ---------------------------------------------------------------------------
 
-void addRTEToQuery(ParseState* pstate, RangeTblEntry* rte,
-                   bool addToJoinList, bool addToNameSpace,
+void addRTEToQuery(ParseState* pstate, RangeTblEntry* rte, bool addToJoinList, bool addToNameSpace,
                    bool allowVLE) {
     int rtindex = 0;
     for (size_t i = 0; i < pstate->p_rtable.size(); ++i) {

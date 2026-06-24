@@ -4,42 +4,43 @@
 // Verifies that the page layout matches PostgreSQL's design: header,
 // line pointer array, free space, and tuple data.
 
+#include "mytoydb/storage/bufpage.h"
+
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <memory>
 
-#include "mytoydb/storage/bufpage.h"
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/common/error/elog.h"
 
-using mytoydb::storage::Page;
-using mytoydb::storage::PageHeader;
-using mytoydb::storage::PageHeaderData;
-using mytoydb::storage::ItemIdData;
-using mytoydb::storage::OffsetNumber;
+using mytoydb::memory::AllocSetContext;
 using mytoydb::storage::BlockNumber;
+using mytoydb::storage::ItemIdData;
+using mytoydb::storage::ItemIdGetFlags;
+using mytoydb::storage::ItemIdGetLength;
+using mytoydb::storage::ItemIdGetOffset;
+using mytoydb::storage::ItemIdIsNormal;
+using mytoydb::storage::ItemIdIsUsed;
 using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kPageHeaderSize;
 using mytoydb::storage::kInvalidOffsetNumber;
 using mytoydb::storage::kLPNormal;
 using mytoydb::storage::kLPUnused;
+using mytoydb::storage::kPageHeaderSize;
 using mytoydb::storage::kPageSizeVersion;
-using mytoydb::storage::PageInit;
+using mytoydb::storage::OffsetNumber;
+using mytoydb::storage::Page;
 using mytoydb::storage::PageAddItem;
-using mytoydb::storage::PageGetItemId;
-using mytoydb::storage::PageGetItem;
-using mytoydb::storage::PageGetMaxOffsetNumber;
-using mytoydb::storage::PageGetHeapFreeSpace;
-using mytoydb::storage::PageGetSpecialPointer;
 using mytoydb::storage::PageGetContents;
-using mytoydb::storage::ItemIdGetOffset;
-using mytoydb::storage::ItemIdGetLength;
-using mytoydb::storage::ItemIdGetFlags;
-using mytoydb::storage::ItemIdIsUsed;
-using mytoydb::storage::ItemIdIsNormal;
-using mytoydb::memory::AllocSetContext;
+using mytoydb::storage::PageGetHeapFreeSpace;
+using mytoydb::storage::PageGetItem;
+using mytoydb::storage::PageGetItemId;
+using mytoydb::storage::PageGetMaxOffsetNumber;
+using mytoydb::storage::PageGetSpecialPointer;
+using mytoydb::storage::PageHeader;
+using mytoydb::storage::PageHeaderData;
+using mytoydb::storage::PageInit;
 
 namespace {
 
@@ -115,8 +116,8 @@ TEST_F(BufPageTest, PageAddItemFirstItem) {
     PageInit(page_, kBlckSz, 0);
 
     char item_data[] = "hello world";
-    OffsetNumber offset = PageAddItem(page_, item_data, sizeof(item_data),
-                                      kInvalidOffsetNumber, true);
+    OffsetNumber offset =
+        PageAddItem(page_, item_data, sizeof(item_data), kInvalidOffsetNumber, true);
 
     EXPECT_EQ(offset, 1);
     EXPECT_EQ(PageGetMaxOffsetNumber(page_), 1);
@@ -140,12 +141,9 @@ TEST_F(BufPageTest, PageAddItemMultipleItems) {
     char item2[] = "second";
     char item3[] = "third";
 
-    OffsetNumber off1 = PageAddItem(page_, item1, sizeof(item1),
-                                    kInvalidOffsetNumber, true);
-    OffsetNumber off2 = PageAddItem(page_, item2, sizeof(item2),
-                                    kInvalidOffsetNumber, true);
-    OffsetNumber off3 = PageAddItem(page_, item3, sizeof(item3),
-                                    kInvalidOffsetNumber, true);
+    OffsetNumber off1 = PageAddItem(page_, item1, sizeof(item1), kInvalidOffsetNumber, true);
+    OffsetNumber off2 = PageAddItem(page_, item2, sizeof(item2), kInvalidOffsetNumber, true);
+    OffsetNumber off3 = PageAddItem(page_, item3, sizeof(item3), kInvalidOffsetNumber, true);
 
     EXPECT_EQ(off1, 1);
     EXPECT_EQ(off2, 2);
@@ -180,17 +178,17 @@ TEST_F(BufPageTest, PageAddItemFailsWhenFull) {
 
     int count = 0;
     while (true) {
-        OffsetNumber off = PageAddItem(page_, big_item, sizeof(big_item),
-                                       kInvalidOffsetNumber, true);
-        if (off == kInvalidOffsetNumber) break;
+        OffsetNumber off =
+            PageAddItem(page_, big_item, sizeof(big_item), kInvalidOffsetNumber, true);
+        if (off == kInvalidOffsetNumber)
+            break;
         ++count;
     }
 
     // Should have added at least 1 item.
     EXPECT_GE(count, 1);
     // The next add should fail.
-    EXPECT_EQ(PageAddItem(page_, big_item, sizeof(big_item),
-                          kInvalidOffsetNumber, true),
+    EXPECT_EQ(PageAddItem(page_, big_item, sizeof(big_item), kInvalidOffsetNumber, true),
               kInvalidOffsetNumber);
 }
 

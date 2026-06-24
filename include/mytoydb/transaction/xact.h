@@ -41,33 +41,33 @@ constexpr CommandId kInvalidCommandId = 0xFFFFFFFF;
 
 // TransState — low-level transaction state.
 enum class TransState {
-    kDefault,       // idle (no transaction active)
-    kStart,         // transaction starting
-    kInProgress,    // transaction in progress
-    kCommit,        // commit in progress
-    kAbort,         // abort in progress
-    kPrepare,       // prepare in progress (2PC; unused in MyToyDB)
+    kDefault,     // idle (no transaction active)
+    kStart,       // transaction starting
+    kInProgress,  // transaction in progress
+    kCommit,      // commit in progress
+    kAbort,       // abort in progress
+    kPrepare,     // prepare in progress (2PC; unused in MyToyDB)
 };
 
 // TBlockState — high-level transaction block state.
 // Tracks where we are in the BEGIN/COMMIT/SAVEPOINT state machine.
 enum class TBlockState {
-    kDefault,              // idle (no transaction block)
-    kStarted,              // single-query transaction (autocommit)
-    kBegin,                // BEGIN received, starting transaction block
-    kInProgress,           // inside a transaction block
-    kEnd,                  // COMMIT received, ending transaction block
-    kAbort,                // ROLLBACK received, aborting transaction block
-    kAbortEnd,             // abort completed
-    kAbortPending,         // abort pending (e.g., error during commit)
-    kSubBegin,             // SAVEPOINT received
-    kSubInProgress,        // inside a subtransaction
-    kSubRelease,           // RELEASE SAVEPOINT received
-    kSubCommit,            // committing a subtransaction
-    kSubAbort,             // ROLLBACK TO SAVEPOINT received
-    kSubAbortPending,      // abort pending in subtransaction
-    kSubRestart,           // ROLLBACK TO + re-entering subtransaction
-    kSubAbortRestart,      // abort during subtransaction restart
+    kDefault,          // idle (no transaction block)
+    kStarted,          // single-query transaction (autocommit)
+    kBegin,            // BEGIN received, starting transaction block
+    kInProgress,       // inside a transaction block
+    kEnd,              // COMMIT received, ending transaction block
+    kAbort,            // ROLLBACK received, aborting transaction block
+    kAbortEnd,         // abort completed
+    kAbortPending,     // abort pending (e.g., error during commit)
+    kSubBegin,         // SAVEPOINT received
+    kSubInProgress,    // inside a subtransaction
+    kSubRelease,       // RELEASE SAVEPOINT received
+    kSubCommit,        // committing a subtransaction
+    kSubAbort,         // ROLLBACK TO SAVEPOINT received
+    kSubAbortPending,  // abort pending in subtransaction
+    kSubRestart,       // ROLLBACK TO + re-entering subtransaction
+    kSubAbortRestart,  // abort during subtransaction restart
 };
 
 // TransactionStateData — per-transaction state record.
@@ -77,7 +77,7 @@ enum class TBlockState {
 struct TransactionStateData {
     TransactionId transaction_id = kInvalidTransactionId;
     SubTransactionId sub_transaction_id = kInvalidSubTransactionId;
-    std::string name;                    // savepoint name (empty for top-level)
+    std::string name;  // savepoint name (empty for top-level)
     int savepoint_level = 0;
     TransState state = TransState::kDefault;
     TBlockState block_state = TBlockState::kDefault;

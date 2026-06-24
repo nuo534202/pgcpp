@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/error/elog.h"
 
 namespace mytoydb::parser {
 
@@ -21,31 +21,36 @@ using mytoydb::nodes::nodeTag;
 // ---------------------------------------------------------------------------
 
 static bool contains_aggregate(Node* node) {
-    if (node == nullptr) return false;
+    if (node == nullptr)
+        return false;
 
     NodeTag tag = nodeTag(node);
-    if (tag == NodeTag::kAggref) return true;
+    if (tag == NodeTag::kAggref)
+        return true;
 
     // Recursively check child nodes
     switch (tag) {
         case NodeTag::kOpExpr: {
             auto* op = static_cast<OpExpr*>(node);
             for (Node* arg : op->args) {
-                if (contains_aggregate(arg)) return true;
+                if (contains_aggregate(arg))
+                    return true;
             }
             break;
         }
         case NodeTag::kFuncExpr: {
             auto* f = static_cast<FuncExpr*>(node);
             for (Node* arg : f->args) {
-                if (contains_aggregate(arg)) return true;
+                if (contains_aggregate(arg))
+                    return true;
             }
             break;
         }
         case NodeTag::kBoolExpr: {
             auto* b = static_cast<BoolExpr*>(node);
             for (Node* arg : b->args) {
-                if (contains_aggregate(arg)) return true;
+                if (contains_aggregate(arg))
+                    return true;
             }
             break;
         }
@@ -63,17 +68,22 @@ static bool contains_aggregate(Node* node) {
         }
         case NodeTag::kCaseExpr: {
             auto* c = static_cast<CaseExpr*>(node);
-            if (contains_aggregate(c->arg)) return true;
+            if (contains_aggregate(c->arg))
+                return true;
             for (Node* w : c->args) {
-                if (contains_aggregate(w)) return true;
+                if (contains_aggregate(w))
+                    return true;
             }
-            if (contains_aggregate(c->defresult)) return true;
+            if (contains_aggregate(c->defresult))
+                return true;
             break;
         }
         case NodeTag::kCaseWhen: {
             auto* w = static_cast<CaseWhen*>(node);
-            if (contains_aggregate(w->expr)) return true;
-            if (contains_aggregate(w->result)) return true;
+            if (contains_aggregate(w->expr))
+                return true;
+            if (contains_aggregate(w->result))
+                return true;
             break;
         }
         case NodeTag::kTargetEntry: {
@@ -92,7 +102,8 @@ static bool contains_aggregate(Node* node) {
 // ---------------------------------------------------------------------------
 
 int count_agg_clauses(Node* node) {
-    if (node == nullptr) return 0;
+    if (node == nullptr)
+        return 0;
 
     int count = 0;
     NodeTag tag = nodeTag(node);
@@ -170,8 +181,8 @@ int count_agg_clauses(Node* node) {
 // This is called from transformFuncCall after the Aggref node is created.
 // ---------------------------------------------------------------------------
 
-Node* transformAggregateCall(ParseState* pstate, Aggref* agg,
-                             std::vector<Node*>& args, int location) {
+Node* transformAggregateCall(ParseState* pstate, Aggref* agg, std::vector<Node*>& args,
+                             int location) {
     // The Aggref node is already built by transformFuncCall.
     // Here we just set the pstate flag and return the node.
     pstate->p_has_aggs = true;
@@ -184,8 +195,7 @@ Node* transformAggregateCall(ParseState* pstate, Aggref* agg,
 // ---------------------------------------------------------------------------
 
 void parseCheckAggregates(ParseState* pstate, Query* qry) {
-    if (!pstate->p_has_aggs && qry->group_clause.empty() &&
-        qry->having_qual == nullptr) {
+    if (!pstate->p_has_aggs && qry->group_clause.empty() && qry->having_qual == nullptr) {
         return;
     }
 

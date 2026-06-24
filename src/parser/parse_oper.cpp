@@ -50,10 +50,11 @@ namespace {
 // Returns the pg_operator row, or nullptr if no exact match exists.
 // MyToyDB has a single namespace for built-ins, so the namespace search
 // in the original is omitted.
-const FormData_pg_operator* OpernameGetOprid(const std::string& opname,
-                                              Oid left_type, Oid right_type) {
+const FormData_pg_operator* OpernameGetOprid(const std::string& opname, Oid left_type,
+                                             Oid right_type) {
     Catalog* cat = GetCatalog();
-    if (cat == nullptr) return nullptr;
+    if (cat == nullptr)
+        return nullptr;
     return cat->GetOperator(opname, left_type, right_type);
 }
 
@@ -62,10 +63,10 @@ const FormData_pg_operator* OpernameGetOprid(const std::string& opname,
 // Mirrors PostgreSQL's OpernameGetCandidates. Returns candidates in
 // catalog insertion order (PostgreSQL returns them in a List; order
 // matters for tie-breaking in oper_select_candidate).
-std::vector<const FormData_pg_operator*>
-OpernameGetCandidates(const std::string& opname) {
+std::vector<const FormData_pg_operator*> OpernameGetCandidates(const std::string& opname) {
     Catalog* cat = GetCatalog();
-    if (cat == nullptr) return {};
+    if (cat == nullptr)
+        return {};
     return cat->GetOperatorsByName(opname);
 }
 
@@ -81,8 +82,8 @@ OpernameGetCandidates(const std::string& opname) {
 //      unknown literals to text for string-category operators. For
 //      arithmetic operators the caller will coerce to a common numeric
 //      type via make_op's fallback.
-const FormData_pg_operator*
-binary_oper_exact(const std::string& opname, Oid left_type, Oid right_type) {
+const FormData_pg_operator* binary_oper_exact(const std::string& opname, Oid left_type,
+                                              Oid right_type) {
     // Step 1: exact match.
     if (const FormData_pg_operator* op = OpernameGetOprid(opname, left_type, right_type))
         return op;
@@ -116,9 +117,7 @@ binary_oper_exact(const std::string& opname, Oid left_type, Oid right_type) {
 //   String category:  text
 //   Datetime category: timestamp
 bool IsTypePreferred(Oid type_oid) {
-    return type_oid == kFloat8Oid ||
-           type_oid == kTextOid ||
-           type_oid == kTimestampOid;
+    return type_oid == kFloat8Oid || type_oid == kTextOid || type_oid == kTimestampOid;
 }
 
 // oper_select_candidate — select the best operator from candidates.
@@ -134,10 +133,10 @@ bool IsTypePreferred(Oid type_oid) {
 //   4. If still ambiguous, return the first viable candidate.
 //      (PostgreSQL errors on ambiguity; MyToyDB's limited type set
 //      makes this rare and the fallback avoids false errors.)
-const FormData_pg_operator*
-oper_select_candidate(const std::vector<const FormData_pg_operator*>& candidates,
-                      Oid left_type, Oid right_type) {
-    if (candidates.empty()) return nullptr;
+const FormData_pg_operator* oper_select_candidate(
+    const std::vector<const FormData_pg_operator*>& candidates, Oid left_type, Oid right_type) {
+    if (candidates.empty())
+        return nullptr;
 
     // Step 1: exact match.
     for (const auto* op : candidates) {
@@ -153,17 +152,18 @@ oper_select_candidate(const std::vector<const FormData_pg_operator*>& candidates
             viable.push_back(op);
         }
     }
-    if (viable.empty()) return nullptr;
-    if (viable.size() == 1) return viable[0];
+    if (viable.empty())
+        return nullptr;
+    if (viable.size() == 1)
+        return viable[0];
 
     // Step 3: prefer candidates using preferred types for unknown sides.
     if (left_type == kUnknownOid || right_type == kUnknownOid) {
         for (const auto* op : viable) {
-            bool left_ok = (left_type != kUnknownOid) ||
-                           IsTypePreferred(op->oprleft);
-            bool right_ok = (right_type != kUnknownOid) ||
-                            IsTypePreferred(op->oprright);
-            if (left_ok && right_ok) return op;
+            bool left_ok = (left_type != kUnknownOid) || IsTypePreferred(op->oprleft);
+            bool right_ok = (right_type != kUnknownOid) || IsTypePreferred(op->oprright);
+            if (left_ok && right_ok)
+                return op;
         }
     }
 
@@ -187,9 +187,8 @@ bool IsOperatorShell(const FormData_pg_operator* op) {
 //
 // `ltree` and `rtree` are in/out parameters: if coercion is applied, they
 // are updated to the coerced expressions.
-const FormData_pg_operator*
-SelectOperator(ParseState* pstate, const std::string& opname,
-               Node*& ltree, Node*& rtree, int location) {
+const FormData_pg_operator* SelectOperator(ParseState* pstate, const std::string& opname,
+                                           Node*& ltree, Node*& rtree, int location) {
     Oid left_type = exprType(ltree);
     Oid right_type = exprType(rtree);
 
@@ -239,8 +238,7 @@ SelectOperator(ParseState* pstate, const std::string& opname,
 // opno == 0 if no match is found (callers should check).
 // ---------------------------------------------------------------------------
 
-OperatorResult lookup_operator(const std::string& opname,
-                               Oid left_type, Oid right_type) {
+OperatorResult lookup_operator(const std::string& opname, Oid left_type, Oid right_type) {
     OperatorResult result;
 
     const FormData_pg_operator* op = binary_oper_exact(opname, left_type, right_type);
@@ -275,8 +273,8 @@ OperatorResult lookup_operator(const std::string& opname,
 //      MyToyDB's coercion is handled inline by SelectOperator.)
 // ---------------------------------------------------------------------------
 
-Node* make_op(ParseState* pstate, const std::string& opname,
-              Node* ltree, Node* rtree, int location) {
+Node* make_op(ParseState* pstate, const std::string& opname, Node* ltree, Node* rtree,
+              int location) {
     // Steps 1-3: select the operator (may coerce ltree/rtree).
     const FormData_pg_operator* op = SelectOperator(pstate, opname, ltree, rtree, location);
 
@@ -289,8 +287,7 @@ Node* make_op(ParseState* pstate, const std::string& opname,
 
     // Step 5: reject shell operators.
     if (IsOperatorShell(op)) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "operator is only a shell");
+        ereport(mytoydb::error::LogLevel::kError, "operator is only a shell");
         return nullptr;
     }
 
@@ -305,17 +302,17 @@ Node* make_op(ParseState* pstate, const std::string& opname,
     // executor receives arguments of the declared types.
     Oid left_actual = exprType(ltree);
     if (left_actual != op->oprleft) {
-        Node* coerced = coerce_type(pstate, ltree, left_actual, op->oprleft,
-                                    -1, CoercionContext::kImplicit,
-                                    CoercionForm::kImplicit, location);
-        if (coerced != nullptr) ltree = coerced;
+        Node* coerced = coerce_type(pstate, ltree, left_actual, op->oprleft, -1,
+                                    CoercionContext::kImplicit, CoercionForm::kImplicit, location);
+        if (coerced != nullptr)
+            ltree = coerced;
     }
     Oid right_actual = exprType(rtree);
     if (right_actual != op->oprright) {
-        Node* coerced = coerce_type(pstate, rtree, right_actual, op->oprright,
-                                    -1, CoercionContext::kImplicit,
-                                    CoercionForm::kImplicit, location);
-        if (coerced != nullptr) rtree = coerced;
+        Node* coerced = coerce_type(pstate, rtree, right_actual, op->oprright, -1,
+                                    CoercionContext::kImplicit, CoercionForm::kImplicit, location);
+        if (coerced != nullptr)
+            rtree = coerced;
     }
 
     // Step 7: build the OpExpr.
@@ -342,8 +339,8 @@ Node* make_op(ParseState* pstate, const std::string& opname,
 // are resolved to text.
 // ---------------------------------------------------------------------------
 
-Node* make_scalar_array_op(ParseState* pstate, const std::string& opname,
-                           bool useOr, Node* ltree, Node* rtree, int location) {
+Node* make_scalar_array_op(ParseState* pstate, const std::string& opname, bool useOr, Node* ltree,
+                           Node* rtree, int location) {
     Oid left_type = exprType(ltree);
 
     // Look up the operator with both args as the left type.
@@ -366,14 +363,12 @@ Node* make_scalar_array_op(ParseState* pstate, const std::string& opname,
     }
 
     if (op == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "operator does not exist for IN/ANY expression");
+        ereport(mytoydb::error::LogLevel::kError, "operator does not exist for IN/ANY expression");
         return nullptr;
     }
 
     if (IsOperatorShell(op)) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "operator is only a shell");
+        ereport(mytoydb::error::LogLevel::kError, "operator is only a shell");
         return nullptr;
     }
 

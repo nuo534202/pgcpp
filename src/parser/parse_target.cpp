@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/parser/parse_coerce.h"
 #include "mytoydb/parser/parse_expr.h"
 #include "mytoydb/parser/parse_relation.h"
@@ -22,8 +22,8 @@ using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::Value;
 using mytoydb::nodes::nodeTag;
+using mytoydb::nodes::Value;
 using mytoydb::types::kBoolOid;
 using mytoydb::types::kInt4Oid;
 using mytoydb::types::kInt8Oid;
@@ -37,7 +37,8 @@ static constexpr Oid kUnknownOid = 705;
 // ---------------------------------------------------------------------------
 
 static std::string FigureColname(Node* node) {
-    if (node == nullptr) return "?column?";
+    if (node == nullptr)
+        return "?column?";
 
     NodeTag tag = nodeTag(node);
     switch (tag) {
@@ -95,26 +96,25 @@ static std::string FigureColname(Node* node) {
 // Helper: ExpandColumnRefStar — expand "table.*" into individual Vars.
 // ---------------------------------------------------------------------------
 
-static std::vector<Node*> ExpandColumnRefStar(ParseState* pstate,
-                                              ColumnRef* cref) {
+static std::vector<Node*> ExpandColumnRefStar(ParseState* pstate, ColumnRef* cref) {
     std::vector<Node*> result;
 
-    if (cref->fields.size() < 2) return result;
+    if (cref->fields.size() < 2)
+        return result;
 
     // Get the table name (first field)
     Node* field0 = cref->fields[0];
-    if (nodeTag(field0) != NodeTag::kString) return result;
+    if (nodeTag(field0) != NodeTag::kString)
+        return result;
 
     auto* v = static_cast<Value*>(field0);
     const std::string& tblname = v->GetString();
 
     // Find the RTE by table name
     int sublevels_up = 0;
-    RangeTblEntry* rte = refnameRangeTblEntry(pstate, tblname.c_str(),
-                                              &sublevels_up);
+    RangeTblEntry* rte = refnameRangeTblEntry(pstate, tblname.c_str(), &sublevels_up);
     if (rte == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "table does not exist for star expansion");
+        ereport(mytoydb::error::LogLevel::kError, "table does not exist for star expansion");
         return result;
     }
 
@@ -138,21 +138,21 @@ static std::vector<Node*> ExpandAllTables(ParseState* pstate, int location) {
     std::vector<Node*> result;
 
     for (ParseNamespaceItem* nsitem : pstate->p_namespace) {
-        if (nsitem == nullptr || !nsitem->p_cols_visible) continue;
+        if (nsitem == nullptr || !nsitem->p_cols_visible)
+            continue;
 
         RangeTblEntry* rte = nsitem->p_rte;
-        if (rte == nullptr) continue;
+        if (rte == nullptr)
+            continue;
 
-        std::vector<Node*> expanded = expandRTE(pstate, rte,
-                                                nsitem->p_rtindex, location);
+        std::vector<Node*> expanded = expandRTE(pstate, rte, nsitem->p_rtindex, location);
         for (Node* var : expanded) {
             result.push_back(var);
         }
     }
 
     if (result.empty()) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "SELECT * with no tables specified is not valid");
+        ereport(mytoydb::error::LogLevel::kError, "SELECT * with no tables specified is not valid");
     }
 
     return result;
@@ -162,8 +162,7 @@ static std::vector<Node*> ExpandAllTables(ParseState* pstate, int location) {
 // transformTargetEntry — transform a single ResTarget into a TargetEntry.
 // ---------------------------------------------------------------------------
 
-TargetEntry* transformTargetEntry(ParseState* pstate, ResTarget* res,
-                                  ParseExprKind exprKind) {
+TargetEntry* transformTargetEntry(ParseState* pstate, ResTarget* res, ParseExprKind exprKind) {
     Node* expr = nullptr;
 
     // Transform the value expression
@@ -193,12 +192,12 @@ TargetEntry* transformTargetEntry(ParseState* pstate, ResTarget* res,
 // transformTargetList — transform a raw target list into TargetEntry list.
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> transformTargetList(ParseState* pstate,
-                                       std::vector<Node*> targetlist) {
+std::vector<Node*> transformTargetList(ParseState* pstate, std::vector<Node*> targetlist) {
     std::vector<Node*> result;
 
     for (Node* node : targetlist) {
-        if (nodeTag(node) != NodeTag::kResTarget) continue;
+        if (nodeTag(node) != NodeTag::kResTarget)
+            continue;
         auto* res = static_cast<ResTarget*>(node);
 
         // Check for bare "*" (star expansion of all tables)
@@ -212,15 +211,12 @@ std::vector<Node*> transformTargetList(ParseState* pstate,
                 if (nodeTag(var) == NodeTag::kVar) {
                     auto* v = static_cast<Var*>(var);
                     RangeTblEntry* rte = nullptr;
-                    if (v->varno > 0 &&
-                        v->varno <= static_cast<int>(pstate->p_rtable.size())) {
-                        rte = static_cast<RangeTblEntry*>(
-                            pstate->p_rtable[v->varno - 1]);
+                    if (v->varno > 0 && v->varno <= static_cast<int>(pstate->p_rtable.size())) {
+                        rte = static_cast<RangeTblEntry*>(pstate->p_rtable[v->varno - 1]);
                     }
                     if (rte != nullptr && rte->eref != nullptr) {
                         int attnum = v->varattno - 1;
-                        if (attnum >= 0 &&
-                            attnum < static_cast<int>(rte->eref->colnames.size())) {
+                        if (attnum >= 0 && attnum < static_cast<int>(rte->eref->colnames.size())) {
                             Node* cn = rte->eref->colnames[attnum];
                             if (nodeTag(cn) == NodeTag::kString) {
                                 auto* cnv = static_cast<Value*>(cn);
@@ -245,8 +241,7 @@ std::vector<Node*> transformTargetList(ParseState* pstate,
                 Node* last = cref->fields.back();
                 if (nodeTag(last) == NodeTag::kAStar) {
                     // Expand "table.*" into multiple TargetEntry items
-                    std::vector<Node*> expanded =
-                        ExpandColumnRefStar(pstate, cref);
+                    std::vector<Node*> expanded = ExpandColumnRefStar(pstate, cref);
                     for (Node* var : expanded) {
                         auto* tle = makeNode<TargetEntry>();
                         tle->expr = var;
@@ -258,8 +253,7 @@ std::vector<Node*> transformTargetList(ParseState* pstate,
                             RangeTblEntry* rte = nullptr;
                             if (v->varno > 0 &&
                                 v->varno <= static_cast<int>(pstate->p_rtable.size())) {
-                                rte = static_cast<RangeTblEntry*>(
-                                    pstate->p_rtable[v->varno - 1]);
+                                rte = static_cast<RangeTblEntry*>(pstate->p_rtable[v->varno - 1]);
                             }
                             if (rte != nullptr && rte->eref != nullptr) {
                                 int attnum = v->varattno - 1;
@@ -285,8 +279,7 @@ std::vector<Node*> transformTargetList(ParseState* pstate,
         }
 
         // Normal target entry
-        result.push_back(transformTargetEntry(pstate, res,
-                                              ParseExprKind::kSelectTarget));
+        result.push_back(transformTargetEntry(pstate, res, ParseExprKind::kSelectTarget));
     }
 
     return result;
@@ -297,8 +290,7 @@ std::vector<Node*> transformTargetList(ParseState* pstate,
 // (In our implementation, this is handled directly in transformTargetList.)
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> expandTargetList(ParseState* pstate,
-                                    std::vector<Node*> targetlist) {
+std::vector<Node*> expandTargetList(ParseState* pstate, std::vector<Node*> targetlist) {
     // Star expansion is already handled in transformTargetList.
     return targetlist;
 }
@@ -310,15 +302,14 @@ std::vector<Node*> expandTargetList(ParseState* pstate,
 
 void markTargetListOrigins(ParseState* pstate, std::vector<Node*>& targetlist) {
     for (Node* tle_node : targetlist) {
-        if (nodeTag(tle_node) != NodeTag::kTargetEntry) continue;
+        if (nodeTag(tle_node) != NodeTag::kTargetEntry)
+            continue;
         auto* tle = static_cast<TargetEntry*>(tle_node);
 
         if (tle->expr != nullptr && nodeTag(tle->expr) == NodeTag::kVar) {
             auto* var = static_cast<Var*>(tle->expr);
-            if (var->varno > 0 &&
-                var->varno <= static_cast<int>(pstate->p_rtable.size())) {
-                RangeTblEntry* rte = static_cast<RangeTblEntry*>(
-                    pstate->p_rtable[var->varno - 1]);
+            if (var->varno > 0 && var->varno <= static_cast<int>(pstate->p_rtable.size())) {
+                RangeTblEntry* rte = static_cast<RangeTblEntry*>(pstate->p_rtable[var->varno - 1]);
                 if (rte->rtekind == RTEKind::kRelation) {
                     tle->resorigtbl = rte->relid;
                     tle->resorigcol = var->varattno;
@@ -333,7 +324,8 @@ void markTargetListOrigins(ParseState* pstate, std::vector<Node*>& targetlist) {
 // ---------------------------------------------------------------------------
 
 int assignSortGroupRef(TargetEntry* tle, std::vector<Node*>& targetlist) {
-    if (tle->ressortgroupref != 0) return tle->ressortgroupref;
+    if (tle->ressortgroupref != 0)
+        return tle->ressortgroupref;
 
     // Find the maximum SortGroupRef in the target list
     int max_ref = 0;
@@ -357,11 +349,11 @@ int assignSortGroupRef(TargetEntry* tle, std::vector<Node*>& targetlist) {
 // ---------------------------------------------------------------------------
 
 TargetEntry* findTargetlistEntrySQL99(ParseState* pstate, Node* node,
-                                      std::vector<Node*>* targetlist,
-                                      ParseExprKind exprKind) {
+                                      std::vector<Node*>* targetlist, ParseExprKind exprKind) {
     // First, try to find a matching target entry by expression equality
     for (Node* tle_node : *targetlist) {
-        if (nodeTag(tle_node) != NodeTag::kTargetEntry) continue;
+        if (nodeTag(tle_node) != NodeTag::kTargetEntry)
+            continue;
         auto* tle = static_cast<TargetEntry*>(tle_node);
 
         // Simple match: if both are ColumnRef with the same name
@@ -391,22 +383,21 @@ TargetEntry* findTargetlistEntrySQL99(ParseState* pstate, Node* node,
 // transformSortClause — transform ORDER BY clause into SortGroupClause list.
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> transformSortClause(ParseState* pstate,
-                                       std::vector<Node*> orderlist,
-                                       std::vector<Node*>* targetlist,
-                                       ParseExprKind exprKind, bool useSQL99) {
+std::vector<Node*> transformSortClause(ParseState* pstate, std::vector<Node*> orderlist,
+                                       std::vector<Node*>* targetlist, ParseExprKind exprKind,
+                                       bool useSQL99) {
     std::vector<Node*> sortclauses;
 
     for (Node* node : orderlist) {
-        if (nodeTag(node) != NodeTag::kSortBy) continue;
+        if (nodeTag(node) != NodeTag::kSortBy)
+            continue;
         auto* sortby = static_cast<SortBy*>(node);
 
         TargetEntry* tle = nullptr;
 
         // Check if the sort expression is a simple column reference
         // that matches an existing target entry
-        if (sortby->node != nullptr &&
-            nodeTag(sortby->node) == NodeTag::kColumnRef) {
+        if (sortby->node != nullptr && nodeTag(sortby->node) == NodeTag::kColumnRef) {
             auto* cref = static_cast<ColumnRef*>(sortby->node);
             if (!cref->fields.empty()) {
                 Node* field0 = cref->fields[0];
@@ -416,7 +407,8 @@ std::vector<Node*> transformSortClause(ParseState* pstate,
 
                     // Search the target list for a matching column name
                     for (Node* tle_node : *targetlist) {
-                        if (nodeTag(tle_node) != NodeTag::kTargetEntry) continue;
+                        if (nodeTag(tle_node) != NodeTag::kTargetEntry)
+                            continue;
                         auto* t = static_cast<TargetEntry*>(tle_node);
                         if (t->resname == colname) {
                             tle = t;
@@ -442,11 +434,11 @@ std::vector<Node*> transformSortClause(ParseState* pstate,
 
         // If not found, create a new target entry (SQL99 style)
         if (tle == nullptr) {
-            tle = findTargetlistEntrySQL99(pstate, sortby->node, targetlist,
-                                           exprKind);
+            tle = findTargetlistEntrySQL99(pstate, sortby->node, targetlist, exprKind);
         }
 
-        if (tle == nullptr) continue;
+        if (tle == nullptr)
+            continue;
 
         // Assign a SortGroupRef if not already assigned
         assignSortGroupRef(tle, *targetlist);
@@ -468,22 +460,20 @@ std::vector<Node*> transformSortClause(ParseState* pstate,
 // transformGroupClause — transform GROUP BY clause into SortGroupClause list.
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> transformGroupClause(ParseState* pstate,
-                                        std::vector<Node*> grouplist,
+std::vector<Node*> transformGroupClause(ParseState* pstate, std::vector<Node*> grouplist,
                                         std::vector<Node*>* targetlist,
-                                        std::vector<Node*> sortClause,
-                                        ParseExprKind exprKind) {
+                                        std::vector<Node*> sortClause, ParseExprKind exprKind) {
     std::vector<Node*> groupclauses;
 
     for (Node* node : grouplist) {
-        if (nodeTag(node) != NodeTag::kSortBy) continue;
+        if (nodeTag(node) != NodeTag::kSortBy)
+            continue;
         auto* sortby = static_cast<SortBy*>(node);
 
         TargetEntry* tle = nullptr;
 
         // Check if the group expression is a simple column reference
-        if (sortby->node != nullptr &&
-            nodeTag(sortby->node) == NodeTag::kColumnRef) {
+        if (sortby->node != nullptr && nodeTag(sortby->node) == NodeTag::kColumnRef) {
             auto* cref = static_cast<ColumnRef*>(sortby->node);
             if (!cref->fields.empty()) {
                 Node* field0 = cref->fields[0];
@@ -493,7 +483,8 @@ std::vector<Node*> transformGroupClause(ParseState* pstate,
 
                     // Search the target list for a matching column name
                     for (Node* tle_node : *targetlist) {
-                        if (nodeTag(tle_node) != NodeTag::kTargetEntry) continue;
+                        if (nodeTag(tle_node) != NodeTag::kTargetEntry)
+                            continue;
                         auto* t = static_cast<TargetEntry*>(tle_node);
                         if (t->resname == colname) {
                             tle = t;
@@ -519,11 +510,11 @@ std::vector<Node*> transformGroupClause(ParseState* pstate,
 
         // If not found, create a new target entry
         if (tle == nullptr) {
-            tle = findTargetlistEntrySQL99(pstate, sortby->node, targetlist,
-                                           exprKind);
+            tle = findTargetlistEntrySQL99(pstate, sortby->node, targetlist, exprKind);
         }
 
-        if (tle == nullptr) continue;
+        if (tle == nullptr)
+            continue;
 
         // Assign a SortGroupRef if not already assigned
         assignSortGroupRef(tle, *targetlist);
@@ -546,18 +537,18 @@ std::vector<Node*> transformGroupClause(ParseState* pstate,
 // For SELECT DISTINCT, we use the entire target list as the distinct clause.
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> transformDistinctClause(ParseState* pstate,
-                                           std::vector<Node*>* targetlist,
-                                           std::vector<Node*> distinctClause,
-                                           bool isOn) {
+std::vector<Node*> transformDistinctClause(ParseState* pstate, std::vector<Node*>* targetlist,
+                                           std::vector<Node*> distinctClause, bool isOn) {
     std::vector<Node*> result;
 
     if (!isOn) {
         // SELECT DISTINCT — use all non-junk target entries
         for (Node* tle_node : *targetlist) {
-            if (nodeTag(tle_node) != NodeTag::kTargetEntry) continue;
+            if (nodeTag(tle_node) != NodeTag::kTargetEntry)
+                continue;
             auto* tle = static_cast<TargetEntry*>(tle_node);
-            if (tle->resjunk) continue;
+            if (tle->resjunk)
+                continue;
 
             assignSortGroupRef(tle, *targetlist);
 

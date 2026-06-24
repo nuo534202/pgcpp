@@ -35,13 +35,12 @@ std::unordered_map<mytoydb::catalog::Oid, Relation>& Relcache() {
 
 // Build a RelFileNodeBackend from a relfilenode OID.
 // Uses default tablespace (0) and database (16384) for MyToyDB.
-mytoydb::storage::RelFileNodeBackend MakeRelFileNodeBackend(
-    mytoydb::catalog::Oid relfilenode) {
+mytoydb::storage::RelFileNodeBackend MakeRelFileNodeBackend(mytoydb::catalog::Oid relfilenode) {
     mytoydb::storage::RelFileNodeBackend rnode;
-    rnode.node.spc_node = 0;       // default tablespace
-    rnode.node.db_node = 16384;    // default database OID
+    rnode.node.spc_node = 0;     // default tablespace
+    rnode.node.db_node = 16384;  // default database OID
     rnode.node.rel_node = relfilenode;
-    rnode.backend = 0;             // not a temp relation
+    rnode.backend = 0;  // not a temp relation
     return rnode;
 }
 
@@ -49,8 +48,7 @@ mytoydb::storage::RelFileNodeBackend MakeRelFileNodeBackend(
 
 // --- Tuple descriptor construction ---
 
-TupleDesc CreateTupleDesc(
-    const std::vector<mytoydb::catalog::FormData_pg_attribute>& attrs) {
+TupleDesc CreateTupleDesc(const std::vector<mytoydb::catalog::FormData_pg_attribute>& attrs) {
     void* mem = mytoydb::memory::palloc(sizeof(TupleDescData));
     TupleDesc desc = new (mem) TupleDescData();
     desc->natts = static_cast<int>(attrs.size());
@@ -71,8 +69,7 @@ Relation RelationOpen(mytoydb::catalog::Oid relid) {
 
     // Look up the pg_class row.
     mytoydb::catalog::Catalog* cat = mytoydb::catalog::GetCatalog();
-    const mytoydb::catalog::FormData_pg_class* pg_class =
-        cat->GetClassByOid(relid);
+    const mytoydb::catalog::FormData_pg_class* pg_class = cat->GetClassByOid(relid);
     if (pg_class == nullptr) {
         return nullptr;
     }
@@ -99,8 +96,7 @@ Relation RelationOpen(mytoydb::catalog::Oid relid) {
     // Open the storage manager handle (lazy: file is not created here).
     mytoydb::catalog::Oid relfilenode = pg_class->relfilenode;
     if (relfilenode != mytoydb::catalog::kInvalidOid) {
-        rel->rd_smgr = mytoydb::storage::smgropen(
-            MakeRelFileNodeBackend(relfilenode));
+        rel->rd_smgr = mytoydb::storage::smgropen(MakeRelFileNodeBackend(relfilenode));
     }
 
     cache[relid] = rel;
@@ -108,7 +104,8 @@ Relation RelationOpen(mytoydb::catalog::Oid relid) {
 }
 
 void RelationClose(Relation relation) {
-    if (relation == nullptr) return;
+    if (relation == nullptr)
+        return;
     relation->rd_refcnt--;
     // We keep the relation in the relcache even at refcnt 0 for reuse.
     // The relcache is cleared explicitly by ResetRelcache().
@@ -119,11 +116,9 @@ mytoydb::storage::SmgrRelation RelationGetSmgr(Relation relation) {
         mytoydb::catalog::Oid relfilenode = relation->rd_rel->relfilenode;
         if (relfilenode == mytoydb::catalog::kInvalidOid) {
             ereport(mytoydb::error::LogLevel::kError,
-                    "relation " + std::to_string(relation->rd_id) +
-                    " has no relfilenode");
+                    "relation " + std::to_string(relation->rd_id) + " has no relfilenode");
         }
-        relation->rd_smgr = mytoydb::storage::smgropen(
-            MakeRelFileNodeBackend(relfilenode));
+        relation->rd_smgr = mytoydb::storage::smgropen(MakeRelFileNodeBackend(relfilenode));
     }
     return relation->rd_smgr;
 }
@@ -131,8 +126,7 @@ mytoydb::storage::SmgrRelation RelationGetSmgr(Relation relation) {
 // --- Storage creation / destruction ---
 
 void RelationCreateStorage(mytoydb::catalog::Oid relfilenode, bool is_temp) {
-    mytoydb::storage::RelFileNodeBackend rnode =
-        MakeRelFileNodeBackend(relfilenode);
+    mytoydb::storage::RelFileNodeBackend rnode = MakeRelFileNodeBackend(relfilenode);
     if (is_temp) {
         rnode.backend = 1;  // MyBackendId
     }
@@ -150,12 +144,11 @@ void RelationDropStorage(Relation relation) {
     }
 }
 
-void RelationExtendStorage(Relation relation,
-                           mytoydb::storage::BlockNumber block_num,
+void RelationExtendStorage(Relation relation, mytoydb::storage::BlockNumber block_num,
                            const char* page_data) {
     mytoydb::storage::SmgrRelation srel = RelationGetSmgr(relation);
-    mytoydb::storage::smgrextend(srel, mytoydb::storage::ForkNumber::kMain,
-                                 block_num, page_data, false);
+    mytoydb::storage::smgrextend(srel, mytoydb::storage::ForkNumber::kMain, block_num, page_data,
+                                 false);
 }
 
 mytoydb::storage::BlockNumber RelationGetNumberOfBlocks(Relation relation) {

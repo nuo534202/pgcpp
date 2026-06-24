@@ -9,15 +9,16 @@
 // catalog + syscache, transaction system, buffer pool, storage directory,
 // and relcache. Each test creates a fresh index relation with btbuild.
 
-#include <gtest/gtest.h>
+#include "mytoydb/access/nbtree.h"
 
-#include <cstring>
-#include <cstdlib>
-#include <string>
+#include <gtest/gtest.h>
 #include <unistd.h>
 
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
 #include "mytoydb/access/nbtpage.h"
-#include "mytoydb/access/nbtree.h"
 #include "mytoydb/access/rel.h"
 #include "mytoydb/catalog/catalog.h"
 #include "mytoydb/catalog/pg_attribute.h"
@@ -32,43 +33,44 @@
 #include "mytoydb/transaction/transam.h"
 #include "mytoydb/transaction/xact.h"
 
-using mytoydb::access::BTItem;
-using mytoydb::access::BTItemData;
-using mytoydb::access::BTKeyKind;
-using mytoydb::access::BTScanDesc;
-using mytoydb::access::BTScanKeyData;
-using mytoydb::access::BTStrategy;
-using mytoydb::access::btbuild;
-using mytoydb::access::btbeginscan;
-using mytoydb::access::btendscan;
-using mytoydb::access::btgettuple;
-using mytoydb::access::btinsert;
-using mytoydb::access::btrescan;
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::kBtpLeaf;
-using mytoydb::access::kBtpMeta;
-using mytoydb::access::kBtpRoot;
-using mytoydb::access::kBtreeMagic;
-using mytoydb::access::kBTPageOpaqueSize;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::ResetRelcache;
 using mytoydb::access::_bt_build_item;
 using mytoydb::access::_bt_compare_int32;
 using mytoydb::access::_bt_compare_int64;
 using mytoydb::access::_bt_compare_keys;
 using mytoydb::access::_bt_compare_text;
+using mytoydb::access::_bt_get_meta;
 using mytoydb::access::_bt_init_meta_page;
 using mytoydb::access::_bt_init_page;
-using mytoydb::access::_bt_get_meta;
 using mytoydb::access::_bt_is_leaf_page;
 using mytoydb::access::_bt_is_root_page;
 using mytoydb::access::_bt_item_get_key;
 using mytoydb::access::_bt_item_get_key_len;
 using mytoydb::access::_bt_item_size;
 using mytoydb::access::_bt_page_getopaque;
+using mytoydb::access::btbeginscan;
+using mytoydb::access::btbuild;
+using mytoydb::access::btendscan;
+using mytoydb::access::btgettuple;
+using mytoydb::access::btinsert;
+using mytoydb::access::BTItem;
+using mytoydb::access::BTItemData;
+using mytoydb::access::BTKeyKind;
+using mytoydb::access::btrescan;
+using mytoydb::access::BTScanDesc;
+using mytoydb::access::BTScanKeyData;
+using mytoydb::access::BTStrategy;
+using mytoydb::access::InitializeRelcache;
+using mytoydb::access::kBTPageOpaqueSize;
+using mytoydb::access::kBtpLeaf;
+using mytoydb::access::kBtpMeta;
+using mytoydb::access::kBtpRoot;
+using mytoydb::access::kBtreeMagic;
+using mytoydb::access::Relation;
+using mytoydb::access::RelationClose;
+using mytoydb::access::RelationCreateStorage;
+using mytoydb::access::RelationGetNumberOfBlocks;
+using mytoydb::access::RelationOpen;
+using mytoydb::access::ResetRelcache;
 using mytoydb::catalog::Catalog;
 using mytoydb::catalog::FormData_pg_class;
 using mytoydb::catalog::GetCatalog;
@@ -87,7 +89,6 @@ using mytoydb::storage::SetStorageBaseDir;
 using mytoydb::storage::ShutdownBufferPool;
 using mytoydb::storage::smgrcloseall;
 using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::access::RelationGetNumberOfBlocks;
 using mytoydb::transaction::ItemPointerData;
 using mytoydb::transaction::ResetTransactionState;
 using mytoydb::transaction::TransactionId;
@@ -139,8 +140,8 @@ protected:
 
     // Helper: build a pg_class row for an index relation.
     FormData_pg_class* MakeIndexClassRow(const std::string& name, Oid oid) {
-        auto* row = static_cast<FormData_pg_class*>(
-            mytoydb::memory::palloc(sizeof(FormData_pg_class)));
+        auto* row =
+            static_cast<FormData_pg_class*>(mytoydb::memory::palloc(sizeof(FormData_pg_class)));
         new (row) FormData_pg_class();
         row->oid = oid;
         row->relname = name;
@@ -166,9 +167,7 @@ protected:
         return tid;
     }
 
-    static void RunShell(const std::string& cmd) {
-        std::system(cmd.c_str());
-    }
+    static void RunShell(const std::string& cmd) { std::system(cmd.c_str()); }
 
     AllocSetContext* context_ = nullptr;
     Catalog* catalog_ = nullptr;
@@ -263,8 +262,7 @@ TEST_F(NbtreeTest, BuildItemInt32) {
     EXPECT_EQ(size, static_cast<uint16_t>(sizeof(BTItemData) + 4));
     EXPECT_EQ(item->tid, tid);
 
-    const int32_t* stored_key = reinterpret_cast<const int32_t*>(
-        _bt_item_get_key(item));
+    const int32_t* stored_key = reinterpret_cast<const int32_t*>(_bt_item_get_key(item));
     EXPECT_EQ(*stored_key, 42);
     EXPECT_EQ(_bt_item_get_key_len(size), 4u);
 }
@@ -406,7 +404,8 @@ TEST_F(NbtreeTest, InsertDuplicateKeys) {
 
     BTScanDesc scan = btbeginscan(rel, BTKeyKind::kInt32, nullptr);
     int count = 0;
-    while (btgettuple(scan)) count++;
+    while (btgettuple(scan))
+        count++;
     EXPECT_EQ(count, 3);
     btendscan(scan);
 
@@ -490,7 +489,8 @@ TEST_F(NbtreeTest, GreaterEqualScan) {
 
     BTScanDesc scan = btbeginscan(rel, BTKeyKind::kInt32, &scan_key);
     int count = 0;
-    while (btgettuple(scan)) count++;
+    while (btgettuple(scan))
+        count++;
     // Keys >= 60: 60, 70, 80, 90, 100 → 5 entries.
     EXPECT_EQ(count, 5);
     btendscan(scan);
@@ -518,7 +518,8 @@ TEST_F(NbtreeTest, LessScan) {
 
     BTScanDesc scan = btbeginscan(rel, BTKeyKind::kInt32, &scan_key);
     int count = 0;
-    while (btgettuple(scan)) count++;
+    while (btgettuple(scan))
+        count++;
     // Keys < 50: 10, 20, 30, 40 → 4 entries.
     EXPECT_EQ(count, 4);
     btendscan(scan);
@@ -548,7 +549,8 @@ TEST_F(NbtreeTest, RescanRestartsFromBeginning) {
     btrescan(scan, nullptr);
 
     int count = 0;
-    while (btgettuple(scan)) count++;
+    while (btgettuple(scan))
+        count++;
     EXPECT_EQ(count, 5);
     btendscan(scan);
 
@@ -593,8 +595,7 @@ TEST_F(NbtreeTest, InsertAndScanText) {
     for (int i = 0; i < 5; i++) {
         ItemPointerData tid = MakeTid(0, static_cast<uint16_t>(i + 1));
         size_t len = std::strlen(keys[i]);
-        ASSERT_TRUE(btinsert(rel, BTKeyKind::kText, keys[i],
-                             static_cast<uint16_t>(len), tid));
+        ASSERT_TRUE(btinsert(rel, BTKeyKind::kText, keys[i], static_cast<uint16_t>(len), tid));
     }
 
     // Full scan — should return in alphabetical order.
@@ -621,8 +622,7 @@ TEST_F(NbtreeTest, EqualityScanText) {
     for (int i = 0; i < 3; i++) {
         ItemPointerData tid = MakeTid(0, static_cast<uint16_t>(i + 1));
         size_t len = std::strlen(keys[i]);
-        ASSERT_TRUE(btinsert(rel, BTKeyKind::kText, keys[i],
-                             static_cast<uint16_t>(len), tid));
+        ASSERT_TRUE(btinsert(rel, BTKeyKind::kText, keys[i], static_cast<uint16_t>(len), tid));
     }
 
     const char* search = "banana";
@@ -655,10 +655,9 @@ TEST_F(NbtreeTest, RootLeafSplitPreservesAllEntries) {
     const int kCount = 1000;
     for (int i = 0; i < kCount; i++) {
         int32_t key = i;
-        ItemPointerData tid = MakeTid(static_cast<BlockNumber>(i / 100),
-                                       static_cast<uint16_t>(i % 100 + 1));
-        ASSERT_TRUE(btinsert(rel, BTKeyKind::kInt32, &key, 4, tid))
-            << "Failed at key " << i;
+        ItemPointerData tid =
+            MakeTid(static_cast<BlockNumber>(i / 100), static_cast<uint16_t>(i % 100 + 1));
+        ASSERT_TRUE(btinsert(rel, BTKeyKind::kInt32, &key, 4, tid)) << "Failed at key " << i;
     }
 
     // After the split, the index should have more than 2 blocks.
@@ -673,8 +672,7 @@ TEST_F(NbtreeTest, RootLeafSplitPreservesAllEntries) {
         // So key = (block * 100) + (offset - 1).
         int key = static_cast<int>(scan->curr_tid.ip_blkid) * 100 +
                   static_cast<int>(scan->curr_tid.ip_posid) - 1;
-        EXPECT_EQ(key, last_key + 1)
-            << "Out of order at count " << count;
+        EXPECT_EQ(key, last_key + 1) << "Out of order at count " << count;
         last_key = key;
         count++;
     }
@@ -692,8 +690,8 @@ TEST_F(NbtreeTest, EqualityScanAfterSplit) {
     // Insert enough to force a split (1000 > ~509 entries per page).
     for (int i = 0; i < 1000; i++) {
         int32_t key = i;
-        ItemPointerData tid = MakeTid(static_cast<BlockNumber>(i / 100),
-                                       static_cast<uint16_t>(i % 100 + 1));
+        ItemPointerData tid =
+            MakeTid(static_cast<BlockNumber>(i / 100), static_cast<uint16_t>(i % 100 + 1));
         ASSERT_TRUE(btinsert(rel, BTKeyKind::kInt32, &key, 4, tid));
     }
 

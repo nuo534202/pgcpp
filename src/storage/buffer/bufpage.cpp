@@ -36,8 +36,8 @@ void PageInit(Page page, int page_size, int special_size) {
     phdr->pd_prune_xid = 0;
 }
 
-OffsetNumber PageAddItem(Page page, Item item, Size size,
-                         OffsetNumber offset_number, bool is_heap) {
+OffsetNumber PageAddItem(Page page, Item item, Size size, OffsetNumber offset_number,
+                         bool is_heap) {
     auto* phdr = reinterpret_cast<PageHeader>(page);
     int lower = phdr->pd_lower;
     int upper = phdr->pd_upper;
@@ -77,8 +77,7 @@ OffsetNumber PageAddItem(Page page, Item item, Size size,
     }
 
     // Set up the line pointer.
-    ItemIdData* item_id = reinterpret_cast<ItemIdData*>(
-        page + kPageHeaderSize) + item_id_index;
+    ItemIdData* item_id = reinterpret_cast<ItemIdData*>(page + kPageHeaderSize) + item_id_index;
     item_id->li_off = static_cast<uint32_t>(item_offset);
     item_id->li_flags = kLPNormal;
     item_id->li_len = static_cast<uint32_t>(size);
@@ -100,7 +99,8 @@ int PageGetHeapFreeSpace(Page page) {
     // Align down to 4 bytes (sizeof(ItemIdData)).
     space &= ~(sizeof(ItemIdData) - 1);
 
-    if (space < 0) space = 0;
+    if (space < 0)
+        space = 0;
     return space;
 }
 

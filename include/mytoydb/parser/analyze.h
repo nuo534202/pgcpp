@@ -18,8 +18,7 @@ using mytoydb::nodes::Node;
 
 // parse_analyze — transform a list of RawStmt nodes into a list of Query nodes.
 // This is the main entry point for parse analysis.
-std::vector<Query*> parse_analyze(std::vector<RawStmt*> parse_trees,
-                                  const char* source_string);
+std::vector<Query*> parse_analyze(std::vector<RawStmt*> parse_trees, const char* source_string);
 
 // parse_analyze_varparams — like parse_analyze but allows variable parameters.
 std::vector<Query*> parse_analyze_varparams(std::vector<RawStmt*> parse_trees,

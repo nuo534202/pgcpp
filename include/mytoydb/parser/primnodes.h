@@ -76,7 +76,9 @@ constexpr int kOuterVar = -2;
 constexpr int kIndexVar = -3;
 constexpr int kRowidVar = -4;
 
-inline bool IsSpecialVarno(int varno) { return varno < 0; }
+inline bool IsSpecialVarno(int varno) {
+    return varno < 0;
+}
 
 // ---------------------------------------------------------------------------
 // Expr — base class for executable expression nodes.
@@ -103,15 +105,15 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    int varno = 0;           // range table index, or INNER_VAR/OUTER_VAR/etc
-    int varattno = 0;        // attribute number (0 = whole-row Var)
-    Oid vartype = 0;         // pg_type OID for the type of this var
-    int vartypmod = -1;      // pg_attribute typmod value
-    Oid varcollid = 0;       // OID of collation, or InvalidOid if none
-    int varlevelsup = 0;     // >0 means N levels up in subquery
-    int varnosyn = 0;        // syntactic relation index (0 if unknown)
-    int varattnosyn = 0;     // syntactic attribute number
-    int location = -1;       // token location, or -1 if unknown
+    int varno = 0;        // range table index, or INNER_VAR/OUTER_VAR/etc
+    int varattno = 0;     // attribute number (0 = whole-row Var)
+    Oid vartype = 0;      // pg_type OID for the type of this var
+    int vartypmod = -1;   // pg_attribute typmod value
+    Oid varcollid = 0;    // OID of collation, or InvalidOid if none
+    int varlevelsup = 0;  // >0 means N levels up in subquery
+    int varnosyn = 0;     // syntactic relation index (0 if unknown)
+    int varattnosyn = 0;  // syntactic attribute number
+    int location = -1;    // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -125,14 +127,14 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Oid consttype = 0;            // pg_type OID of the constant's datatype
-    int consttypmod = -1;         // typmod value, if any
-    Oid constcollid = 0;          // OID of collation, or InvalidOid if none
-    int constlen = 0;             // typlen of the constant's datatype
+    Oid consttype = 0;                     // pg_type OID of the constant's datatype
+    int consttypmod = -1;                  // typmod value, if any
+    Oid constcollid = 0;                   // OID of collation, or InvalidOid if none
+    int constlen = 0;                      // typlen of the constant's datatype
     mytoydb::types::Datum constvalue = 0;  // the constant's value
-    bool constisnull = false;     // whether the constant is null
-    bool constbyval = false;      // whether this datatype is passed by value
-    int location = -1;            // token location, or -1 if unknown
+    bool constisnull = false;              // whether the constant is null
+    bool constbyval = false;               // whether this datatype is passed by value
+    int location = -1;                     // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -147,11 +149,11 @@ public:
     bool Equals(const Node& other) const override;
 
     ParamKind paramkind = ParamKind::kExtern;
-    int paramid = 0;          // numeric ID for parameter
-    Oid paramtype = 0;        // pg_type OID of parameter's datatype
-    int paramtypmod = -1;     // typmod value, if known
-    Oid paramcollid = 0;      // OID of collation, or InvalidOid if none
-    int location = -1;        // token location, or -1 if unknown
+    int paramid = 0;       // numeric ID for parameter
+    Oid paramtype = 0;     // pg_type OID of parameter's datatype
+    int paramtypmod = -1;  // typmod value, if known
+    Oid paramcollid = 0;   // OID of collation, or InvalidOid if none
+    int location = -1;     // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -186,10 +188,10 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Oid funcid = 0;           // PG_PROC OID of the function
-    Oid funcresulttype = 0;   // PG_TYPE OID of result value
-    bool funcretset = false;  // true if function returns set
-    bool funcvariadic = false; // true if variadic arguments combined into array
+    Oid funcid = 0;             // PG_PROC OID of the function
+    Oid funcresulttype = 0;     // PG_TYPE OID of result value
+    bool funcretset = false;    // true if function returns set
+    bool funcvariadic = false;  // true if variadic arguments combined into array
     CoercionForm funcformat = CoercionForm::kImplicit;
     Oid funccollid = 0;       // OID of collation of result
     Oid inputcollid = 0;      // OID of collation that function should use
@@ -208,25 +210,25 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Oid aggfnoid = 0;         // pg_proc Oid of the aggregate
-    Oid aggtype = 0;          // type Oid of result of the aggregate
-    Oid aggcollid = 0;        // OID of collation of result
-    Oid inputcollid = 0;      // OID of collation that function should use
-    Oid aggtranstype = 0;     // type Oid of aggregate's transition value
-    std::vector<Node*> aggargtypes;  // type Oids of direct and aggregated args
-    std::vector<Node*> aggdirectargs; // direct arguments, if ordered-set agg
-    std::vector<Node*> args;  // aggregated arguments and sort expressions
-    std::vector<Node*> aggorder;    // ORDER BY (list of SortGroupClause)
-    std::vector<Node*> aggdistinct; // DISTINCT (list of SortGroupClause)
-    Node* aggfilter = nullptr;      // FILTER expression, if any
-    bool aggstar = false;     // true if argument list was really '*'
-    bool aggvariadic = false; // true if variadic arguments combined into array
-    char aggkind = 0;         // aggregate kind (see pg_aggregate.h)
-    int agglevelsup = 0;      // > 0 if agg belongs to outer query
+    Oid aggfnoid = 0;                  // pg_proc Oid of the aggregate
+    Oid aggtype = 0;                   // type Oid of result of the aggregate
+    Oid aggcollid = 0;                 // OID of collation of result
+    Oid inputcollid = 0;               // OID of collation that function should use
+    Oid aggtranstype = 0;              // type Oid of aggregate's transition value
+    std::vector<Node*> aggargtypes;    // type Oids of direct and aggregated args
+    std::vector<Node*> aggdirectargs;  // direct arguments, if ordered-set agg
+    std::vector<Node*> args;           // aggregated arguments and sort expressions
+    std::vector<Node*> aggorder;       // ORDER BY (list of SortGroupClause)
+    std::vector<Node*> aggdistinct;    // DISTINCT (list of SortGroupClause)
+    Node* aggfilter = nullptr;         // FILTER expression, if any
+    bool aggstar = false;              // true if argument list was really '*'
+    bool aggvariadic = false;          // true if variadic arguments combined into array
+    char aggkind = 0;                  // aggregate kind (see pg_aggregate.h)
+    int agglevelsup = 0;               // > 0 if agg belongs to outer query
     AggSplit aggsplit = AggSplit::kSimple;
-    int aggno = -1;           // unique ID within the Agg node
-    int aggtransno = 0;       // unique ID of transition state in the Agg
-    int location = -1;        // token location, or -1 if unknown
+    int aggno = -1;      // unique ID within the Agg node
+    int aggtransno = 0;  // unique ID of transition state in the Agg
+    int location = -1;   // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -256,10 +258,10 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Node* arg = nullptr;           // input expression
+    Node* arg = nullptr;  // input expression
     NullTestType nulltesttype = NullTestType::kIsNull;
-    bool argisrow = false;         // T to perform field-by-field null checks
-    int location = -1;             // token location, or -1 if unknown
+    bool argisrow = false;  // T to perform field-by-field null checks
+    int location = -1;      // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -273,9 +275,9 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Node* arg = nullptr;           // input expression
+    Node* arg = nullptr;  // input expression
     BoolTestType booltesttype = BoolTestType::kIsTrue;
-    int location = -1;             // token location, or -1 if unknown
+    int location = -1;  // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -289,12 +291,12 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Oid casetype = 0;         // type of expression result
-    Oid casecollid = 0;       // OID of collation, or InvalidOid if none
-    Node* arg = nullptr;      // implicit equality comparison argument
-    std::vector<Node*> args;  // the arguments (list of CaseWhen)
-    Node* defresult = nullptr; // the default result (ELSE clause)
-    int location = -1;        // token location, or -1 if unknown
+    Oid casetype = 0;           // type of expression result
+    Oid casecollid = 0;         // OID of collation, or InvalidOid if none
+    Node* arg = nullptr;        // implicit equality comparison argument
+    std::vector<Node*> args;    // the arguments (list of CaseWhen)
+    Node* defresult = nullptr;  // the default result (ELSE clause)
+    int location = -1;          // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -308,9 +310,9 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Node* expr = nullptr;     // condition expression
-    Node* result = nullptr;   // substitution result
-    int location = -1;        // token location, or -1 if unknown
+    Node* expr = nullptr;    // condition expression
+    Node* result = nullptr;  // substitution result
+    int location = -1;       // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -325,11 +327,11 @@ public:
     bool Equals(const Node& other) const override;
 
     SubLinkType sublinktype = SubLinkType::kExpr;
-    int sublinkid = 0;        // ID (1..n); 0 if not MULTIEXPR
-    Node* testexpr = nullptr; // outer-query test for ALL/ANY/ROWCOMPARE
-    std::vector<Node*> opername; // originally specified operator name
-    Node* subselect = nullptr;   // subselect as Query* or raw parsetree
-    int location = -1;        // token location, or -1 if unknown
+    int sublinkid = 0;            // ID (1..n); 0 if not MULTIEXPR
+    Node* testexpr = nullptr;     // outer-query test for ALL/ANY/ROWCOMPARE
+    std::vector<Node*> opername;  // originally specified operator name
+    Node* subselect = nullptr;    // subselect as Query* or raw parsetree
+    int location = -1;            // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -343,12 +345,12 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Node* arg = nullptr;           // input expression
-    Oid resulttype = 0;            // output type of coercion expression
-    int resulttypmod = -1;         // output typmod (usually -1)
-    Oid resultcollid = 0;          // OID of collation, or InvalidOid if none
+    Node* arg = nullptr;    // input expression
+    Oid resulttype = 0;     // output type of coercion expression
+    int resulttypmod = -1;  // output typmod (usually -1)
+    Oid resultcollid = 0;   // OID of collation, or InvalidOid if none
     CoercionForm relabelformat = CoercionForm::kImplicit;
-    int location = -1;             // token location, or -1 if unknown
+    int location = -1;  // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -362,11 +364,11 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Node* arg = nullptr;           // input expression
-    Oid resulttype = 0;            // output type of coercion
-    Oid resultcollid = 0;          // OID of collation, or InvalidOid if none
+    Node* arg = nullptr;   // input expression
+    Oid resulttype = 0;    // output type of coercion
+    Oid resultcollid = 0;  // OID of collation, or InvalidOid if none
     CoercionForm coerceformat = CoercionForm::kImplicit;
-    int location = -1;             // token location, or -1 if unknown
+    int location = -1;  // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -401,12 +403,12 @@ public:
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Node* arg = nullptr;           // input expression
-    Oid resulttype = 0;            // domain type ID (result type)
-    int resulttypmod = -1;         // output typmod (currently always -1)
-    Oid resultcollid = 0;          // OID of collation, or InvalidOid if none
+    Node* arg = nullptr;    // input expression
+    Oid resulttype = 0;     // domain type ID (result type)
+    int resulttypmod = -1;  // output typmod (currently always -1)
+    Oid resultcollid = 0;   // OID of collation, or InvalidOid if none
     CoercionForm coercionformat = CoercionForm::kImplicit;
-    int location = -1;             // token location, or -1 if unknown
+    int location = -1;  // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -455,14 +457,14 @@ public:
     bool Equals(const Node& other) const override;
 
     JoinType jointype = JoinType::kInner;
-    bool is_natural = false;       // Natural join?
-    Node* larg = nullptr;          // left subtree
-    Node* rarg = nullptr;          // right subtree
-    std::vector<Node*> using_clause; // USING clause (list of String)
-    Alias* join_using_alias = nullptr; // alias attached to USING clause
-    Node* quals = nullptr;         // qualifiers on join, if any
-    Alias* alias = nullptr;        // user-written alias clause, if any
-    int rtindex = 0;               // RT index assigned for join, or 0
+    bool is_natural = false;            // Natural join?
+    Node* larg = nullptr;               // left subtree
+    Node* rarg = nullptr;               // right subtree
+    std::vector<Node*> using_clause;    // USING clause (list of String)
+    Alias* join_using_alias = nullptr;  // alias attached to USING clause
+    Node* quals = nullptr;              // qualifiers on join, if any
+    Alias* alias = nullptr;             // user-written alias clause, if any
+    int rtindex = 0;                    // RT index assigned for join, or 0
 };
 
 // ---------------------------------------------------------------------------
@@ -485,7 +487,7 @@ public:
 // PostgreSQL-compatible helper: palloc + placement new.
 // ---------------------------------------------------------------------------
 
-template <typename T>
+template<typename T>
 T* makeNode() {
     void* mem = mytoydb::memory::palloc(sizeof(T));
     return new (mem) T();
@@ -495,12 +497,11 @@ T* makeNode() {
 // makeVar / makeConst / makeOpExpr / makeFuncExpr — convenience constructors.
 // ---------------------------------------------------------------------------
 
-Var* makeVar(int varno, int varattno, Oid vartype, int vartypmod,
-             Oid varcollid, int varlevelsup, int location);
+Var* makeVar(int varno, int varattno, Oid vartype, int vartypmod, Oid varcollid, int varlevelsup,
+             int location);
 
 Const* makeConst(Oid consttype, int consttypmod, Oid constcollid, int constlen,
-                 mytoydb::types::Datum constvalue, bool constisnull,
-                 bool constbyval, int location);
+                 mytoydb::types::Datum constvalue, bool constisnull, bool constbyval, int location);
 
 Const* makeNullConst(Oid consttype, int consttypmod, Oid constcollid);
 

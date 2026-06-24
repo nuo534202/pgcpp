@@ -5,6 +5,8 @@
 // C++ parser. Also implements BisonParser::error() since the grammar
 // file (gram.yy) has an empty epilogue.
 
+#include "mytoydb/parser/parser.h"
+
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -12,7 +14,6 @@
 #include "gram.tab.hpp"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/parser/parser_driver.h"
-#include "mytoydb/parser/parser.h"
 
 // BisonParser::error — called by the Bison parser on syntax errors.
 // We must NOT ereport(ERROR) here because the longjmp would skip the
@@ -20,8 +21,7 @@
 // leaking its internal std::vector stacks. Instead we report at WARNING
 // level and let raw_parser escalate to ERROR after the parser object is
 // safely destructed.
-void mytoydb_parser::BisonParser::error(const location_type& loc,
-                                        const std::string& msg) {
+void mytoydb_parser::BisonParser::error(const location_type& loc, const std::string& msg) {
     std::fprintf(stderr, "syntax error at location %d: %s\n", loc, msg.c_str());
 }
 
@@ -36,14 +36,14 @@ std::vector<RawStmt*> raw_parser(const std::string& str) {
     driver.scanpos = 0;
 
     mytoydb_parser::BisonParser parser(driver);
-    if (::getenv("YYDEBUG")) parser.set_debug_level(1);
+    if (::getenv("YYDEBUG"))
+        parser.set_debug_level(1);
     int result = parser.parse();
 
     if (result != 0) {
         // The parser's error handler already printed the message to stderr.
         // Now that the parser object is destructed, escalate to ERROR.
-        ereport(mytoydb::error::LogLevel::kError,
-                "syntax error in input SQL");
+        ereport(mytoydb::error::LogLevel::kError, "syntax error in input SQL");
     }
 
     return driver.parsetree;

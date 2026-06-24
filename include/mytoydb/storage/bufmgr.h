@@ -28,17 +28,17 @@ namespace mytoydb::storage {
 // MyToyDB implements only BAS_NORMAL (clock sweep). The enum is preserved
 // for API compatibility.
 enum class BufferAccessStrategy {
-    kNormal,      // BAS_NORMAL — normal clock sweep
-    kBulkRead,    // BAS_BULKREAD — bulk read (reuse ring)
-    kBulkWrite,   // BAS_BULKWRITE — bulk write (reuse ring)
-    kVacuum,      // BAS_VACUUM — vacuum (reuse ring)
+    kNormal,     // BAS_NORMAL — normal clock sweep
+    kBulkRead,   // BAS_BULKREAD — bulk read (reuse ring)
+    kBulkWrite,  // BAS_BULKWRITE — bulk write (reuse ring)
+    kVacuum,     // BAS_VACUUM — vacuum (reuse ring)
 };
 
 // ReadBufferMode — controls how ReadBuffer handles missing pages.
 enum class ReadBufferMode {
-    kNormal,       // RBM_NORMAL — read existing page, error if missing
-    kZero,         // RBM_ZERO — return zeroed page without I/O
-    kNoLock,       // RBM_NO_LOG — don't log (not used in MyToyDB)
+    kNormal,  // RBM_NORMAL — read existing page, error if missing
+    kZero,    // RBM_ZERO — return zeroed page without I/O
+    kNoLock,  // RBM_NO_LOG — don't log (not used in MyToyDB)
 };
 
 // ReadBuffer — read a page into the buffer pool and pin it.
@@ -55,15 +55,14 @@ enum class ReadBufferMode {
 //   strategy — buffer access strategy (currently unused, always normal)
 //
 // Returns the buffer handle (1-based), or kInvalidBuffer on error.
-Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num,
-                  BlockNumber block_num, ReadBufferMode mode,
+Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block_num,
+                  ReadBufferMode mode,
                   BufferAccessStrategy strategy = BufferAccessStrategy::kNormal);
 
 // ReadBufferExtended — same as ReadBuffer but with explicit strategy.
 // (In MyToyDB, this is the same as ReadBuffer with the strategy parameter.)
-Buffer ReadBufferExtended(SmgrRelation smgr_reln, ForkNumber fork_num,
-                          BlockNumber block_num, ReadBufferMode mode,
-                          BufferAccessStrategy strategy);
+Buffer ReadBufferExtended(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block_num,
+                          ReadBufferMode mode, BufferAccessStrategy strategy);
 
 // ReleaseBuffer — unpin a buffer (decrement refcount).
 // The buffer remains in the pool and may be evicted later by the clock sweep.

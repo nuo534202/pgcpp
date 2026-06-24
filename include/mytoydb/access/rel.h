@@ -39,7 +39,8 @@ struct TupleDescData {
     // Convenience accessor.
     const mytoydb::catalog::FormData_pg_attribute* Attr(int attnum) const {
         // attnum is 1-based for user attributes.
-        if (attnum < 1 || attnum > natts) return nullptr;
+        if (attnum < 1 || attnum > natts)
+            return nullptr;
         return &attrs[attnum - 1];
     }
 };
@@ -99,8 +100,7 @@ mytoydb::storage::SmgrRelation RelationGetSmgr(Relation relation);
 // RelationCreateStorage — create the physical storage file for a relation.
 // Uses the relfilenode from pg_class to build a RelFileNode and calls
 // smgrcreate. The relation must already have a pg_class entry.
-void RelationCreateStorage(mytoydb::catalog::Oid relfilenode,
-                           bool is_temp);
+void RelationCreateStorage(mytoydb::catalog::Oid relfilenode, bool is_temp);
 
 // RelationDropStorage — drop the physical storage for a relation.
 // Closes the smgr handle and removes the file. Does not remove the
@@ -121,8 +121,7 @@ mytoydb::storage::BlockNumber RelationGetNumberOfBlocks(Relation relation);
 // CreateTupleDesc — build a TupleDesc from a list of attributes.
 // The attributes are copied into the descriptor. natts is set from the
 // vector size.
-TupleDesc CreateTupleDesc(
-    const std::vector<mytoydb::catalog::FormData_pg_attribute>& attrs);
+TupleDesc CreateTupleDesc(const std::vector<mytoydb::catalog::FormData_pg_attribute>& attrs);
 
 // --- Relcache management ---
 

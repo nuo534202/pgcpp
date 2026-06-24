@@ -36,13 +36,13 @@ const bool kConflictMatrix[kNumLockModes + 1][kNumLockModes + 1] = {
     //              AS     RS     RE     SUE    S      SRE    E      AE
     /* NoLock  */ {false, false, false, false, false, false, false, false, false},
     /* AS      */ {false, false, false, false, false, false, false, false, true},
-    /* RS      */ {false, false, false, false, false, false, false, true,  true},
-    /* RE      */ {false, false, false, false, false, true,  true,  true,  true},
-    /* SUE     */ {false, false, false, false, true,  true,  true,  true,  true},
-    /* S       */ {false, false, false, true,  true,  false, true,  true,  true},
-    /* SRE     */ {false, false, false, true,  true,  true,  true,  true,  true},
-    /* E       */ {false, false, true,  true,  true,  true,  true,  true,  true},
-    /* AE      */ {true,  true,  true,  true,  true,  true,  true,  true,  true},
+    /* RS      */ {false, false, false, false, false, false, false, true, true},
+    /* RE      */ {false, false, false, false, false, true, true, true, true},
+    /* SUE     */ {false, false, false, false, true, true, true, true, true},
+    /* S       */ {false, false, false, true, true, false, true, true, true},
+    /* SRE     */ {false, false, false, true, true, true, true, true, true},
+    /* E       */ {false, false, true, true, true, true, true, true, true},
+    /* AE      */ {true, true, true, true, true, true, true, true, true},
 };
 
 // A held lock entry.

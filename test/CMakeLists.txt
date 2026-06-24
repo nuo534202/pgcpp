@@ -59,3 +59,6 @@ mytoydb_add_test(lock_test unit/transaction/lock_test.cpp)
 # Phase 8 tests (M8: access methods)
 mytoydb_add_test(heapam_test unit/access/heapam_test.cpp)
 mytoydb_add_test(nbtree_test unit/access/nbtree_test.cpp)
+
+# Phase 9 tests (M9: executor)
+mytoydb_add_test(executor_test unit/executor/executor_test.cpp)

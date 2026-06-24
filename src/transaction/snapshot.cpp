@@ -31,7 +31,8 @@ SnapshotData* active_snapshot = nullptr;
 }  // namespace
 
 void GetSnapshotData(SnapshotData* snapshot) {
-    if (snapshot == nullptr) return;
+    if (snapshot == nullptr)
+        return;
 
     snapshot->snapshot_type = SnapshotType::kMVCC;
 
@@ -65,8 +66,7 @@ void GetSnapshotData(SnapshotData* snapshot) {
 
 Snapshot GetLatestSnapshot() {
     // Allocate in the current memory context.
-    auto* snap = static_cast<SnapshotData*>(
-        mytoydb::memory::palloc(sizeof(SnapshotData)));
+    auto* snap = static_cast<SnapshotData*>(mytoydb::memory::palloc(sizeof(SnapshotData)));
     new (snap) SnapshotData();
     GetSnapshotData(snap);
     return snap;

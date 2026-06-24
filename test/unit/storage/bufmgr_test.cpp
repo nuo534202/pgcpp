@@ -4,56 +4,57 @@
 // eviction (clock sweep), and dirty page writeback. Uses a small buffer
 // pool to force eviction scenarios.
 
-#include <gtest/gtest.h>
+#include "mytoydb/storage/bufmgr.h"
 
-#include <cstring>
-#include <cstdlib>
-#include <string>
+#include <gtest/gtest.h>
 #include <unistd.h>
 
-#include "mytoydb/storage/bufmgr.h"
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#include "mytoydb/common/error/elog.h"
+#include "mytoydb/common/memory/alloc_set.h"
+#include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/storage/buf_internals.h"
 #include "mytoydb/storage/bufpage.h"
 #include "mytoydb/storage/smgr.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/common/error/elog.h"
 
-using mytoydb::storage::Buffer;
-using mytoydb::storage::BufferPool;
-using mytoydb::storage::BufferDesc;
-using mytoydb::storage::BufferTag;
-using mytoydb::storage::SmgrRelation;
-using mytoydb::storage::RelFileNode;
-using mytoydb::storage::RelFileNodeBackend;
-using mytoydb::storage::ForkNumber;
+using mytoydb::memory::AllocSetContext;
 using mytoydb::storage::BlockNumber;
-using mytoydb::storage::Page;
-using mytoydb::storage::PageHeader;
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kPageHeaderSize;
-using mytoydb::storage::kInvalidBuffer;
-using mytoydb::storage::PageInit;
-using mytoydb::storage::ReadBuffer;
-using mytoydb::storage::ReleaseBuffer;
-using mytoydb::storage::MarkBufferDirty;
+using mytoydb::storage::Buffer;
+using mytoydb::storage::BufferAccessStrategy;
+using mytoydb::storage::BufferDesc;
 using mytoydb::storage::BufferGetPage;
+using mytoydb::storage::BufferPool;
+using mytoydb::storage::BufferTag;
 using mytoydb::storage::FlushBuffer;
 using mytoydb::storage::FlushRelationBuffers;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::ShutdownBufferPool;
+using mytoydb::storage::ForkNumber;
 using mytoydb::storage::GetBufferPool;
-using mytoydb::storage::SetBufferPool;
+using mytoydb::storage::InitBufferPool;
+using mytoydb::storage::kBlckSz;
+using mytoydb::storage::kInvalidBuffer;
+using mytoydb::storage::kPageHeaderSize;
+using mytoydb::storage::MarkBufferDirty;
+using mytoydb::storage::Page;
+using mytoydb::storage::PageHeader;
+using mytoydb::storage::PageInit;
+using mytoydb::storage::ReadBuffer;
 using mytoydb::storage::ReadBufferMode;
-using mytoydb::storage::BufferAccessStrategy;
-using mytoydb::storage::smgropen;
+using mytoydb::storage::ReleaseBuffer;
+using mytoydb::storage::RelFileNode;
+using mytoydb::storage::RelFileNodeBackend;
+using mytoydb::storage::SetBufferPool;
+using mytoydb::storage::SetStorageBaseDir;
+using mytoydb::storage::ShutdownBufferPool;
 using mytoydb::storage::smgrclose;
 using mytoydb::storage::smgrcloseall;
 using mytoydb::storage::smgrcreate;
 using mytoydb::storage::smgrextend;
 using mytoydb::storage::smgrnblocks;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::memory::AllocSetContext;
+using mytoydb::storage::smgropen;
+using mytoydb::storage::SmgrRelation;
 
 namespace {
 
@@ -117,16 +118,14 @@ protected:
 // --- ReadBuffer basic tests ---
 
 TEST_F(BufMgrTest, ReadBufferReturnsValidBuffer) {
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                            ReadBufferMode::kNormal);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
     EXPECT_NE(buf, kInvalidBuffer);
     EXPECT_GT(buf, 0);
     ReleaseBuffer(buf);
 }
 
 TEST_F(BufMgrTest, ReadBufferGetPageReturnsPagePointer) {
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                            ReadBufferMode::kNormal);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
     Page page = BufferGetPage(buf);
     EXPECT_NE(page, nullptr);
 
@@ -139,13 +138,11 @@ TEST_F(BufMgrTest, ReadBufferGetPageReturnsPagePointer) {
 
 TEST_F(BufMgrTest, ReadBufferHitReturnsSameBuffer) {
     // First read: buffer miss, reads from disk.
-    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                             ReadBufferMode::kNormal);
+    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
     ReleaseBuffer(buf1);
 
     // Second read: buffer hit, should return the same buffer.
-    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                             ReadBufferMode::kNormal);
+    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
     EXPECT_EQ(buf1, buf2);
     ReleaseBuffer(buf2);
 }
@@ -154,10 +151,8 @@ TEST_F(BufMgrTest, ReadBufferDifferentBlocksReturnDifferentBuffers) {
     // Extend the relation to have 2 blocks.
     ExtendRelation(1);
 
-    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                             ReadBufferMode::kNormal);
-    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 1,
-                             ReadBufferMode::kNormal);
+    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 1, ReadBufferMode::kNormal);
     EXPECT_NE(buf1, buf2);
 
     ReleaseBuffer(buf1);
@@ -172,8 +167,7 @@ TEST_F(BufMgrTest, ReadBufferZeroReturnsZeroedPage) {
     // First, we need to extend the file so the block exists.
     ExtendRelation(1);
 
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 1,
-                            ReadBufferMode::kZero);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 1, ReadBufferMode::kZero);
     Page page = BufferGetPage(buf);
 
     // The page should be all zeros (RBM_ZERO doesn't call PageInit).
@@ -187,8 +181,7 @@ TEST_F(BufMgrTest, ReadBufferZeroReturnsZeroedPage) {
 // --- ReleaseBuffer / pin count tests ---
 
 TEST_F(BufMgrTest, ReleaseBufferDecrementsRefcount) {
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                            ReadBufferMode::kNormal);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
 
     BufferPool* pool = GetBufferPool();
     BufferDesc* desc = pool->GetBufferDesc(buf);
@@ -199,10 +192,8 @@ TEST_F(BufMgrTest, ReleaseBufferDecrementsRefcount) {
 }
 
 TEST_F(BufMgrTest, MultiplePinsIncrementRefcount) {
-    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                             ReadBufferMode::kNormal);
-    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                             ReadBufferMode::kNormal);
+    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
 
     // Same buffer, should have refcount = 2.
     EXPECT_EQ(buf1, buf2);
@@ -219,8 +210,7 @@ TEST_F(BufMgrTest, MultiplePinsIncrementRefcount) {
 // --- MarkBufferDirty tests ---
 
 TEST_F(BufMgrTest, MarkBufferDirtySetsDirtyFlag) {
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                            ReadBufferMode::kNormal);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
 
     BufferPool* pool = GetBufferPool();
     BufferDesc* desc = pool->GetBufferDesc(buf);
@@ -233,8 +223,7 @@ TEST_F(BufMgrTest, MarkBufferDirtySetsDirtyFlag) {
 }
 
 TEST_F(BufMgrTest, FlushBufferClearsDirtyFlag) {
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                            ReadBufferMode::kNormal);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
     MarkBufferDirty(buf);
 
     BufferPool* pool = GetBufferPool();
@@ -255,14 +244,10 @@ TEST_F(BufMgrTest, EvictionReusesBufferSlot) {
     ExtendRelation(2);
     ExtendRelation(3);
 
-    Buffer buf0 = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                             ReadBufferMode::kNormal);
-    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 1,
-                             ReadBufferMode::kNormal);
-    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 2,
-                             ReadBufferMode::kNormal);
-    Buffer buf3 = ReadBuffer(reln_, ForkNumber::kMain, 3,
-                             ReadBufferMode::kNormal);
+    Buffer buf0 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 1, ReadBufferMode::kNormal);
+    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 2, ReadBufferMode::kNormal);
+    Buffer buf3 = ReadBuffer(reln_, ForkNumber::kMain, 3, ReadBufferMode::kNormal);
 
     // All 4 slots are now used. Release all.
     ReleaseBuffer(buf0);
@@ -272,8 +257,7 @@ TEST_F(BufMgrTest, EvictionReusesBufferSlot) {
 
     // Read a 5th block — should evict one of the existing buffers.
     ExtendRelation(4);
-    Buffer buf4 = ReadBuffer(reln_, ForkNumber::kMain, 4,
-                             ReadBufferMode::kNormal);
+    Buffer buf4 = ReadBuffer(reln_, ForkNumber::kMain, 4, ReadBufferMode::kNormal);
     EXPECT_NE(buf4, kInvalidBuffer);
 
     ReleaseBuffer(buf4);
@@ -281,8 +265,7 @@ TEST_F(BufMgrTest, EvictionReusesBufferSlot) {
 
 TEST_F(BufMgrTest, DirtyEvictionFlushesToDisk) {
     // Read block 0, modify it, mark dirty, release.
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                            ReadBufferMode::kNormal);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
     Page page = BufferGetPage(buf);
     // Write some data into the page.
     std::memcpy(page + kPageHeaderSize, "dirty data", 10);
@@ -295,14 +278,10 @@ TEST_F(BufMgrTest, DirtyEvictionFlushesToDisk) {
     ExtendRelation(3);
     ExtendRelation(4);
 
-    Buffer b1 = ReadBuffer(reln_, ForkNumber::kMain, 1,
-                           ReadBufferMode::kNormal);
-    Buffer b2 = ReadBuffer(reln_, ForkNumber::kMain, 2,
-                           ReadBufferMode::kNormal);
-    Buffer b3 = ReadBuffer(reln_, ForkNumber::kMain, 3,
-                           ReadBufferMode::kNormal);
-    Buffer b4 = ReadBuffer(reln_, ForkNumber::kMain, 4,
-                           ReadBufferMode::kNormal);
+    Buffer b1 = ReadBuffer(reln_, ForkNumber::kMain, 1, ReadBufferMode::kNormal);
+    Buffer b2 = ReadBuffer(reln_, ForkNumber::kMain, 2, ReadBufferMode::kNormal);
+    Buffer b3 = ReadBuffer(reln_, ForkNumber::kMain, 3, ReadBufferMode::kNormal);
+    Buffer b4 = ReadBuffer(reln_, ForkNumber::kMain, 4, ReadBufferMode::kNormal);
 
     ReleaseBuffer(b1);
     ReleaseBuffer(b2);
@@ -325,15 +304,13 @@ TEST_F(BufMgrTest, FlushRelationBuffersWritesAllDirty) {
     // Read and dirty two blocks.
     ExtendRelation(1);
 
-    Buffer buf0 = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                             ReadBufferMode::kNormal);
+    Buffer buf0 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
     Page page0 = BufferGetPage(buf0);
     std::memcpy(page0 + kPageHeaderSize, "flush0", 6);
     MarkBufferDirty(buf0);
     ReleaseBuffer(buf0);
 
-    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 1,
-                             ReadBufferMode::kNormal);
+    Buffer buf1 = ReadBuffer(reln_, ForkNumber::kMain, 1, ReadBufferMode::kNormal);
     Page page1 = BufferGetPage(buf1);
     std::memcpy(page1 + kPageHeaderSize, "flush1", 6);
     MarkBufferDirty(buf1);
@@ -350,8 +327,7 @@ TEST_F(BufMgrTest, FlushRelationBuffersWritesAllDirty) {
 // --- Buffer pool stats tests ---
 
 TEST_F(BufMgrTest, NumPinnedTracksRefCount) {
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                            ReadBufferMode::kNormal);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
 
     BufferPool* pool = GetBufferPool();
     EXPECT_EQ(pool->NumPinned(), 1);
@@ -361,8 +337,7 @@ TEST_F(BufMgrTest, NumPinnedTracksRefCount) {
 }
 
 TEST_F(BufMgrTest, NumDirtyTracksDirtyFlag) {
-    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0,
-                            ReadBufferMode::kNormal);
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
 
     BufferPool* pool = GetBufferPool();
     EXPECT_EQ(pool->NumDirty(), 0);

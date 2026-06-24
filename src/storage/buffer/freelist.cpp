@@ -15,9 +15,8 @@
 // increments usage_count (up to a max of 5), and the clock sweep must
 // decrement it to 0 before evicting.
 
-#include "mytoydb/storage/buf_internals.h"
-
 #include "mytoydb/common/error/elog.h"
+#include "mytoydb/storage/buf_internals.h"
 
 namespace mytoydb::storage {
 

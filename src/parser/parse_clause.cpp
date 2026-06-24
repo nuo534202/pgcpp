@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/parser/analyze.h"
 #include "mytoydb/parser/parse_coerce.h"
 #include "mytoydb/parser/parse_expr.h"
@@ -22,8 +22,8 @@ using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::Value;
 using mytoydb::nodes::nodeTag;
+using mytoydb::nodes::Value;
 using mytoydb::types::kBoolOid;
 using mytoydb::types::kInt8Oid;
 
@@ -32,10 +32,10 @@ using mytoydb::types::kInt8Oid;
 // Returns the join tree node (RangeTblRef, JoinExpr, etc.).
 // ---------------------------------------------------------------------------
 
-Node* transformFromClauseItem(ParseState* pstate, Node* n,
-                              RangeTblEntry** top_rte, int* top_rti,
+Node* transformFromClauseItem(ParseState* pstate, Node* n, RangeTblEntry** top_rte, int* top_rti,
                               std::vector<ParseNamespaceItem*>& nsitem) {
-    if (n == nullptr) return nullptr;
+    if (n == nullptr)
+        return nullptr;
 
     NodeTag tag = nodeTag(n);
 
@@ -43,11 +43,12 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n,
     if (tag == NodeTag::kRangeVar) {
         auto* rv = static_cast<RangeVar*>(n);
         int rtindex = 0;
-        RangeTblEntry* rte = addRangeTableEntry(pstate, rv, rv->alias,
-                                                rv->inh, true, &rtindex);
+        RangeTblEntry* rte = addRangeTableEntry(pstate, rv, rv->alias, rv->inh, true, &rtindex);
 
-        if (top_rte) *top_rte = rte;
-        if (top_rti) *top_rti = rtindex;
+        if (top_rte)
+            *top_rte = rte;
+        if (top_rti)
+            *top_rti = rtindex;
 
         // Build the namespace item
         auto* item = new ParseNamespaceItem();
@@ -76,13 +77,13 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n,
         free_parsestate(sub_pstate);
 
         int rtindex = 0;
-        RangeTblEntry* rte = addRangeTableEntryForSubquery(pstate, subquery,
-                                                           rs->alias,
-                                                           rs->lateral, true,
-                                                           &rtindex);
+        RangeTblEntry* rte =
+            addRangeTableEntryForSubquery(pstate, subquery, rs->alias, rs->lateral, true, &rtindex);
 
-        if (top_rte) *top_rte = rte;
-        if (top_rti) *top_rti = rtindex;
+        if (top_rte)
+            *top_rte = rte;
+        if (top_rti)
+            *top_rti = rtindex;
 
         auto* item = new ParseNamespaceItem();
         item->p_rte = rte;
@@ -107,14 +108,13 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n,
         RangeTblEntry* left_rte = nullptr;
         int left_rti = 0;
         std::vector<ParseNamespaceItem*> left_ns;
-        Node* left_tree = transformFromClauseItem(pstate, j->larg, &left_rte,
-                                                  &left_rti, left_ns);
+        Node* left_tree = transformFromClauseItem(pstate, j->larg, &left_rte, &left_rti, left_ns);
 
         RangeTblEntry* right_rte = nullptr;
         int right_rti = 0;
         std::vector<ParseNamespaceItem*> right_ns;
-        Node* right_tree = transformFromClauseItem(pstate, j->rarg, &right_rte,
-                                                   &right_rti, right_ns);
+        Node* right_tree =
+            transformFromClauseItem(pstate, j->rarg, &right_rte, &right_rti, right_ns);
 
         // Add left and right namespace items to pstate so JOIN quals can
         // resolve qualified column references (e.g., hits.user_id).
@@ -148,14 +148,15 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n,
         // above (needed for quals resolution). Don't pass them back in nsitem
         // to avoid duplicate namespace entries.
 
-        if (top_rte) *top_rte = left_rte;
-        if (top_rti) *top_rti = left_rti;
+        if (top_rte)
+            *top_rte = left_rte;
+        if (top_rti)
+            *top_rti = left_rti;
 
         return result;
     }
 
-    ereport(mytoydb::error::LogLevel::kError,
-            "unrecognized node type in FROM clause");
+    ereport(mytoydb::error::LogLevel::kError, "unrecognized node type in FROM clause");
     return nullptr;
 }
 
@@ -171,8 +172,7 @@ Node* transformFromClause(ParseState* pstate, std::vector<Node*> frmList) {
         int top_rti = 0;
         std::vector<ParseNamespaceItem*> nsitem;
 
-        Node* transformed = transformFromClauseItem(pstate, n, &top_rte,
-                                                    &top_rti, nsitem);
+        Node* transformed = transformFromClauseItem(pstate, n, &top_rte, &top_rti, nsitem);
 
         // Add the transformed item to the join list
         pstate->p_joinlist.push_back(transformed);
@@ -195,9 +195,10 @@ Node* transformFromClause(ParseState* pstate, std::vector<Node*> frmList) {
 // transformWhereClause — transform a WHERE/HAVING clause.
 // ---------------------------------------------------------------------------
 
-Node* transformWhereClause(ParseState* pstate, Node* clause,
-                           ParseExprKind exprKind, const char* constructName) {
-    if (clause == nullptr) return nullptr;
+Node* transformWhereClause(ParseState* pstate, Node* clause, ParseExprKind exprKind,
+                           const char* constructName) {
+    if (clause == nullptr)
+        return nullptr;
 
     Node* qual = transformExpr(pstate, clause, exprKind);
 
@@ -207,9 +208,8 @@ Node* transformWhereClause(ParseState* pstate, Node* clause,
         Oid qual_type = exprType(qual);
         if (qual_type != kBoolOid && qual_type != 705 /* unknown */) {
             // Try to coerce to boolean
-            qual = coerce_type(pstate, qual, qual_type, kBoolOid, -1,
-                              CoercionContext::kImplicit,
-                              CoercionForm::kImplicit, -1);
+            qual = coerce_type(pstate, qual, qual_type, kBoolOid, -1, CoercionContext::kImplicit,
+                               CoercionForm::kImplicit, -1);
         }
     }
 
@@ -220,9 +220,10 @@ Node* transformWhereClause(ParseState* pstate, Node* clause,
 // transformLimitClause — transform a LIMIT/OFFSET clause.
 // ---------------------------------------------------------------------------
 
-Node* transformLimitClause(ParseState* pstate, Node* clause,
-                           ParseExprKind exprKind, const char* constructName) {
-    if (clause == nullptr) return nullptr;
+Node* transformLimitClause(ParseState* pstate, Node* clause, ParseExprKind exprKind,
+                           const char* constructName) {
+    if (clause == nullptr)
+        return nullptr;
 
     Node* qual = transformExpr(pstate, clause, exprKind);
 
@@ -230,9 +231,8 @@ Node* transformLimitClause(ParseState* pstate, Node* clause,
     if (qual != nullptr) {
         Oid qual_type = exprType(qual);
         if (qual_type != kInt8Oid && qual_type != 705 /* unknown */) {
-            qual = coerce_type(pstate, qual, qual_type, kInt8Oid, -1,
-                              CoercionContext::kImplicit,
-                              CoercionForm::kImplicit, -1);
+            qual = coerce_type(pstate, qual, qual_type, kInt8Oid, -1, CoercionContext::kImplicit,
+                               CoercionForm::kImplicit, -1);
         }
     }
 

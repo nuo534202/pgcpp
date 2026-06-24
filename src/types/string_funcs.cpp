@@ -38,8 +38,8 @@ char* PallocCString(std::string_view s) {
 // _ matches any single character, and \ escapes the next character.
 // Case-sensitive (PostgreSQL LIKE is case-sensitive by default).
 bool MatchLike(std::string_view text, std::string_view pattern) {
-    std::size_t t = 0;  // text index
-    std::size_t p = 0;  // pattern index
+    std::size_t t = 0;                            // text index
+    std::size_t p = 0;                            // pattern index
     std::size_t t_star = std::string_view::npos;  // text position after last %
     std::size_t p_star = std::string_view::npos;  // pattern position after last %
 
@@ -151,8 +151,8 @@ Datum regexp_replace(Datum source_datum, Datum pattern_datum, Datum replacement_
 
     try {
         std::regex re(pattern);
-        std::string result = std::regex_replace(source, re, cpp_replacement,
-                                                 std::regex_constants::format_default);
+        std::string result =
+            std::regex_replace(source, re, cpp_replacement, std::regex_constants::format_default);
         return MakeTextDatum(result);
     } catch (const std::regex_error& e) {
         ereport(LogLevel::kError,

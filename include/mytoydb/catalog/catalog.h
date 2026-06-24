@@ -88,7 +88,8 @@ public:
     // Look up operators by name (may return multiple with different arg types).
     std::vector<const FormData_pg_operator*> GetOperatorsByName(const std::string& name) const;
     // Look up an exact operator by (name, left_type, right_type).
-    const FormData_pg_operator* GetOperator(const std::string& name, Oid left_type, Oid right_type) const;
+    const FormData_pg_operator* GetOperator(const std::string& name, Oid left_type,
+                                            Oid right_type) const;
 
     // --- pg_proc accessors ---
 

@@ -74,6 +74,20 @@ set(MYTOYDB_CORE_SOURCES
     access/heap/heapam.cpp
     access/nbtree/nbtree.cpp
     access/nbtree/nbtpage.cpp
+    executor/exec_expr.cpp
+    executor/exec_main.cpp
+    executor/exec_utils.cpp
+    executor/estate.cpp
+    executor/node_exec.cpp
+    executor/tupletable.cpp
+    executor/node_agg.cpp
+    executor/node_hash.cpp
+    executor/node_hashjoin.cpp
+    executor/node_indexscan.cpp
+    executor/node_modify_table.cpp
+    executor/node_nestloop.cpp
+    executor/node_seqscan.cpp
+    executor/node_sort.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})

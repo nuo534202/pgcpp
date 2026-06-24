@@ -32,10 +32,10 @@
 namespace mytoydb::access {
 
 // B-tree page flags.
-constexpr uint32_t kBtpLeaf = 0x01;   // leaf page
-constexpr uint32_t kBtpRoot = 0x02;   // root page
-constexpr uint32_t kBtpMeta = 0x04;   // meta page
-constexpr uint32_t kBtpDeleted = 0x08; // page has been deleted
+constexpr uint32_t kBtpLeaf = 0x01;     // leaf page
+constexpr uint32_t kBtpRoot = 0x02;     // root page
+constexpr uint32_t kBtpMeta = 0x04;     // meta page
+constexpr uint32_t kBtpDeleted = 0x08;  // page has been deleted
 
 // Size of the B-tree special area (BTPageOpaqueData).
 constexpr int kBTPageOpaqueSize = 16;
@@ -44,8 +44,8 @@ constexpr int kBTPageOpaqueSize = 16;
 struct BTPageOpaqueData {
     mytoydb::storage::BlockNumber btpo_prev = 0;  // previous leaf (backward scan)
     mytoydb::storage::BlockNumber btpo_next = 0;  // next leaf (forward scan)
-    uint32_t btpo_flags = 0;                       // page flags (kBtpLeaf, etc.)
-    uint32_t btpo_level = 0;                       // 0 = leaf, 1+ = internal
+    uint32_t btpo_flags = 0;                      // page flags (kBtpLeaf, etc.)
+    uint32_t btpo_level = 0;                      // 0 = leaf, 1+ = internal
 };
 
 using BTPageOpaque = BTPageOpaqueData*;
@@ -63,9 +63,9 @@ using BTItem = BTItemData*;
 struct BTMetaPageData {
     uint32_t magic = 0;  // magic number for sanity check
     uint32_t version = 0;
-    mytoydb::storage::BlockNumber root = 0;       // root block number
-    uint32_t level = 0;                            // root level
-    mytoydb::storage::BlockNumber fastroot = 0;   // fast path root
+    mytoydb::storage::BlockNumber root = 0;      // root block number
+    uint32_t level = 0;                          // root level
+    mytoydb::storage::BlockNumber fastroot = 0;  // fast path root
 };
 
 constexpr uint32_t kBtreeMagic = 0x0530;
@@ -93,8 +93,7 @@ inline BTPageOpaque _bt_page_getopaque(mytoydb::storage::Page page) {
 
 // _bt_init_page — initialize a B-tree page with the given flags.
 // Sets up the page header, line pointer array, and opaque data.
-void _bt_init_page(mytoydb::storage::Page page, uint32_t flags,
-                   uint32_t level);
+void _bt_init_page(mytoydb::storage::Page page, uint32_t flags, uint32_t level);
 
 // _bt_is_leaf_page — true if the page is a leaf.
 inline bool _bt_is_leaf_page(mytoydb::storage::Page page) {
@@ -110,26 +109,29 @@ inline bool _bt_is_root_page(mytoydb::storage::Page page) {
 
 // _bt_compare_keys — compare two keys of the given kind.
 // Returns < 0 if key1 < key2, 0 if equal, > 0 if key1 > key2.
-int _bt_compare_keys(BTKeyKind kind, const void* key1, uint16_t len1,
-                     const void* key2, uint16_t len2);
+int _bt_compare_keys(BTKeyKind kind, const void* key1, uint16_t len1, const void* key2,
+                     uint16_t len2);
 
 // _bt_compare_int32 — compare two int32 keys.
 inline int _bt_compare_int32(int32_t a, int32_t b) {
-    if (a < b) return -1;
-    if (a > b) return 1;
+    if (a < b)
+        return -1;
+    if (a > b)
+        return 1;
     return 0;
 }
 
 // _bt_compare_int64 — compare two int64 keys.
 inline int _bt_compare_int64(int64_t a, int64_t b) {
-    if (a < b) return -1;
-    if (a > b) return 1;
+    if (a < b)
+        return -1;
+    if (a > b)
+        return 1;
     return 0;
 }
 
 // _bt_compare_text — compare two text keys (as C strings).
-int _bt_compare_text(const char* a, uint16_t len_a,
-                     const char* b, uint16_t len_b);
+int _bt_compare_text(const char* a, uint16_t len_a, const char* b, uint16_t len_b);
 
 // --- Index entry helpers ---
 
@@ -148,21 +150,18 @@ uint16_t _bt_item_size(BTKeyKind kind, const void* key, uint16_t key_len);
 
 // Build an index entry in the provided buffer.
 // Returns the total entry size.
-uint16_t _bt_build_item(BTItem item, BTKeyKind kind,
-                        const void* key, uint16_t key_len,
+uint16_t _bt_build_item(BTItem item, BTKeyKind kind, const void* key, uint16_t key_len,
                         const mytoydb::transaction::ItemPointerData& tid);
 
 // --- Meta page operations ---
 
 // _bt_init_meta_page — initialize the meta page (block 0).
-void _bt_init_meta_page(mytoydb::storage::Page page,
-                        mytoydb::storage::BlockNumber root_block);
+void _bt_init_meta_page(mytoydb::storage::Page page, mytoydb::storage::BlockNumber root_block);
 
 // _bt_get_meta — read the meta page data.
 BTMetaPageData _bt_get_meta(mytoydb::storage::Page page);
 
 // _bt_update_meta — update the root block in the meta page.
-void _bt_update_meta(mytoydb::storage::Page page,
-                     mytoydb::storage::BlockNumber root_block);
+void _bt_update_meta(mytoydb::storage::Page page, mytoydb::storage::BlockNumber root_block);
 
 }  // namespace mytoydb::access

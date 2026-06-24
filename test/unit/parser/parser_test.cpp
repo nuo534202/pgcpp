@@ -4,80 +4,81 @@
 // RawStmt parse trees. Verifies that ClickBench-relevant SQL constructs
 // parse correctly and produce the expected AST node types.
 
+#include "mytoydb/parser/parser.h"
+
 #include <gtest/gtest.h>
 
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "mytoydb/parser/parser.h"
-#include "mytoydb/parser/parsenodes.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/common/error/elog.h"
+#include "mytoydb/parser/parsenodes.h"
 
-using mytoydb::parser::raw_parser;
-using mytoydb::parser::RawStmt;
-using mytoydb::parser::SelectStmt;
-using mytoydb::parser::InsertStmt;
-using mytoydb::parser::UpdateStmt;
-using mytoydb::parser::DeleteStmt;
-using mytoydb::parser::CreateStmt;
-using mytoydb::parser::DropStmt;
-using mytoydb::parser::AlterTableStmt;
-using mytoydb::parser::AlterTableCmd;
-using mytoydb::parser::TransactionStmt;
-using mytoydb::parser::TruncateStmt;
-using mytoydb::parser::ExplainStmt;
-using mytoydb::parser::IndexStmt;
-using mytoydb::parser::ViewStmt;
-using mytoydb::parser::CreateAsStmt;
-using mytoydb::parser::VacuumStmt;
-using mytoydb::parser::VariableSetStmt;
-using mytoydb::parser::ClusterStmt;
-using mytoydb::parser::LockStmt;
-using mytoydb::parser::DiscardStmt;
-using mytoydb::parser::NotifyStmt;
-using mytoydb::parser::ListenStmt;
-using mytoydb::parser::UnlistenStmt;
-using mytoydb::parser::CheckPointStmt;
-using mytoydb::parser::ReindexStmt;
-using mytoydb::parser::DeallocateStmt;
-using mytoydb::parser::PrepareStmt;
-using mytoydb::parser::ExecuteStmt;
-using mytoydb::parser::LoadStmt;
-using mytoydb::parser::CallStmt;
-using mytoydb::parser::RenameStmt;
-using mytoydb::parser::CreateSeqStmt;
-using mytoydb::parser::AlterSeqStmt;
-using mytoydb::parser::CreateFunctionStmt;
-using mytoydb::parser::CreateTrigStmt;
-using mytoydb::parser::CreateRoleStmt;
-using mytoydb::parser::DropRoleStmt;
-using mytoydb::parser::GrantStmt;
-using mytoydb::parser::CopyStmt;
-using mytoydb::parser::RefreshMatViewStmt;
-using mytoydb::parser::CreateTableSpaceStmt;
-using mytoydb::parser::DropTableSpaceStmt;
-using mytoydb::parser::CreatedbStmt;
-using mytoydb::parser::DropdbStmt;
-using mytoydb::parser::AlterDatabaseStmt;
-using mytoydb::parser::DropBehavior;
-using mytoydb::parser::AlterTableType;
-using mytoydb::parser::ColumnRef;
-using mytoydb::parser::AConst;
-using mytoydb::parser::FuncCall;
-using mytoydb::parser::AExpr;
-using mytoydb::parser::ResTarget;
-using mytoydb::parser::RangeVar;
-using mytoydb::parser::Alias;
-using mytoydb::parser::TypeName;
-using mytoydb::parser::ColumnDef;
+using mytoydb::memory::AllocSetContext;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
 using mytoydb::nodes::nodeTag;
-using mytoydb::memory::AllocSetContext;
+using mytoydb::parser::AConst;
+using mytoydb::parser::AExpr;
+using mytoydb::parser::Alias;
+using mytoydb::parser::AlterDatabaseStmt;
+using mytoydb::parser::AlterSeqStmt;
+using mytoydb::parser::AlterTableCmd;
+using mytoydb::parser::AlterTableStmt;
+using mytoydb::parser::AlterTableType;
+using mytoydb::parser::CallStmt;
+using mytoydb::parser::CheckPointStmt;
+using mytoydb::parser::ClusterStmt;
+using mytoydb::parser::ColumnDef;
+using mytoydb::parser::ColumnRef;
+using mytoydb::parser::CopyStmt;
+using mytoydb::parser::CreateAsStmt;
+using mytoydb::parser::CreatedbStmt;
+using mytoydb::parser::CreateFunctionStmt;
+using mytoydb::parser::CreateRoleStmt;
+using mytoydb::parser::CreateSeqStmt;
+using mytoydb::parser::CreateStmt;
+using mytoydb::parser::CreateTableSpaceStmt;
+using mytoydb::parser::CreateTrigStmt;
+using mytoydb::parser::DeallocateStmt;
+using mytoydb::parser::DeleteStmt;
+using mytoydb::parser::DiscardStmt;
+using mytoydb::parser::DropBehavior;
+using mytoydb::parser::DropdbStmt;
+using mytoydb::parser::DropRoleStmt;
+using mytoydb::parser::DropStmt;
+using mytoydb::parser::DropTableSpaceStmt;
+using mytoydb::parser::ExecuteStmt;
+using mytoydb::parser::ExplainStmt;
+using mytoydb::parser::FuncCall;
+using mytoydb::parser::GrantStmt;
+using mytoydb::parser::IndexStmt;
+using mytoydb::parser::InsertStmt;
+using mytoydb::parser::ListenStmt;
+using mytoydb::parser::LoadStmt;
+using mytoydb::parser::LockStmt;
+using mytoydb::parser::NotifyStmt;
+using mytoydb::parser::PrepareStmt;
+using mytoydb::parser::RangeVar;
+using mytoydb::parser::raw_parser;
+using mytoydb::parser::RawStmt;
+using mytoydb::parser::RefreshMatViewStmt;
+using mytoydb::parser::ReindexStmt;
+using mytoydb::parser::RenameStmt;
+using mytoydb::parser::ResTarget;
+using mytoydb::parser::SelectStmt;
+using mytoydb::parser::TransactionStmt;
+using mytoydb::parser::TruncateStmt;
+using mytoydb::parser::TypeName;
+using mytoydb::parser::UnlistenStmt;
+using mytoydb::parser::UpdateStmt;
+using mytoydb::parser::VacuumStmt;
+using mytoydb::parser::VariableSetStmt;
+using mytoydb::parser::ViewStmt;
 
 namespace {
 
@@ -90,9 +91,7 @@ protected:
         mytoydb::memory::SetCurrentMemoryContext(context_);
     }
 
-    void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
-    }
+    void TearDown() override { mytoydb::memory::SetCurrentMemoryContext(nullptr); }
 
     AllocSetContext* context_ = nullptr;
 };
@@ -101,7 +100,8 @@ protected:
 // Returns nullptr if parsing produces no statements.
 Node* ParseSingle(const std::string& sql) {
     auto stmts = raw_parser(sql);
-    if (stmts.empty()) return nullptr;
+    if (stmts.empty())
+        return nullptr;
     return stmts[0]->stmt;
 }
 
@@ -230,8 +230,7 @@ TEST_F(ParserTest, SelectGroupByMultiple) {
 }
 
 TEST_F(ParserTest, SelectHaving) {
-    Node* stmt = ParseSingle(
-        "SELECT a, COUNT(*) FROM t GROUP BY a HAVING COUNT(*) > 100");
+    Node* stmt = ParseSingle("SELECT a, COUNT(*) FROM t GROUP BY a HAVING COUNT(*) > 100");
     ASSERT_NE(stmt, nullptr);
     auto* sel = static_cast<SelectStmt*>(stmt);
     ASSERT_NE(sel->having_clause, nullptr);
@@ -309,8 +308,7 @@ TEST_F(ParserTest, SelectLengthFunc) {
 }
 
 TEST_F(ParserTest, SelectExtractFunc) {
-    Node* stmt = ParseSingle(
-        "SELECT extract(minute FROM EventTime) FROM hits");
+    Node* stmt = ParseSingle("SELECT extract(minute FROM EventTime) FROM hits");
     ASSERT_NE(stmt, nullptr);
     auto* sel = static_cast<SelectStmt*>(stmt);
     auto* rt = static_cast<ResTarget*>(sel->target_list[0]);
@@ -318,8 +316,7 @@ TEST_F(ParserTest, SelectExtractFunc) {
 }
 
 TEST_F(ParserTest, SelectDateTruncFunc) {
-    Node* stmt = ParseSingle(
-        "SELECT DATE_TRUNC('minute', EventTime) FROM hits");
+    Node* stmt = ParseSingle("SELECT DATE_TRUNC('minute', EventTime) FROM hits");
     ASSERT_NE(stmt, nullptr);
     auto* sel = static_cast<SelectStmt*>(stmt);
     auto* rt = static_cast<ResTarget*>(sel->target_list[0]);
@@ -340,8 +337,7 @@ TEST_F(ParserTest, SelectRegexpReplaceFunc) {
 // ---------------------------------------------------------------------------
 
 TEST_F(ParserTest, SelectCaseExpr) {
-    Node* stmt = ParseSingle(
-        "SELECT CASE WHEN a = 0 THEN 'x' ELSE 'y' END FROM t");
+    Node* stmt = ParseSingle("SELECT CASE WHEN a = 0 THEN 'x' ELSE 'y' END FROM t");
     ASSERT_NE(stmt, nullptr);
     auto* sel = static_cast<SelectStmt*>(stmt);
     auto* rt = static_cast<ResTarget*>(sel->target_list[0]);
@@ -360,8 +356,7 @@ TEST_F(ParserTest, SelectArithmeticExpr) {
 }
 
 TEST_F(ParserTest, SelectComplexArithmetic) {
-    Node* stmt = ParseSingle(
-        "SELECT SUM(ResolutionWidth + 1) FROM hits");
+    Node* stmt = ParseSingle("SELECT SUM(ResolutionWidth + 1) FROM hits");
     ASSERT_NE(stmt, nullptr);
     auto* sel = static_cast<SelectStmt*>(stmt);
     EXPECT_EQ(sel->target_list.size(), 1u);
@@ -420,26 +415,22 @@ TEST_F(ParserTest, ClickBenchQ1) {
 }
 
 TEST_F(ParserTest, ClickBenchQ2) {
-    Node* stmt = ParseSingle(
-        "SELECT COUNT(*) FROM hits WHERE AdvEngineID <> 0");
+    Node* stmt = ParseSingle("SELECT COUNT(*) FROM hits WHERE AdvEngineID <> 0");
     ASSERT_NE(stmt, nullptr);
 }
 
 TEST_F(ParserTest, ClickBenchQ3) {
-    Node* stmt = ParseSingle(
-        "SELECT SUM(AdvEngineID), COUNT(*), AVG(ResolutionWidth) FROM hits");
+    Node* stmt = ParseSingle("SELECT SUM(AdvEngineID), COUNT(*), AVG(ResolutionWidth) FROM hits");
     ASSERT_NE(stmt, nullptr);
 }
 
 TEST_F(ParserTest, ClickBenchQ5) {
-    Node* stmt = ParseSingle(
-        "SELECT COUNT(DISTINCT UserID) FROM hits");
+    Node* stmt = ParseSingle("SELECT COUNT(DISTINCT UserID) FROM hits");
     ASSERT_NE(stmt, nullptr);
 }
 
 TEST_F(ParserTest, ClickBenchQ7) {
-    Node* stmt = ParseSingle(
-        "SELECT MIN(EventDate), MAX(EventDate) FROM hits");
+    Node* stmt = ParseSingle("SELECT MIN(EventDate), MAX(EventDate) FROM hits");
     ASSERT_NE(stmt, nullptr);
 }
 
@@ -476,8 +467,7 @@ TEST_F(ParserTest, ClickBenchQ19) {
 }
 
 TEST_F(ParserTest, ClickBenchQ21) {
-    Node* stmt = ParseSingle(
-        "SELECT COUNT(*) FROM hits WHERE URL LIKE '%google%'");
+    Node* stmt = ParseSingle("SELECT COUNT(*) FROM hits WHERE URL LIKE '%google%'");
     ASSERT_NE(stmt, nullptr);
 }
 
@@ -1310,8 +1300,8 @@ TEST_F(ParserTest, RefreshMatViewBasic) {
 // ---------------------------------------------------------------------------
 
 TEST_F(ParserTest, CreateFunctionBasic) {
-    Node* stmt = ParseSingle(
-        "CREATE FUNCTION fn(a int) RETURNS int AS $$ SELECT 1 $$ LANGUAGE sql");
+    Node* stmt =
+        ParseSingle("CREATE FUNCTION fn(a int) RETURNS int AS $$ SELECT 1 $$ LANGUAGE sql");
     ASSERT_NE(stmt, nullptr);
     EXPECT_EQ(nodeTag(stmt), NodeTag::kCreateFunctionStmt);
     auto* cf = static_cast<CreateFunctionStmt*>(stmt);
@@ -1323,8 +1313,8 @@ TEST_F(ParserTest, CreateFunctionBasic) {
 // ---------------------------------------------------------------------------
 
 TEST_F(ParserTest, CreateTriggerBasic) {
-    Node* stmt = ParseSingle(
-        "CREATE TRIGGER trg BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION fn()");
+    Node* stmt =
+        ParseSingle("CREATE TRIGGER trg BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION fn()");
     ASSERT_NE(stmt, nullptr);
     EXPECT_EQ(nodeTag(stmt), NodeTag::kCreateTrigStmt);
     auto* ct = static_cast<CreateTrigStmt*>(stmt);

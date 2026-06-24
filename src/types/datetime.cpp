@@ -38,7 +38,8 @@ char* PallocCString(std::string_view s) {
 
 // Case-insensitive ASCII string comparison.
 bool IStringEq(std::string_view a, std::string_view b) {
-    if (a.size() != b.size()) return false;
+    if (a.size() != b.size())
+        return false;
     for (std::size_t i = 0; i < a.size(); ++i) {
         if (std::tolower(static_cast<unsigned char>(a[i])) !=
             std::tolower(static_cast<unsigned char>(b[i]))) {
@@ -89,7 +90,8 @@ bool IsLeapYear(int year) {
 constexpr int kDaysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 int DaysInMonth(int year, int month) {
-    if (month == 2 && IsLeapYear(year)) return 29;
+    if (month == 2 && IsLeapYear(year))
+        return 29;
     return kDaysInMonth[month - 1];
 }
 
@@ -196,7 +198,8 @@ Datum date_in(const char* str) {
     int year = 0, month = 0, day = 0;
     int n = std::sscanf(str, "%d-%d-%d", &year, &month, &day);
     if (n != 3) {
-        ereport(LogLevel::kError, "invalid input syntax for type date: \"" + std::string(str) + "\"");
+        ereport(LogLevel::kError,
+                "invalid input syntax for type date: \"" + std::string(str) + "\"");
     }
     if (month < 1 || month > 12) {
         ereport(LogLevel::kError, "date field value out of range: month");
@@ -222,16 +225,20 @@ char* date_out(Datum value) {
 int timestamp_cmp(Datum a, Datum b) {
     Timestamp x = DatumGetInt64(a);
     Timestamp y = DatumGetInt64(b);
-    if (x < y) return -1;
-    if (x > y) return 1;
+    if (x < y)
+        return -1;
+    if (x > y)
+        return 1;
     return 0;
 }
 
 int date_cmp(Datum a, Datum b) {
     int32_t x = DatumGetInt32(a);
     int32_t y = DatumGetInt32(b);
-    if (x < y) return -1;
-    if (x > y) return 1;
+    if (x < y)
+        return -1;
+    if (x > y)
+        return 1;
     return 0;
 }
 
@@ -383,8 +390,7 @@ Datum extract(const char* field, Datum timestamp) {
     } else if (IStringEq(f, "epoch")) {
         // Seconds since Unix epoch (1970-01-01).
         // PostgreSQL epoch (2000-01-01) is 10957 days after Unix epoch.
-        result = static_cast<double>(ts) / kMicrosecsPerSec +
-                 10957.0 * kSecsPerDay;
+        result = static_cast<double>(ts) / kMicrosecsPerSec + 10957.0 * kSecsPerDay;
     } else {
         ereport(LogLevel::kError, "extract: unknown field \"" + std::string(field) + "\"");
     }

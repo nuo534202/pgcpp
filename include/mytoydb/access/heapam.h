@@ -94,25 +94,23 @@ using HeapScanDesc = HeapScanDescData*;
 // The tuple's t_data is modified in place (header fields are set).
 // Returns the TID of the inserted tuple.
 mytoydb::transaction::ItemPointerData heap_insert(Relation relation,
-                                                   mytoydb::transaction::HeapTuple tup);
+                                                  mytoydb::transaction::HeapTuple tup);
 
 // heap_delete — mark a tuple as deleted.
 //
 // Sets t_xmax = current transaction ID on the tuple identified by tid.
 // The tuple is not physically removed (that's VACUUM's job); it becomes
 // invisible to new snapshots.
-void heap_delete(Relation relation,
-                 const mytoydb::transaction::ItemPointerData& tid);
+void heap_delete(Relation relation, const mytoydb::transaction::ItemPointerData& tid);
 
 // heap_update — replace a tuple with a new version.
 //
 // Marks the old tuple as deleted (sets t_xmax) and inserts the new tuple.
 // The old tuple's t_ctid is updated to point to the new tuple.
 // Returns the TID of the new tuple.
-mytoydb::transaction::ItemPointerData heap_update(
-    Relation relation,
-    const mytoydb::transaction::ItemPointerData& otid,
-    mytoydb::transaction::HeapTuple tup);
+mytoydb::transaction::ItemPointerData heap_update(Relation relation,
+                                                  const mytoydb::transaction::ItemPointerData& otid,
+                                                  mytoydb::transaction::HeapTuple tup);
 
 // --- Heap scan operations ---
 
@@ -120,8 +118,7 @@ mytoydb::transaction::ItemPointerData heap_update(
 //
 // Allocates a HeapScanDesc, computes the number of blocks, and positions
 // the scan before the first block. The snapshot determines visibility.
-HeapScanDesc heap_beginscan(Relation relation,
-                            mytoydb::transaction::Snapshot snapshot);
+HeapScanDesc heap_beginscan(Relation relation, mytoydb::transaction::Snapshot snapshot);
 
 // heap_getnext — fetch the next visible tuple from a scan.
 //
@@ -145,20 +142,17 @@ void heap_rescan(HeapScanDesc scan);
 // Lays out the tuple data according to the tuple descriptor's alignment
 // rules. The returned HeapTuple is palloc'd in the current memory context.
 // The caller must set t_self separately (heap_insert does this).
-mytoydb::transaction::HeapTuple heap_form_tuple(
-    TupleDesc tupdesc,
-    const mytoydb::types::Datum* values,
-    const bool* isnull);
+mytoydb::transaction::HeapTuple heap_form_tuple(TupleDesc tupdesc,
+                                                const mytoydb::types::Datum* values,
+                                                const bool* isnull);
 
 // heap_deform_tuple — extract column values from a HeapTuple.
 //
 // Fills the values[] and isnull[] arrays (which must have tupdesc->natts
 // entries). For by-reference types, the Datum points into the tuple's data
 // (valid as long as the tuple is pinned).
-void heap_deform_tuple(mytoydb::transaction::HeapTuple tuple,
-                       TupleDesc tupdesc,
-                       mytoydb::types::Datum* values,
-                       bool* isnull);
+void heap_deform_tuple(mytoydb::transaction::HeapTuple tuple, TupleDesc tupdesc,
+                       mytoydb::types::Datum* values, bool* isnull);
 
 // heap_freetuple — free a HeapTuple allocated by heap_form_tuple.
 void heap_freetuple(mytoydb::transaction::HeapTuple tuple);
@@ -168,14 +162,12 @@ void heap_freetuple(mytoydb::transaction::HeapTuple tuple);
 // heap_getattr — extract a single attribute value from a tuple.
 // Returns the Datum for the attribute (attnum is 1-based).
 // Sets *isnull if the attribute is null.
-mytoydb::types::Datum heap_getattr(mytoydb::transaction::HeapTuple tuple,
-                                   int attnum, TupleDesc tupdesc,
-                                   bool* isnull);
+mytoydb::types::Datum heap_getattr(mytoydb::transaction::HeapTuple tuple, int attnum,
+                                   TupleDesc tupdesc, bool* isnull);
 
 // Compute the data portion size of a tuple (excluding header).
 // Used by heap_form_tuple to allocate the right amount of memory.
-uint32_t heap_compute_data_size(TupleDesc tupdesc,
-                                const mytoydb::types::Datum* values,
+uint32_t heap_compute_data_size(TupleDesc tupdesc, const mytoydb::types::Datum* values,
                                 const bool* isnull);
 
 // Align an offset to the given alignment type.

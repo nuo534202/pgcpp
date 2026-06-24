@@ -22,8 +22,7 @@ bool UnlockRelation(mytoydb::catalog::Oid relid, LockMode lockmode) {
     return LockRelease(tag, lockmode);
 }
 
-void UnlockRelations(const std::vector<mytoydb::catalog::Oid>& relids,
-                     LockMode lockmode) {
+void UnlockRelations(const std::vector<mytoydb::catalog::Oid>& relids, LockMode lockmode) {
     for (mytoydb::catalog::Oid relid : relids) {
         UnlockRelation(relid, lockmode);
     }

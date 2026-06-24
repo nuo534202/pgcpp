@@ -39,7 +39,8 @@ BisonParser::symbol_type mytoydb_parser::yylex(ParserDriver& driver) {
         }
         // Skip line comments (-- ...).
         if (pos + 1 < s.size() && s[pos] == '-' && s[pos + 1] == '-') {
-            while (pos < s.size() && s[pos] != '\n') pos++;
+            while (pos < s.size() && s[pos] != '\n')
+                pos++;
             continue;
         }
         // Skip block comments (/* ... */ with nesting).
@@ -72,15 +73,15 @@ BisonParser::symbol_type mytoydb_parser::yylex(ParserDriver& driver) {
     // Identifiers and keywords: [a-zA-Z_][a-zA-Z0-9_$]*
     if (std::isalpha(static_cast<unsigned char>(c)) || c == '_') {
         size_t start = pos;
-        while (pos < s.size() &&
-               (std::isalnum(static_cast<unsigned char>(s[pos])) || s[pos] == '_' ||
-                s[pos] == '$')) {
+        while (pos < s.size() && (std::isalnum(static_cast<unsigned char>(s[pos])) ||
+                                  s[pos] == '_' || s[pos] == '$')) {
             pos++;
         }
         std::string word(s, start, pos - start);
         // Lowercase for keyword lookup.
         std::string lower_word = word;
-        for (auto& ch : lower_word) ch = std::tolower(static_cast<unsigned char>(ch));
+        for (auto& ch : lower_word)
+            ch = std::tolower(static_cast<unsigned char>(ch));
 
         const KeywordEntry* kw = ScanKeywordLookup(lower_word);
         if (kw != nullptr) {
@@ -114,23 +115,29 @@ BisonParser::symbol_type mytoydb_parser::yylex(ParserDriver& driver) {
     // Integer and float constants: [0-9]+ (with optional . or exponent)
     if (std::isdigit(static_cast<unsigned char>(c))) {
         size_t start = pos;
-        while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+        while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos])))
+            pos++;
         // Check for float (decimal point or exponent).
         if (pos < s.size() && s[pos] == '.') {
             pos++;
-            while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+            while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos])))
+                pos++;
             if (pos < s.size() && (s[pos] == 'e' || s[pos] == 'E')) {
                 pos++;
-                if (pos < s.size() && (s[pos] == '+' || s[pos] == '-')) pos++;
-                while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+                if (pos < s.size() && (s[pos] == '+' || s[pos] == '-'))
+                    pos++;
+                while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos])))
+                    pos++;
             }
             std::string num(s, start, pos - start);
             return BisonParser::make_FCONST(num, tok_start);
         }
         if (pos < s.size() && (s[pos] == 'e' || s[pos] == 'E')) {
             pos++;
-            if (pos < s.size() && (s[pos] == '+' || s[pos] == '-')) pos++;
-            while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+            if (pos < s.size() && (s[pos] == '+' || s[pos] == '-'))
+                pos++;
+            while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos])))
+                pos++;
             std::string num(s, start, pos - start);
             return BisonParser::make_FCONST(num, tok_start);
         }
@@ -165,7 +172,8 @@ BisonParser::symbol_type mytoydb_parser::yylex(ParserDriver& driver) {
         if (pos + 1 < s.size() && std::isdigit(static_cast<unsigned char>(s[pos + 1]))) {
             pos++;  // skip $
             size_t start = pos;
-            while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+            while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos])))
+                pos++;
             std::string num(s, start, pos - start);
             int param_num = std::stoi(num);
             return BisonParser::make_PARAM(param_num, tok_start);
@@ -180,7 +188,7 @@ BisonParser::symbol_type mytoydb_parser::yylex(ParserDriver& driver) {
         }
         if (pos < s.size() && s[pos] == '$') {
             std::string tag(s, tag_start, pos - tag_start + 1);  // includes both $
-            pos++;  // skip closing $ of opening tag
+            pos++;                                               // skip closing $ of opening tag
             size_t content_start = pos;
             // Search for closing tag.
             while (pos < s.size()) {

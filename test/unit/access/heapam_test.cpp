@@ -9,14 +9,15 @@
 // catalog + syscache, transaction system, buffer pool, storage directory,
 // and relcache. Each test creates a fresh relation with a known schema.
 
-#include <gtest/gtest.h>
+#include "mytoydb/access/heapam.h"
 
-#include <cstring>
-#include <cstdlib>
-#include <string>
+#include <gtest/gtest.h>
 #include <unistd.h>
 
-#include "mytoydb/access/heapam.h"
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
 #include "mytoydb/access/rel.h"
 #include "mytoydb/catalog/catalog.h"
 #include "mytoydb/catalog/pg_attribute.h"
@@ -33,31 +34,31 @@
 #include "mytoydb/transaction/xact.h"
 #include "mytoydb/types/datum.h"
 
-using mytoydb::access::CreateTupleDesc;
-using mytoydb::access::HeapScanDesc;
-using mytoydb::access::HeapScanDescData;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::TupleDesc;
 using mytoydb::access::att_align;
 using mytoydb::access::att_align_max;
-using mytoydb::catalog::AttAlign;
+using mytoydb::access::CreateTupleDesc;
 using mytoydb::access::heap_beginscan;
 using mytoydb::access::heap_compute_data_size;
 using mytoydb::access::heap_deform_tuple;
 using mytoydb::access::heap_delete;
 using mytoydb::access::heap_endscan;
-using mytoydb::access::heap_freetuple;
 using mytoydb::access::heap_form_tuple;
+using mytoydb::access::heap_freetuple;
 using mytoydb::access::heap_getattr;
 using mytoydb::access::heap_getnext;
 using mytoydb::access::heap_insert;
 using mytoydb::access::heap_rescan;
 using mytoydb::access::heap_update;
+using mytoydb::access::HeapScanDesc;
+using mytoydb::access::HeapScanDescData;
 using mytoydb::access::InitializeRelcache;
+using mytoydb::access::Relation;
+using mytoydb::access::RelationClose;
+using mytoydb::access::RelationCreateStorage;
+using mytoydb::access::RelationOpen;
 using mytoydb::access::ResetRelcache;
+using mytoydb::access::TupleDesc;
+using mytoydb::catalog::AttAlign;
 using mytoydb::catalog::AttStorage;
 using mytoydb::catalog::Catalog;
 using mytoydb::catalog::FormData_pg_attribute;
@@ -76,6 +77,7 @@ using mytoydb::storage::InitBufferPool;
 using mytoydb::storage::SetStorageBaseDir;
 using mytoydb::storage::ShutdownBufferPool;
 using mytoydb::storage::smgrcloseall;
+using mytoydb::transaction::AllocateNextTransactionId;
 using mytoydb::transaction::BeginTransactionBlock;
 using mytoydb::transaction::EndTransactionBlock;
 using mytoydb::transaction::HeapTuple;
@@ -86,13 +88,12 @@ using mytoydb::transaction::HeapTupleHeaderGetXmin;
 using mytoydb::transaction::HeapTupleHeaderSetXminCommitted;
 using mytoydb::transaction::InitializeTransactionSystem;
 using mytoydb::transaction::ItemPointerData;
+using mytoydb::transaction::kFirstNormalTransactionId;
 using mytoydb::transaction::MakeSnapshot;
 using mytoydb::transaction::ResetTransactionState;
 using mytoydb::transaction::SnapshotData;
-using mytoydb::transaction::TransactionIdCommit;
-using mytoydb::transaction::AllocateNextTransactionId;
 using mytoydb::transaction::TransactionId;
-using mytoydb::transaction::kFirstNormalTransactionId;
+using mytoydb::transaction::TransactionIdCommit;
 using mytoydb::types::Datum;
 using mytoydb::types::DatumGetInt32;
 using mytoydb::types::DatumGetInt64;
@@ -155,8 +156,8 @@ protected:
     // Helper: build a pg_class row and insert it into the catalog.
     // The relation is given a relfilenode equal to its OID.
     FormData_pg_class* MakeClassRow(const std::string& name, Oid oid) {
-        auto* row = static_cast<FormData_pg_class*>(
-            mytoydb::memory::palloc(sizeof(FormData_pg_class)));
+        auto* row =
+            static_cast<FormData_pg_class*>(mytoydb::memory::palloc(sizeof(FormData_pg_class)));
         new (row) FormData_pg_class();
         row->oid = oid;
         row->relname = name;
@@ -167,9 +168,8 @@ protected:
     }
 
     // Helper: build a pg_attribute row.
-    FormData_pg_attribute* MakeAttrRow(Oid relid, const std::string& name,
-                                       int16_t attnum, Oid typid,
-                                       int16_t attlen, bool attbyval,
+    FormData_pg_attribute* MakeAttrRow(Oid relid, const std::string& name, int16_t attnum,
+                                       Oid typid, int16_t attlen, bool attbyval,
                                        AttAlign attalign) {
         auto* row = static_cast<FormData_pg_attribute*>(
             mytoydb::memory::palloc(sizeof(FormData_pg_attribute)));
@@ -286,9 +286,7 @@ protected:
         BeginTransactionBlock();
     }
 
-    static void RunShell(const std::string& cmd) {
-        std::system(cmd.c_str());
-    }
+    static void RunShell(const std::string& cmd) { std::system(cmd.c_str()); }
 
     AllocSetContext* context_ = nullptr;
     Catalog* catalog_ = nullptr;
@@ -351,8 +349,7 @@ TEST_F(HeapamTest, ComputeDataSizeTwoInts) {
 TEST_F(HeapamTest, ComputeDataSizeMixed) {
     auto attrs = MakeMixedSchema(101);
     TupleDesc desc = CreateTupleDesc(attrs);
-    Datum values[3] = {Int32GetDatum(1), Int64GetDatum(2),
-                       MakeTextDatum("hi")};
+    Datum values[3] = {Int32GetDatum(1), Int64GetDatum(2), MakeTextDatum("hi")};
     bool isnull[3] = {false, false, false};
     // int4 (4) + pad to 8 (4) + int8 (8) + pad to 4 (0) + varlena (4+2=6)
     // = 4 + 4 + 8 + 6 = 22
@@ -466,8 +463,7 @@ TEST_F(HeapamTest, GetAttrReturnsCorrectValue) {
     auto attrs = MakeMixedSchema(204);
     TupleDesc desc = CreateTupleDesc(attrs);
 
-    Datum values[3] = {Int32GetDatum(123), Int64GetDatum(456),
-                       MakeTextDatum("world")};
+    Datum values[3] = {Int32GetDatum(123), Int64GetDatum(456), MakeTextDatum("world")};
     bool isnull[3] = {false, false, false};
     HeapTuple tup = heap_form_tuple(desc, values, isnull);
 
@@ -478,8 +474,7 @@ TEST_F(HeapamTest, GetAttrReturnsCorrectValue) {
     EXPECT_EQ(DatumGetInt64(heap_getattr(tup, 2, desc, &isnull_out)), 456);
     EXPECT_FALSE(isnull_out);
 
-    EXPECT_EQ(TextDatumToString(heap_getattr(tup, 3, desc, &isnull_out)),
-              "world");
+    EXPECT_EQ(TextDatumToString(heap_getattr(tup, 3, desc, &isnull_out)), "world");
     EXPECT_FALSE(isnull_out);
 
     heap_freetuple(tup);
@@ -527,9 +522,8 @@ TEST_F(HeapamTest, InsertSingleTupleAndScan) {
     CommitAndStartNew();
 
     // Scan and verify.
-    SnapshotData snap = MakeSnapshot(
-        mytoydb::transaction::GetNextTransactionId(),
-        mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
+                                     mytoydb::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
     HeapTuple out = heap_getnext(scan);
     ASSERT_NE(out, nullptr);
@@ -564,9 +558,8 @@ TEST_F(HeapamTest, InsertMultipleTuplesAndScanAll) {
 
     CommitAndStartNew();
 
-    SnapshotData snap = MakeSnapshot(
-        mytoydb::transaction::GetNextTransactionId(),
-        mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
+                                     mytoydb::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
 
     int count = 0;
@@ -598,9 +591,8 @@ TEST_F(HeapamTest, InsertExtendsToMultiplePages) {
 
     CommitAndStartNew();
 
-    SnapshotData snap = MakeSnapshot(
-        mytoydb::transaction::GetNextTransactionId(),
-        mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
+                                     mytoydb::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
 
     int count = 0;
@@ -637,9 +629,8 @@ TEST_F(HeapamTest, DeleteMakesTupleInvisible) {
     CommitAndStartNew();
 
     // Verify it's visible.
-    SnapshotData snap1 = MakeSnapshot(
-        mytoydb::transaction::GetNextTransactionId(),
-        mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap1 = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
+                                      mytoydb::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan1 = heap_beginscan(rel, &snap1);
     EXPECT_NE(heap_getnext(scan1), nullptr);
     EXPECT_EQ(heap_getnext(scan1), nullptr);
@@ -650,9 +641,8 @@ TEST_F(HeapamTest, DeleteMakesTupleInvisible) {
     CommitAndStartNew();
 
     // Now it should be invisible.
-    SnapshotData snap2 = MakeSnapshot(
-        mytoydb::transaction::GetNextTransactionId(),
-        mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap2 = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
+                                      mytoydb::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan2 = heap_beginscan(rel, &snap2);
     EXPECT_EQ(heap_getnext(scan2), nullptr);
     heap_endscan(scan2);
@@ -685,9 +675,8 @@ TEST_F(HeapamTest, UpdateReplacesTuple) {
     CommitAndStartNew();
 
     // Scan: only the new version should be visible.
-    SnapshotData snap = MakeSnapshot(
-        mytoydb::transaction::GetNextTransactionId(),
-        mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
+                                     mytoydb::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
     HeapTuple out = heap_getnext(scan);
     ASSERT_NE(out, nullptr);
@@ -718,9 +707,8 @@ TEST_F(HeapamTest, RescanRestartsFromBeginning) {
     }
     CommitAndStartNew();
 
-    SnapshotData snap = MakeSnapshot(
-        mytoydb::transaction::GetNextTransactionId(),
-        mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
+                                     mytoydb::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
 
     // Read 2 tuples.
@@ -731,7 +719,8 @@ TEST_F(HeapamTest, RescanRestartsFromBeginning) {
     heap_rescan(scan);
 
     int count = 0;
-    while (heap_getnext(scan) != nullptr) count++;
+    while (heap_getnext(scan) != nullptr)
+        count++;
     EXPECT_EQ(count, 3);
     heap_endscan(scan);
 

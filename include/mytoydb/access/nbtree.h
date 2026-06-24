@@ -31,11 +31,11 @@ namespace mytoydb::access {
 
 // B-tree scan strategy (maps to PostgreSQL's StrategyNumber).
 enum class BTStrategy {
-    kAll,  // no key filter (full scan)
-    kEqual,  // key == scan_key
-    kLess,   // key < scan_key
-    kLessEqual,  // key <= scan_key
-    kGreater,    // key > scan_key
+    kAll,           // no key filter (full scan)
+    kEqual,         // key == scan_key
+    kLess,          // key < scan_key
+    kLessEqual,     // key <= scan_key
+    kGreater,       // key > scan_key
     kGreaterEqual,  // key >= scan_key
 };
 
@@ -49,15 +49,15 @@ struct BTScanKeyData {
 
 // BTScanDescData — descriptor for a B-tree scan.
 struct BTScanDescData {
-    Relation index = nullptr;          // the index relation
+    Relation index = nullptr;                // the index relation
     BTKeyKind key_kind = BTKeyKind::kInt32;  // key type for this index
-    BTScanKeyData scan_key;            // search key (strategy + value)
+    BTScanKeyData scan_key;                  // search key (strategy + value)
 
     // Current scan position.
     mytoydb::storage::BlockNumber curr_block = 0;  // current leaf block
     mytoydb::storage::Buffer curr_buf = mytoydb::storage::kInvalidBuffer;
     mytoydb::storage::OffsetNumber curr_offset = 0;  // next offset to check
-    bool inited = false;  // true if scan has been positioned
+    bool inited = false;                             // true if scan has been positioned
 
     // The current tuple being returned (tid of the matching heap tuple).
     mytoydb::transaction::ItemPointerData curr_tid;
@@ -78,8 +78,7 @@ using BTScanDesc = BTScanDescData*;
 //   tid      — the heap tuple ID to associate with this key
 //
 // Returns true on success.
-bool btinsert(Relation index, BTKeyKind kind, const void* key,
-              uint16_t key_len,
+bool btinsert(Relation index, BTKeyKind kind, const void* key, uint16_t key_len,
               const mytoydb::transaction::ItemPointerData& tid);
 
 // btbeginscan — start a B-tree scan.
@@ -87,8 +86,7 @@ bool btinsert(Relation index, BTKeyKind kind, const void* key,
 // If scan_key is provided, the scan returns only entries matching the
 // strategy. If scan_key is nullptr or strategy is kAll, all entries are
 // returned in ascending key order.
-BTScanDesc btbeginscan(Relation index, BTKeyKind kind,
-                        const BTScanKeyData* scan_key);
+BTScanDesc btbeginscan(Relation index, BTKeyKind kind, const BTScanKeyData* scan_key);
 
 // btgettuple — fetch the next matching tid from the scan.
 //
@@ -115,20 +113,17 @@ void btbuild(Relation index, BTKeyKind key_kind);
 // _bt_search_leaf — find the leaf page and offset for a given key.
 // Returns the leaf buffer (pinned) and sets *offset to the first entry
 // >= key (or one past the last entry if all entries are < key).
-mytoydb::storage::Buffer _bt_search_leaf(Relation index, BTKeyKind kind,
-                                          const void* key, uint16_t key_len,
-                                          mytoydb::storage::OffsetNumber* offset);
+mytoydb::storage::Buffer _bt_search_leaf(Relation index, BTKeyKind kind, const void* key,
+                                         uint16_t key_len, mytoydb::storage::OffsetNumber* offset);
 
 // _bt_find_insert_pos — find the position to insert a key in a leaf page.
 // Returns the offset number (1-based) where the key should be inserted.
-mytoydb::storage::OffsetNumber _bt_find_insert_pos(
-    mytoydb::storage::Page page, BTKeyKind kind,
-    const void* key, uint16_t key_len);
+mytoydb::storage::OffsetNumber _bt_find_insert_pos(mytoydb::storage::Page page, BTKeyKind kind,
+                                                   const void* key, uint16_t key_len);
 
 // _bt_find_scan_pos — find the first entry >= key in a leaf page.
 // Returns the offset number, or one past the last entry if not found.
-mytoydb::storage::OffsetNumber _bt_find_scan_pos(
-    mytoydb::storage::Page page, BTKeyKind kind,
-    const void* key, uint16_t key_len);
+mytoydb::storage::OffsetNumber _bt_find_scan_pos(mytoydb::storage::Page page, BTKeyKind kind,
+                                                 const void* key, uint16_t key_len);
 
 }  // namespace mytoydb::access

@@ -23,8 +23,8 @@ using mytoydb::types::MakeTextDatum;
 using mytoydb::types::not_like;
 using mytoydb::types::regexp_replace;
 using mytoydb::types::substring;
-using mytoydb::types::TextDatumToString;
 using mytoydb::types::text_length;
+using mytoydb::types::TextDatumToString;
 
 class StringFuncsTest : public ::testing::Test {
 protected:
@@ -85,7 +85,8 @@ TEST_F(StringFuncsTest, LikeExactMatch) {
 
 TEST_F(StringFuncsTest, LikePercentPrefix) {
     // %google% — matches any string containing "google"
-    EXPECT_TRUE(DatumGetBool(like(MakeTextDatum("http://www.google.com"), MakeTextDatum("%google%"))));
+    EXPECT_TRUE(
+        DatumGetBool(like(MakeTextDatum("http://www.google.com"), MakeTextDatum("%google%"))));
     EXPECT_TRUE(DatumGetBool(like(MakeTextDatum("google.com"), MakeTextDatum("%google%"))));
     EXPECT_TRUE(DatumGetBool(like(MakeTextDatum("www.google"), MakeTextDatum("%google%"))));
     EXPECT_FALSE(DatumGetBool(like(MakeTextDatum("www.yahoo.com"), MakeTextDatum("%google%"))));
@@ -168,11 +169,11 @@ TEST_F(StringFuncsTest, NotLikeBasic) {
 TEST_F(StringFuncsTest, NotLikePercent) {
     // URL NOT LIKE '%.google.%'
     // "http://www.google.com" contains ".google." so LIKE matches, NOT LIKE = false
-    EXPECT_FALSE(DatumGetBool(not_like(MakeTextDatum("http://www.google.com"),
-                                        MakeTextDatum("%.google.%"))));
+    EXPECT_FALSE(DatumGetBool(
+        not_like(MakeTextDatum("http://www.google.com"), MakeTextDatum("%.google.%"))));
     // "http://www.yahoo.com" does NOT contain ".google." so NOT LIKE = true
-    EXPECT_TRUE(DatumGetBool(not_like(MakeTextDatum("http://www.yahoo.com"),
-                                       MakeTextDatum("%.google.%"))));
+    EXPECT_TRUE(
+        DatumGetBool(not_like(MakeTextDatum("http://www.yahoo.com"), MakeTextDatum("%.google.%"))));
 }
 
 // ===========================================================================
@@ -181,12 +182,11 @@ TEST_F(StringFuncsTest, NotLikePercent) {
 
 TEST_F(StringFuncsTest, ClickBenchUrlLikeGoogle) {
     // Query 21: URL LIKE '%google%'
-    EXPECT_TRUE(DatumGetBool(like(MakeTextDatum("http://www.google.com/search"),
-                                  MakeTextDatum("%google%"))));
-    EXPECT_TRUE(DatumGetBool(like(MakeTextDatum("https://google.com"),
-                                  MakeTextDatum("%google%"))));
-    EXPECT_FALSE(DatumGetBool(like(MakeTextDatum("https://www.yahoo.com"),
-                                   MakeTextDatum("%google%"))));
+    EXPECT_TRUE(DatumGetBool(
+        like(MakeTextDatum("http://www.google.com/search"), MakeTextDatum("%google%"))));
+    EXPECT_TRUE(DatumGetBool(like(MakeTextDatum("https://google.com"), MakeTextDatum("%google%"))));
+    EXPECT_FALSE(
+        DatumGetBool(like(MakeTextDatum("https://www.yahoo.com"), MakeTextDatum("%google%"))));
 }
 
 TEST_F(StringFuncsTest, ClickBenchTitleLikeGoogle) {
@@ -197,10 +197,10 @@ TEST_F(StringFuncsTest, ClickBenchTitleLikeGoogle) {
 
 TEST_F(StringFuncsTest, ClickBenchUrlNotLikeGoogleDomain) {
     // Query 23: URL NOT LIKE '%.google.%'
-    EXPECT_TRUE(DatumGetBool(not_like(MakeTextDatum("http://www.yahoo.com"),
-                                       MakeTextDatum("%.google.%"))));
-    EXPECT_FALSE(DatumGetBool(not_like(MakeTextDatum("http://www.google.com"),
-                                        MakeTextDatum("%.google.%"))));
+    EXPECT_TRUE(
+        DatumGetBool(not_like(MakeTextDatum("http://www.yahoo.com"), MakeTextDatum("%.google.%"))));
+    EXPECT_FALSE(DatumGetBool(
+        not_like(MakeTextDatum("http://www.google.com"), MakeTextDatum("%.google.%"))));
 }
 
 // ===========================================================================
@@ -209,56 +209,48 @@ TEST_F(StringFuncsTest, ClickBenchUrlNotLikeGoogleDomain) {
 
 TEST_F(StringFuncsTest, RegexpReplaceBasic) {
     // Replace digits with X
-    Datum result = regexp_replace(MakeTextDatum("abc123def"),
-                                   MakeTextDatum("[0-9]+"),
-                                   MakeTextDatum("X"));
+    Datum result =
+        regexp_replace(MakeTextDatum("abc123def"), MakeTextDatum("[0-9]+"), MakeTextDatum("X"));
     EXPECT_EQ(TextDatumToString(result), "abcXdef");
 }
 
 TEST_F(StringFuncsTest, RegexpReplaceWithCaptureGroup) {
     // ClickBench query 29: extract domain from URL
     // REGEXP_REPLACE(Referer, '^https?://(?:www\.)?([^/]+)/.*$', '\1')
-    Datum result = regexp_replace(
-        MakeTextDatum("http://www.example.com/page?q=1"),
-        MakeTextDatum("^https?://(?:www\\.)?([^/]+)/.*$"),
-        MakeTextDatum("\\1"));
+    Datum result =
+        regexp_replace(MakeTextDatum("http://www.example.com/page?q=1"),
+                       MakeTextDatum("^https?://(?:www\\.)?([^/]+)/.*$"), MakeTextDatum("\\1"));
     EXPECT_EQ(TextDatumToString(result), "example.com");
 }
 
 TEST_F(StringFuncsTest, RegexpReplaceHttpsUrl) {
-    Datum result = regexp_replace(
-        MakeTextDatum("https://www.google.com/search?q=test"),
-        MakeTextDatum("^https?://(?:www\\.)?([^/]+)/.*$"),
-        MakeTextDatum("\\1"));
+    Datum result =
+        regexp_replace(MakeTextDatum("https://www.google.com/search?q=test"),
+                       MakeTextDatum("^https?://(?:www\\.)?([^/]+)/.*$"), MakeTextDatum("\\1"));
     EXPECT_EQ(TextDatumToString(result), "google.com");
 }
 
 TEST_F(StringFuncsTest, RegexpReplaceNoMatch) {
     // If the pattern doesn't match, the source is returned unchanged.
-    Datum result = regexp_replace(MakeTextDatum("hello world"),
-                                   MakeTextDatum("[0-9]+"),
-                                   MakeTextDatum("X"));
+    Datum result =
+        regexp_replace(MakeTextDatum("hello world"), MakeTextDatum("[0-9]+"), MakeTextDatum("X"));
     EXPECT_EQ(TextDatumToString(result), "hello world");
 }
 
 TEST_F(StringFuncsTest, RegexpReplaceEmptyString) {
-    Datum result = regexp_replace(MakeTextDatum(""),
-                                   MakeTextDatum("[0-9]+"),
-                                   MakeTextDatum("X"));
+    Datum result = regexp_replace(MakeTextDatum(""), MakeTextDatum("[0-9]+"), MakeTextDatum("X"));
     EXPECT_EQ(TextDatumToString(result), "");
 }
 
 TEST_F(StringFuncsTest, RegexpReplaceInvalidPattern) {
-    EXPECT_TRUE(RaisesError([] {
-        regexp_replace(MakeTextDatum("test"), MakeTextDatum("["), MakeTextDatum("X"));
-    }));
+    EXPECT_TRUE(RaisesError(
+        [] { regexp_replace(MakeTextDatum("test"), MakeTextDatum("["), MakeTextDatum("X")); }));
 }
 
 TEST_F(StringFuncsTest, RegexpReplaceSpecialChars) {
     // Replace whitespace
-    Datum result = regexp_replace(MakeTextDatum("hello world"),
-                                   MakeTextDatum("\\s+"),
-                                   MakeTextDatum("_"));
+    Datum result =
+        regexp_replace(MakeTextDatum("hello world"), MakeTextDatum("\\s+"), MakeTextDatum("_"));
     EXPECT_EQ(TextDatumToString(result), "hello_world");
 }
 
@@ -273,8 +265,8 @@ TEST_F(StringFuncsTest, SubstringBasic) {
 
 TEST_F(StringFuncsTest, SubstringWithCaptureGroup) {
     // Extract the domain from a URL
-    Datum result = substring(MakeTextDatum("http://example.com/page"),
-                              MakeTextDatum("^https?://([^/]+)"));
+    Datum result =
+        substring(MakeTextDatum("http://example.com/page"), MakeTextDatum("^https?://([^/]+)"));
     EXPECT_EQ(TextDatumToString(result), "example.com");
 }
 
@@ -284,9 +276,7 @@ TEST_F(StringFuncsTest, SubstringNoMatch) {
 }
 
 TEST_F(StringFuncsTest, SubstringInvalidPattern) {
-    EXPECT_TRUE(RaisesError([] {
-        substring(MakeTextDatum("test"), MakeTextDatum("("));
-    }));
+    EXPECT_TRUE(RaisesError([] { substring(MakeTextDatum("test"), MakeTextDatum("(")); }));
 }
 
 }  // namespace

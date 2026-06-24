@@ -209,26 +209,26 @@ Oid Catalog::InsertOperator(FormData_pg_operator* row) {
 
 const FormData_pg_operator* Catalog::GetOperatorByOid(Oid oid) const {
     for (const auto* row : pg_operator_rows_) {
-        if (row->oid == oid) return row;
+        if (row->oid == oid)
+            return row;
     }
     return nullptr;
 }
 
-std::vector<const FormData_pg_operator*>
-Catalog::GetOperatorsByName(const std::string& name) const {
+std::vector<const FormData_pg_operator*> Catalog::GetOperatorsByName(
+    const std::string& name) const {
     std::vector<const FormData_pg_operator*> result;
     for (const auto* row : pg_operator_rows_) {
-        if (row->oprname == name) result.push_back(row);
+        if (row->oprname == name)
+            result.push_back(row);
     }
     return result;
 }
 
-const FormData_pg_operator*
-Catalog::GetOperator(const std::string& name, Oid left_type, Oid right_type) const {
+const FormData_pg_operator* Catalog::GetOperator(const std::string& name, Oid left_type,
+                                                 Oid right_type) const {
     for (const auto* row : pg_operator_rows_) {
-        if (row->oprname == name &&
-            row->oprleft == left_type &&
-            row->oprright == right_type) {
+        if (row->oprname == name && row->oprleft == left_type && row->oprright == right_type) {
             return row;
         }
     }
@@ -254,16 +254,17 @@ Oid Catalog::InsertProc(FormData_pg_proc* row) {
 
 const FormData_pg_proc* Catalog::GetProcByOid(Oid oid) const {
     for (const auto* row : pg_proc_rows_) {
-        if (row->oid == oid) return row;
+        if (row->oid == oid)
+            return row;
     }
     return nullptr;
 }
 
-std::vector<const FormData_pg_proc*>
-Catalog::GetProcsByName(const std::string& name) const {
+std::vector<const FormData_pg_proc*> Catalog::GetProcsByName(const std::string& name) const {
     std::vector<const FormData_pg_proc*> result;
     for (const auto* row : pg_proc_rows_) {
-        if (row->proname == name) result.push_back(row);
+        if (row->proname == name)
+            result.push_back(row);
     }
     return result;
 }
@@ -281,8 +282,7 @@ Oid Catalog::InsertCast(FormData_pg_cast* row) {
     return row->oid;
 }
 
-const FormData_pg_cast*
-Catalog::GetCast(Oid source_type, Oid target_type) const {
+const FormData_pg_cast* Catalog::GetCast(Oid source_type, Oid target_type) const {
     for (const auto* row : pg_cast_rows_) {
         if (row->castsource == source_type && row->casttarget == target_type) {
             return row;
@@ -291,11 +291,11 @@ Catalog::GetCast(Oid source_type, Oid target_type) const {
     return nullptr;
 }
 
-std::vector<const FormData_pg_cast*>
-Catalog::GetCastsBySource(Oid source_type) const {
+std::vector<const FormData_pg_cast*> Catalog::GetCastsBySource(Oid source_type) const {
     std::vector<const FormData_pg_cast*> result;
     for (const auto* row : pg_cast_rows_) {
-        if (row->castsource == source_type) result.push_back(row);
+        if (row->castsource == source_type)
+            result.push_back(row);
     }
     return result;
 }
@@ -311,7 +311,8 @@ void Catalog::InsertAggregate(FormData_pg_aggregate* row) {
 
 const FormData_pg_aggregate* Catalog::GetAggregate(Oid aggfnoid) const {
     for (const auto* row : pg_aggregate_rows_) {
-        if (row->aggfnoid == aggfnoid) return row;
+        if (row->aggfnoid == aggfnoid)
+            return row;
     }
     return nullptr;
 }
@@ -331,15 +332,16 @@ Oid Catalog::InsertCollation(FormData_pg_collation* row) {
 
 const FormData_pg_collation* Catalog::GetCollationByOid(Oid oid) const {
     for (const auto* row : pg_collation_rows_) {
-        if (row->oid == oid) return row;
+        if (row->oid == oid)
+            return row;
     }
     return nullptr;
 }
 
-const FormData_pg_collation*
-Catalog::GetCollationByName(const std::string& name) const {
+const FormData_pg_collation* Catalog::GetCollationByName(const std::string& name) const {
     for (const auto* row : pg_collation_rows_) {
-        if (row->collname == name) return row;
+        if (row->collname == name)
+            return row;
     }
     return nullptr;
 }

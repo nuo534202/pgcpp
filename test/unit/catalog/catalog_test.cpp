@@ -1,8 +1,4 @@
 #include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_attribute.h"
-#include "mytoydb/catalog/pg_class.h"
-#include "mytoydb/catalog/pg_type.h"
-#include "mytoydb/catalog/syscache.h"
 
 #include <gtest/gtest.h>
 
@@ -10,6 +6,10 @@
 #include <string>
 #include <vector>
 
+#include "mytoydb/catalog/pg_attribute.h"
+#include "mytoydb/catalog/pg_class.h"
+#include "mytoydb/catalog/pg_type.h"
+#include "mytoydb/catalog/syscache.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
@@ -28,9 +28,9 @@ using mytoydb::catalog::GetSysCache;
 using mytoydb::catalog::kFirstNormalObjectId;
 using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
+using mytoydb::catalog::ReleaseSysCache;
 using mytoydb::catalog::RelKind;
 using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::ReleaseSysCache;
 using mytoydb::catalog::SearchSysCache1;
 using mytoydb::catalog::SearchSysCache2;
 using mytoydb::catalog::SetCatalog;
@@ -69,7 +69,8 @@ protected:
 
     // Helper: allocate a pg_class row in the current memory context.
     FormData_pg_class* MakeClassRow(const std::string& name, Oid oid = kInvalidOid) {
-        auto* row = static_cast<FormData_pg_class*>(mytoydb::memory::palloc(sizeof(FormData_pg_class)));
+        auto* row =
+            static_cast<FormData_pg_class*>(mytoydb::memory::palloc(sizeof(FormData_pg_class)));
         new (row) FormData_pg_class();
         row->relname = name;
         if (oid != kInvalidOid) {
@@ -80,8 +81,8 @@ protected:
 
     FormData_pg_attribute* MakeAttributeRow(Oid relid, const std::string& name, int16_t attnum,
                                             Oid typid) {
-        auto* row =
-            static_cast<FormData_pg_attribute*>(mytoydb::memory::palloc(sizeof(FormData_pg_attribute)));
+        auto* row = static_cast<FormData_pg_attribute*>(
+            mytoydb::memory::palloc(sizeof(FormData_pg_attribute)));
         new (row) FormData_pg_attribute();
         row->attrelid = relid;
         row->attname = name;
@@ -91,7 +92,8 @@ protected:
     }
 
     FormData_pg_type* MakeTypeRow(const std::string& name, Oid oid = kInvalidOid) {
-        auto* row = static_cast<FormData_pg_type*>(mytoydb::memory::palloc(sizeof(FormData_pg_type)));
+        auto* row =
+            static_cast<FormData_pg_type*>(mytoydb::memory::palloc(sizeof(FormData_pg_type)));
         new (row) FormData_pg_type();
         row->typname = name;
         if (oid != kInvalidOid) {
@@ -593,9 +595,9 @@ TEST_F(CatalogTest, SearchSysCache1AttributeRelidNum) {
 TEST_F(CatalogTest, SearchSysCache2ClassName) {
     catalog_->InsertClass(MakeClassRow("hits", 20000));
     std::string name = "hits";
-    const void* result = SearchSysCache2(SysCacheIdentifier::kClassName,
-                                         reinterpret_cast<uintptr_t>(&name),
-                                         static_cast<uintptr_t>(kInvalidOid));
+    const void* result =
+        SearchSysCache2(SysCacheIdentifier::kClassName, reinterpret_cast<uintptr_t>(&name),
+                        static_cast<uintptr_t>(kInvalidOid));
     ASSERT_NE(result, nullptr);
     auto* row = static_cast<const FormData_pg_class*>(result);
     EXPECT_EQ(row->oid, 20000u);
@@ -605,9 +607,9 @@ TEST_F(CatalogTest, SearchSysCache2ClassName) {
 TEST_F(CatalogTest, SearchSysCache2TypeName) {
     catalog_->InsertType(MakeTypeRow("int4", 23));
     std::string name = "int4";
-    const void* result = SearchSysCache2(SysCacheIdentifier::kTypeName,
-                                         reinterpret_cast<uintptr_t>(&name),
-                                         static_cast<uintptr_t>(kInvalidOid));
+    const void* result =
+        SearchSysCache2(SysCacheIdentifier::kTypeName, reinterpret_cast<uintptr_t>(&name),
+                        static_cast<uintptr_t>(kInvalidOid));
     ASSERT_NE(result, nullptr);
     auto* row = static_cast<const FormData_pg_type*>(result);
     EXPECT_EQ(row->oid, 23u);
@@ -617,9 +619,9 @@ TEST_F(CatalogTest, SearchSysCache2TypeName) {
 TEST_F(CatalogTest, SearchSysCache2AttributeRelidName) {
     catalog_->InsertAttribute(MakeAttributeRow(20000, "id", 1, 23));
     std::string name = "id";
-    const void* result = SearchSysCache2(SysCacheIdentifier::kAttributeRelidName,
-                                         static_cast<uintptr_t>(20000),
-                                         reinterpret_cast<uintptr_t>(&name));
+    const void* result =
+        SearchSysCache2(SysCacheIdentifier::kAttributeRelidName, static_cast<uintptr_t>(20000),
+                        reinterpret_cast<uintptr_t>(&name));
     ASSERT_NE(result, nullptr);
     auto* row = static_cast<const FormData_pg_attribute*>(result);
     EXPECT_EQ(row->attnum, 1);

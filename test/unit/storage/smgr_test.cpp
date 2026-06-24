@@ -4,44 +4,45 @@
 // truncation, and the smgr hash table. Uses a temporary directory for file
 // storage to avoid polluting the workspace.
 
-#include <gtest/gtest.h>
+#include "mytoydb/storage/smgr.h"
 
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <string>
+#include <gtest/gtest.h>
 #include <unistd.h>
 
-#include "mytoydb/storage/smgr.h"
-#include "mytoydb/storage/bufpage.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/common/error/elog.h"
+#include "mytoydb/storage/bufpage.h"
 
-using mytoydb::storage::SmgrRelation;
-using mytoydb::storage::SmgrRelationData;
+using mytoydb::catalog::Oid;
+using mytoydb::memory::AllocSetContext;
+using mytoydb::storage::BlockNumber;
+using mytoydb::storage::ForkNumber;
+using mytoydb::storage::GetStorageBaseDir;
+using mytoydb::storage::kBlckSz;
+using mytoydb::storage::kInvalidBlockNumber;
+using mytoydb::storage::kPageHeaderSize;
+using mytoydb::storage::PageInit;
 using mytoydb::storage::RelFileNode;
 using mytoydb::storage::RelFileNodeBackend;
-using mytoydb::storage::ForkNumber;
-using mytoydb::storage::BlockNumber;
-using mytoydb::catalog::Oid;
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kPageHeaderSize;
-using mytoydb::storage::kInvalidBlockNumber;
-using mytoydb::storage::PageInit;
-using mytoydb::storage::smgropen;
+using mytoydb::storage::SetStorageBaseDir;
 using mytoydb::storage::smgrclose;
 using mytoydb::storage::smgrcloseall;
 using mytoydb::storage::smgrcreate;
-using mytoydb::storage::smgrread;
-using mytoydb::storage::smgrwrite;
 using mytoydb::storage::smgrextend;
-using mytoydb::storage::smgrnblocks;
-using mytoydb::storage::smgrtruncate;
 using mytoydb::storage::smgrimmedsync;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::GetStorageBaseDir;
-using mytoydb::memory::AllocSetContext;
+using mytoydb::storage::smgrnblocks;
+using mytoydb::storage::smgropen;
+using mytoydb::storage::smgrread;
+using mytoydb::storage::SmgrRelation;
+using mytoydb::storage::SmgrRelationData;
+using mytoydb::storage::smgrtruncate;
+using mytoydb::storage::smgrwrite;
 
 namespace {
 
@@ -92,9 +93,7 @@ private:
         std::system(cmd.c_str());
     }
 
-    static int getpid() {
-        return static_cast<int>(::getpid());
-    }
+    static int getpid() { return static_cast<int>(::getpid()); }
 };
 
 }  // namespace

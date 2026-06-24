@@ -24,9 +24,9 @@ enum class ProKind : char {
 
 // provolatile values (PostgreSQL 'char' codes).
 enum class ProVolatile : char {
-    kImmutable = 'i',   // never changes for given input
-    kStable = 's',      // does not change within a scan
-    kVolatile = 'v',    // can change even within a scan
+    kImmutable = 'i',  // never changes for given input
+    kStable = 's',     // does not change within a scan
+    kVolatile = 'v',   // can change even within a scan
 };
 
 // proparallel values (PostgreSQL 'char' codes).
@@ -46,26 +46,26 @@ enum class ProArgMode : char {
 };
 
 struct FormData_pg_proc {
-    Oid oid = kInvalidOid;              // procedure OID
-    std::string proname;                 // procedure name
-    Oid pronamespace = kInvalidOid;      // namespace OID
-    Oid proowner = kInvalidOid;          // owner OID
-    Oid prolang = kInvalidOid;           // language OID
-    float procost = 1.0f;                // estimated execution cost
-    float prorows = 0.0f;                // estimated # of rows out (if proretset)
-    Oid provariadic = kInvalidOid;       // element type of variadic array
-    Oid prosupport = kInvalidOid;        // planner support function (regproc)
+    Oid oid = kInvalidOid;           // procedure OID
+    std::string proname;             // procedure name
+    Oid pronamespace = kInvalidOid;  // namespace OID
+    Oid proowner = kInvalidOid;      // owner OID
+    Oid prolang = kInvalidOid;       // language OID
+    float procost = 1.0f;            // estimated execution cost
+    float prorows = 0.0f;            // estimated # of rows out (if proretset)
+    Oid provariadic = kInvalidOid;   // element type of variadic array
+    Oid prosupport = kInvalidOid;    // planner support function (regproc)
     ProKind prokind = ProKind::kFunction;
-    bool prosecdef = false;              // security definer?
-    bool proleakproof = false;           // leak-proof function?
-    bool proisstrict = true;             // strict w.r.t. NULLs?
-    bool proretset = false;              // returns a set?
+    bool prosecdef = false;     // security definer?
+    bool proleakproof = false;  // leak-proof function?
+    bool proisstrict = true;    // strict w.r.t. NULLs?
+    bool proretset = false;     // returns a set?
     ProVolatile provolatile = ProVolatile::kImmutable;
     ProParallel proparallel = ProParallel::kSafe;
-    int16_t pronargs = 0;                // number of arguments
-    int16_t pronargdefaults = 0;         // number of arguments with defaults
-    Oid prorettype = kInvalidOid;        // OID of result type
-    std::vector<Oid> proargtypes;        // parameter types (IN only)
+    int16_t pronargs = 0;          // number of arguments
+    int16_t pronargdefaults = 0;   // number of arguments with defaults
+    Oid prorettype = kInvalidOid;  // OID of result type
+    std::vector<Oid> proargtypes;  // parameter types (IN only)
     // Variable-length fields (NULL = empty in MyToyDB):
     std::vector<Oid> proallargtypes;     // all param types (empty if IN only)
     std::string proargmodes;             // parameter modes (empty if IN only)

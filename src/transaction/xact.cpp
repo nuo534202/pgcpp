@@ -44,7 +44,8 @@ SubTransactionId& NextSubTransactionId() {
 // Get the current (top-of-stack) transaction state, or nullptr if idle.
 TransactionState CurrentState() {
     auto& stack = StateStack();
-    if (stack.empty()) return nullptr;
+    if (stack.empty())
+        return nullptr;
     return &stack.back();
 }
 
@@ -91,7 +92,8 @@ void StartTransaction() {
 // Commit the current top-level transaction.
 void CommitTransaction() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return;
+    if (s == nullptr)
+        return;
 
     s->state = TransState::kCommit;
 
@@ -106,7 +108,8 @@ void CommitTransaction() {
 // Abort the current top-level transaction.
 void AbortTransaction() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return;
+    if (s == nullptr)
+        return;
 
     s->state = TransState::kAbort;
 
@@ -165,9 +168,9 @@ void AbortSubTransaction() {
 
 bool IsTransactionBlock() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return false;
-    return s->block_state != TBlockState::kDefault &&
-           s->block_state != TBlockState::kStarted;
+    if (s == nullptr)
+        return false;
+    return s->block_state != TBlockState::kDefault && s->block_state != TBlockState::kStarted;
 }
 
 bool IsTransactionOrTransactionBlock() {
@@ -177,24 +180,41 @@ bool IsTransactionOrTransactionBlock() {
 
 const char* TransactionBlockStateAsString() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return "default";
+    if (s == nullptr)
+        return "default";
     switch (s->block_state) {
-        case TBlockState::kDefault: return "default";
-        case TBlockState::kStarted: return "started";
-        case TBlockState::kBegin: return "begin";
-        case TBlockState::kInProgress: return "in progress";
-        case TBlockState::kEnd: return "end";
-        case TBlockState::kAbort: return "abort";
-        case TBlockState::kAbortEnd: return "abort end";
-        case TBlockState::kAbortPending: return "abort pending";
-        case TBlockState::kSubBegin: return "sub begin";
-        case TBlockState::kSubInProgress: return "sub in progress";
-        case TBlockState::kSubRelease: return "sub release";
-        case TBlockState::kSubCommit: return "sub commit";
-        case TBlockState::kSubAbort: return "sub abort";
-        case TBlockState::kSubAbortPending: return "sub abort pending";
-        case TBlockState::kSubRestart: return "sub restart";
-        case TBlockState::kSubAbortRestart: return "sub abort restart";
+        case TBlockState::kDefault:
+            return "default";
+        case TBlockState::kStarted:
+            return "started";
+        case TBlockState::kBegin:
+            return "begin";
+        case TBlockState::kInProgress:
+            return "in progress";
+        case TBlockState::kEnd:
+            return "end";
+        case TBlockState::kAbort:
+            return "abort";
+        case TBlockState::kAbortEnd:
+            return "abort end";
+        case TBlockState::kAbortPending:
+            return "abort pending";
+        case TBlockState::kSubBegin:
+            return "sub begin";
+        case TBlockState::kSubInProgress:
+            return "sub in progress";
+        case TBlockState::kSubRelease:
+            return "sub release";
+        case TBlockState::kSubCommit:
+            return "sub commit";
+        case TBlockState::kSubAbort:
+            return "sub abort";
+        case TBlockState::kSubAbortPending:
+            return "sub abort pending";
+        case TBlockState::kSubRestart:
+            return "sub restart";
+        case TBlockState::kSubAbortRestart:
+            return "sub abort restart";
     }
     return "unknown";
 }
@@ -224,31 +244,36 @@ TransactionId GetCurrentTransactionId() {
 
 TransactionId GetCurrentTransactionIdIfAny() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return kInvalidTransactionId;
+    if (s == nullptr)
+        return kInvalidTransactionId;
     return s->transaction_id;
 }
 
 SubTransactionId GetCurrentSubTransactionId() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return kInvalidSubTransactionId;
+    if (s == nullptr)
+        return kInvalidSubTransactionId;
     return s->sub_transaction_id;
 }
 
 int GetCurrentTransactionNestingLevel() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return 0;
+    if (s == nullptr)
+        return 0;
     return s->nesting_level;
 }
 
 CommandId GetCurrentCommandId(bool /*used_in_trigger*/) {
     TransactionState s = CurrentState();
-    if (s == nullptr) return kFirstCommandId;
+    if (s == nullptr)
+        return kFirstCommandId;
     return s->command_id;
 }
 
 void CommandCounterIncrement() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return;
+    if (s == nullptr)
+        return;
     // PostgreSQL uses a per-transaction counter that resets on each command.
     // Incrementing allows subsequent scans to see earlier command's changes.
     if (s->command_id < kInvalidCommandId - 1) {
@@ -274,16 +299,14 @@ bool BeginTransactionBlock() {
     }
 
     // Already in an explicit block — warn and ignore.
-    ereport(mytoydb::error::LogLevel::kWarning,
-            "there is already a transaction in progress");
+    ereport(mytoydb::error::LogLevel::kWarning, "there is already a transaction in progress");
     return false;
 }
 
 bool EndTransactionBlock() {
     TransactionState s = CurrentState();
     if (s == nullptr) {
-        ereport(mytoydb::error::LogLevel::kWarning,
-                "there is no transaction in progress");
+        ereport(mytoydb::error::LogLevel::kWarning, "there is no transaction in progress");
         return false;
     }
 
@@ -317,7 +340,7 @@ bool EndTransactionBlock() {
         default:
             ereport(mytoydb::error::LogLevel::kWarning,
                     std::string("unexpected state in EndTransactionBlock: ") +
-                    TransactionBlockStateAsString());
+                        TransactionBlockStateAsString());
             return false;
     }
 }
@@ -325,8 +348,7 @@ bool EndTransactionBlock() {
 void AbortTransactionBlock() {
     TransactionState s = CurrentState();
     if (s == nullptr) {
-        ereport(mytoydb::error::LogLevel::kWarning,
-                "there is no transaction in progress");
+        ereport(mytoydb::error::LogLevel::kWarning, "there is no transaction in progress");
         return;
     }
 
@@ -379,7 +401,8 @@ void StartTransactionCommand() {
 
 void CommitTransactionCommand() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return;
+    if (s == nullptr)
+        return;
 
     switch (s->block_state) {
         case TBlockState::kStarted:
@@ -410,7 +433,8 @@ void CommitTransactionCommand() {
 
 void AbortCurrentTransaction() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return;
+    if (s == nullptr)
+        return;
 
     switch (s->block_state) {
         case TBlockState::kStarted:
@@ -464,8 +488,7 @@ void ReleaseSavepoint(const std::string& name) {
     }
 
     if (target == nullptr || target->parent == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "savepoint \"" + name + "\" does not exist");
+        ereport(mytoydb::error::LogLevel::kError, "savepoint \"" + name + "\" does not exist");
     }
 
     // Commit all subtransactions up to and including the target.
@@ -489,8 +512,7 @@ void RollbackToSavepoint(const std::string& name) {
     }
 
     if (target == nullptr || target->parent == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "savepoint \"" + name + "\" does not exist");
+        ereport(mytoydb::error::LogLevel::kError, "savepoint \"" + name + "\" does not exist");
     }
 
     // Abort all subtransactions down to AND INCLUDING the target.
@@ -514,7 +536,8 @@ void InitializeTransactionSystem() {
 
 TransactionId GetTopLevelTransactionId() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return kInvalidTransactionId;
+    if (s == nullptr)
+        return kInvalidTransactionId;
 
     // Walk up to the top-level transaction.
     while (s->parent != nullptr) {
@@ -530,7 +553,8 @@ TransactionId GetTopLevelTransactionId() {
 
 TransactionId GetTopLevelTransactionIdIfAny() {
     TransactionState s = CurrentState();
-    if (s == nullptr) return kInvalidTransactionId;
+    if (s == nullptr)
+        return kInvalidTransactionId;
 
     while (s->parent != nullptr) {
         s = s->parent;
@@ -540,18 +564,21 @@ TransactionId GetTopLevelTransactionIdIfAny() {
 
 bool TransactionIdIsCurrentTransactionId(TransactionId xid) {
     TransactionState s = CurrentState();
-    if (s == nullptr) return false;
+    if (s == nullptr)
+        return false;
 
     // Check all transactions on the stack (subtransactions share the
     // top-level XID, but we check for completeness).
     while (s != nullptr) {
-        if (s->transaction_id == xid) return true;
+        if (s->transaction_id == xid)
+            return true;
         s = s->parent;
     }
 
     // Also check if the XID matches the top-level (deferred assignment).
     TransactionId current = GetCurrentTransactionIdIfAny();
-    if (current == xid) return true;
+    if (current == xid)
+        return true;
 
     return false;
 }

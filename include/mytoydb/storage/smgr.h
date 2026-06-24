@@ -39,8 +39,8 @@ struct SmgrRelationData {
     // md_fd[forkNum][segno] = file descriptor (-1 if not open).
     // We lazily open segments as they are accessed.
     struct MdfdEntry {
-        int fd = -1;       // POSIX file descriptor, -1 if closed
-        int segno = 0;     // segment number within this fork
+        int fd = -1;    // POSIX file descriptor, -1 if closed
+        int segno = 0;  // segment number within this fork
     };
     std::vector<MdfdEntry> md_fd[kNumForks];
 
@@ -60,12 +60,10 @@ struct SmgrRelationData {
     void mdread(ForkNumber fork_num, BlockNumber block_num, char* buffer);
 
     // Write a block from the provided buffer (must be BLCKSZ bytes).
-    void mdwrite(ForkNumber fork_num, BlockNumber block_num,
-                 const char* buffer, bool skip_fsync);
+    void mdwrite(ForkNumber fork_num, BlockNumber block_num, const char* buffer, bool skip_fsync);
 
     // Extend the relation by one block, writing the provided data.
-    void mdextend(ForkNumber fork_num, BlockNumber block_num,
-                  const char* buffer, bool skip_fsync);
+    void mdextend(ForkNumber fork_num, BlockNumber block_num, const char* buffer, bool skip_fsync);
 
     // Return the number of blocks in the fork.
     BlockNumber mdnblocks(ForkNumber fork_num);
@@ -111,23 +109,21 @@ void smgrcloseall();
 void smgrcreate(SmgrRelation reln, ForkNumber fork_num, bool is_redo);
 
 // smgrread — read a block.
-void smgrread(SmgrRelation reln, ForkNumber fork_num,
-              BlockNumber block_num, char* buffer);
+void smgrread(SmgrRelation reln, ForkNumber fork_num, BlockNumber block_num, char* buffer);
 
 // smgrwrite — write a block.
-void smgrwrite(SmgrRelation reln, ForkNumber fork_num,
-               BlockNumber block_num, const char* buffer, bool skip_fsync);
+void smgrwrite(SmgrRelation reln, ForkNumber fork_num, BlockNumber block_num, const char* buffer,
+               bool skip_fsync);
 
 // smgrextend — extend the relation by one block.
-void smgrextend(SmgrRelation reln, ForkNumber fork_num,
-                BlockNumber block_num, const char* buffer, bool skip_fsync);
+void smgrextend(SmgrRelation reln, ForkNumber fork_num, BlockNumber block_num, const char* buffer,
+                bool skip_fsync);
 
 // smgrnblocks — return the number of blocks in a fork.
 BlockNumber smgrnblocks(SmgrRelation reln, ForkNumber fork_num);
 
 // smgrtruncate — truncate a fork to nblocks blocks.
-void smgrtruncate(SmgrRelation reln, ForkNumber fork_num,
-                  BlockNumber nblocks);
+void smgrtruncate(SmgrRelation reln, ForkNumber fork_num, BlockNumber nblocks);
 
 // smgrimmedsync — flush all writes to disk.
 void smgrimmedsync(SmgrRelation reln, ForkNumber fork_num);

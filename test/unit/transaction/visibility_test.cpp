@@ -9,48 +9,49 @@
 //   - Tuple inserted/deleted by current transaction (depends on CID)
 //   - Hint flag setting and reuse
 
+#include "mytoydb/transaction/visibility.h"
+
 #include <gtest/gtest.h>
 
 #include <vector>
 
+#include "mytoydb/transaction/heap_tuple.h"
+#include "mytoydb/transaction/snapshot.h"
 #include "mytoydb/transaction/transam.h"
 #include "mytoydb/transaction/xact.h"
-#include "mytoydb/transaction/snapshot.h"
-#include "mytoydb/transaction/heap_tuple.h"
-#include "mytoydb/transaction/visibility.h"
 
-using mytoydb::transaction::TransactionId;
-using mytoydb::transaction::CommandId;
-using mytoydb::transaction::XidStatus;
-using mytoydb::transaction::kInvalidTransactionId;
-using mytoydb::transaction::kFirstNormalTransactionId;
-using mytoydb::transaction::kFirstCommandId;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::transaction::InitializeTransactionSystem;
 using mytoydb::transaction::AllocateNextTransactionId;
-using mytoydb::transaction::TransactionIdCommit;
-using mytoydb::transaction::TransactionIdAbort;
-using mytoydb::transaction::TransactionIdGetStatus;
+using mytoydb::transaction::CommandId;
 using mytoydb::transaction::GetNextTransactionId;
-using mytoydb::transaction::SnapshotData;
-using mytoydb::transaction::SnapshotType;
-using mytoydb::transaction::MakeSnapshot;
 using mytoydb::transaction::HeapTupleHeaderData;
-using mytoydb::transaction::HeapTupleSatisfiesMVCC;
-using mytoydb::transaction::HeapTupleIsSurelyDead;
-using mytoydb::transaction::XidVisibleInSnapshot;
-using mytoydb::transaction::kHeapXminCommitted;
-using mytoydb::transaction::kHeapXminInvalid;
-using mytoydb::transaction::kHeapXminFrozen;
-using mytoydb::transaction::kHeapXmaxCommitted;
-using mytoydb::transaction::kHeapXmaxInvalid;
-using mytoydb::transaction::HeapTupleHeaderSetXmin;
-using mytoydb::transaction::HeapTupleHeaderSetXmax;
-using mytoydb::transaction::HeapTupleHeaderSetCid;
-using mytoydb::transaction::HeapTupleHeaderGetXminStatus;
 using mytoydb::transaction::HeapTupleHeaderGetXmaxStatus;
+using mytoydb::transaction::HeapTupleHeaderGetXminStatus;
+using mytoydb::transaction::HeapTupleHeaderSetCid;
+using mytoydb::transaction::HeapTupleHeaderSetXmax;
+using mytoydb::transaction::HeapTupleHeaderSetXmin;
 using mytoydb::transaction::HeapTupleHeaderSetXminCommitted;
 using mytoydb::transaction::HeapTupleHeaderSetXminInvalid;
+using mytoydb::transaction::HeapTupleIsSurelyDead;
+using mytoydb::transaction::HeapTupleSatisfiesMVCC;
+using mytoydb::transaction::InitializeTransactionSystem;
+using mytoydb::transaction::kFirstCommandId;
+using mytoydb::transaction::kFirstNormalTransactionId;
+using mytoydb::transaction::kHeapXmaxCommitted;
+using mytoydb::transaction::kHeapXmaxInvalid;
+using mytoydb::transaction::kHeapXminCommitted;
+using mytoydb::transaction::kHeapXminFrozen;
+using mytoydb::transaction::kHeapXminInvalid;
+using mytoydb::transaction::kInvalidTransactionId;
+using mytoydb::transaction::MakeSnapshot;
+using mytoydb::transaction::ResetTransactionState;
+using mytoydb::transaction::SnapshotData;
+using mytoydb::transaction::SnapshotType;
+using mytoydb::transaction::TransactionId;
+using mytoydb::transaction::TransactionIdAbort;
+using mytoydb::transaction::TransactionIdCommit;
+using mytoydb::transaction::TransactionIdGetStatus;
+using mytoydb::transaction::XidStatus;
+using mytoydb::transaction::XidVisibleInSnapshot;
 
 namespace {
 
@@ -66,8 +67,7 @@ protected:
     }
 
     // Helper: create a tuple header with the given xmin/xmax/cid.
-    HeapTupleHeaderData MakeTuple(TransactionId xmin, TransactionId xmax,
-                                  CommandId cid = 0) {
+    HeapTupleHeaderData MakeTuple(TransactionId xmin, TransactionId xmax, CommandId cid = 0) {
         HeapTupleHeaderData tup{};
         HeapTupleHeaderSetXmin(&tup, xmin);
         HeapTupleHeaderSetXmax(&tup, xmax);
@@ -90,9 +90,7 @@ protected:
     }
 
     // Helper: allocate an in-progress XID (not committed or aborted).
-    TransactionId InProgressXid() {
-        return AllocateNextTransactionId();
-    }
+    TransactionId InProgressXid() { return AllocateNextTransactionId(); }
 };
 
 }  // namespace
@@ -182,15 +180,13 @@ TEST_F(VisibilityTest, HintFlagsSetForCommittedXmin) {
     auto tup = MakeTuple(xmin, kInvalidTransactionId);
 
     // Initially no hint flags.
-    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup),
-              mytoydb::transaction::XactStatus::kInProgress);
+    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), mytoydb::transaction::XactStatus::kInProgress);
 
     SnapshotData snap = MakeSnapshot(xmin + 1, xmin + 2);
     HeapTupleSatisfiesMVCC(&tup, snap);
 
     // After visibility check, the committed hint should be set.
-    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup),
-              mytoydb::transaction::XactStatus::kCommitted);
+    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), mytoydb::transaction::XactStatus::kCommitted);
 }
 
 TEST_F(VisibilityTest, HintFlagsSetForAbortedXmin) {
@@ -201,8 +197,7 @@ TEST_F(VisibilityTest, HintFlagsSetForAbortedXmin) {
     HeapTupleSatisfiesMVCC(&tup, snap);
 
     // After visibility check, the invalid (aborted) hint should be set.
-    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup),
-              mytoydb::transaction::XactStatus::kAborted);
+    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), mytoydb::transaction::XactStatus::kAborted);
 }
 
 TEST_F(VisibilityTest, PreSetCommittedHintMakesVisible) {
@@ -233,12 +228,10 @@ TEST_F(VisibilityTest, PreSetInvalidHintMakesInvisible) {
 // --- Frozen XID ---
 
 TEST_F(VisibilityTest, FrozenTupleIsAlwaysVisible) {
-    auto tup = MakeTuple(mytoydb::transaction::kFrozenTransactionId,
-                         kInvalidTransactionId);
+    auto tup = MakeTuple(mytoydb::transaction::kFrozenTransactionId, kInvalidTransactionId);
     tup.t_infomask |= kHeapXminFrozen;
 
-    SnapshotData snap = MakeSnapshot(kFirstNormalTransactionId,
-                                     kFirstNormalTransactionId + 1);
+    SnapshotData snap = MakeSnapshot(kFirstNormalTransactionId, kFirstNormalTransactionId + 1);
     EXPECT_TRUE(HeapTupleSatisfiesMVCC(&tup, snap));
 }
 

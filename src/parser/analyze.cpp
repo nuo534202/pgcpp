@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/error/elog.h"
 #include "mytoydb/parser/parse_agg.h"
 #include "mytoydb/parser/parse_clause.h"
 #include "mytoydb/parser/parse_expr.h"
@@ -33,8 +33,7 @@ static Query* transformSetOperationStmt(ParseState* pstate, SelectStmt* stmt);
 // parse_analyze — transform a list of RawStmt nodes into a list of Query nodes.
 // ---------------------------------------------------------------------------
 
-std::vector<Query*> parse_analyze(std::vector<RawStmt*> parse_trees,
-                                  const char* source_string) {
+std::vector<Query*> parse_analyze(std::vector<RawStmt*> parse_trees, const char* source_string) {
     std::vector<Query*> result;
 
     for (RawStmt* raw_stmt : parse_trees) {
@@ -137,23 +136,19 @@ static Query* transformSelectStmt(ParseState* pstate, SelectStmt* stmt) {
     markTargetListOrigins(pstate, qry->target_list);
 
     // Transform WHERE clause
-    Node* qual = transformWhereClause(pstate, stmt->where_clause,
-                                      ParseExprKind::kWhere, "WHERE");
+    Node* qual = transformWhereClause(pstate, stmt->where_clause, ParseExprKind::kWhere, "WHERE");
 
     // Transform HAVING clause
-    qry->having_qual = transformWhereClause(pstate, stmt->having_clause,
-                                            ParseExprKind::kHaving, "HAVING");
+    qry->having_qual =
+        transformWhereClause(pstate, stmt->having_clause, ParseExprKind::kHaving, "HAVING");
 
     // Transform ORDER BY clause
-    qry->sort_clause = transformSortClause(pstate, stmt->sort_clause,
-                                           &qry->target_list,
+    qry->sort_clause = transformSortClause(pstate, stmt->sort_clause, &qry->target_list,
                                            ParseExprKind::kOrderBy, false);
 
     // Transform GROUP BY clause
-    qry->group_clause = transformGroupClause(pstate, stmt->group_clause,
-                                             &qry->target_list,
-                                             qry->sort_clause,
-                                             ParseExprKind::kGroupBy);
+    qry->group_clause = transformGroupClause(pstate, stmt->group_clause, &qry->target_list,
+                                             qry->sort_clause, ParseExprKind::kGroupBy);
     qry->group_distinct = stmt->group_distinct;
 
     // Transform DISTINCT clause
@@ -164,26 +159,22 @@ static Query* transformSelectStmt(ParseState* pstate, SelectStmt* stmt) {
         // Check if it's SELECT DISTINCT or SELECT DISTINCT ON
         if (stmt->distinct_clause[0] == nullptr) {
             // SELECT DISTINCT
-            qry->distinct_clause = transformDistinctClause(pstate,
-                                                           &qry->target_list,
-                                                           qry->sort_clause,
-                                                           false);
+            qry->distinct_clause =
+                transformDistinctClause(pstate, &qry->target_list, qry->sort_clause, false);
             qry->has_distinct_on = false;
         } else {
             // SELECT DISTINCT ON — simplified handling
-            qry->distinct_clause = transformDistinctClause(pstate,
-                                                           &qry->target_list,
-                                                           qry->sort_clause,
-                                                           true);
+            qry->distinct_clause =
+                transformDistinctClause(pstate, &qry->target_list, qry->sort_clause, true);
             qry->has_distinct_on = true;
         }
     }
 
     // Transform LIMIT/OFFSET
-    qry->limit_offset = transformLimitClause(pstate, stmt->limit_offset,
-                                             ParseExprKind::kOffset, "OFFSET");
-    qry->limit_count = transformLimitClause(pstate, stmt->limit_count,
-                                            ParseExprKind::kLimit, "LIMIT");
+    qry->limit_offset =
+        transformLimitClause(pstate, stmt->limit_offset, ParseExprKind::kOffset, "OFFSET");
+    qry->limit_count =
+        transformLimitClause(pstate, stmt->limit_count, ParseExprKind::kLimit, "LIMIT");
     qry->limit_option = stmt->limit_option;
 
     // Set the range table and join tree
@@ -200,8 +191,7 @@ static Query* transformSelectStmt(ParseState* pstate, SelectStmt* stmt) {
     qry->has_aggs = pstate->p_has_aggs;
 
     // Check aggregates
-    if (pstate->p_has_aggs || !qry->group_clause.empty() ||
-        qry->having_qual != nullptr) {
+    if (pstate->p_has_aggs || !qry->group_clause.empty() || qry->having_qual != nullptr) {
         parseCheckAggregates(pstate, qry);
     }
 
@@ -220,10 +210,8 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
     // Add the target relation to the range table
     if (stmt->relation != nullptr) {
         int rtindex = 0;
-        RangeTblEntry* rte = addRangeTableEntry(pstate, stmt->relation,
-                                                stmt->relation->alias,
-                                                stmt->relation->inh, false,
-                                                &rtindex);
+        RangeTblEntry* rte = addRangeTableEntry(pstate, stmt->relation, stmt->relation->alias,
+                                                stmt->relation->inh, false, &rtindex);
         qry->result_relation = rtindex;
         pstate->p_target_relation = rte;
         pstate->p_is_insert = true;
@@ -269,10 +257,8 @@ static Query* transformUpdateStmt(ParseState* pstate, UpdateStmt* stmt) {
     // Add the target relation to the range table
     if (stmt->relation != nullptr) {
         int rtindex = 0;
-        RangeTblEntry* rte = addRangeTableEntry(pstate, stmt->relation,
-                                                stmt->relation->alias,
-                                                stmt->relation->inh, true,
-                                                &rtindex);
+        RangeTblEntry* rte = addRangeTableEntry(pstate, stmt->relation, stmt->relation->alias,
+                                                stmt->relation->inh, true, &rtindex);
         qry->result_relation = rtindex;
         pstate->p_target_relation = rte;
 
@@ -302,8 +288,7 @@ static Query* transformUpdateStmt(ParseState* pstate, UpdateStmt* stmt) {
     qry->target_list = transformTargetList(pstate, stmt->target_list);
 
     // Transform WHERE clause
-    Node* qual = transformWhereClause(pstate, stmt->where_clause,
-                                      ParseExprKind::kWhere, "WHERE");
+    Node* qual = transformWhereClause(pstate, stmt->where_clause, ParseExprKind::kWhere, "WHERE");
 
     // Set the range table and join tree
     qry->rtable = pstate->p_rtable;
@@ -330,10 +315,8 @@ static Query* transformDeleteStmt(ParseState* pstate, DeleteStmt* stmt) {
     // Add the target relation to the range table
     if (stmt->relation != nullptr) {
         int rtindex = 0;
-        RangeTblEntry* rte = addRangeTableEntry(pstate, stmt->relation,
-                                                stmt->relation->alias,
-                                                stmt->relation->inh, true,
-                                                &rtindex);
+        RangeTblEntry* rte = addRangeTableEntry(pstate, stmt->relation, stmt->relation->alias,
+                                                stmt->relation->inh, true, &rtindex);
         qry->result_relation = rtindex;
         pstate->p_target_relation = rte;
 
@@ -360,8 +343,7 @@ static Query* transformDeleteStmt(ParseState* pstate, DeleteStmt* stmt) {
     }
 
     // Transform WHERE clause
-    Node* qual = transformWhereClause(pstate, stmt->where_clause,
-                                      ParseExprKind::kWhere, "WHERE");
+    Node* qual = transformWhereClause(pstate, stmt->where_clause, ParseExprKind::kWhere, "WHERE");
 
     // Set the range table and join tree
     qry->rtable = pstate->p_rtable;
@@ -411,13 +393,12 @@ static Query* transformSetOperationStmt(ParseState* pstate, SelectStmt* stmt) {
     }
 
     // Transform ORDER BY and LIMIT (applied to the set operation result)
-    qry->sort_clause = transformSortClause(pstate, stmt->sort_clause,
-                                           &qry->target_list,
+    qry->sort_clause = transformSortClause(pstate, stmt->sort_clause, &qry->target_list,
                                            ParseExprKind::kOrderBy, false);
-    qry->limit_offset = transformLimitClause(pstate, stmt->limit_offset,
-                                             ParseExprKind::kOffset, "OFFSET");
-    qry->limit_count = transformLimitClause(pstate, stmt->limit_count,
-                                            ParseExprKind::kLimit, "LIMIT");
+    qry->limit_offset =
+        transformLimitClause(pstate, stmt->limit_offset, ParseExprKind::kOffset, "OFFSET");
+    qry->limit_count =
+        transformLimitClause(pstate, stmt->limit_count, ParseExprKind::kLimit, "LIMIT");
     qry->limit_option = stmt->limit_option;
 
     return qry;

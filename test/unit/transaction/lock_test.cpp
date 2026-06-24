@@ -3,30 +3,31 @@
 // Tests lock acquisition/release, the compatibility matrix, session vs.
 // transaction locks, and relation-level lock helpers.
 
+#include "mytoydb/transaction/lock.h"
+
 #include <gtest/gtest.h>
 
-#include "mytoydb/transaction/lock.h"
 #include "mytoydb/transaction/lmgr.h"
 
-using mytoydb::transaction::LockMode;
-using mytoydb::transaction::LockTag;
-using mytoydb::transaction::kNumLockModes;
+using mytoydb::catalog::Oid;
+using mytoydb::transaction::GetLockCount;
+using mytoydb::transaction::InitializeLockManager;
 using mytoydb::transaction::kLockTagRelation;
-using mytoydb::transaction::LockConflicts;
+using mytoydb::transaction::kNumLockModes;
 using mytoydb::transaction::LockAcquire;
+using mytoydb::transaction::LockConflicts;
+using mytoydb::transaction::LockHeld;
+using mytoydb::transaction::LockMode;
+using mytoydb::transaction::LockModeHeld;
+using mytoydb::transaction::LockModeStronger;
+using mytoydb::transaction::LockRelation;
+using mytoydb::transaction::LockRelationIdForSession;
 using mytoydb::transaction::LockRelease;
 using mytoydb::transaction::LockReleaseAll;
-using mytoydb::transaction::LockHeld;
-using mytoydb::transaction::LockModeHeld;
-using mytoydb::transaction::InitializeLockManager;
+using mytoydb::transaction::LockTag;
 using mytoydb::transaction::ResetLockManager;
-using mytoydb::transaction::GetLockCount;
-using mytoydb::transaction::LockRelation;
 using mytoydb::transaction::UnlockRelation;
-using mytoydb::transaction::LockRelationIdForSession;
 using mytoydb::transaction::UnlockRelationIdForSession;
-using mytoydb::transaction::LockModeStronger;
-using mytoydb::catalog::Oid;
 
 namespace {
 
@@ -36,9 +37,7 @@ protected:
         ResetLockManager();
         InitializeLockManager();
     }
-    void TearDown() override {
-        ResetLockManager();
-    }
+    void TearDown() override { ResetLockManager(); }
 
     LockTag MakeTag(Oid relid) {
         LockTag tag;
@@ -238,6 +237,5 @@ TEST_F(LockTest, LockModeStrongerReturnsStronger) {
               LockMode::kRowShareLock);
     EXPECT_EQ(LockModeStronger(LockMode::kExclusiveLock, LockMode::kAccessShareLock),
               LockMode::kExclusiveLock);
-    EXPECT_EQ(LockModeStronger(LockMode::kShareLock, LockMode::kShareLock),
-              LockMode::kShareLock);
+    EXPECT_EQ(LockModeStronger(LockMode::kShareLock, LockMode::kShareLock), LockMode::kShareLock);
 }

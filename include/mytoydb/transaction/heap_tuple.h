@@ -22,8 +22,8 @@
 
 #include <cstdint>
 
-#include "mytoydb/storage/block.h"      // BlockNumber
-#include "mytoydb/storage/bufpage.h"    // OffsetNumber, TransactionId
+#include "mytoydb/storage/block.h"        // BlockNumber
+#include "mytoydb/storage/bufpage.h"      // OffsetNumber, TransactionId
 #include "mytoydb/transaction/transam.h"  // TransactionId, MultiXactId
 
 namespace mytoydb::transaction {
@@ -32,8 +32,8 @@ namespace mytoydb::transaction {
 // Identifies a tuple by (block number, offset within page).
 // Matches PostgreSQL's ItemPointerData layout (6 bytes, packed).
 struct __attribute__((packed)) ItemPointerData {
-    storage::BlockNumber ip_blkid = 0;  // block number
-    storage::OffsetNumber ip_posid = 0; // offset number (1-based)
+    storage::BlockNumber ip_blkid = 0;   // block number
+    storage::OffsetNumber ip_posid = 0;  // offset number (1-based)
 
     bool operator==(const ItemPointerData&) const = default;
 };
@@ -54,15 +54,15 @@ struct __attribute__((packed)) ItemPointerData {
 // Total header size (without null bitmap): 23 bytes.
 // User data starts at t_hoff (aligned to MAXALIGN, typically 8 bytes → 24).
 struct HeapTupleHeaderData {
-    TransactionId t_xmin = 0;        // inserting XID
-    TransactionId t_xmax = 0;        // deleting or updating XID
-    uint32_t t_cid = 0;              // command ID (or t_xvac for VACUUM)
-    ItemPointerData t_ctid;          // current TID (self or updated version)
-    uint16_t t_infomask2 = 0;        // number of attrs + flags
-    uint16_t t_infomask = 0;         // status flags
-    uint8_t t_hoff = 0;              // offset to user data
+    TransactionId t_xmin = 0;  // inserting XID
+    TransactionId t_xmax = 0;  // deleting or updating XID
+    uint32_t t_cid = 0;        // command ID (or t_xvac for VACUUM)
+    ItemPointerData t_ctid;    // current TID (self or updated version)
+    uint16_t t_infomask2 = 0;  // number of attrs + flags
+    uint16_t t_infomask = 0;   // status flags
+    uint8_t t_hoff = 0;        // offset to user data
     // t_bits[] follows if HEAP_HASNULL is set (variable length)
-    uint8_t t_bits[1] = {0};         // null bitmap (only present if HASNULL)
+    uint8_t t_bits[1] = {0};  // null bitmap (only present if HASNULL)
 };
 
 // HeapTupleHeader — pointer to a HeapTupleHeaderData.
@@ -75,7 +75,9 @@ constexpr int kHeapTupleHeaderSize = 23;
 // MAXALIGN — align a size to the maximum alignment (8 bytes on 64-bit).
 // PostgreSQL uses MAXALIGN(TYPEALIGN(8, ...)).
 constexpr int kMaxAlign = 8;
-constexpr int MaxAlignOf(int size) { return (size + kMaxAlign - 1) & ~(kMaxAlign - 1); }
+constexpr int MaxAlignOf(int size) {
+    return (size + kMaxAlign - 1) & ~(kMaxAlign - 1);
+}
 constexpr int kHeapTupleHeaderAligned = MaxAlignOf(kHeapTupleHeaderSize);  // 24
 
 // --- t_infomask flags ---
@@ -83,37 +85,35 @@ constexpr int kHeapTupleHeaderAligned = MaxAlignOf(kHeapTupleHeaderSize);  // 24
 // These match PostgreSQL's HEAP_XMIN_* and HEAP_XMAX_* constants exactly.
 
 // t_infomask (16 bits): XMIN/XMAX status hints + other flags
-constexpr uint16_t kHeapXminCommitted = 0x0100;  // t_xmin committed (hint)
-constexpr uint16_t kHeapXminInvalid = 0x0200;    // t_xmin invalid/aborted (hint)
-constexpr uint16_t kHeapXminFrozen = 0x0400;     // t_xmin is FrozenTransactionId
-constexpr uint16_t kHeapXmaxLocked = 0x0080;     // t_xmax is a multixact (lock)
-constexpr uint16_t kHeapXmaxExclusiveLock = 0x0040; // FOR UPDATE lock (legacy)
-constexpr uint16_t kHeapXmaxKeyshrLock = 0x0010;    // FOR KEY SHARE lock
-constexpr uint16_t kHeapXmaxShrLock = 0x0020;       // FOR SHARE lock
-constexpr uint16_t kHeapXmaxCommitted = 0x0400;  // t_xmax committed (hint)
-constexpr uint16_t kHeapXmaxInvalid = 0x0800;    // t_xmax invalid/aborted (hint)
+constexpr uint16_t kHeapXminCommitted = 0x0100;      // t_xmin committed (hint)
+constexpr uint16_t kHeapXminInvalid = 0x0200;        // t_xmin invalid/aborted (hint)
+constexpr uint16_t kHeapXminFrozen = 0x0400;         // t_xmin is FrozenTransactionId
+constexpr uint16_t kHeapXmaxLocked = 0x0080;         // t_xmax is a multixact (lock)
+constexpr uint16_t kHeapXmaxExclusiveLock = 0x0040;  // FOR UPDATE lock (legacy)
+constexpr uint16_t kHeapXmaxKeyshrLock = 0x0010;     // FOR KEY SHARE lock
+constexpr uint16_t kHeapXmaxShrLock = 0x0020;        // FOR SHARE lock
+constexpr uint16_t kHeapXmaxCommitted = 0x0400;      // t_xmax committed (hint)
+constexpr uint16_t kHeapXmaxInvalid = 0x0800;        // t_xmax invalid/aborted (hint)
 
-constexpr uint16_t kHeapHasNull = 0x0001;        // has null bitmap
-constexpr uint16_t kHeapHasVarWidth = 0x0002;    // has variable-width attrs
-constexpr uint16_t kHeapHasOid = 0x0004;         // has OID column (unused)
-constexpr uint16_t kHeapUpdated = 0x2000;        // this is an UPDATEd row
-constexpr uint16_t kHeapMovedOff = 0x1000;       // moved by VACUUM (off-page)
-constexpr uint16_t kHeapMovedIn = 0x2000;        // moved by VACUUM (in-page)
+constexpr uint16_t kHeapHasNull = 0x0001;      // has null bitmap
+constexpr uint16_t kHeapHasVarWidth = 0x0002;  // has variable-width attrs
+constexpr uint16_t kHeapHasOid = 0x0004;       // has OID column (unused)
+constexpr uint16_t kHeapUpdated = 0x2000;      // this is an UPDATEd row
+constexpr uint16_t kHeapMovedOff = 0x1000;     // moved by VACUUM (off-page)
+constexpr uint16_t kHeapMovedIn = 0x2000;      // moved by VACUUM (in-page)
 
 // Combined masks for checking XMIN/XMAX status
-constexpr uint16_t kHeapXminStatusMask =
-    kHeapXminCommitted | kHeapXminInvalid | kHeapXminFrozen;
-constexpr uint16_t kHeapXmaxStatusMask =
-    kHeapXmaxCommitted | kHeapXmaxInvalid | kHeapXmaxLocked;
+constexpr uint16_t kHeapXminStatusMask = kHeapXminCommitted | kHeapXminInvalid | kHeapXminFrozen;
+constexpr uint16_t kHeapXmaxStatusMask = kHeapXmaxCommitted | kHeapXmaxInvalid | kHeapXmaxLocked;
 
 // --- t_infomask2 flags ---
 //
 // The low 11 bits store the number of attributes (HEAP_NATTS_MASK).
 // The high bits store additional flags.
-constexpr uint16_t kHeapNattsMask = 0x07FF;       // 11 bits for attr count
-constexpr uint16_t kHeapKeysUpdated = 0x2000;     // key columns updated
-constexpr uint16_t kHeapHotUpdated = 0x4000;      // HOT update
-constexpr uint16_t kHeapOnlyTuple = 0x8000;       // HOT-only tuple (no index)
+constexpr uint16_t kHeapNattsMask = 0x07FF;    // 11 bits for attr count
+constexpr uint16_t kHeapKeysUpdated = 0x2000;  // key columns updated
+constexpr uint16_t kHeapHotUpdated = 0x4000;   // HOT update
+constexpr uint16_t kHeapOnlyTuple = 0x8000;    // HOT-only tuple (no index)
 
 // --- Accessor functions ---
 //
@@ -151,8 +151,7 @@ inline const ItemPointerData& HeapTupleHeaderGetTid(const HeapTupleHeaderData* t
     return tup->t_ctid;
 }
 
-inline void HeapTupleHeaderSetTid(HeapTupleHeaderData* tup,
-                                  const ItemPointerData& tid) {
+inline void HeapTupleHeaderSetTid(HeapTupleHeaderData* tup, const ItemPointerData& tid) {
     tup->t_ctid = tid;
 }
 
@@ -162,22 +161,27 @@ inline void HeapTupleHeaderSetTid(HeapTupleHeaderData* tup,
 enum class XactStatus {
     kInProgress,
     kCommitted,
-    kAborted,    // maps to INVALID hint
+    kAborted,  // maps to INVALID hint
     kFrozen,
 };
 
 inline XactStatus HeapTupleHeaderGetXminStatus(const HeapTupleHeaderData* tup) {
     uint16_t info = tup->t_infomask;
-    if (info & kHeapXminCommitted) return XactStatus::kCommitted;
-    if (info & kHeapXminInvalid) return XactStatus::kAborted;
-    if (info & kHeapXminFrozen) return XactStatus::kFrozen;
+    if (info & kHeapXminCommitted)
+        return XactStatus::kCommitted;
+    if (info & kHeapXminInvalid)
+        return XactStatus::kAborted;
+    if (info & kHeapXminFrozen)
+        return XactStatus::kFrozen;
     return XactStatus::kInProgress;
 }
 
 inline XactStatus HeapTupleHeaderGetXmaxStatus(const HeapTupleHeaderData* tup) {
     uint16_t info = tup->t_infomask;
-    if (info & kHeapXmaxCommitted) return XactStatus::kCommitted;
-    if (info & kHeapXmaxInvalid) return XactStatus::kAborted;
+    if (info & kHeapXmaxCommitted)
+        return XactStatus::kCommitted;
+    if (info & kHeapXmaxInvalid)
+        return XactStatus::kAborted;
     return XactStatus::kInProgress;
 }
 
@@ -212,8 +216,8 @@ inline int HeapTupleHeaderGetNatts(const HeapTupleHeaderData* tup) {
 
 // HeapTupleHeaderSetNatts — set the number of attributes.
 inline void HeapTupleHeaderSetNatts(HeapTupleHeaderData* tup, int natts) {
-    tup->t_infomask2 = (tup->t_infomask2 & ~kHeapNattsMask) |
-                       static_cast<uint16_t>(natts & kHeapNattsMask);
+    tup->t_infomask2 =
+        (tup->t_infomask2 & ~kHeapNattsMask) | static_cast<uint16_t>(natts & kHeapNattsMask);
 }
 
 // HeapTupleHeaderGetDatumLength — return the total tuple length.
@@ -244,9 +248,9 @@ inline bool HeapTupleHeaderIsHeapOnly(const HeapTupleHeaderData* tup) {
 // header data (which lives in a buffer page or a palloc'd region) and
 // records the total length and TID.
 struct HeapTupleData {
-    uint32_t t_len = 0;                  // length of the tuple (header + data)
-    ItemPointerData t_self;              // TID of this tuple
-    HeapTupleHeaderData* t_data = nullptr; // pointer to the header
+    uint32_t t_len = 0;                     // length of the tuple (header + data)
+    ItemPointerData t_self;                 // TID of this tuple
+    HeapTupleHeaderData* t_data = nullptr;  // pointer to the header
 
     // Convenience accessor
     HeapTupleHeader GetHeader() { return t_data; }

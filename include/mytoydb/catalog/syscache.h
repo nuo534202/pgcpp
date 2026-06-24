@@ -111,7 +111,8 @@ private:
         return (static_cast<std::uint64_t>(a) << 32) | static_cast<std::uint32_t>(b);
     }
     static std::uint64_t MakeKey(Oid a, int16_t b) {
-        return (static_cast<std::uint64_t>(a) << 32) | static_cast<std::uint32_t>(static_cast<uint16_t>(b));
+        return (static_cast<std::uint64_t>(a) << 32) |
+               static_cast<std::uint32_t>(static_cast<uint16_t>(b));
     }
     // For string keys, hash the string and combine with the Oid.
     static std::uint64_t MakeKey(const std::string& s, Oid oid);

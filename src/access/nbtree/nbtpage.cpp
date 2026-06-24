@@ -14,10 +14,10 @@
 
 namespace mytoydb::access {
 
+using mytoydb::storage::kBlckSz;
 using mytoydb::storage::Page;
 using mytoydb::storage::PageHeader;
 using mytoydb::storage::PageInit;
-using mytoydb::storage::kBlckSz;
 using mytoydb::transaction::ItemPointerData;
 
 // --- Page initialization ---
@@ -36,19 +36,21 @@ void _bt_init_page(Page page, uint32_t flags, uint32_t level) {
 
 // --- Key comparison ---
 
-int _bt_compare_text(const char* a, uint16_t len_a,
-                     const char* b, uint16_t len_b) {
+int _bt_compare_text(const char* a, uint16_t len_a, const char* b, uint16_t len_b) {
     uint16_t min_len = len_a < len_b ? len_a : len_b;
     int cmp = std::memcmp(a, b, min_len);
-    if (cmp != 0) return cmp;
+    if (cmp != 0)
+        return cmp;
     // If one is a prefix of the other, the shorter one is smaller.
-    if (len_a < len_b) return -1;
-    if (len_a > len_b) return 1;
+    if (len_a < len_b)
+        return -1;
+    if (len_a > len_b)
+        return 1;
     return 0;
 }
 
-int _bt_compare_keys(BTKeyKind kind, const void* key1, uint16_t len1,
-                     const void* key2, uint16_t len2) {
+int _bt_compare_keys(BTKeyKind kind, const void* key1, uint16_t len1, const void* key2,
+                     uint16_t len2) {
     switch (kind) {
         case BTKeyKind::kInt32: {
             int32_t a, b;
@@ -83,8 +85,7 @@ uint16_t _bt_item_size(BTKeyKind kind, const void* key, uint16_t key_len) {
     return static_cast<uint16_t>(sizeof(BTItemData));
 }
 
-uint16_t _bt_build_item(BTItem item, BTKeyKind kind,
-                        const void* key, uint16_t key_len,
+uint16_t _bt_build_item(BTItem item, BTKeyKind kind, const void* key, uint16_t key_len,
                         const ItemPointerData& tid) {
     item->tid = tid;
     char* key_ptr = reinterpret_cast<char*>(item) + sizeof(BTItemData);
@@ -109,8 +110,7 @@ void _bt_init_meta_page(Page page, mytoydb::storage::BlockNumber root_block) {
     // Meta page has no special area (it stores meta data in the page body).
     PageInit(page, kBlckSz, 0);
 
-    auto* meta = reinterpret_cast<BTMetaPageData*>(
-        page + sizeof(mytoydb::storage::PageHeaderData));
+    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(mytoydb::storage::PageHeaderData));
     meta->magic = kBtreeMagic;
     meta->version = 1;
     meta->root = root_block;
@@ -119,14 +119,12 @@ void _bt_init_meta_page(Page page, mytoydb::storage::BlockNumber root_block) {
 }
 
 BTMetaPageData _bt_get_meta(Page page) {
-    auto* meta = reinterpret_cast<BTMetaPageData*>(
-        page + sizeof(mytoydb::storage::PageHeaderData));
+    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(mytoydb::storage::PageHeaderData));
     return *meta;
 }
 
 void _bt_update_meta(Page page, mytoydb::storage::BlockNumber root_block) {
-    auto* meta = reinterpret_cast<BTMetaPageData*>(
-        page + sizeof(mytoydb::storage::PageHeaderData));
+    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(mytoydb::storage::PageHeaderData));
     meta->root = root_block;
     meta->fastroot = root_block;
 }
