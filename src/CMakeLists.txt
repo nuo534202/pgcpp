@@ -93,6 +93,8 @@ set(MYTOYDB_CORE_SOURCES
     optimizer/path/allpaths.cpp
     optimizer/path/indxpath.cpp
     optimizer/cost/costsize.cpp
+    protocol/pqformat.cpp
+    protocol/postgres.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})

@@ -66,4 +66,13 @@ void FreeExprContext(ExprContext* econtext);
 // ResetExprContext — reset the per-tuple memory context.
 void ResetExprContext(ExprContext* econtext);
 
+// SetExecParams — set the bound parameter values for the current query
+// execution. Used by the extended query protocol to pass Bind parameter
+// values to ExecEvalExpr for Param node evaluation.
+void SetExecParams(const std::vector<mytoydb::types::Datum>& values,
+                   const std::vector<bool>& isnull);
+
+// ClearExecParams — clear the bound parameter values after query execution.
+void ClearExecParams();
+
 }  // namespace mytoydb::executor

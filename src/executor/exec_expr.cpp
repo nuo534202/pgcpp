@@ -35,6 +35,7 @@ using mytoydb::parser::Node;
 using mytoydb::parser::NullTest;
 using mytoydb::parser::NullTestType;
 using mytoydb::parser::OpExpr;
+using mytoydb::parser::Param;
 using mytoydb::parser::RelabelType;
 using mytoydb::parser::TargetEntry;
 using mytoydb::parser::Var;
@@ -62,6 +63,11 @@ namespace {
 // Special varno values for join evaluation (from primnodes.h).
 using mytoydb::parser::kInnerVar;
 using mytoydb::parser::kOuterVar;
+
+// Current bound parameter values for extended query protocol execution.
+// Set by SetExecParams() and cleared by ClearExecParams().
+std::vector<Datum> g_param_values;
+std::vector<bool> g_param_isnull;
 
 // Get a Datum value from a slot at the given 1-based attribute number.
 Datum GetSlotAttr(TupleTableSlot* slot, int attno, bool* isnull) {
@@ -251,6 +257,17 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
             auto* c = static_cast<Const*>(expr);
             *isNull = c->constisnull;
             return c->constvalue;
+        }
+
+        case NodeTag::kParam: {
+            auto* p = static_cast<Param*>(expr);
+            int idx = p->paramid - 1;  // 1-based to 0-based
+            if (idx < 0 || idx >= static_cast<int>(g_param_values.size())) {
+                *isNull = true;
+                return 0;
+            }
+            *isNull = g_param_isnull[idx];
+            return g_param_values[idx];
         }
 
         case NodeTag::kOpExpr: {
@@ -448,6 +465,16 @@ void ResetExprContext(ExprContext* econtext) {
     if (econtext->ecxt_per_tuple_memory != nullptr) {
         econtext->ecxt_per_tuple_memory->Reset();
     }
+}
+
+void SetExecParams(const std::vector<Datum>& values, const std::vector<bool>& isnull) {
+    g_param_values = values;
+    g_param_isnull = isnull;
+}
+
+void ClearExecParams() {
+    g_param_values.clear();
+    g_param_isnull.clear();
 }
 
 ExprContext::~ExprContext() = default;

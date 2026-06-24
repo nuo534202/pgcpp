@@ -222,8 +222,18 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
         if (nodeTag(stmt->select_stmt) == NodeTag::kSelectStmt) {
             auto* sel = static_cast<SelectStmt*>(stmt->select_stmt);
             if (!sel->values_lists.empty()) {
-                // INSERT ... VALUES — transform as a SELECT with VALUES
-                qry->target_list = transformTargetList(pstate, sel->target_list);
+                // INSERT ... VALUES — convert the first row's expressions
+                // into ResTarget nodes and transform them into a target list.
+                // (Multi-row INSERT is not yet supported; only the first row
+                // is used.)
+                const auto& first_row = sel->values_lists[0];
+                std::vector<Node*> target_list;
+                for (Node* expr : first_row) {
+                    auto* res = makeNode<ResTarget>();
+                    res->val = expr;
+                    target_list.push_back(res);
+                }
+                qry->target_list = transformTargetList(pstate, target_list);
             } else {
                 // INSERT ... SELECT
                 Query* subquery = transformSelectStmt(pstate, sel);

@@ -65,3 +65,6 @@ mytoydb_add_test(executor_test unit/executor/executor_test.cpp)
 
 # Phase 10 tests (M10: optimizer / planner)
 mytoydb_add_test(optimizer_test unit/optimizer/optimizer_test.cpp)
+
+# Phase 11 tests (M11: frontend protocol)
+mytoydb_add_test(protocol_test unit/protocol/protocol_test.cpp)
