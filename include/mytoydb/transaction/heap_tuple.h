@@ -30,8 +30,8 @@ namespace mytoydb::transaction {
 
 // ItemPointerData — a tuple identifier (TID).
 // Identifies a tuple by (block number, offset within page).
-// Matches PostgreSQL's ItemPointerData layout.
-struct ItemPointerData {
+// Matches PostgreSQL's ItemPointerData layout (6 bytes, packed).
+struct __attribute__((packed)) ItemPointerData {
     storage::BlockNumber ip_blkid = 0;  // block number
     storage::OffsetNumber ip_posid = 0; // offset number (1-based)
 

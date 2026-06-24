@@ -70,6 +70,10 @@ set(MYTOYDB_CORE_SOURCES
     transaction/visibility.cpp
     transaction/lock.cpp
     transaction/lmgr.cpp
+    access/rel.cpp
+    access/heap/heapam.cpp
+    access/nbtree/nbtree.cpp
+    access/nbtree/nbtpage.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})
