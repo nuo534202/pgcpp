@@ -95,6 +95,9 @@ set(MYTOYDB_CORE_SOURCES
     optimizer/cost/costsize.cpp
     protocol/pqformat.cpp
     protocol/postgres.cpp
+    server/postmaster.cpp
+    server/bootstrap.cpp
+    server/options.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})
@@ -117,4 +120,14 @@ set_source_files_properties(
     ${FLEX_mytoydb_scanner_OUTPUTS}
     PROPERTIES
         COMPILE_OPTIONS "-Wno-unused;-Wno-sign-compare;-Wno-old-style-cast"
+)
+
+# ---------------------------------------------------------------------------
+# mytoydb_server — the standalone server executable (M12)
+# ---------------------------------------------------------------------------
+add_executable(mytoydb_server server/main.cpp)
+target_compile_features(mytoydb_server PRIVATE cxx_std_20)
+target_link_libraries(mytoydb_server PRIVATE mytoydb_core)
+target_include_directories(mytoydb_server PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
 )

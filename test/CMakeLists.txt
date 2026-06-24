@@ -68,3 +68,6 @@ mytoydb_add_test(optimizer_test unit/optimizer/optimizer_test.cpp)
 
 # Phase 11 tests (M11: frontend protocol)
 mytoydb_add_test(protocol_test unit/protocol/protocol_test.cpp)
+
+# Phase 12 tests (M12: postmaster / bootstrap)
+mytoydb_add_test(server_test unit/server/server_test.cpp)
