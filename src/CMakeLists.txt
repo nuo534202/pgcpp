@@ -88,6 +88,11 @@ set(MYTOYDB_CORE_SOURCES
     executor/node_nestloop.cpp
     executor/node_seqscan.cpp
     executor/node_sort.cpp
+    optimizer/plan/planner.cpp
+    optimizer/plan/subplanner.cpp
+    optimizer/path/allpaths.cpp
+    optimizer/path/indxpath.cpp
+    optimizer/cost/costsize.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})

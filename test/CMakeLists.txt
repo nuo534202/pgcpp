@@ -62,3 +62,6 @@ mytoydb_add_test(nbtree_test unit/access/nbtree_test.cpp)
 
 # Phase 9 tests (M9: executor)
 mytoydb_add_test(executor_test unit/executor/executor_test.cpp)
+
+# Phase 10 tests (M10: optimizer / planner)
+mytoydb_add_test(optimizer_test unit/optimizer/optimizer_test.cpp)
