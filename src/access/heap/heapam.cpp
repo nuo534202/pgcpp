@@ -12,24 +12,24 @@
 //   - Visible tuples are cached per-page to avoid repeated visibility checks
 //   - heap_insert extends the relation when no page has enough free space
 
-#include "mytoydb/access/heapam.h"
+#include "mytoydb/access/heapam.hpp"
 
 #include <cstring>
 #include <string>
 
-#include "mytoydb/access/rel.h"
-#include "mytoydb/catalog/pg_attribute.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/storage/bufmgr.h"
-#include "mytoydb/storage/bufpage.h"
-#include "mytoydb/transaction/heap_tuple.h"
-#include "mytoydb/transaction/snapshot.h"
-#include "mytoydb/transaction/transam.h"
-#include "mytoydb/transaction/visibility.h"
-#include "mytoydb/transaction/xact.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/access/rel.hpp"
+#include "mytoydb/catalog/pg_attribute.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/storage/bufmgr.hpp"
+#include "mytoydb/storage/bufpage.hpp"
+#include "mytoydb/transaction/heap_tuple.hpp"
+#include "mytoydb/transaction/snapshot.hpp"
+#include "mytoydb/transaction/transam.hpp"
+#include "mytoydb/transaction/visibility.hpp"
+#include "mytoydb/transaction/xact.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::access {
 using mytoydb::nodes::destroyPallocNode;

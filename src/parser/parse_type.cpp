@@ -3,18 +3,18 @@
 // Converted from PostgreSQL 15's src/backend/parser/parse_type.c.
 // Provides typenameTypeId() and related helpers to resolve type names
 // to OIDs during parse analysis.
-#include "mytoydb/parser/parse_type.h"
+#include "mytoydb/parser/parse_type.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <string>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_type.h"
-#include "mytoydb/catalog/syscache.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_type.hpp"
+#include "mytoydb/catalog/syscache.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::parser {
 

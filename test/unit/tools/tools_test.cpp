@@ -24,9 +24,9 @@
 #include <cstring>
 #include <string>
 
-#include "mytoydb/server/bootstrap.h"
-#include "mytoydb/server/postmaster.h"
-#include "mytoydb/tools/psql_client.h"
+#include "mytoydb/server/bootstrap.hpp"
+#include "mytoydb/server/postmaster.hpp"
+#include "mytoydb/tools/psql_client.hpp"
 
 using mytoydb::server::BootstrapCluster;
 using mytoydb::server::BootstrapResult;

@@ -11,21 +11,21 @@
 //   - No VACUUM, no deduplication, no page deletion
 //   - Supports int32, int64, and text keys
 
-#include "mytoydb/access/nbtree.h"
+#include "mytoydb/access/nbtree.hpp"
 
 #include <cstring>
 #include <string>
 #include <vector>
 
-#include "mytoydb/access/nbtpage.h"
-#include "mytoydb/access/rel.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/storage/bufmgr.h"
-#include "mytoydb/storage/bufpage.h"
-#include "mytoydb/storage/smgr.h"
-#include "mytoydb/transaction/heap_tuple.h"
+#include "mytoydb/access/nbtpage.hpp"
+#include "mytoydb/access/rel.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/storage/bufmgr.hpp"
+#include "mytoydb/storage/bufpage.hpp"
+#include "mytoydb/storage/smgr.hpp"
+#include "mytoydb/transaction/heap_tuple.hpp"
 
 namespace mytoydb::access {
 using mytoydb::nodes::destroyPallocNode;

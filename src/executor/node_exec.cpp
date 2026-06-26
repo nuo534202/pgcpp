@@ -5,24 +5,24 @@
 // ExecInitNode dispatches on PlanType to create the matching PlanState
 // subclass, recursively initializing child nodes. ExecEndNode recursively
 // tears down a node and its children.
-#include "mytoydb/executor/node_exec.h"
+#include "mytoydb/executor/node_exec.hpp"
 
 #include <new>
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/executor/estate.h"
-#include "mytoydb/executor/exec_expr.h"
-#include "mytoydb/executor/exec_utils.h"
-#include "mytoydb/executor/node_agg.h"
-#include "mytoydb/executor/node_hash.h"
-#include "mytoydb/executor/node_hashjoin.h"
-#include "mytoydb/executor/node_indexscan.h"
-#include "mytoydb/executor/node_modify_table.h"
-#include "mytoydb/executor/node_nestloop.h"
-#include "mytoydb/executor/node_seqscan.h"
-#include "mytoydb/executor/node_sort.h"
-#include "mytoydb/executor/tupletable.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/executor/estate.hpp"
+#include "mytoydb/executor/exec_expr.hpp"
+#include "mytoydb/executor/exec_utils.hpp"
+#include "mytoydb/executor/node_agg.hpp"
+#include "mytoydb/executor/node_hash.hpp"
+#include "mytoydb/executor/node_hashjoin.hpp"
+#include "mytoydb/executor/node_indexscan.hpp"
+#include "mytoydb/executor/node_modify_table.hpp"
+#include "mytoydb/executor/node_nestloop.hpp"
+#include "mytoydb/executor/node_seqscan.hpp"
+#include "mytoydb/executor/node_sort.hpp"
+#include "mytoydb/executor/tupletable.hpp"
 
 namespace mytoydb::executor {
 using mytoydb::nodes::destroyPallocNode;

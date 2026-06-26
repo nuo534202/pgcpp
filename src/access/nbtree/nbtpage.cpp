@@ -6,11 +6,11 @@
 // for B-tree pages. The B-tree uses the standard page layout with a
 // BTPageOpaqueData special area at the end of each page.
 
-#include "mytoydb/access/nbtpage.h"
+#include "mytoydb/access/nbtpage.hpp"
 
 #include <cstring>
 
-#include "mytoydb/storage/bufpage.h"
+#include "mytoydb/storage/bufpage.hpp"
 
 namespace mytoydb::access {
 

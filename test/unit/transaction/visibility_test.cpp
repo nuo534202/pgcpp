@@ -9,16 +9,16 @@
 //   - Tuple inserted/deleted by current transaction (depends on CID)
 //   - Hint flag setting and reuse
 
-#include "mytoydb/transaction/visibility.h"
+#include "mytoydb/transaction/visibility.hpp"
 
 #include <gtest/gtest.h>
 
 #include <vector>
 
-#include "mytoydb/transaction/heap_tuple.h"
-#include "mytoydb/transaction/snapshot.h"
-#include "mytoydb/transaction/transam.h"
-#include "mytoydb/transaction/xact.h"
+#include "mytoydb/transaction/heap_tuple.hpp"
+#include "mytoydb/transaction/snapshot.hpp"
+#include "mytoydb/transaction/transam.hpp"
+#include "mytoydb/transaction/xact.hpp"
 
 using mytoydb::transaction::AllocateNextTransactionId;
 using mytoydb::transaction::CommandId;

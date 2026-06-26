@@ -5,26 +5,26 @@
 // The IndexScan node uses a B-tree index to find matching TIDs, then
 // fetches the corresponding heap tuples. It supports point lookups
 // (equality) and range scans.
-#include "mytoydb/executor/node_indexscan.h"
+#include "mytoydb/executor/node_indexscan.hpp"
 
 #include <new>
 
-#include "mytoydb/access/heapam.h"
-#include "mytoydb/access/nbtpage.h"
-#include "mytoydb/access/nbtree.h"
-#include "mytoydb/access/rel.h"
-#include "mytoydb/catalog/pg_operator.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/executor/estate.h"
-#include "mytoydb/executor/exec_expr.h"
-#include "mytoydb/executor/exec_utils.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/executor/tupletable.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/parser/primnodes.h"
-#include "mytoydb/transaction/heap_tuple.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/access/heapam.hpp"
+#include "mytoydb/access/nbtpage.hpp"
+#include "mytoydb/access/nbtree.hpp"
+#include "mytoydb/access/rel.hpp"
+#include "mytoydb/catalog/pg_operator.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/executor/estate.hpp"
+#include "mytoydb/executor/exec_expr.hpp"
+#include "mytoydb/executor/exec_utils.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/executor/tupletable.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/parser/primnodes.hpp"
+#include "mytoydb/transaction/heap_tuple.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::executor {
 

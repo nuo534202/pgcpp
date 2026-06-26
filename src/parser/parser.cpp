@@ -5,15 +5,15 @@
 // C++ parser. Also implements BisonParser::error() since the grammar
 // file (gram.yy) has an empty epilogue.
 
-#include "mytoydb/parser/parser.h"
+#include "mytoydb/parser/parser.hpp"
 
 #include <cstdio>
 #include <string>
 #include <vector>
 
 #include "gram.tab.hpp"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/parser/parser_driver.h"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/parser/parser_driver.hpp"
 
 // BisonParser::error — called by the Bison parser on syntax errors.
 // We must NOT ereport(ERROR) here because the longjmp would skip the

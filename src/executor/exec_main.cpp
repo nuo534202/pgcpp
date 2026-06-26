@@ -7,16 +7,16 @@
 //   ExecutorRun    — fetch the next result tuple
 //   ExecutorFinish — post-run cleanup (no-op for SELECT)
 //   ExecutorEnd    — tear down plan tree and EState
-#include "mytoydb/executor/exec_main.h"
+#include "mytoydb/executor/exec_main.hpp"
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/executor/estate.h"
-#include "mytoydb/executor/node_exec.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/transaction/snapshot.h"
-#include "mytoydb/transaction/xact.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/executor/estate.hpp"
+#include "mytoydb/executor/node_exec.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/transaction/snapshot.hpp"
+#include "mytoydb/transaction/xact.hpp"
 
 namespace mytoydb::executor {
 

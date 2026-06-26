@@ -1,14 +1,14 @@
-#include "mytoydb/types/string_funcs.h"
+#include "mytoydb/types/string_funcs.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/types/builtins.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/types/builtins.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace {
 

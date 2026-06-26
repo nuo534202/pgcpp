@@ -4,11 +4,11 @@
 // transaction state machine (BEGIN/COMMIT/ROLLBACK), savepoints, and
 // command counter increment.
 
-#include "mytoydb/transaction/xact.h"
+#include "mytoydb/transaction/xact.hpp"
 
 #include <gtest/gtest.h>
 
-#include "mytoydb/transaction/transam.h"
+#include "mytoydb/transaction/transam.hpp"
 
 using mytoydb::transaction::AbortCurrentTransaction;
 using mytoydb::transaction::AbortTransactionBlock;

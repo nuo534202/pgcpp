@@ -1,9 +1,9 @@
-#include "mytoydb/common/containers/node.h"
+#include "mytoydb/common/containers/node.hpp"
 
 #include <new>
 #include <utility>
 
-#include "mytoydb/common/memory/memory_context.h"
+#include "mytoydb/common/memory/memory_context.hpp"
 
 namespace mytoydb::nodes {
 

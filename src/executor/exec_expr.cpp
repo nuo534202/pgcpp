@@ -4,22 +4,22 @@
 //
 // Implements ExecEvalExpr (dispatch on NodeTag), ExecQual (WHERE clause
 // evaluation), and ExecProject (target list evaluation).
-#include "mytoydb/executor/exec_expr.h"
+#include "mytoydb/executor/exec_expr.hpp"
 
 #include <cstring>
 #include <string>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_operator.h"
-#include "mytoydb/catalog/pg_proc.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/parser/primnodes.h"
-#include "mytoydb/types/datetime.h"
-#include "mytoydb/types/datum.h"
-#include "mytoydb/types/string_funcs.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_operator.hpp"
+#include "mytoydb/catalog/pg_proc.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/parser/primnodes.hpp"
+#include "mytoydb/types/datetime.hpp"
+#include "mytoydb/types/datum.hpp"
+#include "mytoydb/types/string_funcs.hpp"
 
 namespace mytoydb::executor {
 using mytoydb::nodes::destroyPallocNode;

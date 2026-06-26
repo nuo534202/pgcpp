@@ -3,24 +3,24 @@
 // Converted from PostgreSQL 15's src/backend/parser/analyze.c.
 // Provides parse_analyze(), the public entry point that transforms
 // RawStmt parse trees into Query nodes.
-#include "mytoydb/parser/analyze.h"
+#include "mytoydb/parser/analyze.hpp"
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_attribute.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/parser/parse_agg.h"
-#include "mytoydb/parser/parse_clause.h"
-#include "mytoydb/parser/parse_coerce.h"
-#include "mytoydb/parser/parse_expr.h"
-#include "mytoydb/parser/parse_relation.h"
-#include "mytoydb/parser/parse_target.h"
-#include "mytoydb/parser/parse_type.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/parser/primnodes.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_attribute.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/parser/parse_agg.hpp"
+#include "mytoydb/parser/parse_clause.hpp"
+#include "mytoydb/parser/parse_coerce.hpp"
+#include "mytoydb/parser/parse_expr.hpp"
+#include "mytoydb/parser/parse_relation.hpp"
+#include "mytoydb/parser/parse_target.hpp"
+#include "mytoydb/parser/parse_type.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/parser/primnodes.hpp"
 
 namespace mytoydb::parser {
 

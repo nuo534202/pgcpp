@@ -8,7 +8,7 @@
 //   3. The child calls BackendMain() which runs the protocol loop.
 //   4. The parent reaps children via SIGCHLD.
 //   5. SIGTERM/SIGINT trigger graceful shutdown.
-#include "mytoydb/server/postmaster.h"
+#include "mytoydb/server/postmaster.hpp"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -25,20 +25,20 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/access/rel.h"
-#include "mytoydb/catalog/bootstrap_catalog.h"
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/syscache.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/protocol/postgres.h"
-#include "mytoydb/protocol/pqformat.h"
-#include "mytoydb/storage/bufmgr.h"
-#include "mytoydb/storage/smgr.h"
-#include "mytoydb/transaction/snapshot.h"
-#include "mytoydb/transaction/transam.h"
-#include "mytoydb/transaction/xact.h"
+#include "mytoydb/access/rel.hpp"
+#include "mytoydb/catalog/bootstrap_catalog.hpp"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/syscache.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/protocol/postgres.hpp"
+#include "mytoydb/protocol/pqformat.hpp"
+#include "mytoydb/storage/bufmgr.hpp"
+#include "mytoydb/storage/smgr.hpp"
+#include "mytoydb/transaction/snapshot.hpp"
+#include "mytoydb/transaction/transam.hpp"
+#include "mytoydb/transaction/xact.hpp"
 
 namespace mytoydb::server {
 

@@ -4,17 +4,17 @@
 // Transforms raw target lists (lists of ResTarget) into lists of
 // TargetEntry nodes, handles star expansion, and transforms
 // ORDER BY / GROUP BY / DISTINCT clauses.
-#include "mytoydb/parser/parse_target.h"
+#include "mytoydb/parser/parse_target.hpp"
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/parser/parse_coerce.h"
-#include "mytoydb/parser/parse_expr.h"
-#include "mytoydb/parser/parse_relation.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/parser/parse_coerce.hpp"
+#include "mytoydb/parser/parse_expr.hpp"
+#include "mytoydb/parser/parse_relation.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::parser {
 

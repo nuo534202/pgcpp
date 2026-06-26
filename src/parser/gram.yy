@@ -20,11 +20,11 @@
 %code requires {
 #include <string>
 #include <vector>
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/parser/primnodes.h"
-#include "mytoydb/parser/parser_driver.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/parser/primnodes.hpp"
+#include "mytoydb/parser/parser_driver.hpp"
 
 using namespace mytoydb::nodes;
 using namespace mytoydb::parser;

@@ -1,10 +1,10 @@
-#include "mytoydb/common/memory/memory_context.h"
+#include "mytoydb/common/memory/memory_context.hpp"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
 
-#include "mytoydb/common/memory/alloc_set.h"
+#include "mytoydb/common/memory/alloc_set.hpp"
 
 using namespace mytoydb::memory;
 

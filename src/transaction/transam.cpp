@@ -7,11 +7,11 @@
 // aborted) of every normal transaction ID. In PostgreSQL this is a set of
 // shared-memory pages persisted to pg_xact/. MyToyDB keeps an in-memory
 // vector indexed by XID, which is sufficient for single-process operation.
-#include "mytoydb/transaction/transam.h"
+#include "mytoydb/transaction/transam.hpp"
 
 #include <vector>
 
-#include "mytoydb/common/error/elog.h"
+#include "mytoydb/common/error/elog.hpp"
 
 namespace mytoydb::transaction {
 

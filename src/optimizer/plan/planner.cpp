@@ -5,13 +5,13 @@
 // The planner takes a parser Query tree and produces an executor Plan tree.
 // For SELECT, it delegates to subplanner(). For INSERT/UPDATE/DELETE, it
 // plans the source query and wraps the result in a ModifyTable node.
-#include "mytoydb/optimizer/planner.h"
+#include "mytoydb/optimizer/planner.hpp"
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/parser/parsenodes.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

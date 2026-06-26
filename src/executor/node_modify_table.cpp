@@ -13,21 +13,21 @@
 //   tuple's TID is used to delete via heap_delete.
 // For UPDATE: the child produces new tuple values; each is used to
 //   update the corresponding row via heap_update.
-#include "mytoydb/executor/node_modify_table.h"
+#include "mytoydb/executor/node_modify_table.hpp"
 
 #include <new>
 
-#include "mytoydb/access/heapam.h"
-#include "mytoydb/access/rel.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/executor/estate.h"
-#include "mytoydb/executor/exec_expr.h"
-#include "mytoydb/executor/exec_utils.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/executor/tupletable.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/transaction/heap_tuple.h"
+#include "mytoydb/access/heapam.hpp"
+#include "mytoydb/access/rel.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/executor/estate.hpp"
+#include "mytoydb/executor/exec_expr.hpp"
+#include "mytoydb/executor/exec_utils.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/executor/tupletable.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/transaction/heap_tuple.hpp"
 
 namespace mytoydb::executor {
 

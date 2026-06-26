@@ -8,17 +8,17 @@
 //
 // This implementation supports INNER and LEFT joins. For LEFT joins,
 // unmatched outer tuples produce a NULL-padded output row.
-#include "mytoydb/executor/node_nestloop.h"
+#include "mytoydb/executor/node_nestloop.hpp"
 
 #include <new>
 
-#include "mytoydb/executor/estate.h"
-#include "mytoydb/executor/exec_expr.h"
-#include "mytoydb/executor/exec_utils.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/executor/tupletable.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/parser/primnodes.h"
+#include "mytoydb/executor/estate.hpp"
+#include "mytoydb/executor/exec_expr.hpp"
+#include "mytoydb/executor/exec_utils.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/executor/tupletable.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/parser/primnodes.hpp"
 
 namespace mytoydb::executor {
 

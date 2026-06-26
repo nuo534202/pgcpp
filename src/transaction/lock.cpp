@@ -11,9 +11,9 @@
 // In single-process mode, the same transaction can hold multiple locks on
 // the same object (upgrading is allowed). The matrix is preserved for
 // correctness and for future multi-process support.
-#include "mytoydb/transaction/lock.h"
+#include "mytoydb/transaction/lock.hpp"
 
-#include "mytoydb/common/error/elog.h"
+#include "mytoydb/common/error/elog.hpp"
 
 namespace mytoydb::transaction {
 

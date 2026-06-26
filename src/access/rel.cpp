@@ -11,17 +11,17 @@
 //   - No catalog index lookups (direct catalog scan)
 //   - Reference counting is manual (no automatic eviction)
 
-#include "mytoydb/access/rel.h"
+#include "mytoydb/access/rel.hpp"
 
 #include <string>
 #include <unordered_map>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/storage/bufmgr.h"
-#include "mytoydb/storage/smgr.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/storage/bufmgr.hpp"
+#include "mytoydb/storage/smgr.hpp"
 
 namespace mytoydb::access {
 using mytoydb::nodes::destroyPallocNode;

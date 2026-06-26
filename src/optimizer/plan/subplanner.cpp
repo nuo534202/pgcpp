@@ -8,15 +8,15 @@
 // present, with Top-N optimization when LIMIT is also present.
 #include <new>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_attribute.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/optimizer/planner.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/parser/primnodes.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_attribute.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/optimizer/planner.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

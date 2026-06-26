@@ -5,13 +5,13 @@
 // memory-context model) and deep-copies all Node* and std::vector<Node*>
 // fields. Each Equals() compares all fields.
 
-#include "mytoydb/parser/primnodes.h"
+#include "mytoydb/parser/primnodes.hpp"
 
 #include <new>
 #include <utility>
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/memory_context.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
 
 namespace mytoydb::parser {
 using mytoydb::nodes::makePallocNode;

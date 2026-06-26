@@ -16,17 +16,17 @@
 // All operator metadata is read from the Catalog (pg_operator rows
 // populated by BootstrapCatalog). No hardcoded operator table remains.
 
-#include "mytoydb/parser/parse_oper.h"
+#include "mytoydb/parser/parse_oper.hpp"
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_operator.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/parser/parse_coerce.h"
-#include "mytoydb/parser/parse_type.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_operator.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/parser/parse_coerce.hpp"
+#include "mytoydb/parser/parse_type.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::parser {
 

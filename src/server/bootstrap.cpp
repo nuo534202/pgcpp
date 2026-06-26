@@ -4,7 +4,7 @@
 //
 // Creates the data directory structure and initializes the system catalog.
 // This is the MyToyDB equivalent of PostgreSQL's `initdb` command.
-#include "mytoydb/server/bootstrap.h"
+#include "mytoydb/server/bootstrap.hpp"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -14,18 +14,18 @@
 #include <fstream>
 #include <string>
 
-#include "mytoydb/access/rel.h"
-#include "mytoydb/catalog/bootstrap_catalog.h"
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/syscache.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/storage/bufmgr.h"
-#include "mytoydb/storage/smgr.h"
-#include "mytoydb/transaction/snapshot.h"
-#include "mytoydb/transaction/transam.h"
-#include "mytoydb/transaction/xact.h"
+#include "mytoydb/access/rel.hpp"
+#include "mytoydb/catalog/bootstrap_catalog.hpp"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/syscache.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/storage/bufmgr.hpp"
+#include "mytoydb/storage/smgr.hpp"
+#include "mytoydb/transaction/snapshot.hpp"
+#include "mytoydb/transaction/transam.hpp"
+#include "mytoydb/transaction/xact.hpp"
 
 namespace mytoydb::server {
 

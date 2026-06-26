@@ -4,17 +4,17 @@
 // Provides make_parsestate, free_parsestate, make_const, and boolean
 // expression constructors.
 
-#include "mytoydb/parser/parse_node.h"
+#include "mytoydb/parser/parse_node.hpp"
 
 #include <cerrno>
 #include <cstdlib>
 #include <new>
 #include <string>
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::parser {
 using mytoydb::nodes::destroyPallocNode;

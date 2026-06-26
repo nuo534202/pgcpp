@@ -5,21 +5,21 @@
 // The Sort node collects all tuples from its child, sorts them by the
 // specified sort keys, and returns them one at a time. When a limit is
 // specified, only the top N tuples are kept (Top-N heapsort optimization).
-#include "mytoydb/executor/node_sort.h"
+#include "mytoydb/executor/node_sort.hpp"
 
 #include <algorithm>
 #include <new>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_operator.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/executor/estate.h"
-#include "mytoydb/executor/exec_expr.h"
-#include "mytoydb/executor/exec_utils.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/executor/tupletable.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_operator.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/executor/estate.hpp"
+#include "mytoydb/executor/exec_expr.hpp"
+#include "mytoydb/executor/exec_utils.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/executor/tupletable.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::executor {
 

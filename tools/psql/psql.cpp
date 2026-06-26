@@ -18,7 +18,7 @@
 #include <sstream>
 #include <string>
 
-#include "mytoydb/tools/psql_client.h"
+#include "mytoydb/tools/psql_client.hpp"
 
 using mytoydb::tools::FormatQueryResult;
 using mytoydb::tools::PsqlClient;

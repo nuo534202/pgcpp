@@ -4,16 +4,16 @@
 // Verifies that the page layout matches PostgreSQL's design: header,
 // line pointer array, free space, and tuple data.
 
-#include "mytoydb/storage/bufpage.h"
+#include "mytoydb/storage/bufpage.hpp"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <memory>
 
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
 
 using mytoydb::memory::AllocSetContext;
 using mytoydb::storage::BlockNumber;

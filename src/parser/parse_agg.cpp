@@ -2,13 +2,13 @@
 //
 // Converted from PostgreSQL 15's src/backend/parser/parse_agg.c.
 // Handles aggregate function placement checks and query flag setting.
-#include "mytoydb/parser/parse_agg.h"
+#include "mytoydb/parser/parse_agg.hpp"
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
 
 namespace mytoydb::parser {
 

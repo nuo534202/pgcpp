@@ -1,11 +1,11 @@
 // exec_utils.cpp — Shared executor utility helpers.
-#include "mytoydb/executor/exec_utils.h"
+#include "mytoydb/executor/exec_utils.hpp"
 
 #include <new>
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::executor {
 using mytoydb::nodes::makePallocNode;

@@ -1,4 +1,4 @@
-#include "mytoydb/types/builtins.h"
+#include "mytoydb/types/builtins.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -10,8 +10,8 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/memory_context.h"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

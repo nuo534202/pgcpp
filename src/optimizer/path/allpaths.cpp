@@ -5,15 +5,15 @@
 // Creates candidate access paths for each base relation in the query.
 // For MyToyDB, this generates SeqScan paths (and optionally IndexPath when
 // suitable indexes exist). The cheapest path is selected for each relation.
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/optimizer/cost.h"
-#include "mytoydb/optimizer/path.h"
-#include "mytoydb/optimizer/planner.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/parser/primnodes.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/optimizer/cost.hpp"
+#include "mytoydb/optimizer/path.hpp"
+#include "mytoydb/optimizer/planner.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

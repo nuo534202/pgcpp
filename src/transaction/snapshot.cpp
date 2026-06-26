@@ -15,12 +15,12 @@
 // The current transaction sees its own changes via the command ID (curcid),
 // not via the xip list. A tuple inserted by the current transaction is
 // visible if its t_cid <= snapshot.curcid.
-#include "mytoydb/transaction/snapshot.h"
+#include "mytoydb/transaction/snapshot.hpp"
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/transaction/transam.h"
-#include "mytoydb/transaction/xact.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/transaction/transam.hpp"
+#include "mytoydb/transaction/xact.hpp"
 
 namespace mytoydb::transaction {
 using mytoydb::nodes::makePallocNode;

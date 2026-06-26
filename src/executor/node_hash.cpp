@@ -6,16 +6,16 @@
 // its child to the parent HashJoin, which builds the hash table. The
 // Hash node itself is mostly a pass-through; the hash table is stored
 // in the HashState and managed by the HashJoin.
-#include "mytoydb/executor/node_hash.h"
+#include "mytoydb/executor/node_hash.hpp"
 
 #include <new>
 
-#include "mytoydb/executor/estate.h"
-#include "mytoydb/executor/exec_expr.h"
-#include "mytoydb/executor/exec_utils.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/executor/tupletable.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/executor/estate.hpp"
+#include "mytoydb/executor/exec_expr.hpp"
+#include "mytoydb/executor/exec_utils.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/executor/tupletable.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::executor {
 

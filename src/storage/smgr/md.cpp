@@ -25,8 +25,8 @@
 #include <cstdio>
 #include <cstring>
 
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/storage/smgr.h"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/storage/smgr.hpp"
 
 namespace mytoydb::storage {
 

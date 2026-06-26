@@ -4,7 +4,7 @@
 //
 // Thin wrappers around the lock manager that build a LockTag from a
 // relation OID and call LockAcquire/LockRelease.
-#include "mytoydb/transaction/lmgr.h"
+#include "mytoydb/transaction/lmgr.hpp"
 
 namespace mytoydb::transaction {
 

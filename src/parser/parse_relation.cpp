@@ -3,21 +3,21 @@
 // Converted from PostgreSQL 15's src/backend/parser/parse_relation.c.
 // Implements addRangeTableEntry (for relations), column resolution
 // (scanRTEForColumn, colNameToVar), and star expansion (expandRTE).
-#include "mytoydb/parser/parse_relation.h"
+#include "mytoydb/parser/parse_relation.hpp"
 
 #include <cstring>
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_attribute.h"
-#include "mytoydb/catalog/pg_class.h"
-#include "mytoydb/catalog/syscache.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/parser/parse_coerce.h"
-#include "mytoydb/parser/parse_type.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_attribute.hpp"
+#include "mytoydb/catalog/pg_class.hpp"
+#include "mytoydb/catalog/syscache.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/parser/parse_coerce.hpp"
+#include "mytoydb/parser/parse_type.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::parser {
 

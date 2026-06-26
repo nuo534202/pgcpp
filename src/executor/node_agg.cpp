@@ -9,23 +9,23 @@
 // Execution is two-phase:
 //   1. Consume all child tuples, accumulating per-group state.
 //   2. Output one tuple per group (or a single tuple for plain agg).
-#include "mytoydb/executor/node_agg.h"
+#include "mytoydb/executor/node_agg.hpp"
 
 #include <cstring>
 #include <new>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/catalog/pg_proc.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/executor/estate.h"
-#include "mytoydb/executor/exec_expr.h"
-#include "mytoydb/executor/exec_utils.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/executor/tupletable.h"
-#include "mytoydb/parser/parse_node.h"
-#include "mytoydb/parser/primnodes.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_proc.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/executor/estate.hpp"
+#include "mytoydb/executor/exec_expr.hpp"
+#include "mytoydb/executor/exec_utils.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/executor/tupletable.hpp"
+#include "mytoydb/parser/parse_node.hpp"
+#include "mytoydb/parser/primnodes.hpp"
+#include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::executor {
 

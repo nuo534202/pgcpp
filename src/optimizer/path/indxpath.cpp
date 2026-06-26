@@ -5,10 +5,10 @@
 // Creates IndexPath candidates for relations that have B-tree indexes
 // matching the query's WHERE clause. For MyToyDB's ClickBench workload,
 // index path generation is minimal — most queries use full table scans.
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/optimizer/cost.h"
-#include "mytoydb/optimizer/path.h"
-#include "mytoydb/parser/primnodes.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/optimizer/cost.hpp"
+#include "mytoydb/optimizer/path.hpp"
+#include "mytoydb/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 

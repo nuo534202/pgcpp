@@ -4,7 +4,7 @@
 // RawStmt parse trees. Verifies that ClickBench-relevant SQL constructs
 // parse correctly and produce the expected AST node types.
 
-#include "mytoydb/parser/parser.h"
+#include "mytoydb/parser/parser.hpp"
 
 #include <gtest/gtest.h>
 
@@ -12,11 +12,11 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/parser/parsenodes.h"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
 
 using mytoydb::memory::AllocSetContext;
 using mytoydb::nodes::Node;

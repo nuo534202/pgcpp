@@ -17,18 +17,18 @@
 #include <cstdlib>
 #include <string>
 
-#include "mytoydb/catalog/catalog.h"
-#include "mytoydb/common/containers/node.h"
-#include "mytoydb/common/error/elog.h"
-#include "mytoydb/common/memory/alloc_set.h"
-#include "mytoydb/common/memory/memory_context.h"
-#include "mytoydb/executor/plannodes.h"
-#include "mytoydb/optimizer/cost.h"
-#include "mytoydb/optimizer/path.h"
-#include "mytoydb/optimizer/planner.h"
-#include "mytoydb/parser/parsenodes.h"
-#include "mytoydb/parser/primnodes.h"
-#include "mytoydb/types/datum.h"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/optimizer/cost.hpp"
+#include "mytoydb/optimizer/path.hpp"
+#include "mytoydb/optimizer/planner.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/parser/primnodes.hpp"
+#include "mytoydb/types/datum.hpp"
 
 using mytoydb::catalog::Oid;
 using mytoydb::executor::Agg;
