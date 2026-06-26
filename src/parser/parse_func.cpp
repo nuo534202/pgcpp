@@ -235,117 +235,139 @@ bool LookupFuncName(const std::vector<std::string>& funcname, int nargs, const O
 // ---------------------------------------------------------------------------
 
 Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
-    // Step 1: build the function name from the funcname list.
-    std::string funcname;
-    for (size_t i = 0; i < fn->funcname.size(); ++i) {
-        auto* v = static_cast<Value*>(fn->funcname[i]);
-        if (i > 0)
-            funcname += ".";
-        funcname += v->GetString();
-    }
-    funcname = to_lower(funcname);
+    // All C++ locals with non-trivial destructors (std::string, std::vector)
+    // are confined to the block below. ereport(ERROR) does longjmp, which
+    // bypasses C++ destructors; by setting `errmsg` and ereport'ing AFTER the
+    // block, we ensure locals are properly destructed and don't leak.
+    Node* result = nullptr;
+    const char* errmsg = nullptr;
 
-    // Step 2: transform the arguments.
-    std::vector<Node*> targs;
-    for (Node* arg : fn->args) {
-        targs.push_back(transformExpr(pstate, arg, pstate->p_expr_kind));
-    }
+    {
+        // Step 1: build the function name from the funcname list.
+        // MyToyDB has a single namespace, so only the last component (the
+        // function name itself) is used for catalog lookup; any schema prefix
+        // (e.g. "pg_catalog") is ignored.
+        std::string funcname;
+        for (size_t i = 0; i < fn->funcname.size(); ++i) {
+            auto* v = static_cast<Value*>(fn->funcname[i]);
+            if (i > 0)
+                funcname += ".";
+            funcname += v->GetString();
+        }
+        funcname = to_lower(funcname);
+        std::string simple_name = funcname;
+        size_t dot_pos = simple_name.rfind('.');
+        if (dot_pos != std::string::npos)
+            simple_name = simple_name.substr(dot_pos + 1);
 
-    int nargs = static_cast<int>(targs.size());
-
-    // Step 3: handle COUNT(*) specially.
-    //
-    // PostgreSQL's count() is declared with proargtypes = {anyelement}, so
-    // COUNT(*) (no actual argument) is resolved to the 0-arg form. Since
-    // MyToyDB does not model polymorphic types, we handle COUNT(*) here
-    // without a catalog lookup.
-    if (funcname == "count" && fn->agg_star) {
-        auto* agg = makeNode<Aggref>();
-        agg->aggfnoid = 2147;  // PostgreSQL's count(anyelement) OID
-        agg->aggtype = kInt8Oid;
-        agg->aggstar = true;
-        agg->aggkind = 'n';
-        agg->agglevelsup = 0;
-        agg->aggsplit = AggSplit::kSimple;
-        agg->location = location;
-
-        // Handle FILTER clause (same as the general aggregate path below).
-        if (fn->agg_filter != nullptr) {
-            agg->aggfilter = transformExpr(pstate, fn->agg_filter, ParseExprKind::kFilter);
+        // Step 2: transform the arguments.
+        std::vector<Node*> targs;
+        for (Node* arg : fn->args) {
+            targs.push_back(transformExpr(pstate, arg, pstate->p_expr_kind));
         }
 
-        pstate->p_has_aggs = true;
-        return agg;
-    }
+        int nargs = static_cast<int>(targs.size());
 
-    // Step 4: find candidate functions by name and arg count.
-    auto candidates = FuncnameGetCandidates(funcname, nargs);
-    if (candidates.empty()) {
-        ereport(mytoydb::error::LogLevel::kError, "function does not exist");
-        return nullptr;
-    }
+        // Step 3: handle COUNT(*) specially.
+        //
+        // PostgreSQL's count() is declared with proargtypes = {anyelement}, so
+        // COUNT(*) (no actual argument) is resolved to the 0-arg form. Since
+        // MyToyDB does not model polymorphic types, we handle COUNT(*) here
+        // without a catalog lookup.
+        if (simple_name == "count" && fn->agg_star) {
+            auto* agg = makeNode<Aggref>();
+            agg->aggfnoid = 2147;  // PostgreSQL's count(anyelement) OID
+            agg->aggtype = kInt8Oid;
+            agg->aggstar = true;
+            agg->aggkind = 'n';
+            agg->agglevelsup = 0;
+            agg->aggsplit = AggSplit::kSimple;
+            agg->location = location;
 
-    // Step 5: select the best candidate.
-    std::vector<Oid> input_types;
-    input_types.reserve(targs.size());
-    for (Node* arg : targs) {
-        input_types.push_back(exprType(arg));
-    }
-    const FormData_pg_proc* proc = func_select_candidate(candidates, input_types);
-    if (proc == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "function does not exist for the given argument types");
-        return nullptr;
-    }
+            // Handle FILTER clause (same as the general aggregate path below).
+            if (fn->agg_filter != nullptr) {
+                agg->aggfilter = transformExpr(pstate, fn->agg_filter, ParseExprKind::kFilter);
+            }
 
-    // Step 6: coerce arguments to the function's declared types.
-    make_fn_arguments(pstate, targs, proc, location);
+            pstate->p_has_aggs = true;
+            result = agg;
+        } else {
+            // Step 4: find candidate functions by name and arg count.
+            auto candidates = FuncnameGetCandidates(simple_name, nargs);
+            if (candidates.empty()) {
+                errmsg = "function does not exist";
+            } else {
+                // Step 5: select the best candidate.
+                std::vector<Oid> input_types;
+                input_types.reserve(targs.size());
+                for (Node* arg : targs) {
+                    input_types.push_back(exprType(arg));
+                }
+                const FormData_pg_proc* proc = func_select_candidate(candidates, input_types);
+                if (proc == nullptr) {
+                    errmsg = "function does not exist for the given argument types";
+                } else {
+                    // Step 6: coerce arguments to the function's declared types.
+                    make_fn_arguments(pstate, targs, proc, location);
 
-    // Step 7: build Aggref (aggregate) or FuncExpr (regular function).
-    if (proc->prokind == ProKind::kAggregate) {
-        auto* agg = makeNode<Aggref>();
-        agg->aggfnoid = proc->oid;
-        agg->aggtype = proc->prorettype;
-        agg->aggstar = fn->agg_star;
-        agg->aggkind = 'n';
-        agg->agglevelsup = 0;
-        agg->aggsplit = AggSplit::kSimple;
-        agg->location = location;
+                    // Step 7: build Aggref (aggregate) or FuncExpr (regular function).
+                    if (proc->prokind == ProKind::kAggregate) {
+                        auto* agg = makeNode<Aggref>();
+                        agg->aggfnoid = proc->oid;
+                        agg->aggtype = proc->prorettype;
+                        agg->aggstar = fn->agg_star;
+                        agg->aggkind = 'n';
+                        agg->agglevelsup = 0;
+                        agg->aggsplit = AggSplit::kSimple;
+                        agg->location = location;
 
-        if (!targs.empty()) {
-            agg->args = targs;
-        }
+                        if (!targs.empty()) {
+                            agg->args = targs;
+                        }
 
-        // Handle FILTER clause.
-        if (fn->agg_filter != nullptr) {
-            agg->aggfilter = transformExpr(pstate, fn->agg_filter, ParseExprKind::kFilter);
-        }
+                        // Handle FILTER clause.
+                        if (fn->agg_filter != nullptr) {
+                            agg->aggfilter =
+                                transformExpr(pstate, fn->agg_filter, ParseExprKind::kFilter);
+                        }
 
-        // Handle ORDER BY within aggregate.
-        if (!fn->agg_order.empty()) {
-            for (Node* sortnode : fn->agg_order) {
-                Node* transformed = transformExpr(pstate, sortnode, ParseExprKind::kOrderBy);
-                agg->aggorder.push_back(transformed);
+                        // Handle ORDER BY within aggregate.
+                        if (!fn->agg_order.empty()) {
+                            for (Node* sortnode : fn->agg_order) {
+                                Node* transformed =
+                                    transformExpr(pstate, sortnode, ParseExprKind::kOrderBy);
+                                agg->aggorder.push_back(transformed);
+                            }
+                        }
+
+                        pstate->p_has_aggs = true;
+                        result = agg;
+                    } else {
+                        // Regular function.
+                        auto* funcexpr = makeNode<FuncExpr>();
+                        funcexpr->funcid = proc->oid;
+                        funcexpr->funcresulttype = proc->prorettype;
+                        funcexpr->funcretset = proc->proretset;
+                        funcexpr->funcvariadic = false;
+                        funcexpr->funcformat = CoercionForm::kExplicit;
+                        funcexpr->funccollid = 0;
+                        funcexpr->inputcollid = 0;
+                        funcexpr->args = targs;
+                        funcexpr->location = location;
+
+                        result = funcexpr;
+                    }
+                }
             }
         }
-
-        pstate->p_has_aggs = true;
-        return agg;
     }
+    // All locals (funcname, simple_name, targs, candidates, input_types) are
+    // now destructed — safe to ereport.
 
-    // Regular function.
-    auto* funcexpr = makeNode<FuncExpr>();
-    funcexpr->funcid = proc->oid;
-    funcexpr->funcresulttype = proc->prorettype;
-    funcexpr->funcretset = proc->proretset;
-    funcexpr->funcvariadic = false;
-    funcexpr->funcformat = CoercionForm::kExplicit;
-    funcexpr->funccollid = 0;
-    funcexpr->inputcollid = 0;
-    funcexpr->args = targs;
-    funcexpr->location = location;
-
-    return funcexpr;
+    if (errmsg != nullptr) {
+        ereport(mytoydb::error::LogLevel::kError, errmsg);
+    }
+    return result;
 }
 
 }  // namespace mytoydb::parser

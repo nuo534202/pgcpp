@@ -109,6 +109,13 @@ Snapshot GetLatestSnapshot();
 // otherwise creates a new one.
 Snapshot GetTransactionSnapshot();
 
+// ResetTransactionSnapshot — clear the cached transaction snapshot.
+//
+// Must be called when a transaction commits or aborts so that the next
+// transaction gets a fresh snapshot reflecting the latest committed state.
+// In PostgreSQL this is handled by AtCommit_Snapshot / AtAbort_Snapshot.
+void ResetTransactionSnapshot();
+
 // RegisterSnapshot — register a snapshot for resource management.
 // In MyToyDB, this is a no-op (snapshots are managed by the caller).
 void RegisterSnapshot(Snapshot snapshot);

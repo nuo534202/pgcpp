@@ -67,14 +67,7 @@ struct RelationData {
     bool rd_isnailed = false;
     bool rd_isvalid = false;
 
-    ~RelationData() {
-        // The tuple descriptor is palloc'd and owned by the relation.
-        if (rd_att != nullptr) {
-            rd_att->~TupleDescData();
-            mytoydb::memory::pfree(rd_att);
-            rd_att = nullptr;
-        }
-    }
+    ~RelationData();
 };
 
 // Relation — pointer to a RelationData (PostgreSQL convention).

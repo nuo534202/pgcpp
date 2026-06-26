@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
 
@@ -22,11 +23,11 @@ using mytoydb::containers::resetStringInfo;
 using mytoydb::containers::StringInfo;
 using mytoydb::memory::AllocSetContext;
 
-// Helper to properly destroy a palloc'd StringInfo (call destructor, then pfree).
+// Helper to properly destroy a palloc'd StringInfo (unregister destructor,
+// then call destructor and pfree).
 void DestroyStringInfo(StringInfo* si) {
     if (si != nullptr) {
-        si->~StringInfo();
-        mytoydb::memory::pfree(si);
+        mytoydb::nodes::destroyPallocNode(si);
     }
 }
 

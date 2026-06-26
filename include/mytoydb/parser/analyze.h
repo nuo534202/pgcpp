@@ -18,10 +18,13 @@ using mytoydb::nodes::Node;
 
 // parse_analyze — transform a list of RawStmt nodes into a list of Query nodes.
 // This is the main entry point for parse analysis.
-std::vector<Query*> parse_analyze(std::vector<RawStmt*> parse_trees, const char* source_string);
+// Takes const ref to avoid copying the vector (a copy would leak if ereport
+// fires during analysis, since longjmp bypasses the copy's destructor).
+std::vector<Query*> parse_analyze(const std::vector<RawStmt*>& parse_trees,
+                                  const char* source_string);
 
 // parse_analyze_varparams — like parse_analyze but allows variable parameters.
-std::vector<Query*> parse_analyze_varparams(std::vector<RawStmt*> parse_trees,
+std::vector<Query*> parse_analyze_varparams(const std::vector<RawStmt*>& parse_trees,
                                             const char* source_string);
 
 // transformStmt — transform a single statement into a Query.

@@ -2,8 +2,13 @@
 
 #include <cstdint>
 #include <memory>
+#include <new>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include "mytoydb/common/memory/alloc_set.h"
+#include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::nodes {
 
@@ -192,6 +197,43 @@ inline NodeTag nodeTag(const Node* node) {
 // isA() — PostgreSQL-compatible type check.
 inline bool isA(const Node* node, NodeTag tag) {
     return node != nullptr && node->GetTag() == tag;
+}
+
+// makePallocNode — allocate a node in the current memory context via palloc,
+// construct it with placement new, and register its destructor so that
+// std::string/std::vector members (allocated via operator new) are properly
+// released when the owning MemoryContext is deleted. This is the canonical
+// replacement for the `palloc + placement new` pattern; without
+// RegisterDestructor, C++ members would leak when the context is freed
+// (longjmp-based ereport and bulk context reset both bypass C++ destructors).
+template<typename T, typename... Args>
+T* makePallocNode(Args&&... args) {
+    void* mem = mytoydb::memory::palloc(sizeof(T));
+    T* obj = new (mem) T(std::forward<Args>(args)...);
+    mytoydb::memory::MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    if (ctx != nullptr) {
+        ctx->RegisterDestructor(obj, [](void* p) { static_cast<T*>(p)->~T(); });
+    }
+    return obj;
+}
+
+// destroyPallocNode — explicitly destroy a palloc'd C++ object: unregister
+// its destructor (to prevent double-free when the MemoryContext is later
+// deleted), call the destructor explicitly, then pfree the memory. Use this
+// for objects with explicit lifetimes (e.g., ParseState, EState) that are
+// destroyed before their MemoryContext is deleted.
+template<typename T>
+void destroyPallocNode(T* obj) {
+    if (obj == nullptr)
+        return;
+    // Use the owning context from the chunk header, not CurrentMemoryContext,
+    // so this works even when the current context is null or different.
+    mytoydb::memory::MemoryContext* ctx = mytoydb::memory::AllocSetContext::GetPointerContext(obj);
+    if (ctx != nullptr) {
+        ctx->UnregisterDestructor(obj);
+    }
+    obj->~T();
+    mytoydb::memory::pfree(obj);
 }
 
 // copyObject() — PostgreSQL-compatible deep copy. Returns a new Node*.

@@ -11,14 +11,19 @@
 
 #include "mytoydb/catalog/catalog.h"
 #include "mytoydb/catalog/pg_operator.h"
+#include "mytoydb/catalog/pg_proc.h"
 #include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/parser/primnodes.h"
+#include "mytoydb/types/datetime.h"
 #include "mytoydb/types/datum.h"
+#include "mytoydb/types/string_funcs.h"
 
 namespace mytoydb::executor {
+using mytoydb::nodes::destroyPallocNode;
+using mytoydb::nodes::makePallocNode;
 
 using mytoydb::catalog::Catalog;
 using mytoydb::catalog::GetCatalog;
@@ -50,10 +55,14 @@ using mytoydb::types::Float8GetDatum;
 using mytoydb::types::Int32GetDatum;
 using mytoydb::types::Int64GetDatum;
 using mytoydb::types::kBoolOid;
+using mytoydb::types::kDateOid;
 using mytoydb::types::kFloat8Oid;
 using mytoydb::types::kInt4Oid;
 using mytoydb::types::kInt8Oid;
 using mytoydb::types::kTextOid;
+using mytoydb::types::kTimestampOid;
+using mytoydb::types::like;
+using mytoydb::types::not_like;
 using mytoydb::types::VARDATA;
 using mytoydb::types::VARSIZE;
 using mytoydb::types::VARSIZE_DATA;
@@ -113,7 +122,7 @@ Datum ApplyComparison(const std::string& opname, Oid lefttype, Datum left, bool 
 
     bool result = false;
 
-    if (lefttype == kInt4Oid) {
+    if (lefttype == kInt4Oid || lefttype == kDateOid) {
         int32_t l = DatumGetInt32(left);
         int32_t r = DatumGetInt32(right);
         if (opname == "=")
@@ -128,7 +137,7 @@ Datum ApplyComparison(const std::string& opname, Oid lefttype, Datum left, bool 
             result = (l > r);
         else if (opname == ">=")
             result = (l >= r);
-    } else if (lefttype == kInt8Oid) {
+    } else if (lefttype == kInt8Oid || lefttype == kTimestampOid) {
         int64_t l = DatumGetInt64(left);
         int64_t r = DatumGetInt64(right);
         if (opname == "=")
@@ -306,15 +315,86 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                 *isNull = false;
                 return ApplyArithmetic(opname, oprow->oprleft, left, left_null, right, right_null);
             }
+            // LIKE (~~) and NOT LIKE (!~~): text pattern matching.
+            // The operands are text/varchar Datums (pass-by-reference).
+            if (opname == "~~" || opname == "!~~") {
+                if (left_null || right_null) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                if (opname == "~~") {
+                    return like(left, right);
+                }
+                return not_like(left, right);
+            }
             *isNull = true;
             return 0;
         }
 
         case NodeTag::kFuncExpr: {
-            // FuncExpr evaluation: support a few built-in functions.
-            // For now, just return NULL for unsupported functions.
             auto* fn = static_cast<FuncExpr*>(expr);
-            (void)fn;
+            const auto* proc = GetCatalog()->GetProcByOid(fn->funcid);
+            if (proc == nullptr) {
+                *isNull = true;
+                return 0;
+            }
+            const std::string& fname = proc->proname;
+
+            // Evaluate all arguments.
+            std::vector<Datum> arg_values;
+            std::vector<bool> arg_nulls;
+            arg_values.reserve(fn->args.size());
+            arg_nulls.reserve(fn->args.size());
+            for (Node* arg : fn->args) {
+                bool arg_null = false;
+                arg_values.push_back(ExecEvalExpr(arg, econtext, &arg_null));
+                arg_nulls.push_back(arg_null);
+            }
+
+            // extract(field, timestamp) — extract a component from a timestamp.
+            if (fname == "extract") {
+                if (arg_nulls[0] || arg_nulls[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                const char* text = DatumGetTextP(arg_values[0]);
+                int len = VARSIZE_DATA(text);
+                std::string field(VARDATA(text), len);
+                *isNull = false;
+                return mytoydb::types::extract(field.c_str(), arg_values[1]);
+            }
+
+            // length(text) — return the number of bytes in a text value.
+            if (fname == "length") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return mytoydb::types::text_length(arg_values[0]);
+            }
+
+            // regexp_replace(source, pattern, replacement) — regex replacement.
+            if (fname == "regexp_replace") {
+                if (arg_nulls[0] || arg_nulls[1] || arg_nulls[2]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return mytoydb::types::regexp_replace(arg_values[0], arg_values[1], arg_values[2]);
+            }
+
+            // substring(text, pattern) — regex substring extraction.
+            if (fname == "substring") {
+                if (arg_nulls[0] || arg_nulls[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return mytoydb::types::substring(arg_values[0], arg_values[1]);
+            }
+
             *isNull = true;
             return 0;
         }
@@ -441,8 +521,7 @@ void ExecProject(const std::vector<TargetEntry*>& targetlist, ExprContext* econt
 // --- ExprContext lifecycle ---
 
 ExprContext* CreateExprContext() {
-    void* mem = palloc(sizeof(ExprContext));
-    auto* econtext = new (mem) ExprContext();
+    auto* econtext = makePallocNode<ExprContext>();
     // Create a per-tuple memory context as a child of the current context.
     econtext->ecxt_per_tuple_memory = mytoydb::memory::AllocSetContext::Create("ExprContext");
     return econtext;
@@ -455,8 +534,7 @@ void FreeExprContext(ExprContext* econtext) {
         econtext->ecxt_per_tuple_memory->Delete();
         econtext->ecxt_per_tuple_memory = nullptr;
     }
-    econtext->~ExprContext();
-    mytoydb::memory::pfree(econtext);
+    destroyPallocNode(econtext);
 }
 
 void ResetExprContext(ExprContext* econtext) {
@@ -477,6 +555,15 @@ void ClearExecParams() {
     g_param_isnull.clear();
 }
 
-ExprContext::~ExprContext() = default;
+ExprContext::~ExprContext() {
+    // The per-tuple memory context is allocated via `new AllocSetContext`
+    // (not palloc), so it is not reclaimed by the owning MemoryContext's
+    // block cleanup. Delete it explicitly here. FreeExprContext() sets the
+    // pointer to nullptr after deleting, preventing double-delete.
+    if (ecxt_per_tuple_memory != nullptr) {
+        ecxt_per_tuple_memory->Delete();
+        ecxt_per_tuple_memory = nullptr;
+    }
+}
 
 }  // namespace mytoydb::executor

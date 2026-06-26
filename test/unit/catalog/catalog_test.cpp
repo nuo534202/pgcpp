@@ -10,6 +10,7 @@
 #include "mytoydb/catalog/pg_class.h"
 #include "mytoydb/catalog/pg_type.h"
 #include "mytoydb/catalog/syscache.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
@@ -40,6 +41,7 @@ using mytoydb::catalog::SysCacheIdentifier;
 using mytoydb::error::ErrorData;
 using mytoydb::error::LogLevel;
 using mytoydb::memory::AllocSetContext;
+using mytoydb::nodes::makePallocNode;
 
 class CatalogTest : public ::testing::Test {
 protected:
@@ -69,9 +71,7 @@ protected:
 
     // Helper: allocate a pg_class row in the current memory context.
     FormData_pg_class* MakeClassRow(const std::string& name, Oid oid = kInvalidOid) {
-        auto* row =
-            static_cast<FormData_pg_class*>(mytoydb::memory::palloc(sizeof(FormData_pg_class)));
-        new (row) FormData_pg_class();
+        auto* row = makePallocNode<FormData_pg_class>();
         row->relname = name;
         if (oid != kInvalidOid) {
             row->oid = oid;
@@ -81,9 +81,7 @@ protected:
 
     FormData_pg_attribute* MakeAttributeRow(Oid relid, const std::string& name, int16_t attnum,
                                             Oid typid) {
-        auto* row = static_cast<FormData_pg_attribute*>(
-            mytoydb::memory::palloc(sizeof(FormData_pg_attribute)));
-        new (row) FormData_pg_attribute();
+        auto* row = makePallocNode<FormData_pg_attribute>();
         row->attrelid = relid;
         row->attname = name;
         row->attnum = attnum;
@@ -92,9 +90,7 @@ protected:
     }
 
     FormData_pg_type* MakeTypeRow(const std::string& name, Oid oid = kInvalidOid) {
-        auto* row =
-            static_cast<FormData_pg_type*>(mytoydb::memory::palloc(sizeof(FormData_pg_type)));
-        new (row) FormData_pg_type();
+        auto* row = makePallocNode<FormData_pg_type>();
         row->typname = name;
         if (oid != kInvalidOid) {
             row->oid = oid;

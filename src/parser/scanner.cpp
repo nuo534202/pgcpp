@@ -142,7 +142,7 @@ BisonParser::symbol_type mytoydb_parser::yylex(ParserDriver& driver) {
             return BisonParser::make_FCONST(num, tok_start);
         }
         std::string num(s, start, pos - start);
-        int val = std::stoi(num);
+        int64_t val = std::atoll(num.c_str());
         return BisonParser::make_ICONST(val, tok_start);
     }
 

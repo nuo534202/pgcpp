@@ -91,7 +91,12 @@ protected:
         mytoydb::memory::SetCurrentMemoryContext(context_);
     }
 
-    void TearDown() override { mytoydb::memory::SetCurrentMemoryContext(nullptr); }
+    void TearDown() override {
+        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        if (context_ != nullptr) {
+            context_->Delete();
+        }
+    }
 
     AllocSetContext* context_ = nullptr;
 };

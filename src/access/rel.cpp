@@ -17,12 +17,15 @@
 #include <unordered_map>
 
 #include "mytoydb/catalog/catalog.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/storage/bufmgr.h"
 #include "mytoydb/storage/smgr.h"
 
 namespace mytoydb::access {
+using mytoydb::nodes::destroyPallocNode;
+using mytoydb::nodes::makePallocNode;
 
 namespace {
 
@@ -46,11 +49,24 @@ mytoydb::storage::RelFileNodeBackend MakeRelFileNodeBackend(mytoydb::catalog::Oi
 
 }  // namespace
 
+// --- RelationData destructor ---
+//
+// Defined here (not inline in rel.h) so it can call destroyPallocNode,
+// which requires node.h. The tuple descriptor is palloc'd via
+// makePallocNode and owned by the relation; destroying it via
+// destroyPallocNode unregisters its destructor entry to prevent
+// double-free when the MemoryContext is later deleted.
+RelationData::~RelationData() {
+    if (rd_att != nullptr) {
+        destroyPallocNode(rd_att);
+        rd_att = nullptr;
+    }
+}
+
 // --- Tuple descriptor construction ---
 
 TupleDesc CreateTupleDesc(const std::vector<mytoydb::catalog::FormData_pg_attribute>& attrs) {
-    void* mem = mytoydb::memory::palloc(sizeof(TupleDescData));
-    TupleDesc desc = new (mem) TupleDescData();
+    TupleDesc desc = makePallocNode<TupleDescData>();
     desc->natts = static_cast<int>(attrs.size());
     desc->attrs = attrs;
     return desc;
@@ -84,8 +100,7 @@ Relation RelationOpen(mytoydb::catalog::Oid relid) {
     }
 
     // Allocate the RelationData.
-    void* mem = mytoydb::memory::palloc(sizeof(RelationData));
-    Relation rel = new (mem) RelationData();
+    Relation rel = makePallocNode<RelationData>();
     rel->rd_id = relid;
     rel->rd_rel = pg_class;
     rel->rd_att = CreateTupleDesc(attrs);
@@ -165,9 +180,7 @@ void InitializeRelcache() {
 void ResetRelcache() {
     auto& cache = Relcache();
     for (auto& [oid, rel] : cache) {
-        // Call destructor and free memory.
-        rel->~RelationData();
-        mytoydb::memory::pfree(rel);
+        destroyPallocNode(rel);
     }
     cache.clear();
 }

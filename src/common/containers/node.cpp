@@ -25,8 +25,7 @@ Value::Value() : Node(NodeTag::kNull) {}
 // ---------------------------------------------------------------------------
 
 Node* Value::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(Value));
-    return new (mem) Value(*this);
+    return makePallocNode<Value>(*this);
 }
 
 bool Value::Equals(const Node& other) const {
@@ -52,23 +51,19 @@ bool Value::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Value* makeInteger(int64_t ival) {
-    void* mem = mytoydb::memory::palloc(sizeof(Value));
-    return new (mem) Value(ival);
+    return makePallocNode<Value>(ival);
 }
 
 Value* makeFloat(std::string fval) {
-    void* mem = mytoydb::memory::palloc(sizeof(Value));
-    return new (mem) Value(std::move(fval));
+    return makePallocNode<Value>(std::move(fval));
 }
 
 Value* makeString(std::string sval) {
-    void* mem = mytoydb::memory::palloc(sizeof(Value));
-    return new (mem) Value(std::move(sval), true);
+    return makePallocNode<Value>(std::move(sval), true);
 }
 
 Value* makeNull() {
-    void* mem = mytoydb::memory::palloc(sizeof(Value));
-    return new (mem) Value();
+    return makePallocNode<Value>();
 }
 
 // ---------------------------------------------------------------------------

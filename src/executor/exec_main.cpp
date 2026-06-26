@@ -9,8 +9,6 @@
 //   ExecutorEnd    — tear down plan tree and EState
 #include "mytoydb/executor/exec_main.h"
 
-#include <new>
-
 #include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
@@ -22,8 +20,8 @@
 
 namespace mytoydb::executor {
 
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
+using mytoydb::nodes::destroyPallocNode;
+using mytoydb::nodes::makePallocNode;
 using mytoydb::parser::Query;
 using mytoydb::parser::RangeTblEntry;
 using mytoydb::transaction::GetCurrentCommandId;
@@ -34,8 +32,7 @@ void ExecutorStart(QueryDesc* queryDesc) {
         return;
 
     // Create the EState.
-    void* estate_mem = palloc(sizeof(EState));
-    auto* estate = new (estate_mem) EState();
+    auto* estate = makePallocNode<EState>();
     queryDesc->estate = estate;
 
     // Copy the range table from the Query.
@@ -95,8 +92,7 @@ void ExecutorEnd(QueryDesc* queryDesc) {
         }
 
         // The EState destructor closes opened relations and frees slots.
-        estate->~EState();
-        pfree(estate);
+        destroyPallocNode(estate);
         queryDesc->estate = nullptr;
     }
 }

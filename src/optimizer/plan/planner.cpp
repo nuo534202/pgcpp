@@ -7,18 +7,17 @@
 // plans the source query and wraps the result in a ModifyTable node.
 #include "mytoydb/optimizer/planner.h"
 
-#include <new>
-
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/executor/plannodes.h"
 #include "mytoydb/parser/parsenodes.h"
 
 namespace mytoydb::optimizer {
+using mytoydb::nodes::makePallocNode;
 
 using mytoydb::executor::ModifyTable;
 using mytoydb::executor::Plan;
-using mytoydb::memory::palloc;
 using mytoydb::parser::CmdType;
 using mytoydb::parser::Node;
 using mytoydb::parser::Query;
@@ -32,8 +31,7 @@ Plan* planner(Query* query) {
         return nullptr;
 
     // Create PlannerInfo.
-    void* mem = palloc(sizeof(PlannerInfo));
-    auto* root = new (mem) PlannerInfo();
+    auto* root = makePallocNode<PlannerInfo>();
     root->parse = query;
 
     // Handle LIMIT.
@@ -58,8 +56,7 @@ Plan* planner(Query* query) {
             plan = subplanner(root);
 
             // Wrap in ModifyTable.
-            void* mt_mem = palloc(sizeof(ModifyTable));
-            auto* mt = new (mt_mem) ModifyTable();
+            auto* mt = makePallocNode<ModifyTable>();
             mt->operation = query->command_type;
             mt->resultRelid = query->result_relation;
             mt->lefttree = plan;

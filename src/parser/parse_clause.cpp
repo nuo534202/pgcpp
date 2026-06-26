@@ -20,6 +20,7 @@ namespace mytoydb::parser {
 
 using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
+using mytoydb::nodes::makePallocNode;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
 using mytoydb::nodes::nodeTag;
@@ -51,7 +52,7 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n, RangeTblEntry** top_r
             *top_rti = rtindex;
 
         // Build the namespace item
-        auto* item = new ParseNamespaceItem();
+        auto* item = makePallocNode<ParseNamespaceItem>();
         item->p_rte = rte;
         item->p_rtindex = rtindex;
         item->p_names = rte->alias ? rte->alias : rte->eref;
@@ -85,7 +86,7 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n, RangeTblEntry** top_r
         if (top_rti)
             *top_rti = rtindex;
 
-        auto* item = new ParseNamespaceItem();
+        auto* item = makePallocNode<ParseNamespaceItem>();
         item->p_rte = rte;
         item->p_rtindex = rtindex;
         item->p_names = rte->alias ? rte->alias : rte->eref;
@@ -165,7 +166,7 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n, RangeTblEntry** top_r
 // Returns a FromExpr node (the root of the join tree).
 // ---------------------------------------------------------------------------
 
-Node* transformFromClause(ParseState* pstate, std::vector<Node*> frmList) {
+Node* transformFromClause(ParseState* pstate, const std::vector<Node*>& frmList) {
     // Transform each item in the FROM list
     for (Node* n : frmList) {
         RangeTblEntry* top_rte = nullptr;

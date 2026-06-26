@@ -11,9 +11,11 @@
 #include <new>
 
 #include "mytoydb/access/heapam.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::executor {
+using mytoydb::nodes::makePallocNode;
 
 using mytoydb::access::TupleDesc;
 using mytoydb::memory::palloc;
@@ -22,8 +24,7 @@ using mytoydb::transaction::HeapTuple;
 using mytoydb::types::Datum;
 
 TupleTableSlot* TupleTableSlot::Make(TupleDesc tupdesc) {
-    void* mem = palloc(sizeof(TupleTableSlot));
-    auto* slot = new (mem) TupleTableSlot();
+    auto* slot = makePallocNode<TupleTableSlot>();
     slot->tts_tupleDescriptor = tupdesc;
     int natts = tupdesc != nullptr ? tupdesc->natts : 0;
     if (natts > 0) {

@@ -31,14 +31,19 @@ namespace mytoydb::parser {
 // Returns a list of RawStmt* (one per statement in the input).
 // On error, the Bison parser returns non-zero; we then ereport(ERROR).
 std::vector<RawStmt*> raw_parser(const std::string& str) {
-    ParserDriver driver;
-    driver.scanbuf = str;
-    driver.scanpos = 0;
+    std::vector<RawStmt*> parsetree;
+    int result = 0;
+    {
+        ParserDriver driver;
+        driver.scanbuf = str;
+        driver.scanpos = 0;
 
-    mytoydb_parser::BisonParser parser(driver);
-    if (::getenv("YYDEBUG"))
-        parser.set_debug_level(1);
-    int result = parser.parse();
+        mytoydb_parser::BisonParser parser(driver);
+        if (::getenv("YYDEBUG"))
+            parser.set_debug_level(1);
+        result = parser.parse();
+        parsetree = std::move(driver.parsetree);
+    }  // parser and driver destructed here — before any ereport
 
     if (result != 0) {
         // The parser's error handler already printed the message to stderr.
@@ -46,7 +51,7 @@ std::vector<RawStmt*> raw_parser(const std::string& str) {
         ereport(mytoydb::error::LogLevel::kError, "syntax error in input SQL");
     }
 
-    return driver.parsetree;
+    return parsetree;
 }
 
 }  // namespace mytoydb::parser

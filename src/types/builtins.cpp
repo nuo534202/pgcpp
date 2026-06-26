@@ -5,6 +5,7 @@
 #include <climits>
 #include <cstdarg>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <string_view>
@@ -62,7 +63,10 @@ Datum bool_in(const char* str) {
         IStringEq(s, "off") || s == "0") {
         return BoolGetDatum(false);
     }
-    ereport(LogLevel::kError, "invalid input syntax for type boolean: \"" + std::string(s) + "\"");
+    char errbuf[256];
+    std::snprintf(errbuf, sizeof(errbuf), "invalid input syntax for type boolean: \"%.*s\"",
+                  static_cast<int>(s.size()), s.data());
+    ereport(LogLevel::kError, errbuf);
 }
 
 char* bool_out(Datum value) {

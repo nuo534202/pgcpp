@@ -14,6 +14,7 @@
 #include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::parser {
+using mytoydb::nodes::makePallocNode;
 
 using mytoydb::nodes::copyObject;
 using mytoydb::nodes::equal;
@@ -55,8 +56,7 @@ bool EqVec(const std::vector<Node*>& a, const std::vector<Node*>& b) {
 // ---------------------------------------------------------------------------
 
 Node* Var::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(Var));
-    auto* copy = new (mem) Var(*this);
+    auto* copy = makePallocNode<Var>(*this);
     return copy;
 }
 
@@ -74,8 +74,7 @@ bool Var::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* Const::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(Const));
-    auto* copy = new (mem) Const(*this);
+    auto* copy = makePallocNode<Const>(*this);
     return copy;
 }
 
@@ -93,8 +92,7 @@ bool Const::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* Param::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(Param));
-    auto* copy = new (mem) Param(*this);
+    auto* copy = makePallocNode<Param>(*this);
     return copy;
 }
 
@@ -111,8 +109,7 @@ bool Param::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* OpExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(OpExpr));
-    auto* copy = new (mem) OpExpr(*this);
+    auto* copy = makePallocNode<OpExpr>(*this);
     copy->args = CloneVec(args);
     return copy;
 }
@@ -131,8 +128,7 @@ bool OpExpr::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* FuncExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(FuncExpr));
-    auto* copy = new (mem) FuncExpr(*this);
+    auto* copy = makePallocNode<FuncExpr>(*this);
     copy->args = CloneVec(args);
     return copy;
 }
@@ -152,8 +148,7 @@ bool FuncExpr::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* Aggref::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(Aggref));
-    auto* copy = new (mem) Aggref(*this);
+    auto* copy = makePallocNode<Aggref>(*this);
     copy->aggargtypes = CloneVec(aggargtypes);
     copy->aggdirectargs = CloneVec(aggdirectargs);
     copy->args = CloneVec(args);
@@ -182,8 +177,7 @@ bool Aggref::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* BoolExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(BoolExpr));
-    auto* copy = new (mem) BoolExpr(*this);
+    auto* copy = makePallocNode<BoolExpr>(*this);
     copy->args = CloneVec(args);
     return copy;
 }
@@ -200,8 +194,7 @@ bool BoolExpr::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* NullTest::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(NullTest));
-    auto* copy = new (mem) NullTest(*this);
+    auto* copy = makePallocNode<NullTest>(*this);
     copy->arg = CloneNode(arg);
     return copy;
 }
@@ -219,8 +212,7 @@ bool NullTest::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* BooleanTest::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(BooleanTest));
-    auto* copy = new (mem) BooleanTest(*this);
+    auto* copy = makePallocNode<BooleanTest>(*this);
     copy->arg = CloneNode(arg);
     return copy;
 }
@@ -237,8 +229,7 @@ bool BooleanTest::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* CaseExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CaseExpr));
-    auto* copy = new (mem) CaseExpr(*this);
+    auto* copy = makePallocNode<CaseExpr>(*this);
     copy->arg = CloneNode(arg);
     copy->args = CloneVec(args);
     copy->defresult = CloneNode(defresult);
@@ -258,8 +249,7 @@ bool CaseExpr::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* CaseWhen::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CaseWhen));
-    auto* copy = new (mem) CaseWhen(*this);
+    auto* copy = makePallocNode<CaseWhen>(*this);
     copy->expr = CloneNode(expr);
     copy->result = CloneNode(result);
     return copy;
@@ -277,8 +267,7 @@ bool CaseWhen::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* SubLink::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(SubLink));
-    auto* copy = new (mem) SubLink(*this);
+    auto* copy = makePallocNode<SubLink>(*this);
     copy->testexpr = CloneNode(testexpr);
     copy->opername = CloneVec(opername);
     copy->subselect = CloneNode(subselect);
@@ -299,8 +288,7 @@ bool SubLink::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* RelabelType::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RelabelType));
-    auto* copy = new (mem) RelabelType(*this);
+    auto* copy = makePallocNode<RelabelType>(*this);
     copy->arg = CloneNode(arg);
     return copy;
 }
@@ -319,8 +307,7 @@ bool RelabelType::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* CoerceViaIO::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CoerceViaIO));
-    auto* copy = new (mem) CoerceViaIO(*this);
+    auto* copy = makePallocNode<CoerceViaIO>(*this);
     copy->arg = CloneNode(arg);
     return copy;
 }
@@ -338,8 +325,7 @@ bool CoerceViaIO::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* ScalarArrayOpExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ScalarArrayOpExpr));
-    auto* copy = new (mem) ScalarArrayOpExpr(*this);
+    auto* copy = makePallocNode<ScalarArrayOpExpr>(*this);
     copy->args = CloneVec(args);
     return copy;
 }
@@ -358,8 +344,7 @@ bool ScalarArrayOpExpr::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* CoerceToDomain::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CoerceToDomain));
-    auto* copy = new (mem) CoerceToDomain(*this);
+    auto* copy = makePallocNode<CoerceToDomain>(*this);
     copy->arg = CloneNode(arg);
     return copy;
 }
@@ -378,8 +363,7 @@ bool CoerceToDomain::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* TargetEntry::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(TargetEntry));
-    auto* copy = new (mem) TargetEntry(*this);
+    auto* copy = makePallocNode<TargetEntry>(*this);
     copy->expr = CloneNode(expr);
     return copy;
 }
@@ -398,8 +382,7 @@ bool TargetEntry::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* RangeTblRef::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RangeTblRef));
-    return new (mem) RangeTblRef(*this);
+    return makePallocNode<RangeTblRef>(*this);
 }
 
 bool RangeTblRef::Equals(const Node& other) const {
@@ -414,8 +397,7 @@ bool RangeTblRef::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* JoinExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(JoinExpr));
-    auto* copy = new (mem) JoinExpr(*this);
+    auto* copy = makePallocNode<JoinExpr>(*this);
     copy->larg = CloneNode(larg);
     copy->rarg = CloneNode(rarg);
     copy->using_clause = CloneVec(using_clause);
@@ -437,8 +419,7 @@ bool JoinExpr::Equals(const Node& other) const {
 // ---------------------------------------------------------------------------
 
 Node* FromExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(FromExpr));
-    auto* copy = new (mem) FromExpr(*this);
+    auto* copy = makePallocNode<FromExpr>(*this);
     copy->fromlist = CloneVec(fromlist);
     copy->quals = CloneNode(quals);
     return copy;

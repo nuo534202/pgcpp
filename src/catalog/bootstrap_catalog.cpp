@@ -16,10 +16,12 @@
 #include "mytoydb/catalog/pg_collation.h"
 #include "mytoydb/catalog/pg_operator.h"
 #include "mytoydb/catalog/pg_proc.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/types/datum.h"
 
 namespace mytoydb::catalog {
+using mytoydb::nodes::makePallocNode;
 
 namespace {
 
@@ -138,8 +140,7 @@ constexpr Oid F_TIMESTAMP_GE = 1325;
 
 static FormData_pg_operator* MakeOp(Oid oid, const char* name, Oid left, Oid right, Oid result,
                                     Oid code, bool canmerge = false, bool canhash = false) {
-    void* mem = mytoydb::memory::palloc(sizeof(FormData_pg_operator));
-    auto* op = new (mem) FormData_pg_operator();
+    auto* op = makePallocNode<FormData_pg_operator>();
     op->oid = oid;
     op->oprname = name;
     op->oprleft = left;
@@ -153,8 +154,7 @@ static FormData_pg_operator* MakeOp(Oid oid, const char* name, Oid left, Oid rig
 
 static FormData_pg_proc* MakeProc(Oid oid, const char* name, Oid rettype, std::vector<Oid> argtypes,
                                   ProKind kind = ProKind::kFunction, bool retset = false) {
-    void* mem = mytoydb::memory::palloc(sizeof(FormData_pg_proc));
-    auto* proc = new (mem) FormData_pg_proc();
+    auto* proc = makePallocNode<FormData_pg_proc>();
     proc->oid = oid;
     proc->proname = name;
     proc->prorettype = rettype;
@@ -167,8 +167,7 @@ static FormData_pg_proc* MakeProc(Oid oid, const char* name, Oid rettype, std::v
 
 static FormData_pg_cast* MakeCast(Oid source, Oid target, Oid func, CastContext ctx,
                                   CastMethod method) {
-    void* mem = mytoydb::memory::palloc(sizeof(FormData_pg_cast));
-    auto* cast = new (mem) FormData_pg_cast();
+    auto* cast = makePallocNode<FormData_pg_cast>();
     cast->castsource = source;
     cast->casttarget = target;
     cast->castfunc = func;
@@ -179,8 +178,7 @@ static FormData_pg_cast* MakeCast(Oid source, Oid target, Oid func, CastContext 
 
 static FormData_pg_aggregate* MakeAgg(Oid aggfnoid, Oid transfn, Oid finalfn, Oid transtype,
                                       const char* initval = "") {
-    void* mem = mytoydb::memory::palloc(sizeof(FormData_pg_aggregate));
-    auto* agg = new (mem) FormData_pg_aggregate();
+    auto* agg = makePallocNode<FormData_pg_aggregate>();
     agg->aggfnoid = aggfnoid;
     agg->aggtransfn = transfn;
     agg->aggfinalfn = finalfn;
@@ -190,8 +188,7 @@ static FormData_pg_aggregate* MakeAgg(Oid aggfnoid, Oid transfn, Oid finalfn, Oi
 }
 
 static FormData_pg_collation* MakeCollation(Oid oid, const char* name, CollProvider provider) {
-    void* mem = mytoydb::memory::palloc(sizeof(FormData_pg_collation));
-    auto* coll = new (mem) FormData_pg_collation();
+    auto* coll = makePallocNode<FormData_pg_collation>();
     coll->oid = oid;
     coll->collname = name;
     coll->collprovider = provider;
@@ -426,9 +423,11 @@ void BootstrapCatalog(Catalog* cat) {
     Oid max_text_oid =
         cat->InsertProc(MakeProc(kInvalidOid, "max", kTextOid, {kTextOid}, ProKind::kAggregate));
 
-    cat->InsertProc(MakeProc(2107, "avg", kNumericOid, {kInt4Oid}, ProKind::kAggregate));
+    // AVG returns float8 for all integer/float types (MyToyDB does not
+    // implement the numeric type; the executor computes AVG as float8).
+    cat->InsertProc(MakeProc(2107, "avg", kFloat8Oid, {kInt4Oid}, ProKind::kAggregate));
     Oid avg_int8_oid =
-        cat->InsertProc(MakeProc(kInvalidOid, "avg", kNumericOid, {kInt8Oid}, ProKind::kAggregate));
+        cat->InsertProc(MakeProc(kInvalidOid, "avg", kFloat8Oid, {kInt8Oid}, ProKind::kAggregate));
     Oid avg_float8_oid = cat->InsertProc(
         MakeProc(kInvalidOid, "avg", kFloat8Oid, {kFloat8Oid}, ProKind::kAggregate));
 

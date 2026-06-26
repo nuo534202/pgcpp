@@ -12,6 +12,7 @@
 
 #include "mytoydb/catalog/catalog.h"
 #include "mytoydb/catalog/pg_operator.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/executor/estate.h"
 #include "mytoydb/executor/exec_expr.h"
@@ -25,6 +26,7 @@ namespace mytoydb::executor {
 using mytoydb::catalog::GetCatalog;
 using mytoydb::catalog::Oid;
 using mytoydb::memory::palloc;
+using mytoydb::nodes::destroyPallocNode;
 using mytoydb::types::Datum;
 using mytoydb::types::DatumGetBool;
 using mytoydb::types::DatumGetFloat8;
@@ -32,10 +34,12 @@ using mytoydb::types::DatumGetInt32;
 using mytoydb::types::DatumGetInt64;
 using mytoydb::types::DatumGetTextP;
 using mytoydb::types::kBoolOid;
+using mytoydb::types::kDateOid;
 using mytoydb::types::kFloat8Oid;
 using mytoydb::types::kInt4Oid;
 using mytoydb::types::kInt8Oid;
 using mytoydb::types::kTextOid;
+using mytoydb::types::kTimestampOid;
 using mytoydb::types::VARDATA;
 using mytoydb::types::VARSIZE_DATA;
 
@@ -45,7 +49,8 @@ namespace {
 // Returns -1 if a < b, 0 if a == b, 1 if a > b.
 int CompareValues(Datum a, Datum b, Oid typid) {
     switch (typid) {
-        case kInt4Oid: {
+        case kInt4Oid:
+        case kDateOid: {
             int32_t va = DatumGetInt32(a);
             int32_t vb = DatumGetInt32(b);
             if (va < vb)
@@ -54,7 +59,8 @@ int CompareValues(Datum a, Datum b, Oid typid) {
                 return 1;
             return 0;
         }
-        case kInt8Oid: {
+        case kInt8Oid:
+        case kTimestampOid: {
             int64_t va = DatumGetInt64(a);
             int64_t vb = DatumGetInt64(b);
             if (va < vb)
@@ -186,10 +192,19 @@ TupleTableSlot* SortState::ExecProcNode() {
         // Sort the tuples.
         SortTuples();
         sorted_done = true;
+
+        auto* sortplan = static_cast<Sort*>(plan);
+
+        // Apply OFFSET: skip the first `offset` sorted tuples.
+        int64_t off = sortplan->offset;
+        if (off > 0 && static_cast<int64_t>(sorted_tuples.size()) > off) {
+            sorted_tuples.erase(sorted_tuples.begin(), sorted_tuples.begin() + off);
+        } else if (off > 0) {
+            sorted_tuples.clear();
+        }
         output_index = 0;
 
         // Apply Top-N limit.
-        auto* sortplan = static_cast<Sort*>(plan);
         if (sortplan->limit >= 0 && static_cast<int64_t>(sorted_tuples.size()) > sortplan->limit) {
             sorted_tuples.resize(sortplan->limit);
         }
@@ -201,20 +216,28 @@ TupleTableSlot* SortState::ExecProcNode() {
     }
     TupleTableSlot* src = sorted_tuples[output_index++];
 
-    // Project into the result slot.
+    // Copy the sorted tuple's values directly into the result slot. The Sort
+    // node passes through the child's columns unchanged — it must NOT
+    // re-evaluate the target list (which may contain Aggref nodes that
+    // require an aggregates slot the Sort does not have).
     ps_ExprContext->ecxt_scantuple = src;
     ResetExprContext(ps_ExprContext);
-    ExecProject(plan->targetlist, ps_ExprContext, ps_ResultTupleSlot);
+    int natts = ps_ResultTupleSlot->Natts();
+    int src_natts = src->Natts();
+    int ncopy = natts < src_natts ? natts : src_natts;
+    for (int i = 0; i < ncopy; i++) {
+        ps_ResultTupleSlot->tts_values[i] = src->tts_values[i];
+        ps_ResultTupleSlot->tts_isnull[i] = src->tts_isnull[i];
+    }
+    ps_ResultTupleSlot->tts_nvalid = true;
+    ps_ResultTupleSlot->tts_isempty = false;
     return ps_ResultTupleSlot;
 }
 
 void SortState::ExecEnd() {
     // Free copied slots.
     for (TupleTableSlot* slot : sorted_tuples) {
-        if (slot != nullptr) {
-            slot->~TupleTableSlot();
-            mytoydb::memory::pfree(slot);
-        }
+        destroyPallocNode(slot);
     }
     sorted_tuples.clear();
 
@@ -226,10 +249,7 @@ void SortState::ExecEnd() {
 
 void SortState::ExecReScan() {
     for (TupleTableSlot* slot : sorted_tuples) {
-        if (slot != nullptr) {
-            slot->~TupleTableSlot();
-            mytoydb::memory::pfree(slot);
-        }
+        destroyPallocNode(slot);
     }
     sorted_tuples.clear();
     sorted_done = false;

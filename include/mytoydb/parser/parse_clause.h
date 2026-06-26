@@ -15,7 +15,9 @@ using mytoydb::nodes::Node;
 
 // transformFromClause — transform the FROM clause into a join tree.
 // Returns a FromExpr node (the root of the join tree).
-Node* transformFromClause(ParseState* pstate, std::vector<Node*> frmList);
+// Takes const ref to avoid copying the vector (a copy would leak if ereport
+// fires during transformation, since longjmp bypasses the copy's destructor).
+Node* transformFromClause(ParseState* pstate, const std::vector<Node*>& frmList);
 
 // transformFromClauseItem — transform one item in the FROM clause.
 // Returns the join tree node (RangeTblRef, JoinExpr, etc.).

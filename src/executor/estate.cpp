@@ -9,17 +9,19 @@
 #include "mytoydb/executor/estate.h"
 
 #include "mytoydb/access/rel.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/executor/node_exec.h"
 #include "mytoydb/executor/tupletable.h"
 
 namespace mytoydb::executor {
 
+using mytoydb::nodes::destroyPallocNode;
+
 EState::~EState() {
     // Free tuple table slots.
     for (TupleTableSlot* slot : es_tupleTable) {
         if (slot != nullptr) {
-            slot->~TupleTableSlot();
-            mytoydb::memory::pfree(slot);
+            destroyPallocNode(slot);
         }
     }
     es_tupleTable.clear();

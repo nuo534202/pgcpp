@@ -19,6 +19,7 @@
 
 #include "mytoydb/access/nbtpage.h"
 #include "mytoydb/access/rel.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/storage/bufmgr.h"
@@ -27,6 +28,8 @@
 #include "mytoydb/transaction/heap_tuple.h"
 
 namespace mytoydb::access {
+using mytoydb::nodes::destroyPallocNode;
+using mytoydb::nodes::makePallocNode;
 
 namespace {
 
@@ -558,8 +561,7 @@ Buffer _bt_search_leaf(Relation index, BTKeyKind kind, const void* key, uint16_t
 }
 
 BTScanDesc btbeginscan(Relation index, BTKeyKind kind, const BTScanKeyData* scan_key) {
-    void* mem = palloc(sizeof(BTScanDescData));
-    BTScanDesc scan = new (mem) BTScanDescData();
+    BTScanDesc scan = makePallocNode<BTScanDescData>();
 
     scan->index = index;
     scan->key_kind = kind;
@@ -747,8 +749,7 @@ void btendscan(BTScanDesc scan) {
         scan->curr_buf = kInvalidBuffer;
     }
 
-    scan->~BTScanDescData();
-    pfree(scan);
+    destroyPallocNode(scan);
 }
 
 }  // namespace mytoydb::access

@@ -13,6 +13,7 @@
 #include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::parser {
+using mytoydb::nodes::makePallocNode;
 
 using mytoydb::nodes::copyObject;
 using mytoydb::nodes::equal;
@@ -60,8 +61,7 @@ bool EqVec(const std::vector<Node*>& a, const std::vector<Node*>& b) {
 // ===========================================================================
 
 Node* TypeName::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(TypeName));
-    auto* copy = new (mem) TypeName(*this);
+    auto* copy = makePallocNode<TypeName>(*this);
     copy->names = CloneVec(names);
     copy->typmods = CloneVec(typmods);
     copy->array_bounds = CloneVec(array_bounds);
@@ -78,8 +78,7 @@ bool TypeName::Equals(const Node& other) const {
 }
 
 Node* ColumnRef::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ColumnRef));
-    auto* copy = new (mem) ColumnRef(*this);
+    auto* copy = makePallocNode<ColumnRef>(*this);
     copy->fields = CloneVec(fields);
     return copy;
 }
@@ -92,8 +91,7 @@ bool ColumnRef::Equals(const Node& other) const {
 }
 
 Node* ParamRef::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ParamRef));
-    return new (mem) ParamRef(*this);
+    return makePallocNode<ParamRef>(*this);
 }
 
 bool ParamRef::Equals(const Node& other) const {
@@ -108,8 +106,7 @@ bool ParamRef::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* AExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AExpr));
-    auto* copy = new (mem) AExpr(*this);
+    auto* copy = makePallocNode<AExpr>(*this);
     copy->name = CloneVec(name);
     copy->lexpr = CloneNode(lexpr);
     copy->rexpr = CloneNode(rexpr);
@@ -125,8 +122,7 @@ bool AExpr::Equals(const Node& other) const {
 }
 
 Node* AConst::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AConst));
-    auto* copy = new (mem) AConst(*this);
+    auto* copy = makePallocNode<AConst>(*this);
     copy->val = CloneNode(val);
     return copy;
 }
@@ -140,8 +136,7 @@ bool AConst::Equals(const Node& other) const {
 }
 
 Node* TypeCast::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(TypeCast));
-    auto* copy = new (mem) TypeCast(*this);
+    auto* copy = makePallocNode<TypeCast>(*this);
     copy->arg = CloneNode(arg);
     copy->type_name = static_cast<TypeName*>(CloneNode(type_name));
     return copy;
@@ -155,8 +150,7 @@ bool TypeCast::Equals(const Node& other) const {
 }
 
 Node* CollateClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CollateClause));
-    auto* copy = new (mem) CollateClause(*this);
+    auto* copy = makePallocNode<CollateClause>(*this);
     copy->arg = CloneNode(arg);
     copy->collname = CloneVec(collname);
     return copy;
@@ -170,8 +164,7 @@ bool CollateClause::Equals(const Node& other) const {
 }
 
 Node* RoleSpec::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RoleSpec));
-    return new (mem) RoleSpec(*this);
+    return makePallocNode<RoleSpec>(*this);
 }
 
 bool RoleSpec::Equals(const Node& other) const {
@@ -182,8 +175,7 @@ bool RoleSpec::Equals(const Node& other) const {
 }
 
 Node* FuncCall::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(FuncCall));
-    auto* copy = new (mem) FuncCall(*this);
+    auto* copy = makePallocNode<FuncCall>(*this);
     copy->funcname = CloneVec(funcname);
     copy->args = CloneVec(args);
     copy->agg_order = CloneVec(agg_order);
@@ -204,8 +196,7 @@ bool FuncCall::Equals(const Node& other) const {
 }
 
 Node* AStar::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AStar));
-    return new (mem) AStar(*this);
+    return makePallocNode<AStar>(*this);
 }
 
 bool AStar::Equals(const Node& other) const {
@@ -213,8 +204,7 @@ bool AStar::Equals(const Node& other) const {
 }
 
 Node* AIndices::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AIndices));
-    auto* copy = new (mem) AIndices(*this);
+    auto* copy = makePallocNode<AIndices>(*this);
     copy->lidx = CloneNode(lidx);
     copy->uidx = CloneNode(uidx);
     return copy;
@@ -228,8 +218,7 @@ bool AIndices::Equals(const Node& other) const {
 }
 
 Node* AIndirection::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AIndirection));
-    auto* copy = new (mem) AIndirection(*this);
+    auto* copy = makePallocNode<AIndirection>(*this);
     copy->arg = CloneNode(arg);
     copy->indirection = CloneVec(indirection);
     return copy;
@@ -243,8 +232,7 @@ bool AIndirection::Equals(const Node& other) const {
 }
 
 Node* AArrayExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AArrayExpr));
-    auto* copy = new (mem) AArrayExpr(*this);
+    auto* copy = makePallocNode<AArrayExpr>(*this);
     copy->elements = CloneVec(elements);
     return copy;
 }
@@ -257,8 +245,7 @@ bool AArrayExpr::Equals(const Node& other) const {
 }
 
 Node* ResTarget::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ResTarget));
-    auto* copy = new (mem) ResTarget(*this);
+    auto* copy = makePallocNode<ResTarget>(*this);
     copy->indirection = CloneVec(indirection);
     copy->val = CloneNode(val);
     return copy;
@@ -273,8 +260,7 @@ bool ResTarget::Equals(const Node& other) const {
 }
 
 Node* MultiAssignRef::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(MultiAssignRef));
-    auto* copy = new (mem) MultiAssignRef(*this);
+    auto* copy = makePallocNode<MultiAssignRef>(*this);
     copy->source = CloneNode(source);
     return copy;
 }
@@ -287,8 +273,7 @@ bool MultiAssignRef::Equals(const Node& other) const {
 }
 
 Node* SortBy::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(SortBy));
-    auto* copy = new (mem) SortBy(*this);
+    auto* copy = makePallocNode<SortBy>(*this);
     copy->node = CloneNode(node);
     copy->use_op = CloneVec(use_op);
     return copy;
@@ -303,8 +288,7 @@ bool SortBy::Equals(const Node& other) const {
 }
 
 Node* WindowDef::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(WindowDef));
-    auto* copy = new (mem) WindowDef(*this);
+    auto* copy = makePallocNode<WindowDef>(*this);
     copy->partition_clause = CloneVec(partition_clause);
     copy->order_clause = CloneVec(order_clause);
     copy->start_offset = CloneNode(start_offset);
@@ -327,8 +311,7 @@ bool WindowDef::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* RangeSubselect::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RangeSubselect));
-    auto* copy = new (mem) RangeSubselect(*this);
+    auto* copy = makePallocNode<RangeSubselect>(*this);
     copy->subquery = CloneNode(subquery);
     copy->alias = static_cast<Alias*>(CloneNode(alias));
     return copy;
@@ -342,8 +325,7 @@ bool RangeSubselect::Equals(const Node& other) const {
 }
 
 Node* RangeFunction::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RangeFunction));
-    auto* copy = new (mem) RangeFunction(*this);
+    auto* copy = makePallocNode<RangeFunction>(*this);
     copy->functions = CloneVec(functions);
     copy->alias = static_cast<Alias*>(CloneNode(alias));
     copy->coldeflist = CloneVec(coldeflist);
@@ -360,8 +342,7 @@ bool RangeFunction::Equals(const Node& other) const {
 }
 
 Node* ColumnDef::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ColumnDef));
-    auto* copy = new (mem) ColumnDef(*this);
+    auto* copy = makePallocNode<ColumnDef>(*this);
     copy->type_name = static_cast<TypeName*>(CloneNode(type_name));
     copy->raw_default = CloneNode(raw_default);
     copy->cooked_default = CloneNode(cooked_default);
@@ -387,8 +368,7 @@ bool ColumnDef::Equals(const Node& other) const {
 }
 
 Node* IndexElem::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(IndexElem));
-    auto* copy = new (mem) IndexElem(*this);
+    auto* copy = makePallocNode<IndexElem>(*this);
     copy->expr = CloneNode(expr);
     copy->collation = CloneVec(collation);
     copy->opclass = CloneVec(opclass);
@@ -407,8 +387,7 @@ bool IndexElem::Equals(const Node& other) const {
 }
 
 Node* DefElem::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(DefElem));
-    auto* copy = new (mem) DefElem(*this);
+    auto* copy = makePallocNode<DefElem>(*this);
     copy->arg = CloneNode(arg);
     return copy;
 }
@@ -422,8 +401,7 @@ bool DefElem::Equals(const Node& other) const {
 }
 
 Node* LockingClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(LockingClause));
-    auto* copy = new (mem) LockingClause(*this);
+    auto* copy = makePallocNode<LockingClause>(*this);
     copy->locked_rels = CloneVec(locked_rels);
     return copy;
 }
@@ -437,8 +415,7 @@ bool LockingClause::Equals(const Node& other) const {
 }
 
 Node* XmlSerialize::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(XmlSerialize));
-    auto* copy = new (mem) XmlSerialize(*this);
+    auto* copy = makePallocNode<XmlSerialize>(*this);
     copy->expr = CloneNode(expr);
     copy->type_name = static_cast<TypeName*>(CloneNode(type_name));
     return copy;
@@ -457,8 +434,7 @@ bool XmlSerialize::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* PartitionElem::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(PartitionElem));
-    auto* copy = new (mem) PartitionElem(*this);
+    auto* copy = makePallocNode<PartitionElem>(*this);
     copy->expr = CloneNode(expr);
     copy->collation = CloneVec(collation);
     copy->opclass = CloneVec(opclass);
@@ -474,8 +450,7 @@ bool PartitionElem::Equals(const Node& other) const {
 }
 
 Node* PartitionSpec::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(PartitionSpec));
-    auto* copy = new (mem) PartitionSpec(*this);
+    auto* copy = makePallocNode<PartitionSpec>(*this);
     copy->part_params = CloneVec(part_params);
     return copy;
 }
@@ -488,8 +463,7 @@ bool PartitionSpec::Equals(const Node& other) const {
 }
 
 Node* PartitionBoundSpec::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(PartitionBoundSpec));
-    auto* copy = new (mem) PartitionBoundSpec(*this);
+    auto* copy = makePallocNode<PartitionBoundSpec>(*this);
     copy->listdatums = CloneVec(listdatums);
     copy->lowerdatums = CloneVec(lowerdatums);
     copy->upperdatums = CloneVec(upperdatums);
@@ -507,8 +481,7 @@ bool PartitionBoundSpec::Equals(const Node& other) const {
 }
 
 Node* PartitionRangeDatum::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(PartitionRangeDatum));
-    auto* copy = new (mem) PartitionRangeDatum(*this);
+    auto* copy = makePallocNode<PartitionRangeDatum>(*this);
     copy->value = CloneNode(value);
     return copy;
 }
@@ -521,8 +494,7 @@ bool PartitionRangeDatum::Equals(const Node& other) const {
 }
 
 Node* PartitionCmd::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(PartitionCmd));
-    auto* copy = new (mem) PartitionCmd(*this);
+    auto* copy = makePallocNode<PartitionCmd>(*this);
     copy->name = static_cast<RangeVar*>(CloneNode(name));
     copy->bound = static_cast<PartitionBoundSpec*>(CloneNode(bound));
     return copy;
@@ -540,8 +512,7 @@ bool PartitionCmd::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* RangeTblEntry::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RangeTblEntry));
-    auto* copy = new (mem) RangeTblEntry(*this);
+    auto* copy = makePallocNode<RangeTblEntry>(*this);
     copy->tablesample = static_cast<TableSampleClause*>(CloneNode(tablesample));
     copy->subquery = static_cast<Query*>(CloneNode(subquery));
     copy->joinaliasvars = CloneVec(joinaliasvars);
@@ -584,8 +555,7 @@ bool RangeTblEntry::Equals(const Node& other) const {
 }
 
 Node* RangeTblFunction::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RangeTblFunction));
-    auto* copy = new (mem) RangeTblFunction(*this);
+    auto* copy = makePallocNode<RangeTblFunction>(*this);
     copy->funcexpr = CloneNode(funcexpr);
     copy->funccolnames = CloneVec(funccolnames);
     copy->funccoltypes = CloneVec(funccoltypes);
@@ -605,8 +575,7 @@ bool RangeTblFunction::Equals(const Node& other) const {
 }
 
 Node* TableSampleClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(TableSampleClause));
-    auto* copy = new (mem) TableSampleClause(*this);
+    auto* copy = makePallocNode<TableSampleClause>(*this);
     copy->args = CloneVec(args);
     copy->repeatable = CloneNode(repeatable);
     return copy;
@@ -620,8 +589,7 @@ bool TableSampleClause::Equals(const Node& other) const {
 }
 
 Node* WithCheckOption::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(WithCheckOption));
-    auto* copy = new (mem) WithCheckOption(*this);
+    auto* copy = makePallocNode<WithCheckOption>(*this);
     copy->qual = CloneNode(qual);
     return copy;
 }
@@ -639,8 +607,7 @@ bool WithCheckOption::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* SortGroupClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(SortGroupClause));
-    return new (mem) SortGroupClause(*this);
+    return makePallocNode<SortGroupClause>(*this);
 }
 
 bool SortGroupClause::Equals(const Node& other) const {
@@ -652,8 +619,7 @@ bool SortGroupClause::Equals(const Node& other) const {
 }
 
 Node* GroupingSet::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(GroupingSet));
-    auto* copy = new (mem) GroupingSet(*this);
+    auto* copy = makePallocNode<GroupingSet>(*this);
     copy->content = CloneVec(content);
     return copy;
 }
@@ -666,8 +632,7 @@ bool GroupingSet::Equals(const Node& other) const {
 }
 
 Node* WindowClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(WindowClause));
-    auto* copy = new (mem) WindowClause(*this);
+    auto* copy = makePallocNode<WindowClause>(*this);
     copy->partition_clause = CloneVec(partition_clause);
     copy->order_clause = CloneVec(order_clause);
     copy->start_offset = CloneNode(start_offset);
@@ -690,8 +655,7 @@ bool WindowClause::Equals(const Node& other) const {
 }
 
 Node* RowMarkClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RowMarkClause));
-    return new (mem) RowMarkClause(*this);
+    return makePallocNode<RowMarkClause>(*this);
 }
 
 bool RowMarkClause::Equals(const Node& other) const {
@@ -707,8 +671,7 @@ bool RowMarkClause::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* WithClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(WithClause));
-    auto* copy = new (mem) WithClause(*this);
+    auto* copy = makePallocNode<WithClause>(*this);
     copy->ctes = CloneVec(ctes);
     return copy;
 }
@@ -721,8 +684,7 @@ bool WithClause::Equals(const Node& other) const {
 }
 
 Node* InferClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(InferClause));
-    auto* copy = new (mem) InferClause(*this);
+    auto* copy = makePallocNode<InferClause>(*this);
     copy->index_elems = CloneVec(index_elems);
     copy->where_clause = CloneNode(where_clause);
     return copy;
@@ -737,8 +699,7 @@ bool InferClause::Equals(const Node& other) const {
 }
 
 Node* OnConflictClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(OnConflictClause));
-    auto* copy = new (mem) OnConflictClause(*this);
+    auto* copy = makePallocNode<OnConflictClause>(*this);
     copy->infer = static_cast<InferClause*>(CloneNode(infer));
     copy->target_list = CloneVec(target_list);
     copy->where_clause = CloneNode(where_clause);
@@ -754,8 +715,7 @@ bool OnConflictClause::Equals(const Node& other) const {
 }
 
 Node* CommonTableExpr::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CommonTableExpr));
-    auto* copy = new (mem) CommonTableExpr(*this);
+    auto* copy = makePallocNode<CommonTableExpr>(*this);
     copy->aliascolnames = CloneVec(aliascolnames);
     copy->ctequery = CloneNode(ctequery);
     copy->search_clause = CloneNode(search_clause);
@@ -785,8 +745,7 @@ bool CommonTableExpr::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* MergeWhenClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(MergeWhenClause));
-    auto* copy = new (mem) MergeWhenClause(*this);
+    auto* copy = makePallocNode<MergeWhenClause>(*this);
     copy->condition = CloneNode(condition);
     copy->target_list = CloneVec(target_list);
     copy->values = CloneVec(values);
@@ -803,8 +762,7 @@ bool MergeWhenClause::Equals(const Node& other) const {
 }
 
 Node* MergeAction::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(MergeAction));
-    auto* copy = new (mem) MergeAction(*this);
+    auto* copy = makePallocNode<MergeAction>(*this);
     copy->qual = CloneNode(qual);
     copy->target_list = CloneVec(target_list);
     copy->update_colnos = CloneVec(update_colnos);
@@ -821,8 +779,7 @@ bool MergeAction::Equals(const Node& other) const {
 }
 
 Node* TriggerTransition::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(TriggerTransition));
-    return new (mem) TriggerTransition(*this);
+    return makePallocNode<TriggerTransition>(*this);
 }
 
 bool TriggerTransition::Equals(const Node& other) const {
@@ -837,8 +794,7 @@ bool TriggerTransition::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* AccessPriv::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AccessPriv));
-    auto* copy = new (mem) AccessPriv(*this);
+    auto* copy = makePallocNode<AccessPriv>(*this);
     copy->cols = CloneVec(cols);
     return copy;
 }
@@ -855,8 +811,7 @@ bool AccessPriv::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* Alias::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(Alias));
-    auto* copy = new (mem) Alias(*this);
+    auto* copy = makePallocNode<Alias>(*this);
     copy->colnames = CloneVec(colnames);
     return copy;
 }
@@ -869,8 +824,7 @@ bool Alias::Equals(const Node& other) const {
 }
 
 Node* RangeVar::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RangeVar));
-    auto* copy = new (mem) RangeVar(*this);
+    auto* copy = makePallocNode<RangeVar>(*this);
     copy->alias = static_cast<Alias*>(CloneNode(alias));
     return copy;
 }
@@ -885,8 +839,7 @@ bool RangeVar::Equals(const Node& other) const {
 }
 
 Node* IntoClause::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(IntoClause));
-    auto* copy = new (mem) IntoClause(*this);
+    auto* copy = makePallocNode<IntoClause>(*this);
     copy->rel = static_cast<RangeVar*>(CloneNode(rel));
     copy->col_names = CloneVec(col_names);
     copy->options = CloneVec(options);
@@ -909,8 +862,7 @@ bool IntoClause::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* RawStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RawStmt));
-    auto* copy = new (mem) RawStmt(*this);
+    auto* copy = makePallocNode<RawStmt>(*this);
     copy->stmt = CloneNode(stmt);
     return copy;
 }
@@ -923,8 +875,7 @@ bool RawStmt::Equals(const Node& other) const {
 }
 
 Node* InsertStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(InsertStmt));
-    auto* copy = new (mem) InsertStmt(*this);
+    auto* copy = makePallocNode<InsertStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->cols = CloneVec(cols);
     copy->select_stmt = CloneNode(select_stmt);
@@ -945,8 +896,7 @@ bool InsertStmt::Equals(const Node& other) const {
 }
 
 Node* DeleteStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(DeleteStmt));
-    auto* copy = new (mem) DeleteStmt(*this);
+    auto* copy = makePallocNode<DeleteStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->using_clause = CloneVec(using_clause);
     copy->where_clause = CloneNode(where_clause);
@@ -965,8 +915,7 @@ bool DeleteStmt::Equals(const Node& other) const {
 }
 
 Node* UpdateStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(UpdateStmt));
-    auto* copy = new (mem) UpdateStmt(*this);
+    auto* copy = makePallocNode<UpdateStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->target_list = CloneVec(target_list);
     copy->where_clause = CloneNode(where_clause);
@@ -986,8 +935,7 @@ bool UpdateStmt::Equals(const Node& other) const {
 }
 
 Node* SelectStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(SelectStmt));
-    auto* copy = new (mem) SelectStmt(*this);
+    auto* copy = makePallocNode<SelectStmt>(*this);
     copy->distinct_clause = CloneVec(distinct_clause);
     copy->into_clause = static_cast<IntoClause*>(CloneNode(into_clause));
     copy->target_list = CloneVec(target_list);
@@ -1037,8 +985,7 @@ bool SelectStmt::Equals(const Node& other) const {
 }
 
 Node* CreateStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreateStmt));
-    auto* copy = new (mem) CreateStmt(*this);
+    auto* copy = makePallocNode<CreateStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->table_elts = CloneVec(table_elts);
     copy->inh_relations = CloneVec(inh_relations);
@@ -1063,8 +1010,7 @@ bool CreateStmt::Equals(const Node& other) const {
 }
 
 Node* CreateSchemaStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreateSchemaStmt));
-    auto* copy = new (mem) CreateSchemaStmt(*this);
+    auto* copy = makePallocNode<CreateSchemaStmt>(*this);
     copy->authrole = static_cast<RoleSpec*>(CloneNode(authrole));
     copy->schema_elts = CloneVec(schema_elts);
     return copy;
@@ -1079,8 +1025,7 @@ bool CreateSchemaStmt::Equals(const Node& other) const {
 }
 
 Node* AlterTableStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AlterTableStmt));
-    auto* copy = new (mem) AlterTableStmt(*this);
+    auto* copy = makePallocNode<AlterTableStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->cmds = CloneVec(cmds);
     return copy;
@@ -1095,8 +1040,7 @@ bool AlterTableStmt::Equals(const Node& other) const {
 }
 
 Node* AlterTableCmd::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AlterTableCmd));
-    auto* copy = new (mem) AlterTableCmd(*this);
+    auto* copy = makePallocNode<AlterTableCmd>(*this);
     copy->newowner = static_cast<RoleSpec*>(CloneNode(newowner));
     copy->def = CloneNode(def);
     return copy;
@@ -1112,8 +1056,7 @@ bool AlterTableCmd::Equals(const Node& other) const {
 }
 
 Node* DropStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(DropStmt));
-    auto* copy = new (mem) DropStmt(*this);
+    auto* copy = makePallocNode<DropStmt>(*this);
     copy->objects = CloneVec(objects);
     return copy;
 }
@@ -1131,8 +1074,7 @@ bool DropStmt::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* TransactionStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(TransactionStmt));
-    auto* copy = new (mem) TransactionStmt(*this);
+    auto* copy = makePallocNode<TransactionStmt>(*this);
     copy->options = CloneVec(options);
     return copy;
 }
@@ -1146,8 +1088,7 @@ bool TransactionStmt::Equals(const Node& other) const {
 }
 
 Node* TruncateStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(TruncateStmt));
-    auto* copy = new (mem) TruncateStmt(*this);
+    auto* copy = makePallocNode<TruncateStmt>(*this);
     copy->relations = CloneVec(relations);
     return copy;
 }
@@ -1161,8 +1102,7 @@ bool TruncateStmt::Equals(const Node& other) const {
 }
 
 Node* ExplainStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ExplainStmt));
-    auto* copy = new (mem) ExplainStmt(*this);
+    auto* copy = makePallocNode<ExplainStmt>(*this);
     copy->query = CloneNode(query);
     copy->options = CloneVec(options);
     return copy;
@@ -1176,8 +1116,7 @@ bool ExplainStmt::Equals(const Node& other) const {
 }
 
 Node* CommentStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CommentStmt));
-    auto* copy = new (mem) CommentStmt(*this);
+    auto* copy = makePallocNode<CommentStmt>(*this);
     copy->object = CloneVec(object);
     return copy;
 }
@@ -1190,8 +1129,7 @@ bool CommentStmt::Equals(const Node& other) const {
 }
 
 Node* IndexStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(IndexStmt));
-    auto* copy = new (mem) IndexStmt(*this);
+    auto* copy = makePallocNode<IndexStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->index_params = CloneVec(index_params);
     copy->index_including_params = CloneVec(index_including_params);
@@ -1212,8 +1150,7 @@ bool IndexStmt::Equals(const Node& other) const {
 }
 
 Node* ViewStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ViewStmt));
-    auto* copy = new (mem) ViewStmt(*this);
+    auto* copy = makePallocNode<ViewStmt>(*this);
     copy->view = static_cast<RangeVar*>(CloneNode(view));
     copy->aliases = CloneVec(aliases);
     copy->query = CloneNode(query);
@@ -1231,8 +1168,7 @@ bool ViewStmt::Equals(const Node& other) const {
 }
 
 Node* CreateAsStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreateAsStmt));
-    auto* copy = new (mem) CreateAsStmt(*this);
+    auto* copy = makePallocNode<CreateAsStmt>(*this);
     copy->into = static_cast<IntoClause*>(CloneNode(into));
     copy->query = CloneNode(query);
     return copy;
@@ -1247,8 +1183,7 @@ bool CreateAsStmt::Equals(const Node& other) const {
 }
 
 Node* VacuumStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(VacuumStmt));
-    auto* copy = new (mem) VacuumStmt(*this);
+    auto* copy = makePallocNode<VacuumStmt>(*this);
     copy->options = CloneVec(options);
     copy->rels = CloneVec(rels);
     return copy;
@@ -1262,8 +1197,7 @@ bool VacuumStmt::Equals(const Node& other) const {
 }
 
 Node* VariableSetStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(VariableSetStmt));
-    auto* copy = new (mem) VariableSetStmt(*this);
+    auto* copy = makePallocNode<VariableSetStmt>(*this);
     copy->args = CloneVec(args);
     return copy;
 }
@@ -1276,8 +1210,7 @@ bool VariableSetStmt::Equals(const Node& other) const {
 }
 
 Node* ClusterStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ClusterStmt));
-    auto* copy = new (mem) ClusterStmt(*this);
+    auto* copy = makePallocNode<ClusterStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     return copy;
 }
@@ -1290,8 +1223,7 @@ bool ClusterStmt::Equals(const Node& other) const {
 }
 
 Node* LockStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(LockStmt));
-    auto* copy = new (mem) LockStmt(*this);
+    auto* copy = makePallocNode<LockStmt>(*this);
     copy->relations = CloneVec(relations);
     return copy;
 }
@@ -1304,8 +1236,7 @@ bool LockStmt::Equals(const Node& other) const {
 }
 
 Node* DiscardStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(DiscardStmt));
-    auto* copy = new (mem) DiscardStmt(*this);
+    auto* copy = makePallocNode<DiscardStmt>(*this);
     return copy;
 }
 
@@ -1317,8 +1248,7 @@ bool DiscardStmt::Equals(const Node& other) const {
 }
 
 Node* NotifyStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(NotifyStmt));
-    auto* copy = new (mem) NotifyStmt(*this);
+    auto* copy = makePallocNode<NotifyStmt>(*this);
     return copy;
 }
 
@@ -1330,8 +1260,7 @@ bool NotifyStmt::Equals(const Node& other) const {
 }
 
 Node* ListenStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ListenStmt));
-    auto* copy = new (mem) ListenStmt(*this);
+    auto* copy = makePallocNode<ListenStmt>(*this);
     return copy;
 }
 
@@ -1343,8 +1272,7 @@ bool ListenStmt::Equals(const Node& other) const {
 }
 
 Node* UnlistenStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(UnlistenStmt));
-    auto* copy = new (mem) UnlistenStmt(*this);
+    auto* copy = makePallocNode<UnlistenStmt>(*this);
     return copy;
 }
 
@@ -1356,8 +1284,7 @@ bool UnlistenStmt::Equals(const Node& other) const {
 }
 
 Node* CheckPointStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CheckPointStmt));
-    auto* copy = new (mem) CheckPointStmt(*this);
+    auto* copy = makePallocNode<CheckPointStmt>(*this);
     return copy;
 }
 
@@ -1366,8 +1293,7 @@ bool CheckPointStmt::Equals(const Node& other) const {
 }
 
 Node* ReindexStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ReindexStmt));
-    auto* copy = new (mem) ReindexStmt(*this);
+    auto* copy = makePallocNode<ReindexStmt>(*this);
     copy->options = CloneVec(options);
     return copy;
 }
@@ -1381,8 +1307,7 @@ bool ReindexStmt::Equals(const Node& other) const {
 }
 
 Node* DeallocateStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(DeallocateStmt));
-    auto* copy = new (mem) DeallocateStmt(*this);
+    auto* copy = makePallocNode<DeallocateStmt>(*this);
     return copy;
 }
 
@@ -1394,8 +1319,7 @@ bool DeallocateStmt::Equals(const Node& other) const {
 }
 
 Node* PrepareStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(PrepareStmt));
-    auto* copy = new (mem) PrepareStmt(*this);
+    auto* copy = makePallocNode<PrepareStmt>(*this);
     copy->argtypes = CloneVec(argtypes);
     copy->query = CloneNode(query);
     return copy;
@@ -1409,8 +1333,7 @@ bool PrepareStmt::Equals(const Node& other) const {
 }
 
 Node* ExecuteStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(ExecuteStmt));
-    auto* copy = new (mem) ExecuteStmt(*this);
+    auto* copy = makePallocNode<ExecuteStmt>(*this);
     copy->params = CloneVec(params);
     return copy;
 }
@@ -1423,8 +1346,7 @@ bool ExecuteStmt::Equals(const Node& other) const {
 }
 
 Node* LoadStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(LoadStmt));
-    auto* copy = new (mem) LoadStmt(*this);
+    auto* copy = makePallocNode<LoadStmt>(*this);
     return copy;
 }
 
@@ -1436,8 +1358,7 @@ bool LoadStmt::Equals(const Node& other) const {
 }
 
 Node* CallStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CallStmt));
-    auto* copy = new (mem) CallStmt(*this);
+    auto* copy = makePallocNode<CallStmt>(*this);
     copy->funccall = CloneNode(funccall);
     return copy;
 }
@@ -1450,8 +1371,7 @@ bool CallStmt::Equals(const Node& other) const {
 }
 
 Node* RenameStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RenameStmt));
-    auto* copy = new (mem) RenameStmt(*this);
+    auto* copy = makePallocNode<RenameStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->object = CloneVec(object);
     return copy;
@@ -1467,8 +1387,7 @@ bool RenameStmt::Equals(const Node& other) const {
 }
 
 Node* AlterOwnerStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AlterOwnerStmt));
-    auto* copy = new (mem) AlterOwnerStmt(*this);
+    auto* copy = makePallocNode<AlterOwnerStmt>(*this);
     copy->object = CloneVec(object);
     copy->newowner = static_cast<RoleSpec*>(CloneNode(newowner));
     return copy;
@@ -1482,8 +1401,7 @@ bool AlterOwnerStmt::Equals(const Node& other) const {
 }
 
 Node* CreateSeqStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreateSeqStmt));
-    auto* copy = new (mem) CreateSeqStmt(*this);
+    auto* copy = makePallocNode<CreateSeqStmt>(*this);
     copy->sequence = static_cast<RangeVar*>(CloneNode(sequence));
     copy->options = CloneVec(options);
     return copy;
@@ -1498,8 +1416,7 @@ bool CreateSeqStmt::Equals(const Node& other) const {
 }
 
 Node* AlterSeqStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AlterSeqStmt));
-    auto* copy = new (mem) AlterSeqStmt(*this);
+    auto* copy = makePallocNode<AlterSeqStmt>(*this);
     copy->sequence = static_cast<RangeVar*>(CloneNode(sequence));
     copy->options = CloneVec(options);
     return copy;
@@ -1514,8 +1431,7 @@ bool AlterSeqStmt::Equals(const Node& other) const {
 }
 
 Node* CreateFunctionStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreateFunctionStmt));
-    auto* copy = new (mem) CreateFunctionStmt(*this);
+    auto* copy = makePallocNode<CreateFunctionStmt>(*this);
     copy->funcname = CloneVec(funcname);
     copy->parameters = CloneVec(parameters);
     copy->return_type = static_cast<TypeName*>(CloneNode(return_type));
@@ -1533,8 +1449,7 @@ bool CreateFunctionStmt::Equals(const Node& other) const {
 }
 
 Node* AlterFunctionStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AlterFunctionStmt));
-    auto* copy = new (mem) AlterFunctionStmt(*this);
+    auto* copy = makePallocNode<AlterFunctionStmt>(*this);
     copy->funcname = CloneVec(funcname);
     copy->args = CloneVec(args);
     copy->actions = CloneVec(actions);
@@ -1549,8 +1464,7 @@ bool AlterFunctionStmt::Equals(const Node& other) const {
 }
 
 Node* CreateTrigStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreateTrigStmt));
-    auto* copy = new (mem) CreateTrigStmt(*this);
+    auto* copy = makePallocNode<CreateTrigStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->funcname = CloneVec(funcname);
     copy->args = CloneVec(args);
@@ -1572,8 +1486,7 @@ bool CreateTrigStmt::Equals(const Node& other) const {
 }
 
 Node* CreateRoleStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreateRoleStmt));
-    auto* copy = new (mem) CreateRoleStmt(*this);
+    auto* copy = makePallocNode<CreateRoleStmt>(*this);
     copy->options = CloneVec(options);
     return copy;
 }
@@ -1586,8 +1499,7 @@ bool CreateRoleStmt::Equals(const Node& other) const {
 }
 
 Node* AlterRoleStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AlterRoleStmt));
-    auto* copy = new (mem) AlterRoleStmt(*this);
+    auto* copy = makePallocNode<AlterRoleStmt>(*this);
     copy->role = static_cast<RoleSpec*>(CloneNode(role));
     copy->options = CloneVec(options);
     return copy;
@@ -1601,8 +1513,7 @@ bool AlterRoleStmt::Equals(const Node& other) const {
 }
 
 Node* DropRoleStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(DropRoleStmt));
-    auto* copy = new (mem) DropRoleStmt(*this);
+    auto* copy = makePallocNode<DropRoleStmt>(*this);
     copy->roles = CloneVec(roles);
     return copy;
 }
@@ -1615,8 +1526,7 @@ bool DropRoleStmt::Equals(const Node& other) const {
 }
 
 Node* GrantStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(GrantStmt));
-    auto* copy = new (mem) GrantStmt(*this);
+    auto* copy = makePallocNode<GrantStmt>(*this);
     copy->privileges = CloneVec(privileges);
     copy->targobjs = CloneVec(targobjs);
     copy->grantees = CloneVec(grantees);
@@ -1633,8 +1543,7 @@ bool GrantStmt::Equals(const Node& other) const {
 }
 
 Node* GrantRoleStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(GrantRoleStmt));
-    auto* copy = new (mem) GrantRoleStmt(*this);
+    auto* copy = makePallocNode<GrantRoleStmt>(*this);
     copy->granted_roles = CloneVec(granted_roles);
     copy->grantee_roles = CloneVec(grantee_roles);
     copy->grantor = static_cast<RoleSpec*>(CloneNode(grantor));
@@ -1651,8 +1560,7 @@ bool GrantRoleStmt::Equals(const Node& other) const {
 }
 
 Node* CopyStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CopyStmt));
-    auto* copy = new (mem) CopyStmt(*this);
+    auto* copy = makePallocNode<CopyStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     copy->attlist = CloneVec(attlist);
     copy->options = CloneVec(options);
@@ -1670,8 +1578,7 @@ bool CopyStmt::Equals(const Node& other) const {
 }
 
 Node* RefreshMatViewStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(RefreshMatViewStmt));
-    auto* copy = new (mem) RefreshMatViewStmt(*this);
+    auto* copy = makePallocNode<RefreshMatViewStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));
     return copy;
 }
@@ -1684,8 +1591,7 @@ bool RefreshMatViewStmt::Equals(const Node& other) const {
 }
 
 Node* CreateTableSpaceStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreateTableSpaceStmt));
-    auto* copy = new (mem) CreateTableSpaceStmt(*this);
+    auto* copy = makePallocNode<CreateTableSpaceStmt>(*this);
     copy->owner = static_cast<RoleSpec*>(CloneNode(owner));
     copy->options = CloneVec(options);
     return copy;
@@ -1700,8 +1606,7 @@ bool CreateTableSpaceStmt::Equals(const Node& other) const {
 }
 
 Node* DropTableSpaceStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(DropTableSpaceStmt));
-    auto* copy = new (mem) DropTableSpaceStmt(*this);
+    auto* copy = makePallocNode<DropTableSpaceStmt>(*this);
     return copy;
 }
 
@@ -1713,8 +1618,7 @@ bool DropTableSpaceStmt::Equals(const Node& other) const {
 }
 
 Node* CreatedbStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(CreatedbStmt));
-    auto* copy = new (mem) CreatedbStmt(*this);
+    auto* copy = makePallocNode<CreatedbStmt>(*this);
     copy->options = CloneVec(options);
     return copy;
 }
@@ -1727,8 +1631,7 @@ bool CreatedbStmt::Equals(const Node& other) const {
 }
 
 Node* DropdbStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(DropdbStmt));
-    auto* copy = new (mem) DropdbStmt(*this);
+    auto* copy = makePallocNode<DropdbStmt>(*this);
     copy->options = CloneVec(options);
     return copy;
 }
@@ -1741,8 +1644,7 @@ bool DropdbStmt::Equals(const Node& other) const {
 }
 
 Node* AlterDatabaseStmt::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(AlterDatabaseStmt));
-    auto* copy = new (mem) AlterDatabaseStmt(*this);
+    auto* copy = makePallocNode<AlterDatabaseStmt>(*this);
     copy->options = CloneVec(options);
     return copy;
 }
@@ -1759,8 +1661,7 @@ bool AlterDatabaseStmt::Equals(const Node& other) const {
 // ===========================================================================
 
 Node* Query::Clone() const {
-    void* mem = mytoydb::memory::palloc(sizeof(Query));
-    auto* copy = new (mem) Query(*this);
+    auto* copy = makePallocNode<Query>(*this);
     copy->utility_stmt = CloneNode(utility_stmt);
     copy->cte_list = CloneVec(cte_list);
     copy->rtable = CloneVec(rtable);

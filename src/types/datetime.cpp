@@ -331,7 +331,9 @@ Datum date_trunc(const char* field, Datum timestamp) {
         p.month = 1;
         p.year = ((p.year - 1) / 1000) * 1000 + 1;
     } else {
-        ereport(LogLevel::kError, "date_trunc: unknown field \"" + std::string(field) + "\"");
+        char errbuf[256];
+        std::snprintf(errbuf, sizeof(errbuf), "date_trunc: unknown field \"%s\"", field);
+        ereport(LogLevel::kError, errbuf);
     }
 
     return Int64GetDatum(PartsToTimestamp(p));
@@ -392,7 +394,9 @@ Datum extract(const char* field, Datum timestamp) {
         // PostgreSQL epoch (2000-01-01) is 10957 days after Unix epoch.
         result = static_cast<double>(ts) / kMicrosecsPerSec + 10957.0 * kSecsPerDay;
     } else {
-        ereport(LogLevel::kError, "extract: unknown field \"" + std::string(field) + "\"");
+        char errbuf[256];
+        std::snprintf(errbuf, sizeof(errbuf), "extract: unknown field \"%s\"", field);
+        ereport(LogLevel::kError, errbuf);
     }
 
     return Float8GetDatum(result);

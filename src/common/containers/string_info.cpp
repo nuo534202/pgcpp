@@ -5,9 +5,11 @@
 #include <new>
 #include <vector>
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::containers {
+using mytoydb::nodes::makePallocNode;
 
 // ---------------------------------------------------------------------------
 // StringInfo method implementations
@@ -54,8 +56,7 @@ void StringInfo::AppendBinary(const char* data, std::size_t len) {
 // ---------------------------------------------------------------------------
 
 StringInfo* makeStringInfo() {
-    void* raw = mytoydb::memory::palloc(sizeof(StringInfo));
-    return new (raw) StringInfo();
+    return makePallocNode<StringInfo>();
 }
 
 void initStringInfo(StringInfo* si) {

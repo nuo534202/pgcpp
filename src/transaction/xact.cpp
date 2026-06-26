@@ -17,10 +17,12 @@
 //   - No prepared transactions (2PC)
 #include "mytoydb/transaction/xact.h"
 
+#include <cstdio>
 #include <list>
 #include <vector>
 
 #include "mytoydb/common/error/elog.h"
+#include "mytoydb/transaction/snapshot.h"
 #include "mytoydb/transaction/transam.h"
 
 namespace mytoydb::transaction {
@@ -102,6 +104,10 @@ void CommitTransaction() {
         TransactionIdCommit(s->transaction_id);
     }
 
+    // Release the transaction snapshot so the next transaction sees the
+    // latest committed state.
+    ResetTransactionSnapshot();
+
     PopState();
 }
 
@@ -117,6 +123,9 @@ void AbortTransaction() {
     if (TransactionIdIsValid(s->transaction_id)) {
         TransactionIdAbort(s->transaction_id);
     }
+
+    // Release the transaction snapshot.
+    ResetTransactionSnapshot();
 
     PopState();
 }
@@ -488,7 +497,9 @@ void ReleaseSavepoint(const std::string& name) {
     }
 
     if (target == nullptr || target->parent == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "savepoint \"" + name + "\" does not exist");
+        char errbuf[256];
+        std::snprintf(errbuf, sizeof(errbuf), "savepoint \"%s\" does not exist", name.c_str());
+        ereport(mytoydb::error::LogLevel::kError, errbuf);
     }
 
     // Commit all subtransactions up to and including the target.
@@ -512,12 +523,17 @@ void RollbackToSavepoint(const std::string& name) {
     }
 
     if (target == nullptr || target->parent == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "savepoint \"" + name + "\" does not exist");
+        char errbuf[256];
+        std::snprintf(errbuf, sizeof(errbuf), "savepoint \"%s\" does not exist", name.c_str());
+        ereport(mytoydb::error::LogLevel::kError, errbuf);
     }
 
     // Abort all subtransactions down to AND INCLUDING the target.
     // We abort until the current state is the target's parent.
-    while (CurrentState() != target->parent) {
+    // Save target's parent before the loop: once target itself is popped by
+    // AbortSubTransaction(), the `target` pointer becomes dangling.
+    TransactionState target_parent = target->parent;
+    while (CurrentState() != target_parent) {
         AbortSubTransaction();
     }
 

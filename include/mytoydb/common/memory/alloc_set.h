@@ -28,6 +28,11 @@ public:
                                    std::size_t init_block_size = 8192,
                                    std::size_t max_block_size = 8192 * 16);
 
+    // Extract the owning MemoryContext from a palloc'd pointer by reading
+    // the ChunkHeader stored immediately before the user data. This allows
+    // pfree to work without relying on CurrentMemoryContext being set.
+    static MemoryContext* GetPointerContext(void* pointer);
+
 private:
     // Internal block structure (linked list of large OS allocations)
     struct Block;
@@ -52,6 +57,7 @@ private:
     int FreeListIndex(std::size_t size) const;
     void AllocNewBlock(std::size_t block_size);
     void AddToFreeList(ChunkHeader* chunk);
+    void FreeBlocks();
 };
 
 }  // namespace mytoydb::memory

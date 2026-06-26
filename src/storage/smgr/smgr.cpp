@@ -17,10 +17,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::storage {
+using mytoydb::nodes::destroyPallocNode;
+using mytoydb::nodes::makePallocNode;
 
 namespace {
 
@@ -104,8 +107,7 @@ SmgrRelation smgropen(RelFileNodeBackend rnode) {
     }
 
     // Not found: create a new entry.
-    void* mem = mytoydb::memory::palloc(sizeof(SmgrRelationData));
-    auto* reln = new (mem) SmgrRelationData();
+    auto* reln = makePallocNode<SmgrRelationData>();
     reln->smgr_rnode = rnode;
 
     // Insert at head of the linked list.
@@ -135,7 +137,7 @@ void smgrclose(SmgrRelation reln) {
         reln->smgr_next->smgr_prev = reln->smgr_prev;
     }
 
-    mytoydb::memory::pfree(reln);
+    destroyPallocNode(reln);
 }
 
 void smgrcloseall() {

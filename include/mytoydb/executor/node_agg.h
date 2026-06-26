@@ -34,10 +34,20 @@ struct AggStateInfo {
 };
 
 // AggGroupKey — a GROUP BY key (vector of Datum values, hashed).
+//
+// For pass-by-reference types (text, varchar), the Datum is a pointer to a
+// varlena buffer. Two rows with the same string content but different buffer
+// addresses must hash and compare equal, so by-reference columns are
+// serialized into `str_values` at key-construction time. For pass-by-value
+// types, `str_values[i]` is left empty and the Datum in `values[i]` is used
+// directly.
 struct AggGroupKey {
     std::vector<mytoydb::types::Datum> values;
+    std::vector<std::string> str_values;
     std::vector<bool> isnull;
-    bool operator==(const AggGroupKey& o) const { return values == o.values && isnull == o.isnull; }
+    bool operator==(const AggGroupKey& o) const {
+        return values == o.values && str_values == o.str_values && isnull == o.isnull;
+    }
 };
 
 struct AggGroupKeyHash {
@@ -46,6 +56,9 @@ struct AggGroupKeyHash {
         for (size_t i = 0; i < k.values.size(); i++) {
             h ^= std::hash<uintptr_t>{}(k.values[i]) + 0x9e3779b9u + (h << 6) + (h >> 2);
             h ^= std::hash<bool>{}(k.isnull[i]) + 0x9e3779b9u + (h << 6) + (h >> 2);
+        }
+        for (size_t i = 0; i < k.str_values.size(); i++) {
+            h ^= std::hash<std::string>{}(k.str_values[i]) + 0x9e3779b9u + (h << 6) + (h >> 2);
         }
         return h;
     }
@@ -68,7 +81,8 @@ public:
 
     std::vector<AggStateInfo> agg_infos;  // one per Aggref in target list
     bool has_group_by = false;
-    std::vector<int> group_col_idx;  // 1-based attr numbers of GROUP BY cols
+    std::vector<int> group_col_idx;     // 1-based attr numbers of GROUP BY cols
+    std::vector<bool> group_col_byref;  // parallel to group_col_idx; true if pass-by-reference
 
     // Hash table for grouped aggregation.
     std::unordered_map<AggGroupKey, AggGroupState, AggGroupKeyHash> groups;

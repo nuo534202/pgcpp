@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
 
@@ -25,11 +26,11 @@ using mytoydb::containers::TypedList;
 using mytoydb::memory::AllocSetContext;
 using mytoydb::memory::ContextSwitchGuard;
 
-// Helper to properly destroy a palloc'd List (call destructor, then pfree).
+// Helper to properly destroy a palloc'd List (unregister destructor, then
+// call destructor and pfree).
 void DestroyList(List* list) {
     if (list != nullptr) {
-        list->~List();
-        mytoydb::memory::pfree(list);
+        mytoydb::nodes::destroyPallocNode(list);
     }
 }
 

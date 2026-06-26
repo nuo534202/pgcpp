@@ -8,16 +8,26 @@
 #include <string>
 #include <vector>
 
+#include "mytoydb/catalog/catalog.h"
+#include "mytoydb/catalog/pg_attribute.h"
 #include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/parser/parse_agg.h"
 #include "mytoydb/parser/parse_clause.h"
+#include "mytoydb/parser/parse_coerce.h"
 #include "mytoydb/parser/parse_expr.h"
 #include "mytoydb/parser/parse_relation.h"
 #include "mytoydb/parser/parse_target.h"
+#include "mytoydb/parser/parse_type.h"
+#include "mytoydb/parser/parsenodes.h"
+#include "mytoydb/parser/primnodes.h"
 
 namespace mytoydb::parser {
 
+using mytoydb::catalog::Catalog;
+using mytoydb::catalog::GetCatalog;
+using mytoydb::catalog::Oid;
+using mytoydb::nodes::makePallocNode;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
 using mytoydb::nodes::nodeTag;
@@ -33,7 +43,8 @@ static Query* transformSetOperationStmt(ParseState* pstate, SelectStmt* stmt);
 // parse_analyze — transform a list of RawStmt nodes into a list of Query nodes.
 // ---------------------------------------------------------------------------
 
-std::vector<Query*> parse_analyze(std::vector<RawStmt*> parse_trees, const char* source_string) {
+std::vector<Query*> parse_analyze(const std::vector<RawStmt*>& parse_trees,
+                                  const char* source_string) {
     std::vector<Query*> result;
 
     for (RawStmt* raw_stmt : parse_trees) {
@@ -53,7 +64,7 @@ std::vector<Query*> parse_analyze(std::vector<RawStmt*> parse_trees, const char*
 // parse_analyze_varparams — like parse_analyze but allows variable parameters.
 // ---------------------------------------------------------------------------
 
-std::vector<Query*> parse_analyze_varparams(std::vector<RawStmt*> parse_trees,
+std::vector<Query*> parse_analyze_varparams(const std::vector<RawStmt*>& parse_trees,
                                             const char* source_string) {
     // For now, this is the same as parse_analyze.
     // A full implementation would set up variable parameter handling.
@@ -234,6 +245,41 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
                     target_list.push_back(res);
                 }
                 qry->target_list = transformTargetList(pstate, target_list);
+
+                // Coerce each value to the corresponding target column type.
+                // This is essential for string literals (UNKNOWN type) being
+                // inserted into TEXT/VARCHAR columns — the Datum must be
+                // converted from a C string to a varlena structure.
+                if (pstate->p_target_relation != nullptr) {
+                    RangeTblEntry* rte = pstate->p_target_relation;
+                    if (GetCatalog() != nullptr && rte->relid != 0) {
+                        auto attrs = GetCatalog()->GetAttributes(rte->relid);
+                        size_t attr_idx = 0;
+                        for (Node* tle_node : qry->target_list) {
+                            if (attr_idx >= attrs.size())
+                                break;
+                            const auto* attr = attrs[attr_idx];
+                            if (attr->attnum <= 0) {
+                                ++attr_idx;
+                                continue;
+                            }
+                            if (nodeTag(tle_node) == NodeTag::kTargetEntry) {
+                                auto* te = static_cast<TargetEntry*>(tle_node);
+                                Oid expr_type = exprType(te->expr);
+                                if (expr_type != attr->atttypid) {
+                                    Node* coerced = coerce_to_target_type(
+                                        pstate, te->expr, expr_type, attr->atttypid,
+                                        attr->atttypmod, CoercionContext::kAssignment,
+                                        CoercionForm::kImplicit, -1);
+                                    if (coerced != nullptr) {
+                                        te->expr = coerced;
+                                    }
+                                }
+                            }
+                            ++attr_idx;
+                        }
+                    }
+                }
             } else {
                 // INSERT ... SELECT
                 Query* subquery = transformSelectStmt(pstate, sel);
@@ -274,7 +320,7 @@ static Query* transformUpdateStmt(ParseState* pstate, UpdateStmt* stmt) {
 
         // Add the target relation to the namespace so column references in
         // SET/WHERE clauses can be resolved.
-        auto* ns_item = new ParseNamespaceItem();
+        auto* ns_item = makePallocNode<ParseNamespaceItem>();
         ns_item->p_rte = rte;
         ns_item->p_rtindex = rtindex;
         ns_item->p_names = rte->alias ? rte->alias : rte->eref;
@@ -332,7 +378,7 @@ static Query* transformDeleteStmt(ParseState* pstate, DeleteStmt* stmt) {
 
         // Add the target relation to the namespace so column references in
         // WHERE/USING clauses can be resolved.
-        auto* ns_item = new ParseNamespaceItem();
+        auto* ns_item = makePallocNode<ParseNamespaceItem>();
         ns_item->p_rte = rte;
         ns_item->p_rtindex = rtindex;
         ns_item->p_names = rte->alias ? rte->alias : rte->eref;

@@ -24,6 +24,7 @@
 #include "mytoydb/catalog/pg_attribute.h"
 #include "mytoydb/catalog/pg_class.h"
 #include "mytoydb/catalog/syscache.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
@@ -95,6 +96,8 @@ using mytoydb::transaction::TransactionId;
 
 namespace {
 
+using mytoydb::nodes::makePallocNode;
+
 class NbtreeTest : public ::testing::Test {
 protected:
     void SetUp() override {
@@ -140,9 +143,7 @@ protected:
 
     // Helper: build a pg_class row for an index relation.
     FormData_pg_class* MakeIndexClassRow(const std::string& name, Oid oid) {
-        auto* row =
-            static_cast<FormData_pg_class*>(mytoydb::memory::palloc(sizeof(FormData_pg_class)));
-        new (row) FormData_pg_class();
+        auto* row = makePallocNode<FormData_pg_class>();
         row->oid = oid;
         row->relname = name;
         row->relfilenode = oid;
@@ -262,8 +263,12 @@ TEST_F(NbtreeTest, BuildItemInt32) {
     EXPECT_EQ(size, static_cast<uint16_t>(sizeof(BTItemData) + 4));
     EXPECT_EQ(item->tid, tid);
 
-    const int32_t* stored_key = reinterpret_cast<const int32_t*>(_bt_item_get_key(item));
-    EXPECT_EQ(*stored_key, 42);
+    // Use memcpy to read the key, since the key data follows the 6-byte
+    // ItemPointerData tid and may not be 4-byte aligned. Direct
+    // reinterpret_cast + dereference would be undefined behavior.
+    int32_t stored_key;
+    std::memcpy(&stored_key, _bt_item_get_key(item), sizeof(int32_t));
+    EXPECT_EQ(stored_key, 42);
     EXPECT_EQ(_bt_item_get_key_len(size), 4u);
 }
 

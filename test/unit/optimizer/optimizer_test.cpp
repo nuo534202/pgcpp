@@ -18,6 +18,7 @@
 #include <string>
 
 #include "mytoydb/catalog/catalog.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
@@ -73,6 +74,8 @@ using mytoydb::types::kInt8Oid;
 
 namespace {
 
+using mytoydb::nodes::makePallocNode;
+
 // Operator OIDs (from bootstrap_catalog.cpp).
 constexpr Oid kInt4EqOp = 96;   // int4 = int4
 constexpr Oid kInt4LtOp = 97;   // int4 < int4
@@ -95,8 +98,7 @@ protected:
 
     // Helper: create a Var node.
     Var* MakeVar(int varno, int varattno, Oid vartype) {
-        auto* var = static_cast<Var*>(palloc(sizeof(Var)));
-        new (var) Var();
+        auto* var = makePallocNode<Var>();
         var->varno = varno;
         var->varattno = varattno;
         var->vartype = vartype;
@@ -105,8 +107,7 @@ protected:
 
     // Helper: create a Const node for int4.
     Const* MakeInt4Const(int32_t value) {
-        auto* con = static_cast<Const*>(palloc(sizeof(Const)));
-        new (con) Const();
+        auto* con = makePallocNode<Const>();
         con->consttype = kInt4Oid;
         con->constvalue = Int32GetDatum(value);
         con->constisnull = false;
@@ -117,8 +118,7 @@ protected:
 
     // Helper: create a Const node for int8 (used for LIMIT).
     Const* MakeInt8Const(int64_t value) {
-        auto* con = static_cast<Const*>(palloc(sizeof(Const)));
-        new (con) Const();
+        auto* con = makePallocNode<Const>();
         con->consttype = kInt8Oid;
         con->constvalue = Int64GetDatum(value);
         con->constisnull = false;
@@ -130,8 +130,7 @@ protected:
     // Helper: create a TargetEntry.
     TargetEntry* MakeTargetEntry(Node* expr, int resno, const std::string& resname = "",
                                  int ressortgroupref = 0) {
-        auto* te = static_cast<TargetEntry*>(palloc(sizeof(TargetEntry)));
-        new (te) TargetEntry();
+        auto* te = makePallocNode<TargetEntry>();
         te->expr = expr;
         te->resno = resno;
         te->resname = resname;
@@ -141,8 +140,7 @@ protected:
 
     // Helper: create an OpExpr.
     OpExpr* MakeOpExpr(Oid opno, Oid resulttype, Node* left, Node* right) {
-        auto* op = static_cast<OpExpr*>(palloc(sizeof(OpExpr)));
-        new (op) OpExpr();
+        auto* op = makePallocNode<OpExpr>();
         op->opno = opno;
         op->opresulttype = resulttype;
         op->args.push_back(left);
@@ -152,8 +150,7 @@ protected:
 
     // Helper: create a SortGroupClause.
     SortGroupClause* MakeSortGroupClause(int tle_sort_group_ref, int sortop, bool nulls_first) {
-        auto* sgc = static_cast<SortGroupClause*>(palloc(sizeof(SortGroupClause)));
-        new (sgc) SortGroupClause();
+        auto* sgc = makePallocNode<SortGroupClause>();
         sgc->tle_sort_group_ref = tle_sort_group_ref;
         sgc->sortop = sortop;
         sgc->nulls_first = nulls_first;
@@ -162,8 +159,7 @@ protected:
 
     // Helper: create a RangeTblEntry for a relation.
     RangeTblEntry* MakeRTE(int relid) {
-        auto* rte = static_cast<RangeTblEntry*>(palloc(sizeof(RangeTblEntry)));
-        new (rte) RangeTblEntry();
+        auto* rte = makePallocNode<RangeTblEntry>();
         rte->rtekind = RTEKind::kRelation;
         rte->relid = relid;
         return rte;
@@ -171,16 +167,14 @@ protected:
 
     // Helper: create a RangeTblRef.
     RangeTblRef* MakeRangeTblRef(int rtindex) {
-        auto* ref = static_cast<RangeTblRef*>(palloc(sizeof(RangeTblRef)));
-        new (ref) RangeTblRef();
+        auto* ref = makePallocNode<RangeTblRef>();
         ref->rtindex = rtindex;
         return ref;
     }
 
     // Helper: create a FromExpr with a single base relation.
     FromExpr* MakeFromExpr(int rtindex, Node* quals = nullptr) {
-        auto* from = static_cast<FromExpr*>(palloc(sizeof(FromExpr)));
-        new (from) FromExpr();
+        auto* from = makePallocNode<FromExpr>();
         from->fromlist.push_back(MakeRangeTblRef(rtindex));
         from->quals = quals;
         return from;
@@ -188,8 +182,7 @@ protected:
 
     // Helper: create a simple SELECT query.
     Query* MakeSelectQuery() {
-        auto* query = static_cast<Query*>(palloc(sizeof(Query)));
-        new (query) Query();
+        auto* query = makePallocNode<Query>();
         query->command_type = CmdType::kSelect;
         return query;
     }
@@ -256,8 +249,7 @@ TEST_F(OptimizerTest, SelectCount_ProducesAggOnSeqScan) {
     query->has_aggs = true;
 
     // COUNT(*) is an Aggref with aggstar=true.
-    auto* agg = static_cast<mytoydb::parser::Aggref*>(palloc(sizeof(mytoydb::parser::Aggref)));
-    new (agg) mytoydb::parser::Aggref();
+    auto* agg = makePallocNode<mytoydb::parser::Aggref>();
     agg->aggfnoid = 2147;  // count(int4)
     agg->aggtype = kInt8Oid;
     agg->aggstar = true;
@@ -284,8 +276,7 @@ TEST_F(OptimizerTest, SelectGroupBy_ProducesHashedAggOnSeqScan) {
     // Target list: a (ressortgroupref=1), COUNT(*)
     query->target_list.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a", 1));
 
-    auto* aggref = static_cast<mytoydb::parser::Aggref*>(palloc(sizeof(mytoydb::parser::Aggref)));
-    new (aggref) mytoydb::parser::Aggref();
+    auto* aggref = makePallocNode<mytoydb::parser::Aggref>();
     aggref->aggfnoid = 2147;
     aggref->aggtype = kInt8Oid;
     aggref->aggstar = true;
@@ -315,8 +306,8 @@ TEST_F(OptimizerTest, SelectOrderBy_ProducesSortOnSeqScan) {
     // Target list: a (ressortgroupref=1)
     query->target_list.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a", 1));
 
-    // ORDER BY a ASC (sortop = int4lt = 97)
-    query->sort_clause.push_back(MakeSortGroupClause(1, kInt4LtOp, false));
+    // ORDER BY a ASC (sortop = 0, the ASC sentinel)
+    query->sort_clause.push_back(MakeSortGroupClause(1, 0, false));
 
     Plan* plan = planner(query);
 
@@ -326,7 +317,7 @@ TEST_F(OptimizerTest, SelectOrderBy_ProducesSortOnSeqScan) {
     ASSERT_EQ(sort->sortColIdx.size(), 1u);
     EXPECT_EQ(sort->sortColIdx[0], 1);
     ASSERT_EQ(sort->sortOperators.size(), 1u);
-    EXPECT_EQ(sort->sortOperators[0], kInt4LtOp);
+    EXPECT_EQ(sort->sortOperators[0], 0);
     EXPECT_FALSE(sort->reverse[0]);  // ASC
     EXPECT_EQ(sort->limit, -1);      // No LIMIT
     ASSERT_NE(sort->lefttree, nullptr);
@@ -341,8 +332,8 @@ TEST_F(OptimizerTest, SelectOrderByDesc_ProducesSortWithReverse) {
 
     query->target_list.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a", 1));
 
-    // ORDER BY a DESC (sortop = int4gt = 521)
-    query->sort_clause.push_back(MakeSortGroupClause(1, kInt4GtOp, false));
+    // ORDER BY a DESC (sortop = 1, the DESC sentinel)
+    query->sort_clause.push_back(MakeSortGroupClause(1, 1, false));
 
     Plan* plan = planner(query);
 
@@ -360,7 +351,7 @@ TEST_F(OptimizerTest, SelectOrderByLimit_ProducesSortWithTopN) {
 
     query->target_list.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a", 1));
 
-    query->sort_clause.push_back(MakeSortGroupClause(1, kInt4LtOp, false));
+    query->sort_clause.push_back(MakeSortGroupClause(1, 0, false));
     query->limit_count = MakeInt8Const(10);
 
     Plan* plan = planner(query);

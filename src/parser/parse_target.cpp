@@ -192,7 +192,7 @@ TargetEntry* transformTargetEntry(ParseState* pstate, ResTarget* res, ParseExprK
 // transformTargetList — transform a raw target list into TargetEntry list.
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> transformTargetList(ParseState* pstate, std::vector<Node*> targetlist) {
+std::vector<Node*> transformTargetList(ParseState* pstate, const std::vector<Node*>& targetlist) {
     std::vector<Node*> result;
 
     for (Node* node : targetlist) {
@@ -290,7 +290,7 @@ std::vector<Node*> transformTargetList(ParseState* pstate, std::vector<Node*> ta
 // (In our implementation, this is handled directly in transformTargetList.)
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> expandTargetList(ParseState* pstate, std::vector<Node*> targetlist) {
+std::vector<Node*> expandTargetList(ParseState* pstate, const std::vector<Node*>& targetlist) {
     // Star expansion is already handled in transformTargetList.
     return targetlist;
 }
@@ -383,7 +383,7 @@ TargetEntry* findTargetlistEntrySQL99(ParseState* pstate, Node* node,
 // transformSortClause — transform ORDER BY clause into SortGroupClause list.
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> transformSortClause(ParseState* pstate, std::vector<Node*> orderlist,
+std::vector<Node*> transformSortClause(ParseState* pstate, const std::vector<Node*>& orderlist,
                                        std::vector<Node*>* targetlist, ParseExprKind exprKind,
                                        bool useSQL99) {
     std::vector<Node*> sortclauses;
@@ -447,7 +447,10 @@ std::vector<Node*> transformSortClause(ParseState* pstate, std::vector<Node*> or
         auto* sgc = makeNode<SortGroupClause>();
         sgc->tle_sort_group_ref = tle->ressortgroupref;
         sgc->eqop = 0;  // Would be looked up from the operator
-        sgc->sortop = 0;
+        // Encode sort direction in sortop: 0 = ASC (default), 1 = DESC.
+        // PostgreSQL uses the actual operator OID; MyToyDB uses this sentinel
+        // since it does not yet implement full operator lookup.
+        sgc->sortop = (sortby->sortby_dir == SortByDir::kDesc) ? 1 : 0;
         sgc->nulls_first = (sortby->sortby_nulls == SortByNulls::kFirst);
         sgc->hashable = false;
         sortclauses.push_back(sgc);
@@ -460,9 +463,10 @@ std::vector<Node*> transformSortClause(ParseState* pstate, std::vector<Node*> or
 // transformGroupClause — transform GROUP BY clause into SortGroupClause list.
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> transformGroupClause(ParseState* pstate, std::vector<Node*> grouplist,
+std::vector<Node*> transformGroupClause(ParseState* pstate, const std::vector<Node*>& grouplist,
                                         std::vector<Node*>* targetlist,
-                                        std::vector<Node*> sortClause, ParseExprKind exprKind) {
+                                        const std::vector<Node*>& sortClause,
+                                        ParseExprKind exprKind) {
     std::vector<Node*> groupclauses;
 
     for (Node* node : grouplist) {
@@ -538,7 +542,7 @@ std::vector<Node*> transformGroupClause(ParseState* pstate, std::vector<Node*> g
 // ---------------------------------------------------------------------------
 
 std::vector<Node*> transformDistinctClause(ParseState* pstate, std::vector<Node*>* targetlist,
-                                           std::vector<Node*> distinctClause, bool isOn) {
+                                           const std::vector<Node*>& distinctClause, bool isOn) {
     std::vector<Node*> result;
 
     if (!isOn) {

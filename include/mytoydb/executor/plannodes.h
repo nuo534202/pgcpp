@@ -82,12 +82,14 @@ struct Agg : Plan {
     enum class Strategy { kPlain, kSorted, kHashed };
     Agg() { type = PlanType::kAgg; }
     Strategy aggstrategy = Strategy::kPlain;
-    std::vector<int> groupColIdx;  // 1-based attr numbers of GROUP BY columns
+    std::vector<int> groupColIdx;                  // 1-based attr numbers of GROUP BY columns
+    mytoydb::parser::Node* having_qual = nullptr;  // HAVING filter (evaluated per group)
 };
 
 // Sort — sort node with optional Top-N optimization.
 //
 // When limit > 0, only the top N rows are kept (Top-N heapsort).
+// When offset > 0, the first `offset` sorted rows are skipped before output.
 struct Sort : Plan {
     Sort() { type = PlanType::kSort; }
     std::vector<int> sortColIdx;                       // 1-based attr numbers to sort by
@@ -95,6 +97,7 @@ struct Sort : Plan {
     std::vector<bool> nullsFirst;                      // NULLS FIRST/LAST per column
     std::vector<bool> reverse;                         // DESC per column
     int64_t limit = -1;                                // Top-N limit (-1 = no limit)
+    int64_t offset = 0;                                // rows to skip after sort (0 = no skip)
 };
 
 // NestLoop — nested-loop join.

@@ -6,6 +6,7 @@
 // For MyToyDB, this generates SeqScan paths (and optionally IndexPath when
 // suitable indexes exist). The cheapest path is selected for each relation.
 #include "mytoydb/catalog/catalog.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/optimizer/cost.h"
@@ -15,6 +16,7 @@
 #include "mytoydb/parser/primnodes.h"
 
 namespace mytoydb::optimizer {
+using mytoydb::nodes::makePallocNode;
 
 using mytoydb::catalog::GetCatalog;
 using mytoydb::memory::palloc;
@@ -26,8 +28,7 @@ using mytoydb::parser::RTEKind;
 // Create a SeqScan path for a base relation.
 // Estimates cost based on relation size (pages, tuples).
 static SeqScanPath* CreateSeqScanPath(RelOptInfo* rel) {
-    void* mem = palloc(sizeof(SeqScanPath));
-    auto* path = new (mem) SeqScanPath();
+    auto* path = makePallocNode<SeqScanPath>();
     path->relid = rel->relid;
 
     // Get relation size from catalog (heuristic: assume 1000 rows, 10 pages
@@ -80,8 +81,7 @@ void BuildBaseRelInfos(PlannerInfo* root) {
             continue;
         }
 
-        void* mem = palloc(sizeof(RelOptInfo));
-        auto* rel = new (mem) RelOptInfo();
+        auto* rel = makePallocNode<RelOptInfo>();
         rel->relid = rte->relid;
         rel->relindex = rtindex;
         rel->rte = rte;

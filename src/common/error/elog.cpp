@@ -96,36 +96,43 @@ void PopExceptionStack(JmpBufEntry* entry) {
 }
 
 void EreportImpl(LogLevel elevel, const char* filename, const char* funcname, int lineno,
-                 std::string_view message) {
+                 std::string message) {
     // Fill in the error data.
     last_error_data.elevel = elevel;
     last_error_data.filename = filename;
     last_error_data.funcname = funcname;
     last_error_data.lineno = lineno;
-    last_error_data.message.assign(message.data(), message.size());
+    // Copy (not move) the message into thread-local storage.
+    // Move-assignment is avoided because libstdc++ implements it via swap,
+    // which would leave the old last_error_data.message buffer in `message`
+    // (the parameter) — and `message` would leak when longjmp bypasses its
+    // destructor. assign() properly frees the old buffer (or reuses it).
+    last_error_data.message.assign(message);
 
     if (static_cast<int>(elevel) < static_cast<int>(LogLevel::kError)) {
         // Non-error level: print to stderr and return normally.
+        // message's destructor will run on return, freeing its buffer.
         std::fprintf(stderr, "[%s] %s (%s:%d:%s)\n", LogLevelToString(elevel),
                      last_error_data.message.c_str(), filename, lineno, funcname);
         return;
     }
 
-    // ERROR/FATAL/PANIC: longjmp to the nearest PG_CATCH.
+    // ERROR/FATAL/PANIC: print, free the parameter's buffer, then longjmp.
+    std::fprintf(stderr, "[%s] %s (%s:%d:%s)\n", LogLevelToString(elevel),
+                 last_error_data.message.c_str(), filename, lineno, funcname);
+
+    // longjmp bypasses C++ destructors, so `message`'s heap buffer would
+    // leak. Call the destructor explicitly to free it. This is safe because
+    // longjmp will skip the automatic destructor call (no double-free).
+    message.~basic_string();
+
     if (exception_stack_top > 0) {
-        // Print to stderr for visibility (PostgreSQL also logs errors).
-        std::fprintf(stderr, "[%s] %s (%s:%d:%s)\n", LogLevelToString(elevel),
-                     last_error_data.message.c_str(), filename, lineno, funcname);
         JmpBufEntry* top = exception_stack[exception_stack_top - 1];
         std::longjmp(top->buf, 1);
     }
 
     // No handler on the stack — abort the process.
-    std::fprintf(stderr,
-                 "[%s] %s (%s:%d:%s)\n"
-                 "No error handler registered; aborting.\n",
-                 LogLevelToString(elevel), last_error_data.message.c_str(), filename, lineno,
-                 funcname);
+    std::fprintf(stderr, "No error handler registered; aborting.\n");
     std::abort();
 }
 

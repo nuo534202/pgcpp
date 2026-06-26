@@ -74,8 +74,14 @@ void PopExceptionStack(JmpBufEntry* entry);
 // Implementation function (do not call directly; use ereport/elog macros).
 // For ERROR/FATAL/PANIC: never returns (longjmps to nearest PG_CATCH).
 // For lower levels: records the message and returns normally.
+//
+// Takes std::string by value (not string_view) so that temporary strings
+// constructed at call sites (e.g. "msg: " + name) are moved into the
+// parameter. For error levels, the parameter's destructor is called
+// explicitly before longjmp (since longjmp bypasses C++ destructors, the
+// automatic destructor call is skipped — no double-free).
 void EreportImpl(LogLevel elevel, const char* filename, const char* funcname, int lineno,
-                 std::string_view message);
+                 std::string message);
 
 // PG_TRY / PG_CATCH / PG_END_TRY — setjmp-based error recovery.
 //

@@ -16,6 +16,7 @@
 
 #include <new>
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/executor/estate.h"
 #include "mytoydb/executor/exec_expr.h"
 #include "mytoydb/executor/exec_utils.h"
@@ -29,6 +30,7 @@
 namespace mytoydb::executor {
 
 using mytoydb::catalog::Oid;
+using mytoydb::nodes::destroyPallocNode;
 using mytoydb::parser::JoinType;
 using mytoydb::parser::Node;
 using mytoydb::parser::OpExpr;
@@ -294,10 +296,7 @@ void HashJoinState::ExecEnd() {
     // Free hash table slots.
     if (hj_HashState != nullptr) {
         for (auto& [key, entry] : hj_HashState->hashtable.buckets) {
-            if (entry.slot != nullptr) {
-                entry.slot->~TupleTableSlot();
-                mytoydb::memory::pfree(entry.slot);
-            }
+            destroyPallocNode(entry.slot);
         }
         hj_HashState->hashtable.Clear();
     }
@@ -311,10 +310,7 @@ void HashJoinState::ExecEnd() {
 void HashJoinState::ExecReScan() {
     if (hj_HashState != nullptr) {
         for (auto& [key, entry] : hj_HashState->hashtable.buckets) {
-            if (entry.slot != nullptr) {
-                entry.slot->~TupleTableSlot();
-                mytoydb::memory::pfree(entry.slot);
-            }
+            destroyPallocNode(entry.slot);
         }
         hj_HashState->hashtable.Clear();
     }

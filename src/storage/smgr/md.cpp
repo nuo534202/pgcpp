@@ -164,20 +164,37 @@ int SmgrRelationData::mdOpenSegment(ForkNumber fork_num, int segno, bool create)
 }
 
 void SmgrRelationData::mdcreate(ForkNumber fork_num, bool /*is_redo*/) {
-    std::string path = mdFilePath(fork_num, 0);
-    EnsureParentDir(path);
+    // Build the error message inside a block scope so that `path` (a std::string)
+    // is destructed BEFORE we call ereport(ERROR). ereport does longjmp, which
+    // bypasses C++ destructors; without the block scope, `path` would leak.
+    bool error = false;
+    char errbuf[512];
 
-    // Create the file (fail if it already exists, matching PostgreSQL).
-    int fd = open(path.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
-    if (fd < 0) {
-        if (errno == EEXIST) {
-            // PostgreSQL: if is_redo, silently ignore. Otherwise error.
-            ereport(mytoydb::error::LogLevel::kError, "relation file already exists: " + path);
+    {
+        std::string path = mdFilePath(fork_num, 0);
+        EnsureParentDir(path);
+
+        // Create the file (fail if it already exists, matching PostgreSQL).
+        int fd = open(path.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
+        if (fd < 0) {
+            if (errno == EEXIST) {
+                // PostgreSQL: if is_redo, silently ignore. Otherwise error.
+                std::snprintf(errbuf, sizeof(errbuf), "relation file already exists: %s",
+                              path.c_str());
+            } else {
+                std::snprintf(errbuf, sizeof(errbuf), "could not create file %s: %s", path.c_str(),
+                              std::strerror(errno));
+            }
+            error = true;
+        } else {
+            close(fd);
         }
-        ereport(mytoydb::error::LogLevel::kError,
-                "could not create file " + path + ": " + std::strerror(errno));
     }
-    close(fd);
+    // path is now destructed — safe to ereport
+
+    if (error) {
+        ereport(mytoydb::error::LogLevel::kError, errbuf);
+    }
 
     // Open it through the normal path so it's cached.
     mdEnsureSegments(fork_num, 0);

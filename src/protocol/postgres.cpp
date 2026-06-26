@@ -15,6 +15,9 @@
 
 #include "mytoydb/access/rel.h"
 #include "mytoydb/catalog/catalog.h"
+#include "mytoydb/catalog/pg_attribute.h"
+#include "mytoydb/catalog/pg_class.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/executor/estate.h"
@@ -26,6 +29,7 @@
 #include "mytoydb/executor/tupletable.h"
 #include "mytoydb/optimizer/planner.h"
 #include "mytoydb/parser/analyze.h"
+#include "mytoydb/parser/parse_type.h"
 #include "mytoydb/parser/parsenodes.h"
 #include "mytoydb/parser/parser.h"
 #include "mytoydb/parser/primnodes.h"
@@ -37,7 +41,13 @@
 namespace mytoydb::protocol {
 
 using mytoydb::access::TupleDesc;
+using mytoydb::catalog::Catalog;
+using mytoydb::catalog::FormData_pg_attribute;
+using mytoydb::catalog::FormData_pg_class;
+using mytoydb::catalog::GetCatalog;
 using mytoydb::catalog::Oid;
+using mytoydb::catalog::RelKind;
+using mytoydb::catalog::RelPersistence;
 using mytoydb::executor::BuildTupleDescFromTargetList;
 using mytoydb::executor::ClearExecParams;
 using mytoydb::executor::ExecutorEnd;
@@ -49,13 +59,19 @@ using mytoydb::executor::QueryDesc;
 using mytoydb::executor::SetExecParams;
 using mytoydb::executor::TupleTableSlot;
 using mytoydb::memory::palloc;
+using mytoydb::nodes::makePallocNode;
 using mytoydb::optimizer::planner;
 using mytoydb::parser::CmdType;
+using mytoydb::parser::ColumnDef;
+using mytoydb::parser::CreateStmt;
 using mytoydb::parser::Node;
 using mytoydb::parser::Query;
+using mytoydb::parser::RangeVar;
 using mytoydb::parser::RawStmt;
+using mytoydb::parser::RelabelType;
 using mytoydb::parser::TargetEntry;
 using mytoydb::parser::TransactionStmt;
+using mytoydb::parser::TypeName;
 using mytoydb::transaction::AbortCurrentTransaction;
 using mytoydb::transaction::BeginTransactionBlock;
 using mytoydb::transaction::CommandCounterIncrement;
@@ -217,8 +233,122 @@ Oid GetExprTypeOid(Node* expr) {
     }
 }
 
-// Execute a utility statement (transaction control only for now).
-// Returns the command tag, or empty string if not a transaction statement.
+// Extract the type name string from a TypeName node.
+// The names list contains String nodes; the last one is the unqualified type name.
+std::string ExtractTypeName(TypeName* type_name) {
+    if (type_name == nullptr || type_name->names.empty())
+        return "";
+    // The last element is the type name (e.g., "int4", "text").
+    Node* last = type_name->names.back();
+    if (last->GetTag() == mytoydb::nodes::NodeTag::kString) {
+        auto* v = static_cast<mytoydb::nodes::Value*>(last);
+        return v->GetString();
+    }
+    return "";
+}
+
+// Determine the alignment for a type based on typlen.
+mytoydb::catalog::AttAlign TypeAlignForLen(int16_t typlen) {
+    if (typlen == 1)
+        return mytoydb::catalog::AttAlign::kChar;
+    if (typlen == 2)
+        return mytoydb::catalog::AttAlign::kShort;
+    if (typlen == 4)
+        return mytoydb::catalog::AttAlign::kInt;
+    if (typlen == 8 || typlen > 0)
+        return mytoydb::catalog::AttAlign::kDouble;
+    // Varlena types (typlen < 0) use int alignment.
+    return mytoydb::catalog::AttAlign::kInt;
+}
+
+// ProcessCreateTable — execute a CREATE TABLE statement.
+// Creates the pg_class and pg_attribute entries and the physical storage file.
+std::string ProcessCreateTable(CreateStmt* stmt) {
+    if (stmt == nullptr || stmt->relation == nullptr)
+        return "";
+
+    Catalog* cat = GetCatalog();
+    if (cat == nullptr)
+        return "";
+
+    const std::string& relname = stmt->relation->relname;
+
+    // Check if the relation already exists.
+    if (cat->GetClassByName(relname) != nullptr) {
+        if (stmt->if_not_exists)
+            return "CREATE TABLE";
+        ereport(mytoydb::error::LogLevel::kError, "relation \"" + relname + "\" already exists");
+    }
+
+    // Count user columns and resolve their types.
+    int16_t natts = 0;
+    struct ColInfo {
+        std::string name;
+        Oid type_oid;
+        int16_t typlen;
+        bool typbyval;
+    };
+    std::vector<ColInfo> columns;
+
+    for (Node* elt : stmt->table_elts) {
+        if (elt == nullptr)
+            continue;
+        if (elt->GetTag() != mytoydb::nodes::NodeTag::kColumnDef)
+            continue;
+        auto* coldef = static_cast<ColumnDef*>(elt);
+
+        ColInfo ci;
+        ci.name = coldef->colname;
+        std::string type_name = ExtractTypeName(coldef->type_name);
+        ci.type_oid = mytoydb::parser::typenameTypeId(type_name);
+        if (ci.type_oid == mytoydb::types::kInvalidOid) {
+            ereport(mytoydb::error::LogLevel::kError, "type \"" + type_name + "\" does not exist");
+        }
+        ci.typlen = mytoydb::parser::get_typlen(ci.type_oid);
+        ci.typbyval = mytoydb::parser::get_typbyval(ci.type_oid);
+        columns.push_back(ci);
+        natts++;
+    }
+
+    // Create the pg_class entry.
+    auto* class_row = makePallocNode<FormData_pg_class>();
+    class_row->relname = relname;
+    class_row->relnamespace = 2200;  // public schema
+    class_row->relkind = RelKind::kRelation;
+    class_row->relpersistence = RelPersistence::kPermanent;
+    class_row->relnatts = natts;
+    class_row->relispopulated = true;
+
+    Oid relid = cat->InsertClass(class_row);
+    // Use the OID as the relfilenode (same as PostgreSQL for simple cases).
+    class_row->relfilenode = relid;
+
+    // Create pg_attribute entries.
+    int16_t attnum = 1;
+    for (const auto& ci : columns) {
+        auto* attr_row = makePallocNode<FormData_pg_attribute>();
+        attr_row->attrelid = relid;
+        attr_row->attname = ci.name;
+        attr_row->atttypid = ci.type_oid;
+        attr_row->attlen = ci.typlen;
+        attr_row->attnum = attnum;
+        attr_row->attbyval = ci.typbyval;
+        attr_row->attstorage = mytoydb::catalog::AttStorage::kPlain;
+        attr_row->attalign = TypeAlignForLen(ci.typlen);
+        attr_row->attnotnull = false;
+        attr_row->attislocal = true;
+        cat->InsertAttribute(attr_row);
+        attnum++;
+    }
+
+    // Create the physical storage file.
+    mytoydb::access::RelationCreateStorage(relid, false);
+
+    return "CREATE TABLE";
+}
+
+// Execute a utility statement.
+// Returns the command tag, or empty string if not a recognized utility.
 std::string ExecuteUtilityStatement(Node* stmt) {
     if (stmt == nullptr)
         return "";
@@ -241,8 +371,13 @@ std::string ExecuteUtilityStatement(Node* stmt) {
                 return "";
         }
     }
-    // Other utility statements (CREATE TABLE, etc.) are not handled here.
-    // They would require ProcessUtility, which is not yet implemented.
+
+    if (stmt->GetTag() == mytoydb::nodes::NodeTag::kCreateStmt) {
+        auto* create_stmt = static_cast<CreateStmt*>(stmt);
+        return ProcessCreateTable(create_stmt);
+    }
+
+    // Other utility statements (DROP TABLE, ALTER TABLE, etc.) are not yet handled.
     return "";
 }
 
@@ -273,13 +408,17 @@ void Backend::exec_simple_query(const std::string& query_string) {
         return;
     }
 
-    // Parse and analyze the query string.
+    // Parse the query string into raw statements.
+    // NOTE: We analyze each statement individually just before executing it
+    // (instead of batch-analyzing all statements up front) so that DDL changes
+    // (e.g., CREATE TABLE) are visible to the parse analysis of subsequent
+    // statements (e.g., INSERT, SELECT) in the same query string. This mirrors
+    // PostgreSQL's behavior where each statement is fully processed before the
+    // next one is analyzed.
     std::vector<RawStmt*> raw_stmts;
-    std::vector<Query*> queries;
 
     PG_TRY() {
         raw_stmts = mytoydb::parser::raw_parser(query_string);
-        queries = mytoydb::parser::parse_analyze(raw_stmts, query_string.c_str());
     }
     PG_CATCH() {
         mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
@@ -290,11 +429,25 @@ void Backend::exec_simple_query(const std::string& query_string) {
     }
     PG_END_TRY();
 
-    // Execute each query in sequence.
-    for (Query* query : queries) {
+    // Process each raw statement: analyze it, then execute it, one at a time.
+    for (size_t stmt_idx = 0; stmt_idx < raw_stmts.size(); ++stmt_idx) {
+        RawStmt* raw_stmt = raw_stmts[stmt_idx];
         PG_TRY() {
             StartTransactionCommand();
 
+            // Analyze this single statement. Analyzing one at a time ensures
+            // that any catalog changes from prior statements (e.g. CREATE
+            // TABLE) are visible to this statement's parse analysis.
+            std::vector<RawStmt*> single_stmt{raw_stmt};
+            std::vector<Query*> queries =
+                mytoydb::parser::parse_analyze(single_stmt, query_string.c_str());
+
+            if (queries.empty()) {
+                CommitTransactionCommand();
+                continue;
+            }
+
+            Query* query = queries.front();
             std::string tag;
             if (query->command_type == CmdType::kUtility) {
                 tag = ExecuteUtilityStatement(query->utility_stmt);
@@ -313,7 +466,8 @@ void Backend::exec_simple_query(const std::string& query_string) {
             SendError(ed ? ed->message : "execution error");
             AbortCurrentTransaction();
             // Stop processing remaining statements.
-            break;
+            sink_->SendMessage(BuildReadyForQuery(GetCurrentTransactionStatus()));
+            return;
         }
         PG_END_TRY();
     }
@@ -326,8 +480,7 @@ std::string Backend::ExecuteQuery(Query* query, bool send_row_description) {
     Plan* plan = planner(query);
 
     // Create a QueryDesc.
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = plan;
 
@@ -339,6 +492,24 @@ std::string Backend::ExecuteQuery(Query* query, bool send_row_description) {
 
     // Execute.
     ExecutorStart(qd);
+
+    // Extract a constant LIMIT value to apply as a fallback when the plan
+    // tree does not already enforce it (e.g., no Sort/Top-N node). When a
+    // Sort node with Top-N exists, it already truncates results; this loop
+    // guard only matters for LIMIT without ORDER BY.
+    int64_t row_limit = -1;
+    if (query->limit_count != nullptr) {
+        Node* lc_node = query->limit_count;
+        // Unwrap RelabelType (e.g., int4->int8 binary coercion).
+        if (lc_node->GetTag() == mytoydb::nodes::NodeTag::kRelabelType) {
+            lc_node = static_cast<RelabelType*>(lc_node)->arg;
+        }
+        if (lc_node != nullptr && lc_node->GetTag() == mytoydb::nodes::NodeTag::kConst) {
+            auto* lc = static_cast<mytoydb::parser::Const*>(lc_node);
+            if (!lc->constisnull)
+                row_limit = DatumGetInt64(lc->constvalue);
+        }
+    }
 
     int row_count = 0;
     if (is_select) {
@@ -370,6 +541,9 @@ std::string Backend::ExecuteQuery(Query* query, bool send_row_description) {
             }
             SendDataRow(query, values, isnull);
             row_count++;
+            // Apply LIMIT fallback when no Sort/Top-N node enforces it.
+            if (row_limit >= 0 && row_count >= row_limit)
+                break;
         }
     } else {
         // For DML, run to completion (ModifyTable returns tuples for RETURNING,
@@ -518,7 +692,9 @@ void Backend::HandleDescribe(DescribeKind kind, const std::string& name) {
             // Describe portal.
             Portal* portal = FindPortal(name);
             if (portal == nullptr) {
-                ereport(mytoydb::error::LogLevel::kError, "portal \"" + name + "\" does not exist");
+                char errbuf[256];
+                std::snprintf(errbuf, sizeof(errbuf), "portal \"%s\" does not exist", name.c_str());
+                ereport(mytoydb::error::LogLevel::kError, errbuf);
             }
             if (portal->stmt != nullptr && portal->stmt->has_results &&
                 portal->query_index < static_cast<int>(portal->stmt->queries.size())) {
@@ -539,8 +715,10 @@ void Backend::HandleExecute(const std::string& portal_name, int /*max_rows*/) {
     PG_TRY() {
         Portal* portal = FindPortal(portal_name);
         if (portal == nullptr) {
-            ereport(mytoydb::error::LogLevel::kError,
-                    "portal \"" + portal_name + "\" does not exist");
+            char errbuf[256];
+            std::snprintf(errbuf, sizeof(errbuf), "portal \"%s\" does not exist",
+                          portal_name.c_str());
+            ereport(mytoydb::error::LogLevel::kError, errbuf);
         }
         if (portal->stmt == nullptr ||
             portal->query_index >= static_cast<int>(portal->stmt->queries.size())) {

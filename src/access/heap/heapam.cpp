@@ -19,6 +19,7 @@
 
 #include "mytoydb/access/rel.h"
 #include "mytoydb/catalog/pg_attribute.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/storage/bufmgr.h"
@@ -31,6 +32,8 @@
 #include "mytoydb/types/datum.h"
 
 namespace mytoydb::access {
+using mytoydb::nodes::destroyPallocNode;
+using mytoydb::nodes::makePallocNode;
 
 namespace {
 
@@ -209,8 +212,7 @@ HeapTuple heap_form_tuple(TupleDesc tupdesc, const Datum* values, const bool* is
     }
 
     // Allocate the HeapTupleData wrapper.
-    void* tup_mem = palloc(sizeof(HeapTupleData));
-    HeapTuple tuple = new (tup_mem) HeapTupleData();
+    HeapTuple tuple = makePallocNode<HeapTupleData>();
     tuple->t_len = tuple_size;
     tuple->t_data = header;
     return tuple;
@@ -322,8 +324,7 @@ void heap_freetuple(HeapTuple tuple) {
     if (tuple->t_data != nullptr) {
         pfree(tuple->t_data);
     }
-    tuple->~HeapTupleData();
-    pfree(tuple);
+    destroyPallocNode(tuple);
 }
 
 // --- Heap modification ---
@@ -454,8 +455,7 @@ HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot) {
     if (snapshot == nullptr) {
         snapshot = mytoydb::transaction::GetTransactionSnapshot();
     }
-    void* mem = palloc(sizeof(HeapScanDescData));
-    HeapScanDesc scan = new (mem) HeapScanDescData();
+    HeapScanDesc scan = makePallocNode<HeapScanDescData>();
 
     scan->rs_base = relation;
     scan->rs_snapshot = snapshot;
@@ -559,8 +559,7 @@ void heap_endscan(HeapScanDesc scan) {
         scan->rs_cbuf = kInvalidBuffer;
     }
 
-    scan->~HeapScanDescData();
-    pfree(scan);
+    destroyPallocNode(scan);
 }
 
 void heap_rescan(HeapScanDesc scan) {

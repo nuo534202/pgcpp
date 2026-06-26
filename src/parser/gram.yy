@@ -60,8 +60,8 @@ static inline Node* makeStrConst(std::string str, int location) {
     return n;
 }
 
-static inline Node* makeIntConst(int ival, int location) {
-    Value* v = makeInteger(static_cast<int64_t>(ival));
+static inline Node* makeIntConst(int64_t ival, int location) {
+    Value* v = makeInteger(ival);
     AConst* n = makeNode<AConst>();
     n->val = v;
     n->location = location;
@@ -288,7 +288,8 @@ static inline DefElem* makeDefElem(std::string name, Node* arg, int location) {
 
 // Non-keyword tokens.
 %token <std::string> IDENT UIDENT FCONST SCONST USCONST BCONST XCONST Op
-%token <int> ICONST PARAM
+%token <int64_t> ICONST
+%token <int> PARAM
 %token TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER LESS_EQUALS GREATER_EQUALS
 %token NOT_EQUALS
 %token NOT_LA NULLS_LA WITH_LA
@@ -401,13 +402,14 @@ static inline DefElem* makeDefElem(std::string name, Node* arg, int location) {
 %type <Node*> func_application func_expr func_expr_common_subexpr
 %type <Node*> within_group_clause opt_within_group_clause
 %type <Node*> filter_clause opt_filter_clause
-%type <Node*> extract_list overlay_list position_list substr_list
+%type <Node*> overlay_list position_list substr_list
 %type <std::vector<Node*>> trim_list
 %type <Node*> in_expr sub_type subquery_Op
 %type <std::string> all_Op
 %type <std::vector<Node*>> qual_Op qual_all_Op any_operator
 %type <Node*> AexprConst
-%type <int> Iconst SignedIconst opt_array_bounds opt_varying opt_float
+%type <int64_t> Iconst SignedIconst
+%type <int> opt_array_bounds opt_varying opt_float
 %type <std::string> Sconst
 %type <Node*> row array_expr columnref
 %type <Node*> Typename SimpleTypename ConstTypename GenericType Numeric
@@ -5369,12 +5371,15 @@ func_expr_common_subexpr:
         }
     | CAST '(' a_expr AS Typename ')'
         { $$ = makeTypeCast($3, $5, @1); }
-    | EXTRACT '(' extract_list ')'
+    | EXTRACT '(' extract_arg FROM a_expr ')'
         {
             std::vector<Node*> fn;
             fn.push_back(makeString("pg_catalog"));
             fn.push_back(makeString("extract"));
-            $$ = makeFuncCall(std::move(fn), {$3}, @1);
+            std::vector<Node*> args;
+            args.push_back(makeStrConst($3, @3));
+            args.push_back($5);
+            $$ = makeFuncCall(std::move(fn), std::move(args), @1);
         }
     | OVERLAY '(' overlay_list ')'
         {
@@ -5460,13 +5465,6 @@ filter_clause:
 
 opt_filter_clause:
       filter_clause
-    | /* empty */
-        { $$ = nullptr; }
-;
-
-extract_list:
-      extract_arg FROM a_expr
-        { $$ = makeStrConst($1, @1); }
     | /* empty */
         { $$ = nullptr; }
 ;
@@ -5753,7 +5751,7 @@ opt_array_bounds:
       opt_array_bounds '[' ']'
         { $$ = 0; }
     | opt_array_bounds '[' Iconst ']'
-        { $$ = $3; }
+        { $$ = static_cast<int>($3); }
     | /* empty */
         { $$ = 0; }
 ;

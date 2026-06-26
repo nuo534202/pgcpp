@@ -5,6 +5,8 @@
 // to OIDs during parse analysis.
 #include "mytoydb/parser/parse_type.h"
 
+#include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <string>
 
@@ -58,6 +60,8 @@ const BuiltinType kBuiltinTypes[] = {
     {"double precision", mytoydb::types::kFloat8Oid, 8, true},
     {"text", mytoydb::types::kTextOid, -1, false},
     {"varchar", mytoydb::types::kVarcharOid, -1, false},
+    {"char", mytoydb::types::kTextOid, -1, false},
+    {"bpchar", mytoydb::types::kTextOid, -1, false},
     {"date", mytoydb::types::kDateOid, 4, true},
     {"timestamp", mytoydb::types::kTimestampOid, 8, true},
     {"unknown", kUnknownOid, -2, false},
@@ -66,8 +70,13 @@ const BuiltinType kBuiltinTypes[] = {
 constexpr int kBuiltinTypeCount = sizeof(kBuiltinTypes) / sizeof(kBuiltinTypes[0]);
 
 const BuiltinType* FindBuiltinType(const std::string& name) {
+    // PostgreSQL folds identifiers to lowercase (unless quoted). Match that
+    // behavior so type names like "BIGINT", "Date", "TIMESTAMP" resolve.
+    std::string lower_name = name;
+    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
     for (int i = 0; i < kBuiltinTypeCount; ++i) {
-        if (name == kBuiltinTypes[i].name) {
+        if (lower_name == kBuiltinTypes[i].name) {
             return &kBuiltinTypes[i];
         }
     }
@@ -83,15 +92,21 @@ const BuiltinType* FindBuiltinType(const std::string& name) {
 // typenameTypeId — resolve a type name to its OID.
 // Returns InvalidOid if the type is not found.
 Oid typenameTypeId(const std::string& typename_name) {
+    // PostgreSQL folds identifiers to lowercase. Apply the same folding
+    // before all lookups so "BIGINT", "Date", etc. resolve correctly.
+    std::string lower_name = typename_name;
+    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
     // First check built-in types
-    const BuiltinType* bt = FindBuiltinType(typename_name);
+    const BuiltinType* bt = FindBuiltinType(lower_name);
     if (bt != nullptr) {
         return bt->oid;
     }
 
     // Then check the catalog
     if (GetCatalog() != nullptr) {
-        const FormData_pg_type* type_row = GetCatalog()->GetTypeByName(typename_name);
+        const FormData_pg_type* type_row = GetCatalog()->GetTypeByName(lower_name);
         if (type_row != nullptr) {
             return type_row->oid;
         }
@@ -99,7 +114,7 @@ Oid typenameTypeId(const std::string& typename_name) {
 
     // Then check syscache
     if (GetSysCache() != nullptr) {
-        const FormData_pg_type* type_row = GetSysCache()->SearchTypeByName(typename_name, 0);
+        const FormData_pg_type* type_row = GetSysCache()->SearchTypeByName(lower_name, 0);
         if (type_row != nullptr) {
             return type_row->oid;
         }

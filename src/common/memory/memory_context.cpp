@@ -73,9 +73,15 @@ void* repalloc(void* pointer, std::size_t size) {
 }
 
 void pfree(void* pointer) {
-    MemoryContext* ctx = GetCurrentMemoryContext();
+    if (pointer == nullptr)
+        return;
+    // Look up the owning context from the chunk header rather than relying
+    // on CurrentMemoryContext. This allows pfree to work correctly even when
+    // the current context is null (e.g., during MemoryContext::Delete()
+    // when registered destructors call pfree).
+    MemoryContext* ctx = AllocSetContext::GetPointerContext(pointer);
     if (ctx == nullptr) {
-        std::fprintf(stderr, "pfree: CurrentMemoryContext is null\n");
+        std::fprintf(stderr, "pfree: chunk context is null\n");
         std::abort();
     }
     ctx->Free(pointer);
@@ -97,6 +103,43 @@ void* MemoryContextAllocZero(MemoryContext* context, std::size_t size) {
     void* p = context->Alloc(size);
     std::memset(p, 0, size);
     return p;
+}
+
+void MemoryContext::RegisterDestructor(void* obj, DestructorFn fn) {
+    if (obj == nullptr || fn == nullptr)
+        return;
+    auto* entry = static_cast<DestructorEntry*>(this->Alloc(sizeof(DestructorEntry)));
+    entry->obj = obj;
+    entry->fn = fn;
+    entry->next = destructors_;
+    destructors_ = entry;
+}
+
+void MemoryContext::CallRegisteredDestructors() {
+    DestructorEntry* entry = destructors_;
+    while (entry != nullptr) {
+        if (entry->fn != nullptr && entry->obj != nullptr) {
+            entry->fn(entry->obj);
+        }
+        entry = entry->next;
+    }
+    destructors_ = nullptr;
+}
+
+void MemoryContext::UnregisterDestructor(void* obj) {
+    if (obj == nullptr)
+        return;
+    DestructorEntry** pp = &destructors_;
+    while (*pp != nullptr) {
+        if ((*pp)->obj == obj) {
+            DestructorEntry* to_remove = *pp;
+            *pp = to_remove->next;
+            // The entry itself is palloc'd in this context; it will be freed
+            // when the context is deleted. Just unlink it.
+            return;
+        }
+        pp = &((*pp)->next);
+    }
 }
 
 }  // namespace mytoydb::memory

@@ -16,6 +16,20 @@ using MemoryContextPointer = MemoryContext*;
 // Severity / type constants preserved from PostgreSQL
 constexpr std::size_t kStandardChunkSize = 8192;
 
+// Function pointer type for registered C++ destructors.
+using DestructorFn = void (*)(void*);
+
+// DestructorEntry — a linked-list node tracking a C++ object allocated in
+// this memory context via palloc + placement new. When the context is
+// deleted, the destructor is called before the palloc'd blocks are freed,
+// ensuring that std::vector/std::string internal buffers (allocated via
+// operator new) are properly released.
+struct DestructorEntry {
+    void* obj;
+    DestructorFn fn;
+    DestructorEntry* next;
+};
+
 // The MemoryContext abstract base class.
 // In PostgreSQL C, this is MemoryContextData with a MemoryContextMethods*
 // virtual table. In C++ we use native virtual functions instead.
@@ -40,6 +54,20 @@ public:
     // Whether the context has been reset since last allocation
     bool IsReset() const { return is_reset_; }
 
+    // Register a C++ destructor to be called when this context is deleted.
+    // Used by makeNode<T>() to ensure std::vector/std::string members of
+    // palloc'd nodes are properly cleaned up.
+    void RegisterDestructor(void* obj, DestructorFn fn);
+
+    // Remove the destructor entry for the given object. Call this before
+    // explicitly destroying a palloc'd C++ object (e.g., via obj->~T() +
+    // pfree) to prevent CallRegisteredDestructors from invoking the
+    // destructor again on already-freed memory.
+    void UnregisterDestructor(void* obj);
+
+    // Call all registered destructors and clear the list.
+    void CallRegisteredDestructors();
+
 protected:
     MemoryContext() = default;
     explicit MemoryContext(const char* name) : name_(name) {}
@@ -47,6 +75,7 @@ protected:
     MemoryContext* parent_ = nullptr;
     const char* name_ = "unnamed";
     bool is_reset_ = true;
+    DestructorEntry* destructors_ = nullptr;
 };
 
 // Global current-memory-context accessors (PostgreSQL CurrentMemoryContext).

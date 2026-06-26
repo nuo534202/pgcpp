@@ -3,10 +3,12 @@
 
 #include <new>
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/types/datum.h"
 
 namespace mytoydb::executor {
+using mytoydb::nodes::makePallocNode;
 
 using mytoydb::catalog::AttAlign;
 using mytoydb::catalog::FormData_pg_attribute;
@@ -68,8 +70,7 @@ void FillTypeAttrs(Oid typid, int16_t* attlen, bool* attbyval, AttAlign* attalig
 
 mytoydb::access::TupleDesc BuildTupleDescFromTargetList(
     const std::vector<TargetEntry*>& targetlist) {
-    void* mem = palloc(sizeof(mytoydb::access::TupleDescData));
-    auto* tupdesc = new (mem) mytoydb::access::TupleDescData();
+    auto* tupdesc = makePallocNode<mytoydb::access::TupleDescData>();
     tupdesc->natts = static_cast<int>(targetlist.size());
 
     int attno = 1;

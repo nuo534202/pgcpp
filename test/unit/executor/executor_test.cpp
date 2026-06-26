@@ -29,6 +29,7 @@
 #include "mytoydb/catalog/pg_operator.h"
 #include "mytoydb/catalog/pg_proc.h"
 #include "mytoydb/catalog/syscache.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
@@ -109,6 +110,7 @@ using mytoydb::executor::TupleTableSlot;
 using mytoydb::memory::AllocSetContext;
 using mytoydb::memory::palloc;
 using mytoydb::memory::pfree;
+using mytoydb::nodes::destroyPallocNode;
 using mytoydb::nodes::NodeTag;
 using mytoydb::parser::Aggref;
 using mytoydb::parser::CmdType;
@@ -147,6 +149,8 @@ using mytoydb::types::kInt4Oid;
 using mytoydb::types::kInt8Oid;
 
 namespace {
+
+using mytoydb::nodes::makePallocNode;
 
 // Operator OIDs (from bootstrap_catalog.cpp).
 constexpr Oid kInt4EqOp = 96;     // int4 = int4
@@ -219,8 +223,7 @@ protected:
 
     // Helper: build a pg_class row and insert it into the catalog.
     FormData_pg_class* MakeClassRow(const std::string& name, Oid oid) {
-        auto* row = static_cast<FormData_pg_class*>(palloc(sizeof(FormData_pg_class)));
-        new (row) FormData_pg_class();
+        auto* row = makePallocNode<FormData_pg_class>();
         row->oid = oid;
         row->relname = name;
         row->relfilenode = oid;
@@ -233,8 +236,7 @@ protected:
     FormData_pg_attribute* MakeAttrRow(Oid relid, const std::string& name, int16_t attnum,
                                        Oid typid, int16_t attlen, bool attbyval,
                                        AttAlign attalign) {
-        auto* row = static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-        new (row) FormData_pg_attribute();
+        auto* row = makePallocNode<FormData_pg_attribute>();
         row->attrelid = relid;
         row->attname = name;
         row->attnum = attnum;
@@ -252,9 +254,7 @@ protected:
         auto* class_row = MakeClassRow(name, relid);
         catalog_->InsertClass(class_row);
         for (const auto& attr : attrs) {
-            auto* attr_row =
-                static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-            new (attr_row) FormData_pg_attribute(attr);
+            auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
             catalog_->InsertAttribute(attr_row);
         }
         RelationCreateStorage(relid, false);
@@ -298,8 +298,7 @@ protected:
 
     // Helper: create a RangeTblEntry for a relation.
     RangeTblEntry* MakeRTE(Oid relid) {
-        auto* rte = static_cast<RangeTblEntry*>(palloc(sizeof(RangeTblEntry)));
-        new (rte) RangeTblEntry();
+        auto* rte = makePallocNode<RangeTblEntry>();
         rte->rtekind = RTEKind::kRelation;
         rte->relid = static_cast<int>(relid);
         return rte;
@@ -307,8 +306,7 @@ protected:
 
     // Helper: create a Var node.
     Var* MakeVar(int varno, int varattno, Oid vartype) {
-        auto* var = static_cast<Var*>(palloc(sizeof(Var)));
-        new (var) Var();
+        auto* var = makePallocNode<Var>();
         var->varno = varno;
         var->varattno = varattno;
         var->vartype = vartype;
@@ -317,8 +315,7 @@ protected:
 
     // Helper: create a Const node for int4.
     Const* MakeInt4Const(int32_t value) {
-        auto* con = static_cast<Const*>(palloc(sizeof(Const)));
-        new (con) Const();
+        auto* con = makePallocNode<Const>();
         con->consttype = kInt4Oid;
         con->constvalue = Int32GetDatum(value);
         con->constisnull = false;
@@ -329,8 +326,7 @@ protected:
 
     // Helper: create a TargetEntry.
     TargetEntry* MakeTargetEntry(Node* expr, int resno, const std::string& resname = "") {
-        auto* te = static_cast<TargetEntry*>(palloc(sizeof(TargetEntry)));
-        new (te) TargetEntry();
+        auto* te = makePallocNode<TargetEntry>();
         te->expr = expr;
         te->resno = resno;
         te->resname = resname;
@@ -339,8 +335,7 @@ protected:
 
     // Helper: create an OpExpr (e.g., a = b).
     OpExpr* MakeOpExpr(Oid opno, Oid resulttype, Node* left, Node* right) {
-        auto* op = static_cast<OpExpr*>(palloc(sizeof(OpExpr)));
-        new (op) OpExpr();
+        auto* op = makePallocNode<OpExpr>();
         op->opno = opno;
         op->opresulttype = resulttype;
         op->args.push_back(left);
@@ -350,8 +345,7 @@ protected:
 
     // Helper: create an Aggref node.
     Aggref* MakeAggref(Oid aggfnoid, Oid aggtype, bool aggstar = false) {
-        auto* agg = static_cast<Aggref*>(palloc(sizeof(Aggref)));
-        new (agg) Aggref();
+        auto* agg = makePallocNode<Aggref>();
         agg->aggfnoid = aggfnoid;
         agg->aggtype = aggtype;
         agg->aggstar = aggstar;
@@ -360,8 +354,7 @@ protected:
 
     // Helper: create a Query for SELECT.
     Query* MakeSelectQuery(std::vector<RangeTblEntry*> rtable) {
-        auto* query = static_cast<Query*>(palloc(sizeof(Query)));
-        new (query) Query();
+        auto* query = makePallocNode<Query>();
         query->command_type = CmdType::kSelect;
         for (auto* rte : rtable) {
             query->rtable.push_back(rte);
@@ -388,8 +381,7 @@ TEST_F(ExecutorTest, TupleTableSlot_MakeAndStoreVirtual) {
     auto* class_row = MakeClassRow("test_rel", relid);
     catalog_->InsertClass(class_row);
     for (const auto& attr : attrs) {
-        auto* attr_row = static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-        new (attr_row) FormData_pg_attribute(attr);
+        auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
         catalog_->InsertAttribute(attr_row);
     }
     Relation rel = RelationOpen(relid);
@@ -424,8 +416,7 @@ TEST_F(ExecutorTest, TupleTableSlot_StoreVirtualWithNulls) {
     auto* class_row = MakeClassRow("test_rel", relid);
     catalog_->InsertClass(class_row);
     for (const auto& attr : attrs) {
-        auto* attr_row = static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-        new (attr_row) FormData_pg_attribute(attr);
+        auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
         catalog_->InsertAttribute(attr_row);
     }
     Relation rel = RelationOpen(relid);
@@ -464,8 +455,7 @@ TEST_F(ExecutorTest, ExecEvalExpr_Var) {
     auto* class_row = MakeClassRow("test_rel", relid);
     catalog_->InsertClass(class_row);
     for (const auto& attr : attrs) {
-        auto* attr_row = static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-        new (attr_row) FormData_pg_attribute(attr);
+        auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
         catalog_->InsertAttribute(attr_row);
     }
     Relation rel = RelationOpen(relid);
@@ -499,8 +489,7 @@ TEST_F(ExecutorTest, ExecEvalExpr_OpExpr) {
     auto* class_row = MakeClassRow("test_rel", relid);
     catalog_->InsertClass(class_row);
     for (const auto& attr : attrs) {
-        auto* attr_row = static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-        new (attr_row) FormData_pg_attribute(attr);
+        auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
         catalog_->InsertAttribute(attr_row);
     }
     Relation rel = RelationOpen(relid);
@@ -532,8 +521,7 @@ TEST_F(ExecutorTest, ExecQual_Predicate) {
     auto* class_row = MakeClassRow("test_rel", relid);
     catalog_->InsertClass(class_row);
     for (const auto& attr : attrs) {
-        auto* attr_row = static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-        new (attr_row) FormData_pg_attribute(attr);
+        auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
         catalog_->InsertAttribute(attr_row);
     }
     Relation rel = RelationOpen(relid);
@@ -566,8 +554,7 @@ TEST_F(ExecutorTest, ExecQual_Predicate) {
 
 TEST_F(ExecutorTest, ResultNode_SelectConst) {
     // Build a plan: SELECT 42
-    auto* result_plan = static_cast<Result*>(palloc(sizeof(Result)));
-    new (result_plan) Result();
+    auto* result_plan = makePallocNode<Result>();
 
     // Target list: one entry with a Const(42).
     Const* con = MakeInt4Const(42);
@@ -575,8 +562,7 @@ TEST_F(ExecutorTest, ResultNode_SelectConst) {
 
     // Build a QueryDesc.
     auto* query = MakeSelectQuery({});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = result_plan;
 
@@ -611,8 +597,7 @@ TEST_F(ExecutorTest, SeqScan_SimpleScan) {
     RelationClose(rel);
 
     // Build a SeqScan plan.
-    auto* seqplan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (seqplan) SeqScan();
+    auto* seqplan = makePallocNode<SeqScan>();
     seqplan->scanrelid = 1;  // 1-based RT index
 
     // Target list: a, b (both Vars).
@@ -622,8 +607,7 @@ TEST_F(ExecutorTest, SeqScan_SimpleScan) {
     // Build a QueryDesc with range table.
     auto* rte = MakeRTE(relid);
     auto* query = MakeSelectQuery({rte});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = seqplan;
 
@@ -661,8 +645,7 @@ TEST_F(ExecutorTest, SeqScan_WithQual) {
     CommitAndStartNew();
     RelationClose(rel);
 
-    auto* seqplan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (seqplan) SeqScan();
+    auto* seqplan = makePallocNode<SeqScan>();
     seqplan->scanrelid = 1;
 
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
@@ -673,8 +656,7 @@ TEST_F(ExecutorTest, SeqScan_WithQual) {
 
     auto* rte = MakeRTE(relid);
     auto* query = MakeSelectQuery({rte});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = seqplan;
 
@@ -713,15 +695,13 @@ TEST_F(ExecutorTest, Sort_OrderByAsc) {
     RelationClose(rel);
 
     // Build SeqScan child plan.
-    auto* seqplan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (seqplan) SeqScan();
+    auto* seqplan = makePallocNode<SeqScan>();
     seqplan->scanrelid = 1;
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
 
     // Build Sort plan on top.
-    auto* sortplan = static_cast<Sort*>(palloc(sizeof(Sort)));
-    new (sortplan) Sort();
+    auto* sortplan = makePallocNode<Sort>();
     sortplan->lefttree = seqplan;
     sortplan->sortColIdx = {1};  // sort by column 1 (a)
     sortplan->sortOperators = {kInt4LtOp};
@@ -733,8 +713,7 @@ TEST_F(ExecutorTest, Sort_OrderByAsc) {
 
     auto* rte = MakeRTE(relid);
     auto* query = MakeSelectQuery({rte});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = sortplan;
 
@@ -767,14 +746,12 @@ TEST_F(ExecutorTest, Sort_OrderByDesc) {
     CommitAndStartNew();
     RelationClose(rel);
 
-    auto* seqplan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (seqplan) SeqScan();
+    auto* seqplan = makePallocNode<SeqScan>();
     seqplan->scanrelid = 1;
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
 
-    auto* sortplan = static_cast<Sort*>(palloc(sizeof(Sort)));
-    new (sortplan) Sort();
+    auto* sortplan = makePallocNode<Sort>();
     sortplan->lefttree = seqplan;
     sortplan->sortColIdx = {1};
     sortplan->sortOperators = {kInt4LtOp};
@@ -786,8 +763,7 @@ TEST_F(ExecutorTest, Sort_OrderByDesc) {
 
     auto* rte = MakeRTE(relid);
     auto* query = MakeSelectQuery({rte});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = sortplan;
 
@@ -820,14 +796,12 @@ TEST_F(ExecutorTest, Sort_TopN) {
     CommitAndStartNew();
     RelationClose(rel);
 
-    auto* seqplan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (seqplan) SeqScan();
+    auto* seqplan = makePallocNode<SeqScan>();
     seqplan->scanrelid = 1;
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
 
-    auto* sortplan = static_cast<Sort*>(palloc(sizeof(Sort)));
-    new (sortplan) Sort();
+    auto* sortplan = makePallocNode<Sort>();
     sortplan->lefttree = seqplan;
     sortplan->sortColIdx = {1};
     sortplan->sortOperators = {kInt4LtOp};
@@ -839,8 +813,7 @@ TEST_F(ExecutorTest, Sort_TopN) {
 
     auto* rte = MakeRTE(relid);
     auto* query = MakeSelectQuery({rte});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = sortplan;
 
@@ -876,13 +849,11 @@ TEST_F(ExecutorTest, Agg_Count) {
     CommitAndStartNew();
     RelationClose(rel);
 
-    auto* seqplan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (seqplan) SeqScan();
+    auto* seqplan = makePallocNode<SeqScan>();
     seqplan->scanrelid = 1;
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
 
-    auto* aggplan = static_cast<Agg*>(palloc(sizeof(Agg)));
-    new (aggplan) Agg();
+    auto* aggplan = makePallocNode<Agg>();
     aggplan->lefttree = seqplan;
     aggplan->aggstrategy = Agg::Strategy::kPlain;
 
@@ -892,8 +863,7 @@ TEST_F(ExecutorTest, Agg_Count) {
 
     auto* rte = MakeRTE(relid);
     auto* query = MakeSelectQuery({rte});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = aggplan;
 
@@ -922,13 +892,11 @@ TEST_F(ExecutorTest, Agg_Sum) {
     CommitAndStartNew();
     RelationClose(rel);
 
-    auto* seqplan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (seqplan) SeqScan();
+    auto* seqplan = makePallocNode<SeqScan>();
     seqplan->scanrelid = 1;
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
 
-    auto* aggplan = static_cast<Agg*>(palloc(sizeof(Agg)));
-    new (aggplan) Agg();
+    auto* aggplan = makePallocNode<Agg>();
     aggplan->lefttree = seqplan;
     aggplan->aggstrategy = Agg::Strategy::kPlain;
 
@@ -939,8 +907,7 @@ TEST_F(ExecutorTest, Agg_Sum) {
 
     auto* rte = MakeRTE(relid);
     auto* query = MakeSelectQuery({rte});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = aggplan;
 
@@ -967,13 +934,11 @@ TEST_F(ExecutorTest, Agg_MinMax) {
     CommitAndStartNew();
     RelationClose(rel);
 
-    auto* seqplan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (seqplan) SeqScan();
+    auto* seqplan = makePallocNode<SeqScan>();
     seqplan->scanrelid = 1;
     seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
 
-    auto* aggplan = static_cast<Agg*>(palloc(sizeof(Agg)));
-    new (aggplan) Agg();
+    auto* aggplan = makePallocNode<Agg>();
     aggplan->lefttree = seqplan;
     aggplan->aggstrategy = Agg::Strategy::kPlain;
 
@@ -989,8 +954,7 @@ TEST_F(ExecutorTest, Agg_MinMax) {
 
     auto* rte = MakeRTE(relid);
     auto* query = MakeSelectQuery({rte});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = aggplan;
 
@@ -1031,22 +995,19 @@ TEST_F(ExecutorTest, NestLoop_InnerJoin) {
     RelationClose(rel2);
 
     // Build left SeqScan (t1, varno=1).
-    auto* left_scan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (left_scan) SeqScan();
+    auto* left_scan = makePallocNode<SeqScan>();
     left_scan->scanrelid = 1;
     left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
     left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
 
     // Build right SeqScan (t2, varno=2).
-    auto* right_scan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (right_scan) SeqScan();
+    auto* right_scan = makePallocNode<SeqScan>();
     right_scan->scanrelid = 2;
     right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
     right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
 
     // Build NestLoop plan.
-    auto* nlplan = static_cast<NestLoop*>(palloc(sizeof(NestLoop)));
-    new (nlplan) NestLoop();
+    auto* nlplan = makePallocNode<NestLoop>();
     nlplan->jointype = JoinType::kInner;
     nlplan->lefttree = left_scan;
     nlplan->righttree = right_scan;
@@ -1063,8 +1024,7 @@ TEST_F(ExecutorTest, NestLoop_InnerJoin) {
     auto* rte1 = MakeRTE(relid1);
     auto* rte2 = MakeRTE(relid2);
     auto* query = MakeSelectQuery({rte1, rte2});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = nlplan;
 
@@ -1121,30 +1081,25 @@ TEST_F(ExecutorTest, HashJoin_InnerJoin) {
     RelationClose(rel2);
 
     // Left SeqScan (outer, t1).
-    auto* left_scan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (left_scan) SeqScan();
+    auto* left_scan = makePallocNode<SeqScan>();
     left_scan->scanrelid = 1;
     left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
     left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
 
     // Right SeqScan (inner, t2) → child of Hash.
-    auto* right_scan = static_cast<SeqScan*>(palloc(sizeof(SeqScan)));
-    new (right_scan) SeqScan();
+    auto* right_scan = makePallocNode<SeqScan>();
     right_scan->scanrelid = 2;
     right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
     right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
 
     // Hash node (inner child of HashJoin).
-    auto* hash_plan =
-        static_cast<mytoydb::executor::Hash*>(palloc(sizeof(mytoydb::executor::Hash)));
-    new (hash_plan) mytoydb::executor::Hash();
+    auto* hash_plan = makePallocNode<mytoydb::executor::Hash>();
     hash_plan->lefttree = right_scan;
     hash_plan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
     hash_plan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
 
     // HashJoin plan.
-    auto* hjplan = static_cast<HashJoin*>(palloc(sizeof(HashJoin)));
-    new (hjplan) HashJoin();
+    auto* hjplan = makePallocNode<HashJoin>();
     hjplan->jointype = JoinType::kInner;
     hjplan->lefttree = left_scan;
     hjplan->righttree = hash_plan;
@@ -1161,8 +1116,7 @@ TEST_F(ExecutorTest, HashJoin_InnerJoin) {
     auto* rte1 = MakeRTE(relid1);
     auto* rte2 = MakeRTE(relid2);
     auto* query = MakeSelectQuery({rte1, rte2});
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = hjplan;
 
@@ -1208,15 +1162,13 @@ TEST_F(ExecutorTest, ModifyTable_Insert) {
     RelationClose(rel);
 
     // Build a Result child plan that produces one row (42, 99).
-    auto* result_plan = static_cast<Result*>(palloc(sizeof(Result)));
-    new (result_plan) Result();
+    auto* result_plan = makePallocNode<Result>();
     // Target list for the child: two Const values.
     result_plan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(42), 1, "a"));
     result_plan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(99), 2, "b"));
 
     // Build ModifyTable plan.
-    auto* mt_plan = static_cast<ModifyTable*>(palloc(sizeof(ModifyTable)));
-    new (mt_plan) ModifyTable();
+    auto* mt_plan = makePallocNode<ModifyTable>();
     mt_plan->operation = CmdType::kInsert;
     mt_plan->resultRelid = 1;  // 1-based RT index
     mt_plan->lefttree = result_plan;
@@ -1225,14 +1177,12 @@ TEST_F(ExecutorTest, ModifyTable_Insert) {
     mt_plan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
 
     auto* rte = MakeRTE(relid);
-    auto* query = static_cast<Query*>(palloc(sizeof(Query)));
-    new (query) Query();
+    auto* query = makePallocNode<Query>();
     query->command_type = CmdType::kInsert;
     query->result_relation = 1;
     query->rtable.push_back(rte);
 
-    auto* qd = static_cast<QueryDesc*>(palloc(sizeof(QueryDesc)));
-    new (qd) QueryDesc();
+    auto* qd = makePallocNode<QueryDesc>();
     qd->query = query;
     qd->plan = mt_plan;
 
@@ -1273,13 +1223,11 @@ TEST_F(ExecutorTest, ModifyTable_Insert) {
 TEST_F(ExecutorTest, ExecInitNode_DispatchesOnPlanType) {
     // Verify that ExecInitNode correctly dispatches on PlanType.
     // Test with a Result plan (simplest case).
-    auto* result_plan = static_cast<Result*>(palloc(sizeof(Result)));
-    new (result_plan) Result();
+    auto* result_plan = makePallocNode<Result>();
     result_plan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(7), 1, "x"));
 
     auto* query = MakeSelectQuery({});
-    auto* estate = static_cast<EState*>(palloc(sizeof(EState)));
-    new (estate) EState();
+    auto* estate = makePallocNode<EState>();
     estate->es_query_cxt = context_;
 
     PlanState* ps = ExecInitNode(result_plan, estate);
@@ -1293,8 +1241,7 @@ TEST_F(ExecutorTest, ExecInitNode_DispatchesOnPlanType) {
     EXPECT_EQ(ps->ExecProcNode(), nullptr);
 
     ExecEndNode(ps);
-    estate->~EState();
-    pfree(estate);
+    destroyPallocNode(estate);
 }
 
 }  // namespace

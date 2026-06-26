@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <new>
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/memory_context.h"
 
 namespace mytoydb::containers {
+using mytoydb::nodes::makePallocNode;
 
 // ---------------------------------------------------------------------------
 // List method implementations
@@ -69,8 +71,7 @@ void List::Reverse() {
 // ---------------------------------------------------------------------------
 
 List* newList() {
-    void* raw = mytoydb::memory::palloc(sizeof(List));
-    return new (raw) List();
+    return makePallocNode<List>();
 }
 
 List* lappend(List* list, void* datum) {

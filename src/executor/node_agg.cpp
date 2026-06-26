@@ -23,6 +23,7 @@
 #include "mytoydb/executor/exec_utils.h"
 #include "mytoydb/executor/plannodes.h"
 #include "mytoydb/executor/tupletable.h"
+#include "mytoydb/parser/parse_node.h"
 #include "mytoydb/parser/primnodes.h"
 #include "mytoydb/types/datum.h"
 
@@ -34,11 +35,12 @@ using mytoydb::memory::palloc;
 using mytoydb::nodes::NodeTag;
 using mytoydb::parser::Aggref;
 using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
 using mytoydb::types::BoolGetDatum;
 using mytoydb::types::Datum;
 using mytoydb::types::DatumGetBool;
+using mytoydb::types::DatumGetFloat4;
 using mytoydb::types::DatumGetFloat8;
+using mytoydb::types::DatumGetInt16;
 using mytoydb::types::DatumGetInt32;
 using mytoydb::types::DatumGetInt64;
 using mytoydb::types::DatumGetTextP;
@@ -46,10 +48,15 @@ using mytoydb::types::Float8GetDatum;
 using mytoydb::types::Int32GetDatum;
 using mytoydb::types::Int64GetDatum;
 using mytoydb::types::kBoolOid;
+using mytoydb::types::kDateOid;
+using mytoydb::types::kFloat4Oid;
 using mytoydb::types::kFloat8Oid;
+using mytoydb::types::kInt2Oid;
 using mytoydb::types::kInt4Oid;
 using mytoydb::types::kInt8Oid;
 using mytoydb::types::kTextOid;
+using mytoydb::types::kTimestampOid;
+using mytoydb::types::TextPGetDatum;
 using mytoydb::types::VARDATA;
 using mytoydb::types::VARSIZE_DATA;
 
@@ -93,9 +100,75 @@ int CompareTextValues(Datum a, Datum b) {
 
 }  // namespace
 
+// Recursively find all Aggref nodes in an expression tree and register them.
+// This handles Aggrefs nested inside OpExpr/FuncExpr/BoolExpr (e.g., the
+// HAVING clause `COUNT(*) > 100000` has an Aggref inside an OpExpr).
+static void CollectAggrefsRecursive(mytoydb::parser::Node* node,
+                                    std::vector<AggStateInfo>& agg_infos, int& next_aggno) {
+    if (node == nullptr)
+        return;
+    switch (node->GetTag()) {
+        case NodeTag::kAggref: {
+            auto* agg = static_cast<Aggref*>(node);
+            // Skip if already assigned (shared between target list and HAVING).
+            if (agg->aggno >= 0)
+                return;
+            agg->aggno = next_aggno++;
+            AggStateInfo info;
+            info.kind = AggKindFromOid(agg->aggfnoid);
+            info.restype = agg->aggtype;
+            info.aggno = agg->aggno;
+            info.isstar = agg->aggstar;
+            if (!agg->aggstar && !agg->args.empty()) {
+                mytoydb::parser::Node* arg = agg->args[0];
+                if (arg != nullptr && arg->GetTag() == NodeTag::kTargetEntry) {
+                    info.arg = static_cast<TargetEntry*>(arg)->expr;
+                } else {
+                    info.arg = arg;
+                }
+            }
+            if (info.arg != nullptr) {
+                info.argtype = mytoydb::parser::exprType(info.arg);
+            }
+            agg_infos.push_back(info);
+            return;
+        }
+        case NodeTag::kOpExpr: {
+            auto* op = static_cast<mytoydb::parser::OpExpr*>(node);
+            for (auto* arg : op->args)
+                CollectAggrefsRecursive(arg, agg_infos, next_aggno);
+            return;
+        }
+        case NodeTag::kFuncExpr: {
+            auto* fn = static_cast<mytoydb::parser::FuncExpr*>(node);
+            for (auto* arg : fn->args)
+                CollectAggrefsRecursive(arg, agg_infos, next_aggno);
+            return;
+        }
+        case NodeTag::kBoolExpr: {
+            auto* be = static_cast<mytoydb::parser::BoolExpr*>(node);
+            for (auto* arg : be->args)
+                CollectAggrefsRecursive(arg, agg_infos, next_aggno);
+            return;
+        }
+        case NodeTag::kRelabelType:
+            CollectAggrefsRecursive(static_cast<mytoydb::parser::RelabelType*>(node)->arg,
+                                    agg_infos, next_aggno);
+            return;
+        case NodeTag::kTargetEntry:
+            CollectAggrefsRecursive(static_cast<TargetEntry*>(node)->expr, agg_infos, next_aggno);
+            return;
+        default:
+            return;
+    }
+}
+
 void AggState::CollectAggrefs() {
     auto* aggplan = static_cast<Agg*>(plan);
     int next_aggno = 0;
+
+    // First pass: collect Aggrefs from the target list (top-level only —
+    // target list entries are either Aggref or Var).
     for (TargetEntry* te : aggplan->targetlist) {
         if (te->expr == nullptr)
             continue;
@@ -120,14 +193,17 @@ void AggState::CollectAggrefs() {
             }
             // Determine arg type from the argument expression.
             if (info.arg != nullptr) {
-                if (info.arg->GetTag() == NodeTag::kVar) {
-                    info.argtype = static_cast<Var*>(info.arg)->vartype;
-                } else if (info.arg->GetTag() == NodeTag::kConst) {
-                    info.argtype = static_cast<mytoydb::parser::Const*>(info.arg)->consttype;
-                }
+                info.argtype = mytoydb::parser::exprType(info.arg);
             }
             agg_infos.push_back(info);
         }
+    }
+
+    // Second pass: collect Aggrefs from the HAVING clause (recursively,
+    // since HAVING expressions like `COUNT(*) > 100000` nest Aggref inside
+    // OpExpr). Aggrefs already assigned from the target list are skipped.
+    if (aggplan->having_qual != nullptr) {
+        CollectAggrefsRecursive(aggplan->having_qual, agg_infos, next_aggno);
     }
 }
 
@@ -168,18 +244,34 @@ void AggState::Accumulate(AggGroupState& gs, ExprContext* econtext) {
 
         switch (info.kind) {
             case AggKind::kSum:
-                if (info.argtype == kInt4Oid || info.argtype == kInt8Oid) {
-                    gs.sum_int[i] +=
-                        (info.argtype == kInt4Oid) ? DatumGetInt32(val) : DatumGetInt64(val);
+                if (info.argtype == kInt2Oid || info.argtype == kInt4Oid ||
+                    info.argtype == kInt8Oid) {
+                    int64_t v = 0;
+                    if (info.argtype == kInt2Oid)
+                        v = DatumGetInt16(val);
+                    else if (info.argtype == kInt4Oid)
+                        v = DatumGetInt32(val);
+                    else
+                        v = DatumGetInt64(val);
+                    gs.sum_int[i] += v;
+                } else if (info.argtype == kFloat4Oid) {
+                    gs.sum_float[i] += DatumGetFloat4(val);
                 } else {
                     gs.sum_float[i] += DatumGetFloat8(val);
                 }
                 break;
             case AggKind::kAvg:
-                if (info.argtype == kInt4Oid) {
-                    gs.sum_int[i] += DatumGetInt32(val);
+                // AVG accumulates in double (sum_float) to avoid int64 overflow
+                // for large int8 values. PostgreSQL uses numeric; MyToyDB uses
+                // float8 since numeric is not implemented.
+                if (info.argtype == kInt2Oid) {
+                    gs.sum_float[i] += static_cast<double>(DatumGetInt16(val));
+                } else if (info.argtype == kInt4Oid) {
+                    gs.sum_float[i] += static_cast<double>(DatumGetInt32(val));
                 } else if (info.argtype == kInt8Oid) {
-                    gs.sum_int[i] += DatumGetInt64(val);
+                    gs.sum_float[i] += static_cast<double>(DatumGetInt64(val));
+                } else if (info.argtype == kFloat4Oid) {
+                    gs.sum_float[i] += DatumGetFloat4(val);
                 } else {
                     gs.sum_float[i] += DatumGetFloat8(val);
                 }
@@ -189,15 +281,25 @@ void AggState::Accumulate(AggGroupState& gs, ExprContext* econtext) {
                 bool take = false;
                 if (!gs.minmax_init[i]) {
                     take = true;
-                } else if (info.argtype == kInt4Oid) {
+                } else if (info.argtype == kInt2Oid) {
+                    int16_t v = DatumGetInt16(val);
+                    int16_t cur =
+                        DatumGetInt16(info.kind == AggKind::kMin ? gs.min_val[i] : gs.max_val[i]);
+                    take = info.kind == AggKind::kMin ? (v < cur) : (v > cur);
+                } else if (info.argtype == kInt4Oid || info.argtype == kDateOid) {
                     int32_t v = DatumGetInt32(val);
                     int32_t cur =
                         DatumGetInt32(info.kind == AggKind::kMin ? gs.min_val[i] : gs.max_val[i]);
                     take = info.kind == AggKind::kMin ? (v < cur) : (v > cur);
-                } else if (info.argtype == kInt8Oid) {
+                } else if (info.argtype == kInt8Oid || info.argtype == kTimestampOid) {
                     int64_t v = DatumGetInt64(val);
                     int64_t cur =
                         DatumGetInt64(info.kind == AggKind::kMin ? gs.min_val[i] : gs.max_val[i]);
+                    take = info.kind == AggKind::kMin ? (v < cur) : (v > cur);
+                } else if (info.argtype == kFloat4Oid) {
+                    float v = DatumGetFloat4(val);
+                    float cur =
+                        DatumGetFloat4(info.kind == AggKind::kMin ? gs.min_val[i] : gs.max_val[i]);
                     take = info.kind == AggKind::kMin ? (v < cur) : (v > cur);
                 } else if (info.argtype == kFloat8Oid) {
                     double v = DatumGetFloat8(val);
@@ -241,7 +343,8 @@ TupleTableSlot* AggState::BuildOutputSlot(const AggGroupKey& key, const AggGroup
             case AggKind::kSum:
                 if (gs.count[i] == 0) {
                     isnull = true;
-                } else if (info.argtype == kInt4Oid || info.argtype == kInt8Oid) {
+                } else if (info.argtype == kInt2Oid || info.argtype == kInt4Oid ||
+                           info.argtype == kInt8Oid) {
                     val = Int64GetDatum(gs.sum_int[i]);
                 } else {
                     val = Float8GetDatum(gs.sum_float[i]);
@@ -250,10 +353,8 @@ TupleTableSlot* AggState::BuildOutputSlot(const AggGroupKey& key, const AggGroup
             case AggKind::kAvg:
                 if (gs.count[i] == 0) {
                     isnull = true;
-                } else if (info.argtype == kInt4Oid || info.argtype == kInt8Oid) {
-                    val = Float8GetDatum(static_cast<double>(gs.sum_int[i]) /
-                                         static_cast<double>(gs.count[i]));
                 } else {
+                    // AVG uses sum_float (double) for all types to avoid overflow.
                     val = Float8GetDatum(gs.sum_float[i] / static_cast<double>(gs.count[i]));
                 }
                 break;
@@ -286,8 +387,26 @@ TupleTableSlot* AggState::BuildOutputSlot(const AggGroupKey& key, const AggGroup
         for (size_t i = 0; i < group_col_idx.size(); i++) {
             int attno = group_col_idx[i];  // 1-based
             if (attno >= 1 && attno <= group_slot->Natts()) {
-                group_slot->tts_values[attno - 1] = key.values[i];
                 group_slot->tts_isnull[attno - 1] = key.isnull[i];
+                if (key.isnull[i]) {
+                    group_slot->tts_values[attno - 1] = 0;
+                } else if (i < group_col_byref.size() && group_col_byref[i]) {
+                    // Reconstruct a varlena buffer from the serialized string
+                    // content. The original Datum pointed into a child tuple
+                    // buffer that no longer exists. Allocate in the current
+                    // (per-query) memory context.
+                    const std::string& s = key.str_values[i];
+                    std::size_t total = sizeof(int32_t) + s.size();
+                    char* buf = static_cast<char*>(palloc(total));
+                    int32_t header = static_cast<int32_t>(total);
+                    std::memcpy(buf, &header, sizeof(header));
+                    if (!s.empty()) {
+                        std::memcpy(buf + sizeof(int32_t), s.data(), s.size());
+                    }
+                    group_slot->tts_values[attno - 1] = TextPGetDatum(buf);
+                } else {
+                    group_slot->tts_values[attno - 1] = key.values[i];
+                }
             }
         }
         group_slot->tts_nvalid = true;
@@ -303,6 +422,25 @@ void AggState::ExecInit() {
     auto* aggplan = static_cast<Agg*>(plan);
     has_group_by = !aggplan->groupColIdx.empty();
     group_col_idx = aggplan->groupColIdx;
+
+    // Determine which GROUP BY columns are pass-by-reference (text/varchar).
+    // For those, the group key must hold the string content, not the Datum
+    // pointer, so that rows with identical text at different addresses hash
+    // and compare equal.
+    if (has_group_by && leftps != nullptr && leftps->ps_ResultTupleSlot != nullptr) {
+        auto* child_desc = leftps->ps_ResultTupleSlot->tts_tupleDescriptor;
+        group_col_byref.reserve(group_col_idx.size());
+        for (int attno : group_col_idx) {
+            bool byref = false;
+            if (child_desc != nullptr && attno >= 1 && attno <= child_desc->natts) {
+                const auto& attr = child_desc->attrs[attno - 1];
+                byref = !attr.attbyval;
+            }
+            group_col_byref.push_back(byref);
+        }
+    } else {
+        group_col_byref.assign(group_col_idx.size(), false);
+    }
 
     // Collect aggregate info from the target list.
     CollectAggrefs();
@@ -371,6 +509,7 @@ TupleTableSlot* AggState::ExecProcNode() {
                 // Compute the group key.
                 AggGroupKey key;
                 key.values.resize(group_col_idx.size());
+                key.str_values.resize(group_col_idx.size());
                 key.isnull.resize(group_col_idx.size());
                 for (size_t i = 0; i < group_col_idx.size(); i++) {
                     int attno = group_col_idx[i];
@@ -380,8 +519,21 @@ TupleTableSlot* AggState::ExecProcNode() {
                         val = child_slot->tts_values[attno - 1];
                         isnull = child_slot->tts_isnull[attno - 1];
                     }
-                    key.values[i] = val;
                     key.isnull[i] = isnull;
+                    if (isnull) {
+                        key.values[i] = 0;
+                        continue;
+                    }
+                    if (i < group_col_byref.size() && group_col_byref[i]) {
+                        // Pass-by-reference: serialize the varlena content so
+                        // identical strings at different addresses compare equal.
+                        const char* text = DatumGetTextP(val);
+                        int len = VARSIZE_DATA(text);
+                        key.str_values[i].assign(VARDATA(text), len);
+                        key.values[i] = 0;
+                    } else {
+                        key.values[i] = val;
+                    }
                 }
 
                 // Find or create the group.
@@ -403,19 +555,33 @@ TupleTableSlot* AggState::ExecProcNode() {
     }
 
     // Phase 2: output.
+    auto* aggplan = static_cast<Agg*>(plan);
     if (has_group_by) {
-        if (group_iter == groups.end()) {
-            return nullptr;
+        while (group_iter != groups.end()) {
+            TupleTableSlot* slot = BuildOutputSlot(group_iter->first, group_iter->second);
+            ++group_iter;
+            // Evaluate HAVING qual: skip groups that don't satisfy it.
+            if (aggplan->having_qual != nullptr) {
+                if (!ExecQual(aggplan->having_qual, ps_ExprContext)) {
+                    continue;
+                }
+            }
+            return slot;
         }
-        TupleTableSlot* slot = BuildOutputSlot(group_iter->first, group_iter->second);
-        ++group_iter;
-        return slot;
+        return nullptr;
     } else {
         if (!plain_group_init) {
             return nullptr;
         }
         plain_group_init = false;  // Only output once.
-        return BuildOutputSlot(AggGroupKey{}, plain_group);
+        TupleTableSlot* slot = BuildOutputSlot(AggGroupKey{}, plain_group);
+        // Evaluate HAVING qual for plain aggregation.
+        if (aggplan->having_qual != nullptr) {
+            if (!ExecQual(aggplan->having_qual, ps_ExprContext)) {
+                return nullptr;
+            }
+        }
+        return slot;
     }
 }
 

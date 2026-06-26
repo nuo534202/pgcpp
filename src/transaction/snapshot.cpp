@@ -17,11 +17,13 @@
 // visible if its t_cid <= snapshot.curcid.
 #include "mytoydb/transaction/snapshot.h"
 
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/memory/memory_context.h"
 #include "mytoydb/transaction/transam.h"
 #include "mytoydb/transaction/xact.h"
 
 namespace mytoydb::transaction {
+using mytoydb::nodes::makePallocNode;
 
 namespace {
 
@@ -65,9 +67,7 @@ void GetSnapshotData(SnapshotData* snapshot) {
 }
 
 Snapshot GetLatestSnapshot() {
-    // Allocate in the current memory context.
-    auto* snap = static_cast<SnapshotData*>(mytoydb::memory::palloc(sizeof(SnapshotData)));
-    new (snap) SnapshotData();
+    auto* snap = makePallocNode<SnapshotData>();
     GetSnapshotData(snap);
     return snap;
 }
@@ -81,6 +81,13 @@ Snapshot GetTransactionSnapshot() {
     // Create a new snapshot for this transaction.
     active_snapshot = GetLatestSnapshot();
     return active_snapshot;
+}
+
+void ResetTransactionSnapshot() {
+    // Clear the cached snapshot so the next transaction gets a fresh one.
+    // The snapshot memory is owned by the memory context it was allocated in
+    // (palloc), so we only drop our reference here.
+    active_snapshot = nullptr;
 }
 
 void RegisterSnapshot(Snapshot /*snapshot*/) {

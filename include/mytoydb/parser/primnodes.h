@@ -483,14 +483,13 @@ public:
 };
 
 // ---------------------------------------------------------------------------
-// makeNode — allocate a node in the current memory context.
-// PostgreSQL-compatible helper: palloc + placement new.
+// makeNode — allocate a default-constructed node in the current memory
+// context. Delegates to makePallocNode<T>() so the destructor is registered.
 // ---------------------------------------------------------------------------
 
 template<typename T>
 T* makeNode() {
-    void* mem = mytoydb::memory::palloc(sizeof(T));
-    return new (mem) T();
+    return mytoydb::nodes::makePallocNode<T>();
 }
 
 // ---------------------------------------------------------------------------

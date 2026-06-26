@@ -29,6 +29,11 @@ inline std::size_t AlignUp(std::size_t size) {
     return (size + kAlignment - 1) & ~(kAlignment - 1);
 }
 
+MemoryContext* AllocSetContext::GetPointerContext(void* pointer) {
+    auto* chunk = reinterpret_cast<ChunkHeader*>(static_cast<char*>(pointer) - sizeof(ChunkHeader));
+    return chunk->context;
+}
+
 AllocSetContext::AllocSetContext(const char* name, std::size_t min_context_size,
                                  std::size_t init_block_size, std::size_t max_block_size)
     : MemoryContext(name),
@@ -39,7 +44,8 @@ AllocSetContext::AllocSetContext(const char* name, std::size_t min_context_size,
 }
 
 AllocSetContext::~AllocSetContext() {
-    Delete();
+    CallRegisteredDestructors();
+    FreeBlocks();
 }
 
 int AllocSetContext::FreeListIndex(std::size_t size) const {
@@ -178,7 +184,7 @@ void AllocSetContext::Reset() {
     is_reset_ = true;
 }
 
-void AllocSetContext::Delete() {
+void AllocSetContext::FreeBlocks() {
     // Free all blocks.
     Block* block = blocks_;
     while (block != nullptr) {
@@ -195,6 +201,12 @@ void AllocSetContext::Delete() {
     for (int i = 0; i < kNumFreeLists; ++i) {
         free_lists_[i] = nullptr;
     }
+}
+
+void AllocSetContext::Delete() {
+    CallRegisteredDestructors();
+    FreeBlocks();
+    delete this;
 }
 
 bool AllocSetContext::IsEmpty() const {

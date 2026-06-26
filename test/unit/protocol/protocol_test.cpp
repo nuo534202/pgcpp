@@ -24,6 +24,7 @@
 #include "mytoydb/catalog/pg_attribute.h"
 #include "mytoydb/catalog/pg_class.h"
 #include "mytoydb/catalog/syscache.h"
+#include "mytoydb/common/containers/node.h"
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/common/memory/alloc_set.h"
 #include "mytoydb/common/memory/memory_context.h"
@@ -99,6 +100,8 @@ using mytoydb::types::Int32GetDatum;
 using mytoydb::types::kInt4Oid;
 
 namespace {
+
+using mytoydb::nodes::makePallocNode;
 
 // ===========================================================================
 // Part 1: pqformat tests — message encoding/decoding (no full stack needed)
@@ -387,8 +390,7 @@ protected:
 
     // Helper: build a pg_class row and insert it into the catalog.
     FormData_pg_class* MakeClassRow(const std::string& name, Oid oid) {
-        auto* row = static_cast<FormData_pg_class*>(palloc(sizeof(FormData_pg_class)));
-        new (row) FormData_pg_class();
+        auto* row = makePallocNode<FormData_pg_class>();
         row->oid = oid;
         row->relname = name;
         row->relfilenode = oid;
@@ -401,8 +403,7 @@ protected:
     FormData_pg_attribute* MakeAttrRow(Oid relid, const std::string& name, int16_t attnum,
                                        Oid typid, int16_t attlen, bool attbyval,
                                        AttAlign attalign) {
-        auto* row = static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-        new (row) FormData_pg_attribute();
+        auto* row = makePallocNode<FormData_pg_attribute>();
         row->attrelid = relid;
         row->attname = name;
         row->attnum = attnum;
@@ -420,9 +421,7 @@ protected:
         auto* class_row = MakeClassRow(name, relid);
         catalog_->InsertClass(class_row);
         for (const auto& attr : attrs) {
-            auto* attr_row =
-                static_cast<FormData_pg_attribute*>(palloc(sizeof(FormData_pg_attribute)));
-            new (attr_row) FormData_pg_attribute(attr);
+            auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
             catalog_->InsertAttribute(attr_row);
         }
         RelationCreateStorage(relid, false);

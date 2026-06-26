@@ -17,6 +17,8 @@
 #include "mytoydb/types/datum.h"
 
 namespace mytoydb::parser {
+using mytoydb::nodes::destroyPallocNode;
+using mytoydb::nodes::makePallocNode;
 
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
@@ -38,8 +40,7 @@ static constexpr Oid kUnknownOid = 705;
 // ---------------------------------------------------------------------------
 
 ParseState* make_parsestate(ParseState* parent) {
-    void* mem = mytoydb::memory::palloc0(sizeof(ParseState));
-    auto* pstate = new (mem) ParseState();
+    auto* pstate = makePallocNode<ParseState>();
     pstate->parent_parse_state = parent;
     pstate->p_next_resno = 1;
     pstate->p_resolve_unknowns = true;
@@ -50,11 +51,7 @@ ParseState* make_parsestate(ParseState* parent) {
 }
 
 void free_parsestate(ParseState* pstate) {
-    if (pstate == nullptr)
-        return;
-    // In C++ we call the destructor explicitly then pfree.
-    pstate->~ParseState();
-    mytoydb::memory::pfree(pstate);
+    destroyPallocNode(pstate);
 }
 
 // ---------------------------------------------------------------------------

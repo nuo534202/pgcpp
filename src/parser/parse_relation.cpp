@@ -28,6 +28,7 @@ using mytoydb::catalog::GetCatalog;
 using mytoydb::catalog::GetSysCache;
 using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
+using mytoydb::nodes::makePallocNode;
 using mytoydb::nodes::Node;
 using mytoydb::nodes::NodeTag;
 using mytoydb::nodes::nodeTag;
@@ -418,7 +419,7 @@ void addRTEToQuery(ParseState* pstate, RangeTblEntry* rte, bool addToJoinList, b
     }
 
     if (addToNameSpace) {
-        auto* nsitem = new ParseNamespaceItem();
+        auto* nsitem = makePallocNode<ParseNamespaceItem>();
         nsitem->p_rte = rte;
         nsitem->p_rtindex = rtindex;
         nsitem->p_names = rte->alias ? rte->alias : rte->eref;

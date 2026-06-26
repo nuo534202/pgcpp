@@ -6,8 +6,12 @@
 // string type resolution.
 #include "mytoydb/parser/parse_coerce.h"
 
+#include <cstring>
+
 #include "mytoydb/common/error/elog.h"
 #include "mytoydb/parser/parse_type.h"
+#include "mytoydb/types/builtins.h"
+#include "mytoydb/types/datetime.h"
 #include "mytoydb/types/datum.h"
 
 namespace mytoydb::parser {
@@ -185,22 +189,37 @@ Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid, Oid target_t
             // For string constants, we can directly set the target type
             // if the target is a string type
             if (target_typeid == kTextOid || target_typeid == kVarcharOid) {
+                // Convert the C string Datum to a varlena Datum.
+                // The unknown-type Const stores a char* to a null-terminated
+                // string; TEXT/VARCHAR needs a varlena structure (4-byte
+                // length header + data).
+                const char* str = reinterpret_cast<const char*>(con->constvalue);
+                if (str != nullptr) {
+                    con->constvalue = mytoydb::types::text_in(str);
+                }
                 con->consttype = target_typeid;
                 con->constlen = get_typlen(target_typeid);
                 con->constbyval = get_typbyval(target_typeid);
                 return node;
             }
             // For numeric targets, parse the string value
-            if (target_typeid == kInt4Oid || target_typeid == kInt8Oid ||
+            if (target_typeid == kInt2Oid || target_typeid == kInt4Oid ||
+                target_typeid == kInt8Oid || target_typeid == kFloat4Oid ||
                 target_typeid == kFloat8Oid) {
                 // The string is stored as a char* in the Datum
                 const char* str = reinterpret_cast<const char*>(con->constvalue);
                 if (str != nullptr) {
-                    if (target_typeid == kInt4Oid) {
+                    if (target_typeid == kInt2Oid) {
+                        con->constvalue =
+                            mytoydb::types::Int16GetDatum(static_cast<int16_t>(std::atoll(str)));
+                    } else if (target_typeid == kInt4Oid) {
                         con->constvalue =
                             mytoydb::types::Int32GetDatum(static_cast<int32_t>(std::atoll(str)));
                     } else if (target_typeid == kInt8Oid) {
                         con->constvalue = mytoydb::types::Int64GetDatum(std::atoll(str));
+                    } else if (target_typeid == kFloat4Oid) {
+                        con->constvalue = mytoydb::types::Float4GetDatum(
+                            static_cast<float>(std::strtod(str, nullptr)));
                     } else {
                         con->constvalue = mytoydb::types::Float8GetDatum(std::strtod(str, nullptr));
                     }
@@ -220,6 +239,22 @@ Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid, Oid target_t
                     con->consttype = kBoolOid;
                     con->constlen = 1;
                     con->constbyval = true;
+                    return node;
+                }
+            }
+            // For datetime targets (DATE, TIMESTAMP), parse via the type's
+            // input function.
+            if (target_typeid == kDateOid || target_typeid == kTimestampOid) {
+                const char* str = reinterpret_cast<const char*>(con->constvalue);
+                if (str != nullptr) {
+                    if (target_typeid == kDateOid) {
+                        con->constvalue = mytoydb::types::date_in(str);
+                    } else {
+                        con->constvalue = mytoydb::types::timestamp_in(str);
+                    }
+                    con->consttype = target_typeid;
+                    con->constlen = get_typlen(target_typeid);
+                    con->constbyval = get_typbyval(target_typeid);
                     return node;
                 }
             }
@@ -262,7 +297,106 @@ Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid, Oid target_t
             r->location = location;
             return r;
         }
-        // int -> float needs actual conversion
+        // For Const nodes, fold the narrowing/widening cast at parse time
+        // so the executor doesn't need to evaluate CoerceViaIO. This mirrors
+        // PostgreSQL's eval_const_expressions behavior for simple numeric casts.
+        if (node != nullptr && node->GetTag() == mytoydb::nodes::NodeTag::kConst) {
+            auto* con = static_cast<Const*>(node);
+            if (con->constisnull) {
+                // Just fix up the type metadata; value stays null.
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                return node;
+            }
+            bool ok = false;
+            if (input_typeid == kInt4Oid && target_typeid == kInt2Oid) {
+                con->constvalue = mytoydb::types::Int16GetDatum(
+                    static_cast<int16_t>(mytoydb::types::DatumGetInt32(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kInt4Oid && target_typeid == kInt8Oid) {
+                // int4 -> int8 widening (e.g., LIMIT/OFFSET constants).
+                con->constvalue = mytoydb::types::Int64GetDatum(
+                    static_cast<int64_t>(mytoydb::types::DatumGetInt32(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kInt2Oid && target_typeid == kInt4Oid) {
+                // int2 -> int4 widening.
+                con->constvalue = mytoydb::types::Int32GetDatum(
+                    static_cast<int32_t>(mytoydb::types::DatumGetInt16(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kInt2Oid && target_typeid == kInt8Oid) {
+                // int2 -> int8 widening.
+                con->constvalue = mytoydb::types::Int64GetDatum(
+                    static_cast<int64_t>(mytoydb::types::DatumGetInt16(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kInt8Oid && target_typeid == kInt4Oid) {
+                con->constvalue = mytoydb::types::Int32GetDatum(
+                    static_cast<int32_t>(mytoydb::types::DatumGetInt64(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kInt8Oid && target_typeid == kInt2Oid) {
+                con->constvalue = mytoydb::types::Int16GetDatum(
+                    static_cast<int16_t>(mytoydb::types::DatumGetInt64(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kFloat8Oid && target_typeid == kFloat4Oid) {
+                con->constvalue = mytoydb::types::Float4GetDatum(
+                    static_cast<float>(mytoydb::types::DatumGetFloat8(con->constvalue)));
+                ok = true;
+            } else if ((input_typeid == kInt2Oid || input_typeid == kInt4Oid ||
+                        input_typeid == kInt8Oid) &&
+                       (target_typeid == kFloat4Oid || target_typeid == kFloat8Oid)) {
+                // int -> float: extract integer value, convert to double/float.
+                int64_t ival = 0;
+                if (input_typeid == kInt2Oid) {
+                    ival = mytoydb::types::DatumGetInt16(con->constvalue);
+                } else if (input_typeid == kInt4Oid) {
+                    ival = mytoydb::types::DatumGetInt32(con->constvalue);
+                } else {
+                    ival = mytoydb::types::DatumGetInt64(con->constvalue);
+                }
+                if (target_typeid == kFloat4Oid) {
+                    con->constvalue = mytoydb::types::Float4GetDatum(static_cast<float>(ival));
+                } else {
+                    con->constvalue = mytoydb::types::Float8GetDatum(static_cast<double>(ival));
+                }
+                ok = true;
+            } else if (input_typeid == kFloat4Oid && target_typeid == kFloat8Oid) {
+                // float4 -> float8 widening (not binary-coercible in our model).
+                con->constvalue = mytoydb::types::Float8GetDatum(
+                    static_cast<double>(mytoydb::types::DatumGetFloat4(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kFloat8Oid && target_typeid == kInt2Oid) {
+                con->constvalue = mytoydb::types::Int16GetDatum(
+                    static_cast<int16_t>(mytoydb::types::DatumGetFloat8(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kFloat8Oid && target_typeid == kInt4Oid) {
+                con->constvalue = mytoydb::types::Int32GetDatum(
+                    static_cast<int32_t>(mytoydb::types::DatumGetFloat8(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kFloat8Oid && target_typeid == kInt8Oid) {
+                con->constvalue = mytoydb::types::Int64GetDatum(
+                    static_cast<int64_t>(mytoydb::types::DatumGetFloat8(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kFloat4Oid && target_typeid == kInt2Oid) {
+                con->constvalue = mytoydb::types::Int16GetDatum(
+                    static_cast<int16_t>(mytoydb::types::DatumGetFloat4(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kFloat4Oid && target_typeid == kInt4Oid) {
+                con->constvalue = mytoydb::types::Int32GetDatum(
+                    static_cast<int32_t>(mytoydb::types::DatumGetFloat4(con->constvalue)));
+                ok = true;
+            } else if (input_typeid == kFloat4Oid && target_typeid == kInt8Oid) {
+                con->constvalue = mytoydb::types::Int64GetDatum(
+                    static_cast<int64_t>(mytoydb::types::DatumGetFloat4(con->constvalue)));
+                ok = true;
+            }
+            if (ok) {
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                return node;
+            }
+        }
+        // Non-Const or unsupported numeric cast: fall back to CoerceViaIO.
         auto* cio = makeNode<CoerceViaIO>();
         cio->arg = node;
         cio->resulttype = target_typeid;
@@ -287,7 +421,8 @@ Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid, Oid target_t
     // If we get here, the coercion is not supported
     if (ccontext >= CoercionContext::kAssignment) {
         ereport(mytoydb::error::LogLevel::kError,
-                "cannot coerce type to target type in coerce_type");
+                "cannot coerce type " + std::to_string(input_typeid) + " to target type " +
+                    std::to_string(target_typeid) + " in coerce_type");
     }
 
     return node;  // return as-is if can't coerce

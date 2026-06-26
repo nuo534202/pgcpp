@@ -9,6 +9,7 @@
 //   psql [-h host] [-p port] [-c "SQL"] [-f file.sql]
 //
 // If neither -c nor -f is given, reads SQL from stdin interactively.
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -84,9 +85,13 @@ bool ParseArgs(int argc, char* argv[], PsqlOptions* opts) {
 }
 
 // Execute a query and print the result.
-void ExecuteAndPrint(PsqlClient& client, const std::string& query) {
+// Returns false if the connection was lost (server closed or error).
+bool ExecuteAndPrint(PsqlClient& client, const std::string& query) {
     QueryResult result = client.ExecuteQuery(query);
     std::cout << FormatQueryResult(result);
+    // A query error (e.g. syntax error) leaves the connection alive;
+    // only stop if the socket was closed.
+    return client.IsConnected();
 }
 
 // Read and execute SQL from a file.
@@ -115,7 +120,9 @@ void ExecuteFile(PsqlClient& client, const std::string& filename) {
             size_t start = stmt.find_first_not_of(" \t\n\r");
             if (start != std::string::npos) {
                 stmt = stmt.substr(start);
-                ExecuteAndPrint(client, stmt);
+                if (!ExecuteAndPrint(client, stmt)) {
+                    return;  // Connection lost; stop executing.
+                }
             }
             stmt.clear();
         } else {
@@ -191,6 +198,9 @@ void InteractiveMode(PsqlClient& client) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+    // Ignore SIGPIPE so write() returns EPIPE instead of killing the process.
+    std::signal(SIGPIPE, SIG_IGN);
+
     PsqlOptions opts;
     if (!ParseArgs(argc, argv, &opts)) {
         PrintUsage(argv[0]);

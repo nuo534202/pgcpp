@@ -254,7 +254,7 @@ void InitializeServerSubsystems(const std::string& data_dir) {
 
     // Storage.
     SetStorageBaseDir(data_dir);
-    InitBufferPool(64);
+    InitBufferPool(4096);
     g_state.buffer_pool_initialized = true;
 
     // Relcache.

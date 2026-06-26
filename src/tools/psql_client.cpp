@@ -195,6 +195,8 @@ QueryResult PsqlClient::ExecuteQuery(const std::string& query) {
 
     if (!WriteAll(fd_, msg.data(), msg.size())) {
         result.error_message = "failed to send query";
+        close(fd_);
+        fd_ = -1;
         return result;
     }
 
@@ -204,6 +206,8 @@ QueryResult PsqlClient::ExecuteQuery(const std::string& query) {
         std::string payload;
         if (!ReadMessage(&type, &payload)) {
             result.error_message = "connection closed by server";
+            close(fd_);
+            fd_ = -1;
             return result;
         }
 
