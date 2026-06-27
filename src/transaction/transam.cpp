@@ -31,6 +31,22 @@ TransactionId& NextXid() {
     return next;
 }
 
+// Single-entry cache for TransactionLogFetch (PostgreSQL's
+// TransactionLogFetch keeps a one-row cache to avoid repeated CLOG reads).
+TransactionId cached_xid = kInvalidTransactionId;
+XidStatus cached_status = XidStatus::kInProgress;
+
+// FetchFromCommitLog — read the raw status from the commit log without
+// special-XID handling or caching.
+XidStatus FetchFromCommitLog(TransactionId xid) {
+    auto& log = CommitLog();
+    if (xid >= log.size()) {
+        // XID has not been recorded yet — treat as in-progress.
+        return XidStatus::kInProgress;
+    }
+    return log[xid];
+}
+
 }  // namespace
 
 void InitializeCommitLog() {
@@ -44,20 +60,26 @@ void InitializeCommitLog() {
     log[kBootstrapTransactionId] = XidStatus::kCommitted;
     log[kFrozenTransactionId] = XidStatus::kCommitted;
     NextXid() = kFirstNormalTransactionId;
+    // Clear the TransactionLogFetch cache.
+    cached_xid = kInvalidTransactionId;
 }
 
-XidStatus TransactionIdGetStatus(TransactionId xid) {
-    // Special XIDs are always considered committed.
+XidStatus TransactionLogFetch(TransactionId xid) {
+    // Special XIDs are always considered committed; do not pollute the cache.
     if (!TransactionIdIsNormal(xid)) {
         return XidStatus::kCommitted;
     }
-
-    auto& log = CommitLog();
-    if (xid >= log.size()) {
-        // XID has not been recorded yet — treat as in-progress.
-        return XidStatus::kInProgress;
+    if (xid == cached_xid) {
+        return cached_status;
     }
-    return log[xid];
+    XidStatus status = FetchFromCommitLog(xid);
+    cached_xid = xid;
+    cached_status = status;
+    return status;
+}
+
+XidStatus TransactionIdGetStatus(TransactionId xid) {
+    return TransactionLogFetch(xid);
 }
 
 bool TransactionIdDidCommit(TransactionId xid) {
@@ -84,6 +106,10 @@ void TransactionIdCommit(TransactionId xid) {
         log.resize(xid + 1, XidStatus::kInProgress);
     }
     log[xid] = XidStatus::kCommitted;
+    // Invalidate the TransactionLogFetch cache if it held this XID.
+    if (xid == cached_xid) {
+        cached_xid = kInvalidTransactionId;
+    }
 }
 
 void TransactionIdAbort(TransactionId xid) {
@@ -97,6 +123,10 @@ void TransactionIdAbort(TransactionId xid) {
         log.resize(xid + 1, XidStatus::kInProgress);
     }
     log[xid] = XidStatus::kAborted;
+    // Invalidate the TransactionLogFetch cache if it held this XID.
+    if (xid == cached_xid) {
+        cached_xid = kInvalidTransactionId;
+    }
 }
 
 void TransactionIdSetInProgress(TransactionId xid) {
@@ -109,6 +139,10 @@ void TransactionIdSetInProgress(TransactionId xid) {
         log.resize(xid + 1, XidStatus::kInProgress);
     }
     log[xid] = XidStatus::kInProgress;
+    // Invalidate the TransactionLogFetch cache if it held this XID.
+    if (xid == cached_xid) {
+        cached_xid = kInvalidTransactionId;
+    }
 }
 
 TransactionId AllocateNextTransactionId() {

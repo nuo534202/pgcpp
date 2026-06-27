@@ -138,6 +138,13 @@ void InitializeCommitLog();
 // Special XIDs (bootstrap, frozen) return kCommitted without lookup.
 XidStatus TransactionIdGetStatus(TransactionId xid);
 
+// TransactionLogFetch — return the commit-log status of `xid` with a
+// single-entry cache (PostgreSQL's TransactionLogFetch equivalent).
+// Special XIDs return kCommitted without consulting or polluting the cache.
+// TransactionIdGetStatus forwards here, and the commit/abort/in-progress
+// mutators invalidate the cached entry when they modify it.
+XidStatus TransactionLogFetch(TransactionId xid);
+
 // Did the transaction commit? (true for committed or frozen/bootstrap XIDs).
 bool TransactionIdDidCommit(TransactionId xid);
 

@@ -17,6 +17,8 @@
 // visible if its t_cid <= snapshot.curcid.
 #include "mytoydb/transaction/snapshot.hpp"
 
+#include <vector>
+
 #include "mytoydb/common/containers/node.hpp"
 #include "mytoydb/common/memory/memory_context.hpp"
 #include "mytoydb/transaction/transam.hpp"
@@ -27,8 +29,22 @@ using mytoydb::nodes::makePallocNode;
 
 namespace {
 
-// The active snapshot for the current transaction (if any).
+// The active snapshot stack. The top (back) is the current active snapshot.
+// Implemented as a function-local static to avoid static-initialization-order
+// issues (matches the CommitLog() pattern in transam.cpp).
+std::vector<Snapshot>& ActiveSnapshotStack() {
+    static std::vector<Snapshot> stack;
+    return stack;
+}
+
+// The cached transaction snapshot (pushed onto the stack on first use of
+// GetTransactionSnapshot). Kept for backward compatibility with the original
+// single-snapshot implementation.
 SnapshotData* active_snapshot = nullptr;
+
+// The cached CatalogSnapshot (lazily built, invalidated on catalog change or
+// transaction end). Memory is owned by the allocating memory context.
+Snapshot catalog_snapshot = nullptr;
 
 }  // namespace
 
@@ -73,21 +89,71 @@ Snapshot GetLatestSnapshot() {
 }
 
 Snapshot GetTransactionSnapshot() {
-    // If we already have an active snapshot, reuse it.
-    if (active_snapshot != nullptr) {
-        return active_snapshot;
+    // If the stack already has an active snapshot, return its top.
+    if (!ActiveSnapshotStack().empty()) {
+        return ActiveSnapshotStack().back();
     }
 
-    // Create a new snapshot for this transaction.
+    // Create a new snapshot for this transaction, cache it, and push it
+    // onto the stack so subsequent calls reuse it.
     active_snapshot = GetLatestSnapshot();
+    ActiveSnapshotStack().push_back(active_snapshot);
     return active_snapshot;
 }
 
 void ResetTransactionSnapshot() {
-    // Clear the cached snapshot so the next transaction gets a fresh one.
-    // The snapshot memory is owned by the memory context it was allocated in
-    // (palloc), so we only drop our reference here.
+    // Clear the entire stack and the cached transaction snapshot. The
+    // snapshot memory is owned by the memory context it was allocated in
+    // (palloc), so we only drop our references here.
+    ActiveSnapshotStack().clear();
     active_snapshot = nullptr;
+    // CatalogSnapshot is invalidated at transaction end (PG semantics).
+    catalog_snapshot = nullptr;
+}
+
+void PushActiveSnapshot(Snapshot snapshot) {
+    ActiveSnapshotStack().push_back(snapshot);
+}
+
+void PushCopiedSnapshot(Snapshot snapshot) {
+    Snapshot copy = makePallocNode<SnapshotData>();
+    *copy = *snapshot;  // deep-copies fields (including the xip vector)
+    ActiveSnapshotStack().push_back(copy);
+}
+
+void PopActiveSnapshot() {
+    if (!ActiveSnapshotStack().empty()) {
+        ActiveSnapshotStack().pop_back();
+    }
+}
+
+bool ActiveSnapshotSet() {
+    return !ActiveSnapshotStack().empty();
+}
+
+Snapshot GetActiveSnapshot() {
+    if (ActiveSnapshotStack().empty()) {
+        return nullptr;
+    }
+    return ActiveSnapshotStack().back();
+}
+
+Snapshot GetCatalogSnapshot() {
+    if (catalog_snapshot == nullptr) {
+        catalog_snapshot = GetLatestSnapshot();
+    }
+    return catalog_snapshot;
+}
+
+void InvalidateCatalogSnapshot() {
+    catalog_snapshot = nullptr;
+}
+
+Snapshot GetNonHistoricCatalogSnapshot() {
+    if (catalog_snapshot != nullptr) {
+        return catalog_snapshot;
+    }
+    return GetActiveSnapshot();
 }
 
 void RegisterSnapshot(Snapshot /*snapshot*/) {
@@ -99,7 +165,9 @@ void UnregisterSnapshot(Snapshot /*snapshot*/) {
 }
 
 void InitializeSnapshotManager() {
+    ActiveSnapshotStack().clear();
     active_snapshot = nullptr;
+    catalog_snapshot = nullptr;
 }
 
 SnapshotData MakeSnapshot(TransactionId xmin, TransactionId xmax,

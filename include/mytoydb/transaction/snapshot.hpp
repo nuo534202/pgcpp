@@ -105,16 +105,62 @@ void GetSnapshotData(SnapshotData* snapshot);
 Snapshot GetLatestSnapshot();
 
 // GetTransactionSnapshot — return the snapshot for the current transaction.
-// If a snapshot is already registered for this transaction, reuses it;
-// otherwise creates a new one.
+// If the active snapshot stack is non-empty, returns its top; otherwise
+// creates a new snapshot, caches it, pushes it onto the stack, and returns it.
 Snapshot GetTransactionSnapshot();
 
-// ResetTransactionSnapshot — clear the cached transaction snapshot.
+// ResetTransactionSnapshot — clear the cached transaction snapshot and the
+// active snapshot stack.
 //
 // Must be called when a transaction commits or aborts so that the next
 // transaction gets a fresh snapshot reflecting the latest committed state.
 // In PostgreSQL this is handled by AtCommit_Snapshot / AtAbort_Snapshot.
+// Also invalidates the CatalogSnapshot (PG semantics: catalog snapshot does
+// not survive past transaction end).
 void ResetTransactionSnapshot();
+
+// --- Active snapshot stack (snapmgr) ---
+//
+// PostgreSQL maintains a stack of active snapshots so that nested
+// operations (e.g., triggers) can push a snapshot, execute, and pop to
+// restore the previous active snapshot. The top of the stack is the
+// "active" snapshot returned by GetActiveSnapshot().
+
+// PushActiveSnapshot — push `snapshot` onto the active snapshot stack.
+// Borrows the caller's pointer (no copy); the caller must keep it alive
+// until it is popped.
+void PushActiveSnapshot(Snapshot snapshot);
+
+// PushCopiedSnapshot — push a deep copy of `snapshot` onto the stack.
+// The copy is allocated via makePallocNode in the current memory context.
+void PushCopiedSnapshot(Snapshot snapshot);
+
+// PopActiveSnapshot — pop the top of the active snapshot stack.
+// No-op if the stack is empty.
+void PopActiveSnapshot();
+
+// ActiveSnapshotSet — true if the stack is non-empty.
+bool ActiveSnapshotSet();
+
+// GetActiveSnapshot — return the top of the stack, or nullptr if empty.
+Snapshot GetActiveSnapshot();
+
+// --- CatalogSnapshot ---
+//
+// The CatalogSnapshot is a separate snapshot used for catalog scans.
+// It is lazily built and invalidated whenever the catalog changes.
+
+// GetCatalogSnapshot — return the current CatalogSnapshot, building one
+// lazily via GetLatestSnapshot() if none exists.
+Snapshot GetCatalogSnapshot();
+
+// InvalidateCatalogSnapshot — drop the cached CatalogSnapshot so that the
+// next GetCatalogSnapshot() rebuilds it.
+void InvalidateCatalogSnapshot();
+
+// GetNonHistoricCatalogSnapshot — return the CatalogSnapshot if set,
+// otherwise fall back to GetActiveSnapshot().
+Snapshot GetNonHistoricCatalogSnapshot();
 
 // RegisterSnapshot — register a snapshot for resource management.
 // In MyToyDB, this is a no-op (snapshots are managed by the caller).
