@@ -9,6 +9,10 @@
 // to ErrorResponse messages sent to the client.
 #include "mytoydb/protocol/postgres.hpp"
 
+#include <unistd.h>
+
+#include <cerrno>
+#include <csignal>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -33,6 +37,8 @@
 #include "mytoydb/parser/parsenodes.hpp"
 #include "mytoydb/parser/parser.hpp"
 #include "mytoydb/parser/primnodes.hpp"
+#include "mytoydb/protocol/utility.hpp"
+#include "mytoydb/server/postmaster.hpp"
 #include "mytoydb/transaction/xact.hpp"
 #include "mytoydb/types/builtins.hpp"
 #include "mytoydb/types/datetime.hpp"
@@ -42,12 +48,8 @@ namespace mytoydb::protocol {
 
 using mytoydb::access::TupleDesc;
 using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
 using mytoydb::catalog::GetCatalog;
 using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
 using mytoydb::executor::BuildTupleDescFromTargetList;
 using mytoydb::executor::ClearExecParams;
 using mytoydb::executor::ExecutorEnd;
@@ -62,16 +64,12 @@ using mytoydb::memory::palloc;
 using mytoydb::nodes::makePallocNode;
 using mytoydb::optimizer::planner;
 using mytoydb::parser::CmdType;
-using mytoydb::parser::ColumnDef;
-using mytoydb::parser::CreateStmt;
 using mytoydb::parser::Node;
 using mytoydb::parser::Query;
 using mytoydb::parser::RangeVar;
 using mytoydb::parser::RawStmt;
 using mytoydb::parser::RelabelType;
 using mytoydb::parser::TargetEntry;
-using mytoydb::parser::TransactionStmt;
-using mytoydb::parser::TypeName;
 using mytoydb::transaction::AbortCurrentTransaction;
 using mytoydb::transaction::BeginTransactionBlock;
 using mytoydb::transaction::CommandCounterIncrement;
@@ -233,154 +231,6 @@ Oid GetExprTypeOid(Node* expr) {
     }
 }
 
-// Extract the type name string from a TypeName node.
-// The names list contains String nodes; the last one is the unqualified type name.
-std::string ExtractTypeName(TypeName* type_name) {
-    if (type_name == nullptr || type_name->names.empty())
-        return "";
-    // The last element is the type name (e.g., "int4", "text").
-    Node* last = type_name->names.back();
-    if (last->GetTag() == mytoydb::nodes::NodeTag::kString) {
-        auto* v = static_cast<mytoydb::nodes::Value*>(last);
-        return v->GetString();
-    }
-    return "";
-}
-
-// Determine the alignment for a type based on typlen.
-mytoydb::catalog::AttAlign TypeAlignForLen(int16_t typlen) {
-    if (typlen == 1)
-        return mytoydb::catalog::AttAlign::kChar;
-    if (typlen == 2)
-        return mytoydb::catalog::AttAlign::kShort;
-    if (typlen == 4)
-        return mytoydb::catalog::AttAlign::kInt;
-    if (typlen == 8 || typlen > 0)
-        return mytoydb::catalog::AttAlign::kDouble;
-    // Varlena types (typlen < 0) use int alignment.
-    return mytoydb::catalog::AttAlign::kInt;
-}
-
-// ProcessCreateTable — execute a CREATE TABLE statement.
-// Creates the pg_class and pg_attribute entries and the physical storage file.
-std::string ProcessCreateTable(CreateStmt* stmt) {
-    if (stmt == nullptr || stmt->relation == nullptr)
-        return "";
-
-    Catalog* cat = GetCatalog();
-    if (cat == nullptr)
-        return "";
-
-    const std::string& relname = stmt->relation->relname;
-
-    // Check if the relation already exists.
-    if (cat->GetClassByName(relname) != nullptr) {
-        if (stmt->if_not_exists)
-            return "CREATE TABLE";
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + relname + "\" already exists");
-    }
-
-    // Count user columns and resolve their types.
-    int16_t natts = 0;
-    struct ColInfo {
-        std::string name;
-        Oid type_oid;
-        int16_t typlen;
-        bool typbyval;
-    };
-    std::vector<ColInfo> columns;
-
-    for (Node* elt : stmt->table_elts) {
-        if (elt == nullptr)
-            continue;
-        if (elt->GetTag() != mytoydb::nodes::NodeTag::kColumnDef)
-            continue;
-        auto* coldef = static_cast<ColumnDef*>(elt);
-
-        ColInfo ci;
-        ci.name = coldef->colname;
-        std::string type_name = ExtractTypeName(coldef->type_name);
-        ci.type_oid = mytoydb::parser::typenameTypeId(type_name);
-        if (ci.type_oid == mytoydb::types::kInvalidOid) {
-            ereport(mytoydb::error::LogLevel::kError, "type \"" + type_name + "\" does not exist");
-        }
-        ci.typlen = mytoydb::parser::get_typlen(ci.type_oid);
-        ci.typbyval = mytoydb::parser::get_typbyval(ci.type_oid);
-        columns.push_back(ci);
-        natts++;
-    }
-
-    // Create the pg_class entry.
-    auto* class_row = makePallocNode<FormData_pg_class>();
-    class_row->relname = relname;
-    class_row->relnamespace = 2200;  // public schema
-    class_row->relkind = RelKind::kRelation;
-    class_row->relpersistence = RelPersistence::kPermanent;
-    class_row->relnatts = natts;
-    class_row->relispopulated = true;
-
-    Oid relid = cat->InsertClass(class_row);
-    // Use the OID as the relfilenode (same as PostgreSQL for simple cases).
-    class_row->relfilenode = relid;
-
-    // Create pg_attribute entries.
-    int16_t attnum = 1;
-    for (const auto& ci : columns) {
-        auto* attr_row = makePallocNode<FormData_pg_attribute>();
-        attr_row->attrelid = relid;
-        attr_row->attname = ci.name;
-        attr_row->atttypid = ci.type_oid;
-        attr_row->attlen = ci.typlen;
-        attr_row->attnum = attnum;
-        attr_row->attbyval = ci.typbyval;
-        attr_row->attstorage = mytoydb::catalog::AttStorage::kPlain;
-        attr_row->attalign = TypeAlignForLen(ci.typlen);
-        attr_row->attnotnull = false;
-        attr_row->attislocal = true;
-        cat->InsertAttribute(attr_row);
-        attnum++;
-    }
-
-    // Create the physical storage file.
-    mytoydb::access::RelationCreateStorage(relid, false);
-
-    return "CREATE TABLE";
-}
-
-// Execute a utility statement.
-// Returns the command tag, or empty string if not a recognized utility.
-std::string ExecuteUtilityStatement(Node* stmt) {
-    if (stmt == nullptr)
-        return "";
-
-    if (stmt->GetTag() == mytoydb::nodes::NodeTag::kTransactionStmt) {
-        auto* ts = static_cast<TransactionStmt*>(stmt);
-        switch (ts->kind) {
-            case TransactionStmt::Kind::kBegin:
-            case TransactionStmt::Kind::kStart:
-                BeginTransactionBlock();
-                return "BEGIN";
-            case TransactionStmt::Kind::kCommit:
-                EndTransactionBlock();
-                return "COMMIT";
-            case TransactionStmt::Kind::kRollback:
-                mytoydb::transaction::AbortTransactionBlock();
-                return "ROLLBACK";
-            default:
-                // SAVEPOINT / RELEASE / ROLLBACK TO — not yet supported in protocol.
-                return "";
-        }
-    }
-
-    if (stmt->GetTag() == mytoydb::nodes::NodeTag::kCreateStmt) {
-        auto* create_stmt = static_cast<CreateStmt*>(stmt);
-        return ProcessCreateTable(create_stmt);
-    }
-
-    // Other utility statements (DROP TABLE, ALTER TABLE, etc.) are not yet handled.
-    return "";
-}
-
 }  // namespace
 
 // --- Backend ---
@@ -450,7 +300,7 @@ void Backend::exec_simple_query(const std::string& query_string) {
             Query* query = queries.front();
             std::string tag;
             if (query->command_type == CmdType::kUtility) {
-                tag = ExecuteUtilityStatement(query->utility_stmt);
+                tag = ProcessUtility(query->utility_stmt, sink_);
                 if (tag.empty()) {
                     tag = "UTILITY";
                 }
@@ -746,7 +596,7 @@ void Backend::HandleExecute(const std::string& portal_name, int /*max_rows*/) {
         Query* query = portal->stmt->queries[portal->query_index];
         std::string tag;
         if (query->command_type == CmdType::kUtility) {
-            tag = ExecuteUtilityStatement(query->utility_stmt);
+            tag = ProcessUtility(query->utility_stmt, sink_);
             if (tag.empty())
                 tag = "UTILITY";
         } else {
@@ -806,6 +656,183 @@ Portal* Backend::FindPortal(const std::string& name) const {
     if (it == portals_.end())
         return nullptr;
     return it->second;
+}
+
+// ---------------------------------------------------------------------------
+// PostgresMain — full per-connection server main loop
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// Interrupt-pending flag, set by SetInterruptPending (signal-safe).
+// Checked by ProcessInterrupts at safe points in the main loop.
+volatile sig_atomic_t g_interrupt_pending = 0;
+
+// Read exactly len bytes from a fd (handles partial reads).
+// Returns true on success, false on EOF or error.
+bool ReadAllBytes(int fd, char* buf, std::size_t len) {
+    std::size_t got = 0;
+    while (got < len) {
+        ssize_t n = read(fd, buf + got, len - got);
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+            return false;
+        }
+        if (n == 0)
+            return false;  // EOF
+        got += static_cast<std::size_t>(n);
+    }
+    return true;
+}
+
+// Read a single protocol message from the client.
+// Returns true if a message was read, false on EOF/error.
+bool ReadProtocolMessage(int fd, char* type, std::string& payload) {
+    if (!ReadAllBytes(fd, type, 1))
+        return false;
+
+    char len_buf[4];
+    if (!ReadAllBytes(fd, len_buf, 4))
+        return false;
+
+    int32_t length = static_cast<int32_t>(
+        (static_cast<uint8_t>(len_buf[0]) << 24) | (static_cast<uint8_t>(len_buf[1]) << 16) |
+        (static_cast<uint8_t>(len_buf[2]) << 8) | static_cast<uint8_t>(len_buf[3]));
+
+    if (length < 4)
+        return false;
+
+    std::size_t payload_len = static_cast<std::size_t>(length) - 4;
+    if (payload_len > 0) {
+        payload.resize(payload_len);
+        if (!ReadAllBytes(fd, payload.data(), payload_len))
+            return false;
+    } else {
+        payload.clear();
+    }
+    return true;
+}
+
+}  // namespace
+
+void SetInterruptPending() {
+    g_interrupt_pending = 1;
+}
+
+void ProcessInterrupts() {
+    if (g_interrupt_pending) {
+        g_interrupt_pending = 0;
+        ereport(mytoydb::error::LogLevel::kError, "canceling statement due to user request");
+    }
+}
+
+void PostgresMain(int client_fd, mytoydb::server::SocketSink* sink) {
+    Backend backend(sink);
+
+    while (true) {
+        char type;
+        std::string payload;
+
+        if (!ReadProtocolMessage(client_fd, &type, payload)) {
+            break;  // Client disconnected or error.
+        }
+
+        // Check for interrupts at a safe point (before dispatching).
+        PG_TRY() {
+            ProcessInterrupts();
+
+            MessageReader reader(payload);
+            switch (type) {
+                case 'Q': {
+                    std::string query = reader.ReadString();
+                    backend.exec_simple_query(query);
+                    break;
+                }
+                case 'P': {
+                    std::string stmt_name = reader.ReadString();
+                    std::string query = reader.ReadString();
+                    int16_t num_params = reader.ReadInt16();
+                    std::vector<Oid> param_types;
+                    param_types.reserve(static_cast<std::size_t>(num_params));
+                    for (int16_t i = 0; i < num_params; ++i) {
+                        param_types.push_back(static_cast<Oid>(reader.ReadInt32()));
+                    }
+                    backend.HandleParse(stmt_name, query, param_types);
+                    break;
+                }
+                case 'B': {
+                    std::string portal_name = reader.ReadString();
+                    std::string stmt_name = reader.ReadString();
+                    int16_t num_formats = reader.ReadInt16();
+                    for (int16_t i = 0; i < num_formats; ++i)
+                        reader.ReadInt16();
+                    int16_t num_params = reader.ReadInt16();
+                    std::vector<std::string> param_values;
+                    std::vector<bool> param_isnull;
+                    param_values.reserve(static_cast<std::size_t>(num_params));
+                    param_isnull.reserve(static_cast<std::size_t>(num_params));
+                    for (int16_t i = 0; i < num_params; ++i) {
+                        int32_t plen = reader.ReadInt32();
+                        if (plen < 0) {
+                            param_values.emplace_back("");
+                            param_isnull.push_back(true);
+                        } else {
+                            param_values.push_back(
+                                reader.ReadBytes(static_cast<std::size_t>(plen)));
+                            param_isnull.push_back(false);
+                        }
+                    }
+                    int16_t num_result_formats = reader.ReadInt16();
+                    for (int16_t i = 0; i < num_result_formats; ++i)
+                        reader.ReadInt16();
+                    backend.HandleBind(portal_name, stmt_name, param_values, param_isnull);
+                    break;
+                }
+                case 'D': {
+                    char kind = reader.ReadByte();
+                    std::string name = reader.ReadString();
+                    backend.HandleDescribe(static_cast<DescribeKind>(kind), name);
+                    break;
+                }
+                case 'E': {
+                    std::string portal_name = reader.ReadString();
+                    int32_t max_rows = reader.ReadInt32();
+                    backend.HandleExecute(portal_name, max_rows);
+                    break;
+                }
+                case 'S': {
+                    backend.HandleSync();
+                    break;
+                }
+                case 'H': {
+                    backend.HandleFlush();
+                    break;
+                }
+                case 'C': {
+                    char kind = reader.ReadByte();
+                    std::string name = reader.ReadString();
+                    backend.HandleClose(static_cast<DescribeKind>(kind), name);
+                    break;
+                }
+                case 'X': {
+                    // Terminate.
+                    return;
+                }
+                default:
+                    // Unknown message type — ignore.
+                    break;
+            }
+        }
+        PG_CATCH() {
+            mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+            sink->SendMessage(BuildErrorResponse(ed ? ed->message : "internal error"));
+            TransactionStatus status =
+                IsTransactionBlock() ? TransactionStatus::kInTransaction : TransactionStatus::kIdle;
+            sink->SendMessage(BuildReadyForQuery(status));
+        }
+        PG_END_TRY();
+    }
 }
 
 }  // namespace mytoydb::protocol

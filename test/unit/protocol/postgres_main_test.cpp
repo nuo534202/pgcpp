@@ -1,0 +1,322 @@
+// postgres_main_test.cpp — Unit tests for PostgresMain (M11 Phase 15.9).
+//
+// Tests the PostgresMain main loop, ProcessInterrupts, and SetInterruptPending.
+// The interrupt tests are pure unit tests (no sockets). The PostgresMain
+// integration test uses a socketpair + fork to exercise the full loop.
+
+#include <arpa/inet.h>
+#include <gtest/gtest.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <cstdlib>
+#include <string>
+
+#include "mytoydb/access/rel.hpp"
+#include "mytoydb/catalog/bootstrap_catalog.hpp"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/syscache.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/alloc_set.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/protocol/postgres.hpp"
+#include "mytoydb/protocol/pqformat.hpp"
+#include "mytoydb/server/postmaster.hpp"
+#include "mytoydb/storage/bufmgr.hpp"
+#include "mytoydb/storage/smgr.hpp"
+#include "mytoydb/transaction/snapshot.hpp"
+#include "mytoydb/transaction/transam.hpp"
+#include "mytoydb/transaction/xact.hpp"
+
+using mytoydb::access::InitializeRelcache;
+using mytoydb::access::ResetRelcache;
+using mytoydb::catalog::BootstrapCatalog;
+using mytoydb::catalog::Catalog;
+using mytoydb::catalog::SetCatalog;
+using mytoydb::catalog::SetSysCache;
+using mytoydb::catalog::SysCache;
+using mytoydb::memory::AllocSetContext;
+using mytoydb::protocol::PostgresMain;
+using mytoydb::protocol::ProcessInterrupts;
+using mytoydb::protocol::SetInterruptPending;
+using mytoydb::server::SocketSink;
+using mytoydb::storage::InitBufferPool;
+using mytoydb::storage::SetStorageBaseDir;
+using mytoydb::storage::ShutdownBufferPool;
+using mytoydb::storage::smgrcloseall;
+using mytoydb::transaction::BeginTransactionBlock;
+using mytoydb::transaction::EndTransactionBlock;
+using mytoydb::transaction::InitializeSnapshotManager;
+using mytoydb::transaction::InitializeTransactionSystem;
+using mytoydb::transaction::ResetTransactionState;
+
+namespace {
+
+class PostgresMainTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        mytoydb::error::InitErrorSubsystem();
+        context_ = AllocSetContext::Create("pgmain_test_context");
+        mytoydb::memory::SetCurrentMemoryContext(context_);
+
+        catalog_ = new Catalog();
+        SetCatalog(catalog_);
+        BootstrapCatalog(catalog_);
+        syscache_ = new SysCache();
+        SetSysCache(syscache_);
+
+        ResetTransactionState();
+        InitializeTransactionSystem();
+        InitializeSnapshotManager();
+        BeginTransactionBlock();
+
+        test_dir_ = "/tmp/mytoydb_pgmain_test_" + std::to_string(getpid());
+        SetStorageBaseDir(test_dir_);
+        RunShell("rm -rf " + test_dir_);
+
+        InitBufferPool(64);
+        InitializeRelcache();
+    }
+
+    void TearDown() override {
+        EndTransactionBlock();
+        ResetRelcache();
+        ShutdownBufferPool();
+        smgrcloseall();
+        RunShell("rm -rf " + test_dir_);
+
+        SetSysCache(nullptr);
+        SetCatalog(nullptr);
+        delete syscache_;
+        delete catalog_;
+
+        ResetTransactionState();
+        InitializeTransactionSystem();
+        InitializeSnapshotManager();
+
+        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        if (context_ != nullptr) {
+            context_->Delete();
+        }
+    }
+
+    static void RunShell(const std::string& cmd) { std::system(cmd.c_str()); }
+
+    // Write a wire-format message to fd.
+    static void WriteMessage(int fd, char type, const std::string& payload) {
+        std::string msg;
+        msg.push_back(type);
+        int32_t len = htonl(static_cast<int32_t>(4 + payload.size()));
+        msg.append(reinterpret_cast<const char*>(&len), 4);
+        msg += payload;
+        std::size_t written = 0;
+        while (written < msg.size()) {
+            ssize_t n = write(fd, msg.data() + written, msg.size() - written);
+            if (n <= 0)
+                break;
+            written += static_cast<std::size_t>(n);
+        }
+    }
+
+    // Read a wire-format message from fd.
+    static bool ReadMessage(int fd, char* type, std::string& payload) {
+        if (!ReadAll(fd, type, 1))
+            return false;
+        char len_buf[4];
+        if (!ReadAll(fd, len_buf, 4))
+            return false;
+        int32_t length = static_cast<int32_t>(
+            (static_cast<uint8_t>(len_buf[0]) << 24) | (static_cast<uint8_t>(len_buf[1]) << 16) |
+            (static_cast<uint8_t>(len_buf[2]) << 8) | static_cast<uint8_t>(len_buf[3]));
+        if (length < 4)
+            return false;
+        std::size_t payload_len = static_cast<std::size_t>(length) - 4;
+        if (payload_len > 0) {
+            payload.resize(payload_len);
+            if (!ReadAll(fd, payload.data(), payload_len))
+                return false;
+        } else {
+            payload.clear();
+        }
+        return true;
+    }
+
+    static bool ReadAll(int fd, char* buf, std::size_t len) {
+        std::size_t got = 0;
+        while (got < len) {
+            ssize_t n = read(fd, buf + got, len - got);
+            if (n <= 0)
+                return false;
+            got += static_cast<std::size_t>(n);
+        }
+        return true;
+    }
+
+    AllocSetContext* context_ = nullptr;
+    Catalog* catalog_ = nullptr;
+    SysCache* syscache_ = nullptr;
+    std::string test_dir_;
+};
+
+// --- ProcessInterrupts / SetInterruptPending ---
+
+TEST_F(PostgresMainTest, ProcessInterrupts_NoopWhenNotPending) {
+    // Without SetInterruptPending, ProcessInterrupts should be a no-op.
+    // Wrap in PG_TRY to catch any unexpected ereport.
+    bool caught = false;
+    PG_TRY() {
+        ProcessInterrupts();
+    }
+    PG_CATCH() {
+        caught = true;
+    }
+    PG_END_TRY();
+    EXPECT_FALSE(caught);
+}
+
+TEST_F(PostgresMainTest, SetInterruptPending_TriggersProcessInterrupts) {
+    SetInterruptPending();
+    bool caught = false;
+    std::string message;
+    PG_TRY() {
+        ProcessInterrupts();
+    }
+    PG_CATCH() {
+        caught = true;
+        mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+        message = ed ? ed->message : "";
+    }
+    PG_END_TRY();
+    EXPECT_TRUE(caught);
+    EXPECT_NE(message.find("canceling"), std::string::npos);
+}
+
+TEST_F(PostgresMainTest, ProcessInterrupts_ClearsFlag) {
+    SetInterruptPending();
+    bool first_caught = false;
+    PG_TRY() {
+        ProcessInterrupts();
+    }
+    PG_CATCH() {
+        first_caught = true;
+    }
+    PG_END_TRY();
+    EXPECT_TRUE(first_caught);
+
+    // Second call should be a no-op (flag was cleared).
+    bool second_caught = false;
+    PG_TRY() {
+        ProcessInterrupts();
+    }
+    PG_CATCH() {
+        second_caught = true;
+    }
+    PG_END_TRY();
+    EXPECT_FALSE(second_caught);
+}
+
+// --- PostgresMain integration test (fork + socketpair) ---
+
+TEST_F(PostgresMainTest, PostgresMain_TerminateReturnsImmediately) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+
+    pid_t pid = fork();
+    ASSERT_GE(pid, 0);
+
+    if (pid == 0) {
+        // Child: run PostgresMain.
+        close(fds[0]);
+        SocketSink sink(fds[1]);
+        PostgresMain(fds[1], &sink);
+        // Skip TearDown (the parent owns the global state).
+        _exit(0);
+    }
+
+    // Parent: send 'X' (Terminate) and wait for child to exit.
+    close(fds[1]);
+    WriteMessage(fds[0], 'X', "");
+
+    int status = 0;
+    ASSERT_EQ(waitpid(pid, &status, 0), pid);
+    EXPECT_TRUE(WIFEXITED(status));
+    EXPECT_EQ(WEXITSTATUS(status), 0);
+    close(fds[0]);
+}
+
+TEST_F(PostgresMainTest, PostgresMain_SimpleQuerySelect) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+
+    pid_t pid = fork();
+    ASSERT_GE(pid, 0);
+
+    if (pid == 0) {
+        // Child: run PostgresMain.
+        close(fds[0]);
+        SocketSink sink(fds[1]);
+        PostgresMain(fds[1], &sink);
+        _exit(0);
+    }
+
+    // Parent: send a simple query 'Q' message.
+    close(fds[1]);
+
+    std::string query = "SELECT 42;";
+    std::string query_payload = query;
+    query_payload.push_back('\0');  // NUL-terminated string
+    WriteMessage(fds[0], 'Q', query_payload);
+
+    // Read response messages until ReadyForQuery.
+    char type = 0;
+    std::string payload;
+    bool got_command_complete = false;
+    bool got_ready_for_query = false;
+    int msg_count = 0;
+    while (msg_count < 10 && ReadMessage(fds[0], &type, payload)) {
+        ++msg_count;
+        if (type == 'C') {
+            got_command_complete = true;
+        } else if (type == 'Z') {
+            got_ready_for_query = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(got_command_complete);
+    EXPECT_TRUE(got_ready_for_query);
+
+    // Send Terminate to end the child.
+    WriteMessage(fds[0], 'X', "");
+    int status = 0;
+    ASSERT_EQ(waitpid(pid, &status, 0), pid);
+    EXPECT_TRUE(WIFEXITED(status));
+    close(fds[0]);
+}
+
+TEST_F(PostgresMainTest, PostgresMain_ClientDisconnectEndsLoop) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+
+    pid_t pid = fork();
+    ASSERT_GE(pid, 0);
+
+    if (pid == 0) {
+        // Child: run PostgresMain.
+        close(fds[0]);
+        SocketSink sink(fds[1]);
+        PostgresMain(fds[1], &sink);
+        _exit(0);
+    }
+
+    // Parent: close the socket immediately (simulates client disconnect).
+    close(fds[1]);
+    close(fds[0]);
+
+    int status = 0;
+    ASSERT_EQ(waitpid(pid, &status, 0), pid);
+    EXPECT_TRUE(WIFEXITED(status));
+}
+
+}  // namespace

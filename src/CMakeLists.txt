@@ -112,7 +112,9 @@ set(MYTOYDB_CORE_SOURCES
     optimizer/util/restrictinfo.cpp
     optimizer/util/plancat.cpp
     protocol/pqformat.cpp
+    protocol/dest.cpp
     protocol/postgres.cpp
+    protocol/utility.cpp
     server/postmaster.cpp
     server/bootstrap.cpp
     server/options.cpp

@@ -92,6 +92,9 @@ mytoydb_add_test(query_planner_test unit/optimizer/query_planner_test.cpp)
 
 # Phase 11 tests (M11: frontend protocol)
 mytoydb_add_test(protocol_test unit/protocol/protocol_test.cpp)
+mytoydb_add_test(dest_test unit/protocol/dest_test.cpp)
+mytoydb_add_test(utility_test unit/protocol/utility_test.cpp)
+mytoydb_add_test(postgres_main_test unit/protocol/postgres_main_test.cpp)
 
 # Phase 12 tests (M12: postmaster / bootstrap)
 mytoydb_add_test(server_test unit/server/server_test.cpp)

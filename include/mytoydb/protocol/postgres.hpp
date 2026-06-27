@@ -41,6 +41,10 @@ namespace mytoydb::executor {
 struct Plan;
 }  // namespace mytoydb::executor
 
+namespace mytoydb::server {
+class SocketSink;
+}  // namespace mytoydb::server
+
 namespace mytoydb::protocol {
 
 // PreparedStatement — a parsed statement in the extended query protocol.
@@ -164,5 +168,26 @@ private:
     // The unnamed prepared statement and portal are stored with empty names
     // and are always replaced (never explicitly closed).
 };
+
+// PostgresMain — full per-connection server main loop.
+//
+// This is the PG-style entry point (src/backend/tcop/postgres.c). It handles:
+//   - reading messages from the client socket
+//   - dispatching to a Backend handler
+//   - implicit transaction management (one transaction per command outside a
+//     BEGIN/COMMIT block)
+//   - error recovery (ereport ERROR -> ErrorResponse -> ReadyForQuery)
+//   - COPY message dispatch stubs
+//
+// `client_fd` is the accepted TCP socket. `sink` is the SocketSink wrapping it.
+// The caller (postmaster) is responsible for fork() and resource init.
+void PostgresMain(int client_fd, mytoydb::server::SocketSink* sink);
+
+// ProcessInterrupts — called at safe points in the main loop.
+// If the interrupt-pending flag is set, ereport(ERROR) with a cancel message.
+void ProcessInterrupts();
+
+// SetInterruptPending — set the interrupt-pending flag (signal-safe).
+void SetInterruptPending();
 
 }  // namespace mytoydb::protocol
