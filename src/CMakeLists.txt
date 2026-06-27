@@ -117,6 +117,25 @@ set(MYTOYDB_CORE_SOURCES
     protocol/dest.cpp
     protocol/postgres.cpp
     protocol/utility.cpp
+    commands/tablecmds.cpp
+    commands/indexcmds.cpp
+    commands/copy.cpp
+    commands/copy_from.cpp
+    commands/copy_to.cpp
+    commands/vacuum.cpp
+    commands/analyze.cpp
+    commands/sequence.cpp
+    commands/view.cpp
+    commands/trigger.cpp
+    commands/explain.cpp
+    commands/dbcommands.cpp
+    commands/schemacmds.cpp
+    commands/functioncmds.cpp
+    commands/typecmds.cpp
+    commands/operatorcmds.cpp
+    commands/opclasscmds.cpp
+    commands/aggregatecmds.cpp
+    commands/tablespace.cpp
     server/postmaster.cpp
     server/bootstrap.cpp
     server/options.cpp

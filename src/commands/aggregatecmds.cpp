@@ -1,0 +1,21 @@
+// aggregatecmds.cpp — CREATE AGGREGATE implementation.
+//
+// Converted from PostgreSQL 15's src/backend/commands/aggregatecmds.c.
+// MyToyDB has fixed built-in aggregates (count, sum, avg, min, max);
+// this is a stub for user-defined aggregates.
+#include "mytoydb/commands/aggregatecmds.hpp"
+
+#include <string>
+
+#include "mytoydb/parser/parsenodes.hpp"
+
+namespace mytoydb::commands {
+
+using mytoydb::parser::CreateStmt;
+
+std::string DefineAggregate(CreateStmt* stmt) {
+    (void)stmt;  // Stub.
+    return "CREATE AGGREGATE";
+}
+
+}  // namespace mytoydb::commands

@@ -108,3 +108,7 @@ mytoydb_add_test(postmaster_startup_test unit/server/postmaster_startup_test.cpp
 mytoydb_add_test(tools_test unit/tools/tools_test.cpp)
 mytoydb_add_test(psql_describe_test unit/tools/psql_describe_test.cpp)
 mytoydb_add_test(psql_command_test unit/tools/psql_command_test.cpp)
+
+# Phase 15.13 tests (M14: commands module — sequence/view/trigger/explain/
+# dbcommands/schemacmds/tablespace/functioncmds)
+mytoydb_add_test(commands_test unit/commands/commands_test.cpp)

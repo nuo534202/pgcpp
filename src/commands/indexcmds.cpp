@@ -1,0 +1,172 @@
+// indexcmds.cpp — CREATE INDEX implementation.
+//
+// Converted from PostgreSQL 15's src/backend/commands/indexcmds.c.
+// Extracted from src/protocol/utility.cpp to the commands/ module.
+#include "mytoydb/commands/indexcmds.hpp"
+
+#include <cstdint>
+#include <string>
+
+#include "mytoydb/access/nbtree.hpp"
+#include "mytoydb/access/rel.hpp"
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/catalog/pg_attribute.hpp"
+#include "mytoydb/catalog/pg_class.hpp"
+#include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/parser/parse_type.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+#include "mytoydb/types/builtins.hpp"
+
+namespace mytoydb::commands {
+
+using mytoydb::access::btbuild;
+using mytoydb::access::BTKeyKind;
+using mytoydb::access::Relation;
+using mytoydb::access::RelationClose;
+using mytoydb::access::RelationCreateStorage;
+using mytoydb::access::RelationOpen;
+using mytoydb::catalog::AttAlign;
+using mytoydb::catalog::AttStorage;
+using mytoydb::catalog::Catalog;
+using mytoydb::catalog::FormData_pg_attribute;
+using mytoydb::catalog::FormData_pg_class;
+using mytoydb::catalog::GetCatalog;
+using mytoydb::catalog::Oid;
+using mytoydb::catalog::RelKind;
+using mytoydb::catalog::RelPersistence;
+using mytoydb::nodes::makePallocNode;
+using mytoydb::nodes::NodeTag;
+using mytoydb::parser::IndexElem;
+using mytoydb::parser::IndexStmt;
+using mytoydb::parser::Node;
+using mytoydb::types::kInt4Oid;
+
+namespace {
+
+AttAlign TypeAlignForLen(int16_t typlen) {
+    if (typlen == 1)
+        return AttAlign::kChar;
+    if (typlen == 2)
+        return AttAlign::kShort;
+    if (typlen == 4)
+        return AttAlign::kInt;
+    if (typlen == 8 || typlen > 0)
+        return AttAlign::kDouble;
+    return AttAlign::kInt;
+}
+
+BTKeyKind BtKeyKindForType(Oid type_oid) {
+    switch (type_oid) {
+        case mytoydb::types::kInt2Oid:
+        case mytoydb::types::kInt4Oid:
+            return BTKeyKind::kInt32;
+        case mytoydb::types::kInt8Oid:
+            return BTKeyKind::kInt64;
+        case mytoydb::types::kTextOid:
+        case mytoydb::types::kVarcharOid:
+            return BTKeyKind::kText;
+        default:
+            return BTKeyKind::kInt32;
+    }
+}
+
+}  // namespace
+
+std::string DefineIndex(IndexStmt* stmt) {
+    if (stmt == nullptr || stmt->relation == nullptr)
+        return "";
+
+    Catalog* cat = GetCatalog();
+    if (cat == nullptr)
+        return "";
+
+    const std::string& heapname = stmt->relation->relname;
+    const FormData_pg_class* heap_row = cat->GetClassByName(heapname);
+    if (heap_row == nullptr) {
+        ereport(mytoydb::error::LogLevel::kError, "relation \"" + heapname + "\" does not exist");
+    }
+    Oid heap_oid = heap_row->oid;
+
+    Oid key_type_oid = kInt4Oid;
+    if (!stmt->index_params.empty()) {
+        Node* first = stmt->index_params[0];
+        if (first != nullptr && first->GetTag() == NodeTag::kIndexElem) {
+            auto* elem = static_cast<IndexElem*>(first);
+            if (!elem->name.empty()) {
+                auto attrs = cat->GetAttributes(heap_oid);
+                for (const FormData_pg_attribute* attr : attrs) {
+                    if (attr->attname == elem->name) {
+                        key_type_oid = attr->atttypid;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    BTKeyKind key_kind = BtKeyKindForType(key_type_oid);
+
+    std::string idxname = stmt->idxname;
+    if (idxname.empty())
+        idxname = heapname + "_idx";
+
+    if (cat->GetClassByName(idxname) != nullptr) {
+        if (stmt->if_not_exists)
+            return "CREATE INDEX";
+        ereport(mytoydb::error::LogLevel::kError, "relation \"" + idxname + "\" already exists");
+    }
+
+    auto* class_row = makePallocNode<FormData_pg_class>();
+    class_row->relname = idxname;
+    class_row->relnamespace = 2200;
+    class_row->relkind = RelKind::kIndex;
+    class_row->relpersistence = RelPersistence::kPermanent;
+    class_row->relnatts = static_cast<int16_t>(stmt->index_params.size());
+    class_row->relispopulated = true;
+    Oid index_oid = cat->InsertClass(class_row);
+    class_row->relfilenode = index_oid;
+
+    int16_t attnum = 1;
+    for (Node* node : stmt->index_params) {
+        if (node == nullptr || node->GetTag() != NodeTag::kIndexElem)
+            continue;
+        auto* elem = static_cast<IndexElem*>(node);
+        Oid col_type = kInt4Oid;
+        int16_t col_len = 4;
+        bool col_byval = true;
+        auto attrs = cat->GetAttributes(heap_oid);
+        for (const FormData_pg_attribute* attr : attrs) {
+            if (attr->attname == elem->name) {
+                col_type = attr->atttypid;
+                col_len = attr->attlen;
+                col_byval = attr->attbyval;
+                break;
+            }
+        }
+        auto* attr_row = makePallocNode<FormData_pg_attribute>();
+        attr_row->attrelid = index_oid;
+        attr_row->attname = elem->name;
+        attr_row->atttypid = col_type;
+        attr_row->attlen = col_len;
+        attr_row->attnum = attnum;
+        attr_row->attbyval = col_byval;
+        attr_row->attstorage = AttStorage::kPlain;
+        attr_row->attalign = TypeAlignForLen(col_len);
+        attr_row->attnotnull = false;
+        attr_row->attislocal = true;
+        cat->InsertAttribute(attr_row);
+        attnum++;
+    }
+
+    RelationCreateStorage(index_oid, false);
+    Relation index_rel = RelationOpen(index_oid);
+    if (index_rel != nullptr) {
+        btbuild(index_rel, key_kind);
+        RelationClose(index_rel);
+    }
+
+    return "CREATE INDEX";
+}
+
+}  // namespace mytoydb::commands
