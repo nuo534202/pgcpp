@@ -242,6 +242,46 @@ int date_cmp(Datum a, Datum b) {
     return 0;
 }
 
+// --- comparison operators ---
+
+Datum timestamp_eq(Datum a, Datum b) {
+    return BoolGetDatum(timestamp_cmp(a, b) == 0);
+}
+Datum timestamp_ne(Datum a, Datum b) {
+    return BoolGetDatum(timestamp_cmp(a, b) != 0);
+}
+Datum timestamp_lt(Datum a, Datum b) {
+    return BoolGetDatum(timestamp_cmp(a, b) < 0);
+}
+Datum timestamp_le(Datum a, Datum b) {
+    return BoolGetDatum(timestamp_cmp(a, b) <= 0);
+}
+Datum timestamp_gt(Datum a, Datum b) {
+    return BoolGetDatum(timestamp_cmp(a, b) > 0);
+}
+Datum timestamp_ge(Datum a, Datum b) {
+    return BoolGetDatum(timestamp_cmp(a, b) >= 0);
+}
+
+Datum date_eq(Datum a, Datum b) {
+    return BoolGetDatum(date_cmp(a, b) == 0);
+}
+Datum date_ne(Datum a, Datum b) {
+    return BoolGetDatum(date_cmp(a, b) != 0);
+}
+Datum date_lt(Datum a, Datum b) {
+    return BoolGetDatum(date_cmp(a, b) < 0);
+}
+Datum date_le(Datum a, Datum b) {
+    return BoolGetDatum(date_cmp(a, b) <= 0);
+}
+Datum date_gt(Datum a, Datum b) {
+    return BoolGetDatum(date_cmp(a, b) > 0);
+}
+Datum date_ge(Datum a, Datum b) {
+    return BoolGetDatum(date_cmp(a, b) >= 0);
+}
+
 // --- date_trunc ---
 
 Datum date_trunc(const char* field, Datum timestamp) {

@@ -3,6 +3,7 @@
 #include <cctype>
 #include <cerrno>
 #include <climits>
+#include <cmath>
 #include <cstdarg>
 #include <cstdint>
 #include <cstdio>
@@ -12,6 +13,7 @@
 
 #include "mytoydb/common/error/elog.hpp"
 #include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/types/numutils.hpp"
 
 namespace mytoydb::types {
 
@@ -71,6 +73,39 @@ Datum bool_in(const char* str) {
 
 char* bool_out(Datum value) {
     return PallocCString(DatumGetBool(value) ? "t" : "f");
+}
+
+// ---------------------------------------------------------------------------
+// int2 (SMALLINT)
+// ---------------------------------------------------------------------------
+
+Datum int2_in(const char* str) {
+    if (str == nullptr) {
+        ereport(LogLevel::kError, "invalid input syntax for type smallint: NULL");
+    }
+    errno = 0;
+    char* endptr = nullptr;
+    long val = std::strtol(str, &endptr, 10);
+    if (errno == ERANGE || val < INT16_MIN || val > INT16_MAX) {
+        ereport(LogLevel::kError,
+                "value \"" + std::string(str) + "\" is out of range for type smallint");
+    }
+    if (endptr == str) {
+        ereport(LogLevel::kError,
+                "invalid input syntax for type smallint: \"" + std::string(str) + "\"");
+    }
+    while (*endptr != '\0' && std::isspace(static_cast<unsigned char>(*endptr))) {
+        ++endptr;
+    }
+    if (*endptr != '\0') {
+        ereport(LogLevel::kError,
+                "invalid input syntax for type smallint: \"" + std::string(str) + "\"");
+    }
+    return Int16GetDatum(static_cast<int16_t>(val));
+}
+
+char* int2_out(Datum value) {
+    return PallocCString(std::to_string(DatumGetInt16(value)));
 }
 
 // ---------------------------------------------------------------------------
@@ -169,11 +204,7 @@ Datum float8_in(const char* str) {
 }
 
 char* float8_out(Datum value) {
-    double val = DatumGetFloat8(value);
-    // PostgreSQL uses "%.15g" for shortest round-trip representation.
-    char buf[128];
-    std::snprintf(buf, sizeof(buf), "%.15g", val);
-    return PallocCString(buf);
+    return float8_out_internal(DatumGetFloat8(value));
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +249,16 @@ char* varchar_out(Datum value) {
 // ---------------------------------------------------------------------------
 // Comparison functions
 // ---------------------------------------------------------------------------
+
+int int2_cmp(Datum a, Datum b) {
+    int16_t x = DatumGetInt16(a);
+    int16_t y = DatumGetInt16(b);
+    if (x < y)
+        return -1;
+    if (x > y)
+        return 1;
+    return 0;
+}
 
 int int4_cmp(Datum a, Datum b) {
     int32_t x = DatumGetInt32(a);
@@ -270,6 +311,130 @@ int text_cmp(Datum a, Datum b) {
 }
 
 // ---------------------------------------------------------------------------
+// Comparison operators (return bool Datum)
+// ---------------------------------------------------------------------------
+
+// bool: PostgreSQL orders false < true.
+Datum bool_eq(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetBool(a) == DatumGetBool(b));
+}
+Datum bool_ne(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetBool(a) != DatumGetBool(b));
+}
+Datum bool_lt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetBool(a) < DatumGetBool(b));
+}
+Datum bool_le(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetBool(a) <= DatumGetBool(b));
+}
+Datum bool_gt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetBool(a) > DatumGetBool(b));
+}
+Datum bool_ge(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetBool(a) >= DatumGetBool(b));
+}
+
+// int2
+Datum int2_eq(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt16(a) == DatumGetInt16(b));
+}
+Datum int2_ne(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt16(a) != DatumGetInt16(b));
+}
+Datum int2_lt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt16(a) < DatumGetInt16(b));
+}
+Datum int2_le(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt16(a) <= DatumGetInt16(b));
+}
+Datum int2_gt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt16(a) > DatumGetInt16(b));
+}
+Datum int2_ge(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt16(a) >= DatumGetInt16(b));
+}
+
+// int4
+Datum int4_eq(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt32(a) == DatumGetInt32(b));
+}
+Datum int4_ne(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt32(a) != DatumGetInt32(b));
+}
+Datum int4_lt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt32(a) < DatumGetInt32(b));
+}
+Datum int4_le(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt32(a) <= DatumGetInt32(b));
+}
+Datum int4_gt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt32(a) > DatumGetInt32(b));
+}
+Datum int4_ge(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt32(a) >= DatumGetInt32(b));
+}
+
+// int8
+Datum int8_eq(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt64(a) == DatumGetInt64(b));
+}
+Datum int8_ne(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt64(a) != DatumGetInt64(b));
+}
+Datum int8_lt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt64(a) < DatumGetInt64(b));
+}
+Datum int8_le(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt64(a) <= DatumGetInt64(b));
+}
+Datum int8_gt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt64(a) > DatumGetInt64(b));
+}
+Datum int8_ge(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetInt64(a) >= DatumGetInt64(b));
+}
+
+// float8
+Datum float8_eq(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetFloat8(a) == DatumGetFloat8(b));
+}
+Datum float8_ne(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetFloat8(a) != DatumGetFloat8(b));
+}
+Datum float8_lt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetFloat8(a) < DatumGetFloat8(b));
+}
+Datum float8_le(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetFloat8(a) <= DatumGetFloat8(b));
+}
+Datum float8_gt(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetFloat8(a) > DatumGetFloat8(b));
+}
+Datum float8_ge(Datum a, Datum b) {
+    return BoolGetDatum(DatumGetFloat8(a) >= DatumGetFloat8(b));
+}
+
+// text
+Datum text_eq(Datum a, Datum b) {
+    return BoolGetDatum(text_cmp(a, b) == 0);
+}
+Datum text_ne(Datum a, Datum b) {
+    return BoolGetDatum(text_cmp(a, b) != 0);
+}
+Datum text_lt(Datum a, Datum b) {
+    return BoolGetDatum(text_cmp(a, b) < 0);
+}
+Datum text_le(Datum a, Datum b) {
+    return BoolGetDatum(text_cmp(a, b) <= 0);
+}
+Datum text_gt(Datum a, Datum b) {
+    return BoolGetDatum(text_cmp(a, b) > 0);
+}
+Datum text_ge(Datum a, Datum b) {
+    return BoolGetDatum(text_cmp(a, b) >= 0);
+}
+
+// ---------------------------------------------------------------------------
 // Arithmetic — int4
 // ---------------------------------------------------------------------------
 
@@ -291,6 +456,96 @@ Datum int4_div(Datum a, Datum b) {
         ereport(LogLevel::kError, "division by zero");
     }
     return Int32GetDatum(DatumGetInt32(a) / divisor);
+}
+
+Datum int4_mod(Datum a, Datum b) {
+    int32_t divisor = DatumGetInt32(b);
+    if (divisor == 0) {
+        ereport(LogLevel::kError, "division by zero");
+    }
+    return Int32GetDatum(DatumGetInt32(a) % divisor);
+}
+
+Datum int4_um(Datum a) {
+    return Int32GetDatum(-DatumGetInt32(a));
+}
+
+Datum int4_abs(Datum a) {
+    int32_t v = DatumGetInt32(a);
+    return Int32GetDatum(v < 0 ? -v : v);
+}
+
+Datum int4_inc(Datum a) {
+    return Int32GetDatum(DatumGetInt32(a) + 1);
+}
+
+// ---------------------------------------------------------------------------
+// Arithmetic — int2
+// ---------------------------------------------------------------------------
+
+Datum int2_pl(Datum a, Datum b) {
+    return Int16GetDatum(static_cast<int16_t>(DatumGetInt16(a) + DatumGetInt16(b)));
+}
+
+Datum int2_mi(Datum a, Datum b) {
+    return Int16GetDatum(static_cast<int16_t>(DatumGetInt16(a) - DatumGetInt16(b)));
+}
+
+Datum int2_mul(Datum a, Datum b) {
+    return Int16GetDatum(static_cast<int16_t>(DatumGetInt16(a) * DatumGetInt16(b)));
+}
+
+Datum int2_div(Datum a, Datum b) {
+    int16_t divisor = DatumGetInt16(b);
+    if (divisor == 0) {
+        ereport(LogLevel::kError, "division by zero");
+    }
+    return Int16GetDatum(static_cast<int16_t>(DatumGetInt16(a) / divisor));
+}
+
+// ---------------------------------------------------------------------------
+// Arithmetic — int8
+// ---------------------------------------------------------------------------
+
+Datum int8_pl(Datum a, Datum b) {
+    return Int64GetDatum(DatumGetInt64(a) + DatumGetInt64(b));
+}
+
+Datum int8_mi(Datum a, Datum b) {
+    return Int64GetDatum(DatumGetInt64(a) - DatumGetInt64(b));
+}
+
+Datum int8_mul(Datum a, Datum b) {
+    return Int64GetDatum(DatumGetInt64(a) * DatumGetInt64(b));
+}
+
+Datum int8_div(Datum a, Datum b) {
+    int64_t divisor = DatumGetInt64(b);
+    if (divisor == 0) {
+        ereport(LogLevel::kError, "division by zero");
+    }
+    return Int64GetDatum(DatumGetInt64(a) / divisor);
+}
+
+Datum int8_mod(Datum a, Datum b) {
+    int64_t divisor = DatumGetInt64(b);
+    if (divisor == 0) {
+        ereport(LogLevel::kError, "division by zero");
+    }
+    return Int64GetDatum(DatumGetInt64(a) % divisor);
+}
+
+Datum int8_um(Datum a) {
+    return Int64GetDatum(-DatumGetInt64(a));
+}
+
+Datum int8_abs(Datum a) {
+    int64_t v = DatumGetInt64(a);
+    return Int64GetDatum(v < 0 ? -v : v);
+}
+
+Datum int8_inc(Datum a) {
+    return Int64GetDatum(DatumGetInt64(a) + 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -315,6 +570,57 @@ Datum float8_div(Datum a, Datum b) {
         ereport(LogLevel::kError, "division by zero");
     }
     return Float8GetDatum(DatumGetFloat8(a) / divisor);
+}
+
+Datum float8_um(Datum a) {
+    return Float8GetDatum(-DatumGetFloat8(a));
+}
+
+Datum float8_abs(Datum a) {
+    return Float8GetDatum(std::fabs(DatumGetFloat8(a)));
+}
+
+Datum float8_ceil(Datum a) {
+    return Float8GetDatum(std::ceil(DatumGetFloat8(a)));
+}
+
+Datum float8_floor(Datum a) {
+    return Float8GetDatum(std::floor(DatumGetFloat8(a)));
+}
+
+Datum float8_round(Datum a) {
+    return Float8GetDatum(std::round(DatumGetFloat8(a)));
+}
+
+Datum float8_trunc(Datum a) {
+    return Float8GetDatum(std::trunc(DatumGetFloat8(a)));
+}
+
+Datum float8_sign(Datum a) {
+    double v = DatumGetFloat8(a);
+    if (v > 0) {
+        return Float8GetDatum(1.0);
+    }
+    if (v < 0) {
+        return Float8GetDatum(-1.0);
+    }
+    return Float8GetDatum(0.0);
+}
+
+// ---------------------------------------------------------------------------
+// Type conversions
+// ---------------------------------------------------------------------------
+
+Datum i2toi4(Datum a) {
+    return Int32GetDatum(DatumGetInt16(a));
+}
+
+Datum i4toi2(Datum a) {
+    int32_t v = DatumGetInt32(a);
+    if (v < INT16_MIN || v > INT16_MAX) {
+        ereport(LogLevel::kError, "smallint out of range");
+    }
+    return Int16GetDatum(static_cast<int16_t>(v));
 }
 
 // ---------------------------------------------------------------------------

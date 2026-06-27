@@ -18,12 +18,24 @@ using mytoydb::memory::AllocSetContext;
 using mytoydb::types::Datum;
 using mytoydb::types::DatumGetBool;
 using mytoydb::types::DatumGetInt32;
+using mytoydb::types::Int32GetDatum;
 using mytoydb::types::like;
 using mytoydb::types::MakeTextDatum;
 using mytoydb::types::not_like;
 using mytoydb::types::regexp_replace;
 using mytoydb::types::substring;
+using mytoydb::types::text_btrim;
+using mytoydb::types::text_left;
 using mytoydb::types::text_length;
+using mytoydb::types::text_lower;
+using mytoydb::types::text_ltrim;
+using mytoydb::types::text_repeat;
+using mytoydb::types::text_reverse;
+using mytoydb::types::text_right;
+using mytoydb::types::text_rtrim;
+using mytoydb::types::text_substr;
+using mytoydb::types::text_upper;
+using mytoydb::types::textcat;
 using mytoydb::types::TextDatumToString;
 
 class StringFuncsTest : public ::testing::Test {
@@ -277,6 +289,122 @@ TEST_F(StringFuncsTest, SubstringNoMatch) {
 
 TEST_F(StringFuncsTest, SubstringInvalidPattern) {
     EXPECT_TRUE(RaisesError([] { substring(MakeTextDatum("test"), MakeTextDatum("(")); }));
+}
+
+// ===========================================================================
+// regexp_replace — PG semantics (first-match-only by default)
+// ===========================================================================
+
+TEST_F(StringFuncsTest, RegexpReplaceFirstOnly) {
+    // PG's default (no 'g' flag) replaces ONLY the first match.
+    Datum result = regexp_replace(MakeTextDatum("abcabc"), MakeTextDatum("b"), MakeTextDatum("X"));
+    EXPECT_EQ(TextDatumToString(result), "aXcabc");
+}
+
+TEST_F(StringFuncsTest, RegexpReplaceGlobalFlag) {
+    // 4-arg form with 'g' flag replaces ALL matches.
+    Datum result = regexp_replace(MakeTextDatum("abcabc"), MakeTextDatum("b"), MakeTextDatum("X"),
+                                  MakeTextDatum("g"));
+    EXPECT_EQ(TextDatumToString(result), "aXcaXc");
+}
+
+TEST_F(StringFuncsTest, RegexpReplaceFourArgNoGFlag) {
+    // 4-arg form without 'g' flag also replaces only the first match.
+    Datum result = regexp_replace(MakeTextDatum("abcabc"), MakeTextDatum("b"), MakeTextDatum("X"),
+                                  MakeTextDatum(""));
+    EXPECT_EQ(TextDatumToString(result), "aXcabc");
+}
+
+// ===========================================================================
+// textcat — alias of text_concat
+// ===========================================================================
+
+TEST_F(StringFuncsTest, TextCat) {
+    Datum result = textcat(MakeTextDatum("hello "), MakeTextDatum("world"));
+    EXPECT_EQ(TextDatumToString(result), "hello world");
+}
+
+// ===========================================================================
+// text_substr
+// ===========================================================================
+
+TEST_F(StringFuncsTest, TextSubstr) {
+    // PG's substr(text, from, len) is 1-based.
+    Datum result = text_substr(MakeTextDatum("hello world"), Int32GetDatum(1), Int32GetDatum(5));
+    EXPECT_EQ(TextDatumToString(result), "hello");
+}
+
+TEST_F(StringFuncsTest, TextSubstrFromMiddle) {
+    Datum result = text_substr(MakeTextDatum("hello world"), Int32GetDatum(7), Int32GetDatum(5));
+    EXPECT_EQ(TextDatumToString(result), "world");
+}
+
+TEST_F(StringFuncsTest, TextSubstrBeyondEnd) {
+    // If start is past the end, return empty string.
+    Datum result = text_substr(MakeTextDatum("abc"), Int32GetDatum(10), Int32GetDatum(3));
+    EXPECT_EQ(TextDatumToString(result), "");
+}
+
+// ===========================================================================
+// text_left / text_right
+// ===========================================================================
+
+TEST_F(StringFuncsTest, TextLeft) {
+    EXPECT_EQ(TextDatumToString(text_left(MakeTextDatum("hello"), Int32GetDatum(3))), "hel");
+    EXPECT_EQ(TextDatumToString(text_left(MakeTextDatum("hello"), Int32GetDatum(10))), "hello");
+}
+
+TEST_F(StringFuncsTest, TextRight) {
+    EXPECT_EQ(TextDatumToString(text_right(MakeTextDatum("hello"), Int32GetDatum(3))), "llo");
+    EXPECT_EQ(TextDatumToString(text_right(MakeTextDatum("hello"), Int32GetDatum(10))), "hello");
+}
+
+// ===========================================================================
+// text_upper / text_lower
+// ===========================================================================
+
+TEST_F(StringFuncsTest, TextUpper) {
+    EXPECT_EQ(TextDatumToString(text_upper(MakeTextDatum("hello World"))), "HELLO WORLD");
+}
+
+TEST_F(StringFuncsTest, TextLower) {
+    EXPECT_EQ(TextDatumToString(text_lower(MakeTextDatum("Hello World"))), "hello world");
+}
+
+// ===========================================================================
+// text_btrim / text_ltrim / text_rtrim
+// ===========================================================================
+
+TEST_F(StringFuncsTest, TextBtrim) {
+    EXPECT_EQ(TextDatumToString(text_btrim(MakeTextDatum("  hello  "))), "hello");
+    EXPECT_EQ(TextDatumToString(text_btrim(MakeTextDatum("\t\nhello\r\n"))), "hello");
+    EXPECT_EQ(TextDatumToString(text_btrim(MakeTextDatum("hello"))), "hello");
+}
+
+TEST_F(StringFuncsTest, TextLtrim) {
+    EXPECT_EQ(TextDatumToString(text_ltrim(MakeTextDatum("  hello  "))), "hello  ");
+    EXPECT_EQ(TextDatumToString(text_ltrim(MakeTextDatum("hello"))), "hello");
+}
+
+TEST_F(StringFuncsTest, TextRtrim) {
+    EXPECT_EQ(TextDatumToString(text_rtrim(MakeTextDatum("  hello  "))), "  hello");
+    EXPECT_EQ(TextDatumToString(text_rtrim(MakeTextDatum("hello"))), "hello");
+}
+
+// ===========================================================================
+// text_repeat / text_reverse
+// ===========================================================================
+
+TEST_F(StringFuncsTest, TextRepeat) {
+    EXPECT_EQ(TextDatumToString(text_repeat(MakeTextDatum("ab"), Int32GetDatum(3))), "ababab");
+    EXPECT_EQ(TextDatumToString(text_repeat(MakeTextDatum("ab"), Int32GetDatum(0))), "");
+    EXPECT_EQ(TextDatumToString(text_repeat(MakeTextDatum("ab"), Int32GetDatum(-1))), "");
+}
+
+TEST_F(StringFuncsTest, TextReverse) {
+    EXPECT_EQ(TextDatumToString(text_reverse(MakeTextDatum("hello"))), "olleh");
+    EXPECT_EQ(TextDatumToString(text_reverse(MakeTextDatum(""))), "");
+    EXPECT_EQ(TextDatumToString(text_reverse(MakeTextDatum("a"))), "a");
 }
 
 }  // namespace

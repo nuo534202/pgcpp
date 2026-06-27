@@ -37,6 +37,21 @@ char* date_out(Datum value);
 int timestamp_cmp(Datum a, Datum b);
 int date_cmp(Datum a, Datum b);
 
+// --- timestamp/date comparison operators (return bool Datum) ---
+Datum timestamp_eq(Datum a, Datum b);
+Datum timestamp_ne(Datum a, Datum b);
+Datum timestamp_lt(Datum a, Datum b);
+Datum timestamp_le(Datum a, Datum b);
+Datum timestamp_gt(Datum a, Datum b);
+Datum timestamp_ge(Datum a, Datum b);
+
+Datum date_eq(Datum a, Datum b);
+Datum date_ne(Datum a, Datum b);
+Datum date_lt(Datum a, Datum b);
+Datum date_le(Datum a, Datum b);
+Datum date_gt(Datum a, Datum b);
+Datum date_ge(Datum a, Datum b);
+
 // --- date_trunc ---
 // Truncate a timestamp to the specified precision.
 // Supported fields: 'microseconds', 'milliseconds', 'second', 'minute',

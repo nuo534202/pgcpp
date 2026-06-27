@@ -7,6 +7,7 @@
 #include "mytoydb/common/error/elog.hpp"
 #include "mytoydb/common/memory/alloc_set.hpp"
 #include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/types/datetime.hpp"
 
 namespace {
 
@@ -16,9 +17,11 @@ using mytoydb::memory::AllocSetContext;
 using mytoydb::types::BoolGetDatum;
 using mytoydb::types::DatumGetBool;
 using mytoydb::types::DatumGetFloat8;
+using mytoydb::types::DatumGetInt16;
 using mytoydb::types::DatumGetInt32;
 using mytoydb::types::DatumGetInt64;
 using mytoydb::types::Float8GetDatum;
+using mytoydb::types::Int16GetDatum;
 using mytoydb::types::Int32GetDatum;
 using mytoydb::types::Int64GetDatum;
 using mytoydb::types::MakeTextDatum;
@@ -291,6 +294,187 @@ TEST_F(BuiltinsTest, MakeTextDatumInteropWithTextOut) {
 TEST_F(BuiltinsTest, TextInInteropWithTextDatumToString) {
     auto d = mytoydb::types::text_in("from text_in");
     EXPECT_EQ(TextDatumToString(d), "from text_in");
+}
+
+// ---------------------------------------------------------------------------
+// int2 (SMALLINT)
+// ---------------------------------------------------------------------------
+
+TEST_F(BuiltinsTest, Int2InOutRoundTrip) {
+    auto d = mytoydb::types::int2_in("42");
+    EXPECT_EQ(DatumGetInt16(d), 42);
+    EXPECT_STREQ(mytoydb::types::int2_out(d), "42");
+    auto neg = mytoydb::types::int2_in("-7");
+    EXPECT_EQ(DatumGetInt16(neg), -7);
+    EXPECT_STREQ(mytoydb::types::int2_out(neg), "-7");
+}
+
+TEST_F(BuiltinsTest, Int2OutOfRangeRaises) {
+    EXPECT_TRUE(RaisesError([] { mytoydb::types::int2_in("40000"); }));
+    EXPECT_TRUE(RaisesError([] { mytoydb::types::int2_in("-40000"); }));
+}
+
+TEST_F(BuiltinsTest, Int2Eq) {
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::int2_eq(Int16GetDatum(5), Int16GetDatum(5))));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::int2_eq(Int16GetDatum(5), Int16GetDatum(6))));
+}
+
+TEST_F(BuiltinsTest, Int2Lt) {
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::int2_lt(Int16GetDatum(5), Int16GetDatum(6))));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::int2_lt(Int16GetDatum(6), Int16GetDatum(5))));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::int2_lt(Int16GetDatum(5), Int16GetDatum(5))));
+}
+
+TEST_F(BuiltinsTest, Int2Pl) {
+    EXPECT_EQ(DatumGetInt16(mytoydb::types::int2_pl(Int16GetDatum(3), Int16GetDatum(4))), 7);
+}
+
+TEST_F(BuiltinsTest, Int2Div) {
+    EXPECT_EQ(DatumGetInt16(mytoydb::types::int2_div(Int16GetDatum(12), Int16GetDatum(4))), 3);
+    EXPECT_TRUE(RaisesError([] { mytoydb::types::int2_div(Int16GetDatum(10), Int16GetDatum(0)); }));
+}
+
+// ---------------------------------------------------------------------------
+// int4 comparison + extras
+// ---------------------------------------------------------------------------
+
+TEST_F(BuiltinsTest, Int4Eq) {
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::int4_eq(Int32GetDatum(5), Int32GetDatum(5))));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::int4_ne(Int32GetDatum(5), Int32GetDatum(5))));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::int4_lt(Int32GetDatum(5), Int32GetDatum(6))));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::int4_ge(Int32GetDatum(6), Int32GetDatum(6))));
+}
+
+TEST_F(BuiltinsTest, Int4Mod) {
+    EXPECT_EQ(DatumGetInt32(mytoydb::types::int4_mod(Int32GetDatum(17), Int32GetDatum(5))), 2);
+    EXPECT_TRUE(RaisesError([] { mytoydb::types::int4_mod(Int32GetDatum(10), Int32GetDatum(0)); }));
+}
+
+TEST_F(BuiltinsTest, Int4AbsAndUmAndInc) {
+    EXPECT_EQ(DatumGetInt32(mytoydb::types::int4_abs(Int32GetDatum(-7))), 7);
+    EXPECT_EQ(DatumGetInt32(mytoydb::types::int4_abs(Int32GetDatum(7))), 7);
+    EXPECT_EQ(DatumGetInt32(mytoydb::types::int4_um(Int32GetDatum(7))), -7);
+    EXPECT_EQ(DatumGetInt32(mytoydb::types::int4_inc(Int32GetDatum(41))), 42);
+}
+
+// ---------------------------------------------------------------------------
+// int8 comparison + extras
+// ---------------------------------------------------------------------------
+
+TEST_F(BuiltinsTest, Int8Eq) {
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::int8_eq(Int64GetDatum(100), Int64GetDatum(100))));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::int8_ne(Int64GetDatum(100), Int64GetDatum(100))));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::int8_lt(Int64GetDatum(99), Int64GetDatum(100))));
+}
+
+TEST_F(BuiltinsTest, Int8Pl) {
+    EXPECT_EQ(DatumGetInt64(mytoydb::types::int8_pl(Int64GetDatum(1000000000), Int64GetDatum(23))),
+              1000000023);
+}
+
+TEST_F(BuiltinsTest, Int8Mod) {
+    EXPECT_EQ(DatumGetInt64(mytoydb::types::int8_mod(Int64GetDatum(17), Int64GetDatum(5))), 2);
+    EXPECT_TRUE(RaisesError([] { mytoydb::types::int8_mod(Int64GetDatum(10), Int64GetDatum(0)); }));
+}
+
+TEST_F(BuiltinsTest, Int8AbsAndUmAndInc) {
+    EXPECT_EQ(DatumGetInt64(mytoydb::types::int8_abs(Int64GetDatum(-9))), 9);
+    EXPECT_EQ(DatumGetInt64(mytoydb::types::int8_um(Int64GetDatum(9))), -9);
+    EXPECT_EQ(DatumGetInt64(mytoydb::types::int8_inc(Int64GetDatum(41))), 42);
+}
+
+// ---------------------------------------------------------------------------
+// float8 comparison + math functions
+// ---------------------------------------------------------------------------
+
+TEST_F(BuiltinsTest, Float8Eq) {
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::float8_eq(Float8GetDatum(1.5), Float8GetDatum(1.5))));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::float8_ne(Float8GetDatum(1.5), Float8GetDatum(1.5))));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::float8_lt(Float8GetDatum(1.4), Float8GetDatum(1.5))));
+}
+
+TEST_F(BuiltinsTest, Float8Ceil) {
+    EXPECT_NEAR(DatumGetFloat8(mytoydb::types::float8_ceil(Float8GetDatum(1.4))), 2.0, 1e-12);
+    EXPECT_NEAR(DatumGetFloat8(mytoydb::types::float8_ceil(Float8GetDatum(-1.4))), -1.0, 1e-12);
+}
+
+TEST_F(BuiltinsTest, Float8Floor) {
+    EXPECT_NEAR(DatumGetFloat8(mytoydb::types::float8_floor(Float8GetDatum(1.6))), 1.0, 1e-12);
+    EXPECT_NEAR(DatumGetFloat8(mytoydb::types::float8_floor(Float8GetDatum(-1.6))), -2.0, 1e-12);
+}
+
+TEST_F(BuiltinsTest, Float8AbsAndUm) {
+    EXPECT_NEAR(DatumGetFloat8(mytoydb::types::float8_abs(Float8GetDatum(-3.5))), 3.5, 1e-12);
+    EXPECT_NEAR(DatumGetFloat8(mytoydb::types::float8_um(Float8GetDatum(3.5))), -3.5, 1e-12);
+}
+
+// ---------------------------------------------------------------------------
+// bool operators
+// ---------------------------------------------------------------------------
+
+TEST_F(BuiltinsTest, BoolOperators) {
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::bool_eq(BoolGetDatum(true), BoolGetDatum(true))));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::bool_eq(BoolGetDatum(true), BoolGetDatum(false))));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::bool_ne(BoolGetDatum(true), BoolGetDatum(false))));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::bool_lt(BoolGetDatum(false), BoolGetDatum(true))));
+}
+
+// ---------------------------------------------------------------------------
+// text comparison operators
+// ---------------------------------------------------------------------------
+
+TEST_F(BuiltinsTest, TextEq) {
+    auto a = mytoydb::types::text_in("abc");
+    auto b = mytoydb::types::text_in("abc");
+    auto c = mytoydb::types::text_in("abd");
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::text_eq(a, b)));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::text_eq(a, c)));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::text_ne(a, c)));
+}
+
+TEST_F(BuiltinsTest, TextLt) {
+    auto a = mytoydb::types::text_in("abc");
+    auto b = mytoydb::types::text_in("abd");
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::text_lt(a, b)));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::text_lt(b, a)));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::text_le(a, b)));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::text_ge(b, a)));
+}
+
+// ---------------------------------------------------------------------------
+// timestamp/date comparison operators
+// ---------------------------------------------------------------------------
+
+TEST_F(BuiltinsTest, TimestampEq) {
+    auto a = mytoydb::types::timestamp_in("2013-07-15 10:30:45");
+    auto b = mytoydb::types::timestamp_in("2013-07-15 10:30:45");
+    auto c = mytoydb::types::timestamp_in("2013-07-15 10:30:46");
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::timestamp_eq(a, b)));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::timestamp_eq(a, c)));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::timestamp_lt(a, c)));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::timestamp_ge(a, b)));
+}
+
+TEST_F(BuiltinsTest, DateLt) {
+    auto a = mytoydb::types::date_in("2013-07-15");
+    auto b = mytoydb::types::date_in("2013-07-16");
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::date_lt(a, b)));
+    EXPECT_FALSE(DatumGetBool(mytoydb::types::date_lt(b, a)));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::date_eq(a, a)));
+    EXPECT_TRUE(DatumGetBool(mytoydb::types::date_le(a, b)));
+}
+
+// ---------------------------------------------------------------------------
+// type conversions
+// ---------------------------------------------------------------------------
+
+TEST_F(BuiltinsTest, I2ToI4AndBack) {
+    EXPECT_EQ(DatumGetInt32(mytoydb::types::i2toi4(Int16GetDatum(-42))), -42);
+    EXPECT_EQ(DatumGetInt16(mytoydb::types::i4toi2(Int32GetDatum(-42))), -42);
+}
+
+TEST_F(BuiltinsTest, I4ToI2OutOfRangeRaises) {
+    EXPECT_TRUE(RaisesError([] { mytoydb::types::i4toi2(Int32GetDatum(40000)); }));
 }
 
 }  // namespace
