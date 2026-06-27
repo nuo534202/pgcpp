@@ -63,6 +63,8 @@ set(MYTOYDB_CORE_SOURCES
     parser/parse_target.cpp
     parser/parse_clause.cpp
     parser/parse_agg.cpp
+    parser/parse_utilcmd.cpp
+    parser/parse_cte.cpp
     parser/analyze.cpp
     ${BISON_mytoydb_parser_OUTPUTS}
     ${FLEX_mytoydb_scanner_OUTPUTS}

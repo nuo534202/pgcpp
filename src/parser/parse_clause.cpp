@@ -40,11 +40,55 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n, RangeTblEntry** top_r
 
     NodeTag tag = nodeTag(n);
 
-    // Case 1: RangeVar (plain table reference)
+    // Case 1: RangeVar (plain table reference, possibly a CTE reference)
     if (tag == NodeTag::kRangeVar) {
         auto* rv = static_cast<RangeVar*>(n);
+
+        // First, check whether `rv->relname` refers to a CTE visible in
+        // this ParseState or any ancestor ParseState's CTE namespace
+        // (p_ctenamespace for non-recursive CTEs; p_future_ctes for the
+        // self-referential recursive CTE being analyzed). Sub-ParseStates
+        // created by AnalyzeCTE do not inherit p_ctenamespace directly,
+        // so we walk the parent chain here.
+        CommonTableExpr* matched_cte = nullptr;
+        for (ParseState* p = pstate; p != nullptr && matched_cte == nullptr;
+             p = p->parent_parse_state) {
+            for (Node* cte_node : p->p_ctenamespace) {
+                if (cte_node == nullptr || cte_node->GetTag() != NodeTag::kCommonTableExpr)
+                    continue;
+                auto* cte = static_cast<CommonTableExpr*>(cte_node);
+                if (cte->ctename == rv->relname) {
+                    matched_cte = cte;
+                    break;
+                }
+            }
+            if (matched_cte != nullptr)
+                break;
+            for (Node* cte_node : p->p_future_ctes) {
+                if (cte_node == nullptr || cte_node->GetTag() != NodeTag::kCommonTableExpr)
+                    continue;
+                auto* cte = static_cast<CommonTableExpr*>(cte_node);
+                if (cte->ctename == rv->relname) {
+                    matched_cte = cte;
+                    break;
+                }
+            }
+        }
+
         int rtindex = 0;
-        RangeTblEntry* rte = addRangeTableEntry(pstate, rv, rv->alias, rv->inh, true, &rtindex);
+        RangeTblEntry* rte = nullptr;
+        if (matched_cte != nullptr && matched_cte->ctequery != nullptr &&
+            matched_cte->ctequery->GetTag() == NodeTag::kQuery) {
+            // CTE reference — wrap the analyzed Query as a subquery RTE.
+            // We pass a fresh copy of the Query pointer; the executor will
+            // re-analyze it per-reference if needed (CTE materialization is
+            // a future optimization).
+            auto* cte_query = static_cast<Query*>(matched_cte->ctequery);
+            rte =
+                addRangeTableEntryForSubquery(pstate, cte_query, rv->alias, false, true, &rtindex);
+        } else {
+            rte = addRangeTableEntry(pstate, rv, rv->alias, rv->inh, true, &rtindex);
+        }
 
         if (top_rte)
             *top_rte = rte;

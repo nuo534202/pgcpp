@@ -13,7 +13,10 @@
 #include "mytoydb/catalog/catalog.hpp"
 #include "mytoydb/catalog/pg_type.hpp"
 #include "mytoydb/catalog/syscache.hpp"
+#include "mytoydb/common/containers/node.hpp"
 #include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/parser/parse_node.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
 #include "mytoydb/types/datum.hpp"
 
 namespace mytoydb::parser {
@@ -24,6 +27,10 @@ using mytoydb::catalog::GetCatalog;
 using mytoydb::catalog::GetSysCache;
 using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
+using mytoydb::nodes::Node;
+using mytoydb::nodes::NodeTag;
+using mytoydb::nodes::nodeTag;
+using mytoydb::nodes::Value;
 
 // UNKNOWNOID — PostgreSQL's OID for the "unknown" type (705).
 static constexpr Oid kUnknownOid = 705;
@@ -206,6 +213,147 @@ bool type_is_string(Oid type_oid) {
 // type_is_datetime — is this a date/time type?
 bool type_is_datetime(Oid type_oid) {
     return type_oid == mytoydb::types::kDateOid || type_oid == mytoydb::types::kTimestampOid;
+}
+
+// ---------------------------------------------------------------------------
+// LookupTypeName — array suffix + typmod-aware type resolution.
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// VARHDRSZ — PostgreSQL's varlena header size, used when encoding typmods
+// for varlena types like varchar/bpchar. Matches VARHDRSZ in postgres.h.
+constexpr int32_t kVarHdrSz = 4;
+
+// Built-in base-type → array-type OID mapping. PostgreSQL's pg_type
+// normally provides this via FormData_pg_type.typarray, but our
+// BootstrapCatalog does not populate pg_type, so we hardcode the
+// standard OIDs for the types ClickBench may encounter.
+struct ArrayTypeEntry {
+    Oid base_oid;
+    Oid array_oid;
+};
+
+const ArrayTypeEntry kArrayTypes[] = {
+    {mytoydb::types::kBoolOid, 1000},       // _bool
+    {mytoydb::types::kInt2Oid, 1005},       // _int2
+    {mytoydb::types::kInt4Oid, 1007},       // _int4
+    {mytoydb::types::kInt8Oid, 1016},       // _int8
+    {mytoydb::types::kFloat4Oid, 1021},     // _float4
+    {mytoydb::types::kFloat8Oid, 1022},     // _float8
+    {mytoydb::types::kTextOid, 1009},       // _text
+    {mytoydb::types::kVarcharOid, 1015},    // _varchar
+    {mytoydb::types::kDateOid, 1182},       // _date
+    {mytoydb::types::kTimestampOid, 1115},  // _timestamp
+    {kUnknownOid, 705},                     // _unknown (same OID)
+};
+constexpr int kArrayTypesCount = sizeof(kArrayTypes) / sizeof(kArrayTypes[0]);
+
+Oid LookupArrayTypeOid(Oid base_oid) {
+    for (int i = 0; i < kArrayTypesCount; ++i) {
+        if (kArrayTypes[i].base_oid == base_oid)
+            return kArrayTypes[i].array_oid;
+    }
+    return kInvalidOid;
+}
+
+// Extract the type name string from a TypeName's `names` list (the last
+// component of a qualified name, e.g., "mytype" from "public.mytype").
+std::string ExtractLastTypeName(const TypeName* tn) {
+    if (tn == nullptr || tn->names.empty())
+        return "";
+    const Node* last = tn->names.back();
+    if (last == nullptr || last->GetTag() != NodeTag::kString)
+        return "";
+    return static_cast<const Value*>(last)->GetString();
+}
+
+// Try to extract an integer typmod from tn->typmods.
+// Currently handles the simple case: a single integer Value, used directly
+// (with VARHDRSZ added for varlena string types). Returns -1 if no typmod
+// can be extracted or the type does not accept a typmod.
+int32_t ComputeTypmod(const TypeName* tn, Oid base_oid) {
+    if (tn == nullptr || tn->typmods.empty())
+        return -1;
+
+    // Only handle a single integer typmod (e.g., varchar(10), char(5)).
+    if (tn->typmods.size() != 1)
+        return -1;
+
+    const Node* mod_node = tn->typmods[0];
+    if (mod_node == nullptr)
+        return -1;
+
+    // Integer Value? (scanner emits an integer constant as typmod)
+    if (mod_node->GetTag() == NodeTag::kInteger) {
+        int64_t ival = static_cast<const Value*>(mod_node)->GetInteger();
+        if (ival < 0)
+            return -1;
+
+        // Varchar/bpchar/char encode the typmod as VARHDRSZ + max_length
+        // to match PostgreSQL's varchar_typmod_in().
+        if (base_oid == mytoydb::types::kVarcharOid || base_oid == mytoydb::types::kTextOid) {
+            return static_cast<int32_t>(ival + kVarHdrSz);
+        }
+        // Other types: pass the typmod through verbatim.
+        return static_cast<int32_t>(ival);
+    }
+
+    // A_Expr / other typmod forms are out of scope for this task.
+    return -1;
+}
+
+}  // namespace
+
+// LookupTypeName — see header for contract.
+Oid LookupTypeName(ParseState* pstate, TypeName* tn, int32_t* typmod) {
+    (void)pstate;  // No ParseState usage yet; namespace lookups are deferred.
+
+    if (typmod != nullptr)
+        *typmod = -1;
+
+    if (tn == nullptr)
+        return kInvalidOid;
+
+    // 1. Resolve the base type name (last component of the qualified name).
+    std::string name = ExtractLastTypeName(tn);
+    if (name.empty())
+        return kInvalidOid;
+
+    Oid base_oid = typenameTypeId(name);
+    if (base_oid == kInvalidOid)
+        return kInvalidOid;
+
+    // 2. Compute typmod (only applies to the base type — array types
+    //    carry their element type's typmod implicitly).
+    int32_t computed_typmod = ComputeTypmod(tn, base_oid);
+    if (typmod != nullptr)
+        *typmod = computed_typmod;
+
+    // 3. If an array suffix is present, look up the corresponding array
+    //    type OID. The typmod computed above stays attached to the element
+    //    type (PostgreSQL semantics).
+    Oid result_oid = base_oid;
+    if (!tn->array_bounds.empty()) {
+        Oid array_oid = LookupArrayTypeOid(base_oid);
+        if (array_oid != kInvalidOid)
+            result_oid = array_oid;
+        // If we have no array type registered for this base type, leave
+        // result_oid as the base type — callers can detect the mismatch.
+    }
+
+    tn->type_oid = result_oid;
+    return result_oid;
+}
+
+// typenameTypeId (strict overload) — see header for contract.
+Oid typenameTypeId(ParseState* pstate, TypeName* tn, int32_t* typmod) {
+    Oid oid = LookupTypeName(pstate, tn, typmod);
+    if (oid == kInvalidOid) {
+        std::string name = ExtractLastTypeName(tn);
+        ereport(mytoydb::error::LogLevel::kError, "type \"" + name + "\" does not exist");
+    }
+    return oid;
 }
 
 }  // namespace mytoydb::parser

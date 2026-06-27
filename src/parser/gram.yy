@@ -595,7 +595,19 @@ stmt:
 ;
 
 // SELECT statement.
-SelectStmt: select_no_parens | select_with_parens ;
+SelectStmt:
+      select_no_parens
+    | select_with_parens
+    | with_clause select_no_parens
+        {
+            // Leading WITH clause for SELECT, e.g.:
+            //   WITH cte AS (SELECT 1) SELECT * FROM cte
+            // Standard SQL form — the WITH clause appears before SELECT.
+            SelectStmt* sel = static_cast<SelectStmt*>($2);
+            sel->with_clause = static_cast<WithClause*>($1);
+            $$ = sel;
+        }
+;
 
 select_with_parens:
       '(' select_no_parens ')'

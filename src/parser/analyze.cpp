@@ -15,6 +15,7 @@
 #include "mytoydb/parser/parse_agg.hpp"
 #include "mytoydb/parser/parse_clause.hpp"
 #include "mytoydb/parser/parse_coerce.hpp"
+#include "mytoydb/parser/parse_cte.hpp"
 #include "mytoydb/parser/parse_expr.hpp"
 #include "mytoydb/parser/parse_relation.hpp"
 #include "mytoydb/parser/parse_target.hpp"
@@ -132,6 +133,11 @@ static Query* transformSelectStmt(ParseState* pstate, SelectStmt* stmt) {
     qry->command_type = CmdType::kSelect;
     qry->can_set_tag = true;
 
+    // Process the WITH clause first, so CTEs are visible to FROM/WHERE/etc.
+    if (stmt->with_clause != nullptr) {
+        transformWithClause(pstate, stmt->with_clause);
+    }
+
     // Process the FROM clause
     if (!stmt->from_clause.empty()) {
         qry->jointree = transformFromClause(pstate, stmt->from_clause);
@@ -217,6 +223,11 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
     auto* qry = makeNode<Query>();
     qry->command_type = CmdType::kInsert;
     qry->can_set_tag = true;
+
+    // Process the WITH clause first, so CTEs are visible to the source query.
+    if (stmt->with_clause != nullptr) {
+        transformWithClause(pstate, stmt->with_clause);
+    }
 
     // Add the target relation to the range table
     if (stmt->relation != nullptr) {
@@ -310,6 +321,11 @@ static Query* transformUpdateStmt(ParseState* pstate, UpdateStmt* stmt) {
     qry->command_type = CmdType::kUpdate;
     qry->can_set_tag = true;
 
+    // Process the WITH clause first, so CTEs are visible to SET/FROM/WHERE.
+    if (stmt->with_clause != nullptr) {
+        transformWithClause(pstate, stmt->with_clause);
+    }
+
     // Add the target relation to the range table
     if (stmt->relation != nullptr) {
         int rtindex = 0;
@@ -367,6 +383,11 @@ static Query* transformDeleteStmt(ParseState* pstate, DeleteStmt* stmt) {
     auto* qry = makeNode<Query>();
     qry->command_type = CmdType::kDelete;
     qry->can_set_tag = true;
+
+    // Process the WITH clause first, so CTEs are visible to USING/WHERE.
+    if (stmt->with_clause != nullptr) {
+        transformWithClause(pstate, stmt->with_clause);
+    }
 
     // Add the target relation to the range table
     if (stmt->relation != nullptr) {
