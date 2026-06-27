@@ -182,6 +182,23 @@ bool IsTransactionBlock() {
     return s->block_state != TBlockState::kDefault && s->block_state != TBlockState::kStarted;
 }
 
+bool IsAbortedTransactionBlock() {
+    TransactionState s = CurrentState();
+    if (s == nullptr)
+        return false;
+    switch (s->block_state) {
+        case TBlockState::kAbort:
+        case TBlockState::kAbortEnd:
+        case TBlockState::kAbortPending:
+        case TBlockState::kSubAbort:
+        case TBlockState::kSubAbortPending:
+        case TBlockState::kSubAbortRestart:
+            return true;
+        default:
+            return false;
+    }
+}
+
 bool IsTransactionOrTransactionBlock() {
     TransactionState s = CurrentState();
     return s != nullptr && s->state != TransState::kDefault;

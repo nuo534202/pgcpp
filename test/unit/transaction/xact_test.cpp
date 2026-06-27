@@ -27,6 +27,7 @@ using mytoydb::transaction::GetCurrentTransactionNestingLevel;
 using mytoydb::transaction::GetNextTransactionId;
 using mytoydb::transaction::InitializeCommitLog;
 using mytoydb::transaction::InitializeTransactionSystem;
+using mytoydb::transaction::IsAbortedTransactionBlock;
 using mytoydb::transaction::IsTransactionBlock;
 using mytoydb::transaction::IsTransactionOrTransactionBlock;
 using mytoydb::transaction::kBootstrapTransactionId;
@@ -346,4 +347,42 @@ TEST_F(XactTest, TransactionBlockStateAsString) {
     const char* state = TransactionBlockStateAsString();
     EXPECT_TRUE(std::string(state) == "begin" || std::string(state) == "in progress");
     EndTransactionBlock();
+}
+
+// --- IsAbortedTransactionBlock (failed transaction detection for 'Z' status) ---
+
+TEST_F(XactTest, IsAbortedTransactionBlockFalseWhenIdle) {
+    EXPECT_FALSE(IsAbortedTransactionBlock());
+}
+
+TEST_F(XactTest, IsAbortedTransactionBlockFalseInNormalTransactionBlock) {
+    BeginTransactionBlock();
+    EXPECT_FALSE(IsAbortedTransactionBlock());
+    EXPECT_TRUE(IsTransactionBlock());
+    EndTransactionBlock();
+}
+
+TEST_F(XactTest, IsAbortedTransactionBlockFalseInAutocommit) {
+    StartTransactionCommand();
+    EXPECT_FALSE(IsAbortedTransactionBlock());
+    CommitTransactionCommand();
+}
+
+TEST_F(XactTest, IsAbortedTransactionBlockTrueAfterErrorInBlock) {
+    BeginTransactionBlock();
+    EXPECT_FALSE(IsAbortedTransactionBlock());
+    // Simulate a statement error inside the transaction block.
+    AbortCurrentTransaction();
+    // The block is now in the aborted state — the 'Z' status should be 'E'.
+    EXPECT_TRUE(IsAbortedTransactionBlock());
+    EXPECT_TRUE(IsTransactionBlock());  // Still inside a (failed) block.
+}
+
+TEST_F(XactTest, IsAbortedTransactionBlockFalseAfterAutocommitError) {
+    // An error in autocommit mode aborts the single statement but leaves us
+    // idle (not in a failed block).
+    StartTransactionCommand();
+    AbortCurrentTransaction();
+    EXPECT_FALSE(IsAbortedTransactionBlock());
+    EXPECT_FALSE(IsTransactionBlock());
 }

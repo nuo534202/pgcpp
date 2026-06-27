@@ -7,6 +7,7 @@
 #include <cstring>
 #include <string>
 
+#include "mytoydb/server/guc.hpp"
 #include "mytoydb/server/main.hpp"
 
 namespace mytoydb::server {
@@ -85,6 +86,14 @@ bool ParseArgs(int argc, char* argv[], ServerOptions* opts) {
     }
 
     return true;
+}
+
+bool LoadGucFromDataDir(const std::string& data_dir, GucConfig* guc) {
+    if (data_dir.empty() || guc == nullptr) {
+        return false;
+    }
+    std::string path = data_dir + "/postgresql.conf";
+    return guc->LoadFile(path);
 }
 
 }  // namespace mytoydb::server

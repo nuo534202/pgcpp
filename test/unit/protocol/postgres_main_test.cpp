@@ -319,4 +319,98 @@ TEST_F(PostgresMainTest, PostgresMain_ClientDisconnectEndsLoop) {
     EXPECT_TRUE(WIFEXITED(status));
 }
 
+// --- 'Z' transaction status byte (Task 15.10.3) ---
+//
+// The ReadyForQuery message carries a single-byte transaction status:
+//   'I' = idle, 'T' = in transaction, 'E' = in failed transaction.
+// The fixture's SetUp calls BeginTransactionBlock(), so the forked child
+// inherits a transaction block and the status should reflect that.
+
+TEST_F(PostgresMainTest, ReadyForQueryStatusIsInTransactionAfterSuccess) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+    pid_t pid = fork();
+    ASSERT_GE(pid, 0);
+    if (pid == 0) {
+        close(fds[0]);
+        SocketSink sink(fds[1]);
+        PostgresMain(fds[1], &sink);
+        _exit(0);
+    }
+    close(fds[1]);
+
+    // Send a successful simple query.
+    std::string query = "SELECT 1;";
+    query.push_back('\0');
+    WriteMessage(fds[0], 'Q', query);
+
+    // Read until ReadyForQuery and check the status byte.
+    char type = 0;
+    std::string payload;
+    bool got_ready = false;
+    char z_status = 0;
+    for (int i = 0; i < 10 && ReadMessage(fds[0], &type, payload); ++i) {
+        if (type == 'Z') {
+            got_ready = true;
+            ASSERT_FALSE(payload.empty());
+            z_status = payload[0];
+            break;
+        }
+    }
+    EXPECT_TRUE(got_ready);
+    // We're inside a transaction block (from the fixture), so status is 'T'.
+    EXPECT_EQ(z_status, 'T');
+
+    WriteMessage(fds[0], 'X', "");
+    int status = 0;
+    waitpid(pid, &status, 0);
+    close(fds[0]);
+}
+
+TEST_F(PostgresMainTest, ReadyForQueryStatusIsInFailedTransactionAfterError) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+    pid_t pid = fork();
+    ASSERT_GE(pid, 0);
+    if (pid == 0) {
+        close(fds[0]);
+        SocketSink sink(fds[1]);
+        PostgresMain(fds[1], &sink);
+        _exit(0);
+    }
+    close(fds[1]);
+
+    // Send a query that will fail (nonexistent table).
+    std::string query = "SELECT * FROM nonexistent_table_xyz;";
+    query.push_back('\0');
+    WriteMessage(fds[0], 'Q', query);
+
+    // Read until ReadyForQuery, capturing ErrorResponse + status byte.
+    char type = 0;
+    std::string payload;
+    bool got_error = false;
+    bool got_ready = false;
+    char z_status = 0;
+    for (int i = 0; i < 10 && ReadMessage(fds[0], &type, payload); ++i) {
+        if (type == 'E') {
+            got_error = true;  // ErrorResponse (server -> client).
+        } else if (type == 'Z') {
+            got_ready = true;
+            ASSERT_FALSE(payload.empty());
+            z_status = payload[0];
+            break;
+        }
+    }
+    EXPECT_TRUE(got_error) << "expected an ErrorResponse before ReadyForQuery";
+    EXPECT_TRUE(got_ready);
+    // We're inside a transaction block (from the fixture) and the query failed,
+    // so the status must be 'E' (in failed transaction).
+    EXPECT_EQ(z_status, 'E');
+
+    WriteMessage(fds[0], 'X', "");
+    int status = 0;
+    waitpid(pid, &status, 0);
+    close(fds[0]);
+}
+
 }  // namespace

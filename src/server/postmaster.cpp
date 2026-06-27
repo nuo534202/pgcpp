@@ -289,6 +289,121 @@ void ShutdownServerSubsystems() {
 }
 
 // ---------------------------------------------------------------------------
+// ProcessStartupPacket — read and parse the frontend startup packet sequence
+// ---------------------------------------------------------------------------
+
+// Read a 4-byte network-order uint32 from the fd.
+// Returns true on success, false on EOF/error.
+static bool ReadUint32(int fd, uint32_t* out) {
+    char buf[4];
+    if (!ReadAll(fd, buf, 4))
+        return false;
+    *out = (static_cast<uint32_t>(static_cast<uint8_t>(buf[0])) << 24) |
+           (static_cast<uint32_t>(static_cast<uint8_t>(buf[1])) << 16) |
+           (static_cast<uint32_t>(static_cast<uint8_t>(buf[2])) << 8) |
+           static_cast<uint32_t>(static_cast<uint8_t>(buf[3]));
+    return true;
+}
+
+StartupPacketResult ProcessStartupPacket(int client_fd) {
+    StartupPacketResult result;
+
+    while (true) {
+        // Read the 4-byte length prefix.
+        uint32_t len = 0;
+        if (!ReadUint32(client_fd, &len)) {
+            return result;  // EOF or read error.
+        }
+        // Sanity-check the length. The length includes itself (4 bytes) but
+        // not a type byte (startup packets have no type byte).
+        if (len < 8 || len > 1024 * 1024) {
+            return result;  // Bogus length — give up.
+        }
+
+        // Read the rest of the packet (length - 4 bytes).
+        std::size_t rest_len = static_cast<std::size_t>(len) - 4;
+        std::vector<char> rest(rest_len);
+        if (rest_len > 0 && !ReadAll(client_fd, rest.data(), rest_len)) {
+            return result;  // EOF mid-packet.
+        }
+
+        // The first 4 bytes of the body are the protocol version / special code.
+        uint32_t code = (static_cast<uint32_t>(static_cast<uint8_t>(rest[0])) << 24) |
+                        (static_cast<uint32_t>(static_cast<uint8_t>(rest[1])) << 16) |
+                        (static_cast<uint32_t>(static_cast<uint8_t>(rest[2])) << 8) |
+                        static_cast<uint32_t>(static_cast<uint8_t>(rest[3]));
+
+        if (code == kNegotiateSslCode || code == kNegotiateGssCode) {
+            // SSLRequest / GSSENCRequest — reply 'N' (no SSL/GSS) and loop
+            // to read the real startup packet that follows.
+            char reply = 'N';
+            WriteAll(client_fd, &reply, 1);
+            continue;
+        }
+
+        if (code == kCancelRequestCode) {
+            // CancelRequest — the caller should silently close the connection.
+            return result;  // valid stays false.
+        }
+
+        // Otherwise this should be a protocol-versioned startup packet.
+        // PostgreSQL's v3.0 carries 0x00030000. We accept any code that looks
+        // like a versioned startup (not a special code); for the v3.0 case we
+        // parse the trailing key/value pairs.
+        result.protocol_version = code;
+
+        // Parse null-terminated key/value pairs starting after the 4-byte code.
+        // The body ends with an extra NUL terminator.
+        std::size_t pos = 4;
+        while (pos < rest_len) {
+            // Read the key (null-terminated).
+            std::string key;
+            while (pos < rest_len && rest[pos] != '\0') {
+                key.push_back(rest[pos]);
+                ++pos;
+            }
+            if (pos >= rest_len)
+                break;  // Malformed — no NUL terminator for key.
+            ++pos;      // consume the key's NUL.
+            if (pos >= rest_len || rest[pos] == '\0')
+                break;  // End of pairs (final terminator).
+
+            // Read the value (null-terminated).
+            std::string value;
+            while (pos < rest_len && rest[pos] != '\0') {
+                value.push_back(rest[pos]);
+                ++pos;
+            }
+            if (pos >= rest_len)
+                break;  // Malformed — no NUL terminator for value.
+            ++pos;      // consume the value's NUL.
+
+            result.options[key] = value;
+        }
+
+        // Mirror well-known keys into dedicated fields.
+        auto it = result.options.find("user");
+        if (it != result.options.end()) {
+            result.user = it->second;
+        }
+        it = result.options.find("database");
+        if (it != result.options.end()) {
+            result.database = it->second;
+        } else {
+            // Database defaults to user (PostgreSQL behavior).
+            result.database = result.user;
+        }
+        it = result.options.find("application_name");
+        if (it != result.options.end()) {
+            result.application_name = it->second;
+        }
+
+        result.valid = true;
+        return result;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // BackendMain — per-connection protocol loop
 // ---------------------------------------------------------------------------
 
@@ -296,27 +411,11 @@ void BackendMain(int client_fd) {
     // Reset signal handlers to defaults in the child process.
     ResetSignalHandlers();
 
-    // Read the startup message.
-    // Format: 4-byte length + 4-byte protocol version + key-value pairs + NUL
-    char len_buf[4];
-    if (!ReadAll(client_fd, len_buf, 4)) {
-        close(client_fd);
-        return;
-    }
-
-    int32_t startup_len = static_cast<int32_t>(
-        (static_cast<uint8_t>(len_buf[0]) << 24) | (static_cast<uint8_t>(len_buf[1]) << 16) |
-        (static_cast<uint8_t>(len_buf[2]) << 8) | static_cast<uint8_t>(len_buf[3]));
-
-    if (startup_len < 4 || startup_len > 1024 * 1024) {
-        close(client_fd);
-        return;
-    }
-
-    // Read the rest of the startup message.
-    std::size_t rest_len = static_cast<std::size_t>(startup_len) - 4;
-    std::vector<char> startup_buf(rest_len);
-    if (rest_len > 0 && !ReadAll(client_fd, startup_buf.data(), rest_len)) {
+    // Read and parse the startup packet (handles SSL/GSS preambles,
+    // CancelRequest, and v3.0 startup with user/database).
+    StartupPacketResult startup = ProcessStartupPacket(client_fd);
+    if (!startup.valid) {
+        // CancelRequest, EOF, or protocol violation — close silently.
         close(client_fd);
         return;
     }
@@ -349,6 +448,10 @@ void BackendMain(int client_fd) {
     send_param_status("client_encoding", "UTF8");
     send_param_status("DateStyle", "ISO");
     send_param_status("integer_datetimes", "on");
+    // Report the authenticated user (multi-user support).
+    if (!startup.user.empty()) {
+        send_param_status("current_user", startup.user);
+    }
 
     // Send BackendKeyData (type 'K', payload: int32 pid, int32 key).
     {

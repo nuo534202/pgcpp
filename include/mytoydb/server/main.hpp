@@ -10,6 +10,8 @@
 
 namespace mytoydb::server {
 
+class GucConfig;
+
 // ServerMode — the mode the server should run in.
 enum class ServerMode {
     kServer,     // Run as a server (postmaster)
@@ -32,6 +34,11 @@ bool ParseArgs(int argc, char* argv[], ServerOptions* opts);
 
 // PrintUsage — print usage information to stderr.
 void PrintUsage(const char* prog_name);
+
+// LoadGucFromDataDir — load `<data_dir>/postgresql.conf` into `guc` if present.
+// Returns true if the file was found and loaded, false otherwise (guc is left
+// untouched on failure). Missing file is not an error.
+bool LoadGucFromDataDir(const std::string& data_dir, GucConfig* guc);
 
 // MyToyDBMain — the main entry point.
 // Returns 0 on success, non-zero on error.

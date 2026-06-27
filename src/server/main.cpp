@@ -11,6 +11,7 @@
 #include <string>
 
 #include "mytoydb/server/bootstrap.hpp"
+#include "mytoydb/server/guc.hpp"
 #include "mytoydb/server/postmaster.hpp"
 
 namespace mytoydb::server {
@@ -38,11 +39,19 @@ int MyToyDBMain(int argc, char* argv[]) {
     }
 
     // Server mode.
+    // Convert command-line options to the server config first.
     ServerConfig config;
     config.data_dir = opts.data_dir;
     config.port = opts.port;
     config.listen_addr = opts.listen_addr;
     config.max_connections = opts.max_connections;
+
+    // Apply postgresql.conf overrides from the data directory if present.
+    // A missing postgresql.conf is not an error (the file is optional).
+    GucConfig guc;
+    if (LoadGucFromDataDir(opts.data_dir, &guc)) {
+        guc.ApplyTo(&config);
+    }
 
     Postmaster postmaster(std::move(config));
     return postmaster.Run();

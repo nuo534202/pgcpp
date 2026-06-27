@@ -16,6 +16,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <string>
 
 #include "mytoydb/protocol/pqformat.hpp"
@@ -29,6 +30,54 @@ struct ServerConfig {
     int max_connections = 100;              // maximum concurrent backend processes
     std::string listen_addr = "127.0.0.1";  // bind address
 };
+
+// Special startup packet protocol codes (network-byte-order int32 in the
+// first 4 bytes of the startup packet, where a v3.0 packet would carry
+// 0x00030000). See src/backend/postmaster/postmaster.c.
+constexpr uint32_t kNegotiateSslCode = 80877103;   // SSLRequest
+constexpr uint32_t kNegotiateGssCode = 80877104;   // GSSENCRequest
+constexpr uint32_t kCancelRequestCode = 80877102;  // CancelRequest
+
+// StartupPacketResult — outcome of ProcessStartupPacket.
+struct StartupPacketResult {
+    // True if a valid v3.0 startup packet was received and parsed.
+    // False on EOF/error, or on a CancelRequest (which the caller should
+    // silently drop), or on any unrecoverable protocol violation.
+    bool valid = false;
+
+    // The parsed user name (empty if not supplied by the client).
+    std::string user;
+
+    // The parsed database name. Defaults to `user` when the client does not
+    // supply a `database` parameter (matching PostgreSQL's behavior).
+    std::string database;
+
+    // The application_name parameter if supplied.
+    std::string application_name;
+
+    // All key-value pairs parsed from the startup packet, in arrival order.
+    // (Stored in a map for convenient lookup; duplicates keep the last value.)
+    std::map<std::string, std::string> options;
+
+    // The protocol version reported by the client (e.g. 0x00030000 for v3.0).
+    uint32_t protocol_version = 0;
+};
+
+// ProcessStartupPacket — read and parse the frontend startup packet sequence.
+//
+// Handles the optional SSLRequest / GSSENCRequest preambles (responds 'N'
+// — no SSL/GSS — and continues reading) and the CancelRequest message
+// (returns valid=false; the caller should close the connection without
+// further protocol traffic).
+//
+// On a v3.0 startup packet, parses the null-terminated key/value pairs and
+// returns them in `result.options` (with `user`/`database`/`application_name`
+// mirrored into dedicated fields for convenience). `database` defaults to
+// `user` when not explicitly supplied.
+//
+// `client_fd` is the accepted TCP socket. On EOF or read error, returns a
+// result with valid=false.
+StartupPacketResult ProcessStartupPacket(int client_fd);
 
 // SocketSink — OutputSink that writes protocol messages to a socket fd.
 //

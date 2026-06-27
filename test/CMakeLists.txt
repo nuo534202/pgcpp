@@ -98,6 +98,8 @@ mytoydb_add_test(postgres_main_test unit/protocol/postgres_main_test.cpp)
 
 # Phase 12 tests (M12: postmaster / bootstrap)
 mytoydb_add_test(server_test unit/server/server_test.cpp)
+mytoydb_add_test(guc_test unit/server/guc_test.cpp)
+mytoydb_add_test(postmaster_startup_test unit/server/postmaster_startup_test.cpp)
 
 # Phase 13 tests (M13: client tools)
 mytoydb_add_test(tools_test unit/tools/tools_test.cpp)

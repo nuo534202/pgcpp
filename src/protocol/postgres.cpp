@@ -75,6 +75,7 @@ using mytoydb::transaction::BeginTransactionBlock;
 using mytoydb::transaction::CommandCounterIncrement;
 using mytoydb::transaction::CommitTransactionCommand;
 using mytoydb::transaction::EndTransactionBlock;
+using mytoydb::transaction::IsAbortedTransactionBlock;
 using mytoydb::transaction::IsTransactionBlock;
 using mytoydb::transaction::StartTransactionCommand;
 using mytoydb::types::Datum;
@@ -440,6 +441,9 @@ void Backend::SendDataRow(Query* /*query*/, const std::vector<std::string>& valu
 }
 
 TransactionStatus Backend::GetCurrentTransactionStatus() const {
+    if (IsAbortedTransactionBlock()) {
+        return TransactionStatus::kInFailedTransaction;
+    }
     if (IsTransactionBlock()) {
         return TransactionStatus::kInTransaction;
     }
@@ -827,8 +831,14 @@ void PostgresMain(int client_fd, mytoydb::server::SocketSink* sink) {
         PG_CATCH() {
             mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
             sink->SendMessage(BuildErrorResponse(ed ? ed->message : "internal error"));
-            TransactionStatus status =
-                IsTransactionBlock() ? TransactionStatus::kInTransaction : TransactionStatus::kIdle;
+            TransactionStatus status;
+            if (IsAbortedTransactionBlock()) {
+                status = TransactionStatus::kInFailedTransaction;
+            } else if (IsTransactionBlock()) {
+                status = TransactionStatus::kInTransaction;
+            } else {
+                status = TransactionStatus::kIdle;
+            }
             sink->SendMessage(BuildReadyForQuery(status));
         }
         PG_END_TRY();

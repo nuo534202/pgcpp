@@ -95,6 +95,11 @@ using TransactionState = TransactionStateData*;
 // IsTransactionBlock — true if we're inside an explicit BEGIN/COMMIT block.
 bool IsTransactionBlock();
 
+// IsAbortedTransactionBlock — true if we're inside a transaction block that
+// has failed (an error occurred and the user must issue ROLLBACK to exit).
+// Used to send the 'E' (in failed transaction) status byte in ReadyForQuery.
+bool IsAbortedTransactionBlock();
+
 // IsTransactionOrTransactionBlock — true if any transaction is active
 // (either autocommit single-statement or explicit block).
 bool IsTransactionOrTransactionBlock();

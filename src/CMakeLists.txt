@@ -118,6 +118,7 @@ set(MYTOYDB_CORE_SOURCES
     server/postmaster.cpp
     server/bootstrap.cpp
     server/options.cpp
+    server/guc.cpp
     tools/psql_client.cpp
 )
 
