@@ -752,4 +752,80 @@ void btendscan(BTScanDesc scan) {
     destroyPallocNode(scan);
 }
 
+// --- P0 extensions (Task 15.8.5 / GAP-M8-F05/F06 + FN15/FN23/FN28) ---
+
+bool btcanreturn(Relation index) {
+    (void)index;
+    // B-tree can always return heap tuples for index-only scans.
+    return true;
+}
+
+int64_t btgetbitmap(BTScanDesc scan, std::vector<ItemPointerData>* tids) {
+    if (scan == nullptr || tids == nullptr)
+        return 0;
+    int64_t count = 0;
+    while (btgettuple(scan)) {
+        tids->push_back(scan->curr_tid);
+        count++;
+    }
+    return count;
+}
+
+OffsetNumber _bt_binsrch(Page page, BTKeyKind kind, const void* key, uint16_t key_len,
+                         bool for_insert) {
+    OffsetNumber low = 1;
+    OffsetNumber high = PageGetMaxOffsetNumber(page);
+    while (low <= high) {
+        OffsetNumber mid = low + (high - low) / 2;
+        auto* item_id = PageGetItemId(page, mid);
+        if (!ItemIdIsNormal(item_id)) {
+            // Non-normal (dead) line pointers should not appear on compacted
+            // B-tree pages in MyToyDB. Treat as "search left" to terminate
+            // safely; the linear _bt_find_*_pos helpers remain available for
+            // pages that may contain dead entries.
+            high = mid - 1;
+            continue;
+        }
+        auto* bt_item = reinterpret_cast<BTItem>(PageGetItem(page, item_id));
+        const void* item_key = _bt_item_get_key(bt_item);
+        uint16_t item_key_len = _bt_item_get_key_len(ItemIdGetLength(item_id));
+        int cmp = _bt_compare_keys(kind, key, key_len, item_key, item_key_len);
+        if (for_insert) {
+            // Looking for the first item whose key is strictly > the search
+            // key. cmp < 0 means search key < item key (candidate); go left.
+            if (cmp < 0) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        } else {
+            // Looking for the first item whose key is >= the search key.
+            // cmp > 0 means search key > item key (go right).
+            if (cmp > 0) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+    }
+    return low;
+}
+
+Buffer _bt_getbuf(Relation index, BlockNumber blkno) {
+    index->rd_smgr = RelationGetSmgr(index);
+    return ReadBuffer(index->rd_smgr, ForkNumber::kMain, blkno, ReadBufferMode::kNormal);
+}
+
+Buffer _bt_relandgetbuf(Relation index, Buffer buf, BlockNumber blkno) {
+    ReleaseBuffer(buf);
+    return _bt_getbuf(index, blkno);
+}
+
+void _bt_relbuf(Relation index, Buffer buf) {
+    (void)index;
+    if (buf != kInvalidBuffer) {
+        ReleaseBuffer(buf);
+    }
+}
+
 }  // namespace mytoydb::access

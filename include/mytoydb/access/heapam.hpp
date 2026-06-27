@@ -31,6 +31,18 @@
 
 namespace mytoydb::access {
 
+// --- System column attribute numbers (PostgreSQL-compatible, negative) ---
+//
+// These mirror PostgreSQL's SelfItemPointerAttributeNumber etc. from
+// src/include/access/sysattr.h. They are passed as `attnum` to
+// heap_tuple_buffer_getsysattr and heap_attisnull to request system columns.
+constexpr int kSelfItemPointerAttributeNumber = -1;   // ctid
+constexpr int kMinTransactionIdAttributeNumber = -2;  // xmin
+constexpr int kMaxTransactionIdAttributeNumber = -3;  // xmax
+constexpr int kMinCommandIdAttributeNumber = -4;      // cmin
+constexpr int kMaxCommandIdAttributeNumber = -5;      // cmax
+constexpr int kTableOidAttributeNumber = -6;          // tableoid
+
 // ScanDirection — direction for index and heap scans.
 enum class ScanDirection {
     kForward,     // scan forward (ascending)
@@ -175,5 +187,75 @@ uint32_t att_align(uint32_t offset, mytoydb::catalog::AttAlign align);
 
 // Align an offset to MAXALIGN (8 bytes).
 uint32_t att_align_max(uint32_t offset);
+
+// --- heaptuple.c P0 extensions (Task 15.8.1 / GAP-M8-F02) ---
+//
+// These mirror PostgreSQL's src/backend/access/common/heaptuple.c helpers,
+// preserved as C++20 free functions. They operate on the same HeapTupleHeader
+// layout described in heap_tuple.h.
+
+// heap_fill_tuple — fill a pre-allocated tuple data buffer with column values.
+//
+// `data` must point to a buffer of at least `hoff + data_size` bytes, where
+// `hoff` is the aligned header size (computed by the caller from the null
+// bitmap; this function writes the null bitmap at `data + kHeapTupleHeaderSize`
+// and the column data at `data + hoff`). The header bytes [0, hoff) are
+// zeroed by this function so that the null bitmap region is clean.
+//
+// Outputs:
+//   *infomask_out    — receives the HEAP_HASNULL / HEAP_HASVARWIDTH bits
+//   *tuple_hoff_out  — receives the computed hoff (aligned header size)
+void heap_fill_tuple(TupleDesc tupdesc, const mytoydb::types::Datum* values, const bool* isnull,
+                     char* data, uint32_t data_size, uint16_t* infomask_out,
+                     uint8_t* tuple_hoff_out);
+
+// heap_modify_tuple — build a new HeapTuple by selectively replacing columns.
+//
+// For each column i: if `do_replace[i]` is true, the new value/isnull is used;
+// otherwise the original value from `tuple` is preserved. If `do_replace` is
+// nullptr, every column is replaced (equivalent to heap_form_tuple).
+mytoydb::transaction::HeapTuple heap_modify_tuple(mytoydb::transaction::HeapTuple tuple,
+                                                  TupleDesc tupdesc,
+                                                  const mytoydb::types::Datum* values,
+                                                  const bool* isnull, const bool* do_replace);
+
+// heap_modify_tuple_by_cols — replace only the first `ncols` columns.
+// Columns beyond `ncols` keep their original values.
+mytoydb::transaction::HeapTuple heap_modify_tuple_by_cols(mytoydb::transaction::HeapTuple tuple,
+                                                          TupleDesc tupdesc, int ncols,
+                                                          const mytoydb::types::Datum* values,
+                                                          const bool* isnull);
+
+// heap_copytuple — deep-copy a HeapTuple (wrapper + t_data buffer).
+mytoydb::transaction::HeapTuple heap_copytuple(mytoydb::transaction::HeapTuple tuple);
+
+// heap_copytuple_with_tuple — copy src into dest's wrapper, allocating a fresh
+// t_data buffer. dest must already be allocated (e.g. via makePallocNode).
+void heap_copytuple_with_tuple(mytoydb::transaction::HeapTuple src,
+                               mytoydb::transaction::HeapTuple dest);
+
+// heap_attisnull — true if attribute `attnum` (1-based user column) is NULL.
+// Negative attnum values request system columns (always non-NULL in MyToyDB).
+bool heap_attisnull(mytoydb::transaction::HeapTuple tuple, int attnum, TupleDesc tupdesc);
+
+// Minimal tuple conversions.
+//
+// MyToyDB simplification: a minimal tuple uses the same on-disk layout as a
+// heap tuple (HeapTupleHeaderData + data). The conversion functions are
+// therefore deep copies. PostgreSQL's real minimal-tuple format omits the
+// t_ctid field to save space, but that optimization is unnecessary for
+// ClickBench and the _tuplesort/tuplestore callers accept this simplification.
+mytoydb::transaction::HeapTuple minimal_tuple_from_heap_tuple(
+    mytoydb::transaction::HeapTuple tuple);
+mytoydb::transaction::HeapTuple heap_tuple_from_minimal_tuple(mytoydb::transaction::HeapTuple mtup);
+
+// heap_tuple_buffer_getsysattr — extract a system column Datum.
+//
+// Supports the five core system columns (tableoid, xmin, xmax, cmin, cmax,
+// ctid). `attnum` is negative (see kSelfItemPointerAttributeNumber etc.).
+// Sets *isnull to false for all supported system columns. ereport(ERROR) for
+// unsupported system columns.
+mytoydb::types::Datum heap_tuple_buffer_getsysattr(mytoydb::transaction::HeapTuple tuple,
+                                                   int attnum, TupleDesc tupdesc, bool* isnull);
 
 }  // namespace mytoydb::access

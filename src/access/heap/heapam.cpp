@@ -576,4 +576,183 @@ void heap_rescan(HeapScanDesc scan) {
     scan->rs_vistuple_index = 0;
 }
 
+// --- heaptuple.c P0 extensions (Task 15.8.1) ---
+
+void heap_fill_tuple(TupleDesc tupdesc, const Datum* values, const bool* isnull, char* data,
+                     uint32_t data_size, uint16_t* infomask_out, uint8_t* tuple_hoff_out) {
+    (void)data_size;  // Caller-allocated; we write exactly the computed bytes.
+
+    bool hasnull = false;
+    for (int i = 0; i < tupdesc->natts; i++) {
+        if (isnull != nullptr && isnull[i]) {
+            hasnull = true;
+            break;
+        }
+    }
+
+    int null_bitmap_size = hasnull ? (tupdesc->natts + 7) / 8 : 0;
+    uint32_t header_size =
+        static_cast<uint32_t>(kHeapTupleHeaderSize) + static_cast<uint32_t>(null_bitmap_size);
+    uint32_t hoff = att_align_max(header_size);
+
+    // Zero the header region (including the null bitmap).
+    std::memset(data, 0, hoff);
+
+    uint16_t infomask = 0;
+
+    if (hasnull) {
+        infomask |= kHeapHasNull;
+        uint8_t* null_bitmap = reinterpret_cast<uint8_t*>(data + kHeapTupleHeaderSize);
+        for (int i = 0; i < tupdesc->natts; i++) {
+            if (isnull != nullptr && isnull[i]) {
+                null_bitmap[i / 8] |= static_cast<uint8_t>(1 << (i % 8));
+            }
+        }
+    }
+
+    uint32_t offset = hoff;
+    for (int i = 0; i < tupdesc->natts; i++) {
+        if (isnull != nullptr && isnull[i])
+            continue;
+        const auto& attr = tupdesc->attrs[i];
+        offset = att_align(offset, attr.attalign);
+
+        if (attr.attlen == -1) {
+            const char* src = DatumGetTextP(values[i]);
+            int len = VARSIZE(src);
+            std::memcpy(data + offset, src, len);
+            offset += len;
+            infomask |= kHeapHasVarWidth;
+        } else if (attr.attbyval) {
+            std::memcpy(data + offset, &values[i], attr.attlen);
+            offset += attr.attlen;
+        } else {
+            std::memcpy(data + offset, reinterpret_cast<void*>(values[i]), attr.attlen);
+            offset += attr.attlen;
+            infomask |= kHeapHasVarWidth;
+        }
+    }
+
+    *infomask_out = infomask;
+    *tuple_hoff_out = static_cast<uint8_t>(hoff);
+}
+
+HeapTuple heap_modify_tuple(HeapTuple tuple, TupleDesc tupdesc, const Datum* values,
+                            const bool* isnull, const bool* do_replace) {
+    int natts = tupdesc->natts;
+    Datum* new_values = static_cast<Datum*>(palloc(sizeof(Datum) * natts));
+    bool* new_isnull = static_cast<bool*>(palloc(sizeof(bool) * natts));
+
+    heap_deform_tuple(tuple, tupdesc, new_values, new_isnull);
+
+    for (int i = 0; i < natts; i++) {
+        if (do_replace == nullptr || do_replace[i]) {
+            new_values[i] = (values != nullptr) ? values[i] : 0;
+            new_isnull[i] = (isnull != nullptr) ? isnull[i] : false;
+        }
+    }
+
+    HeapTuple result = heap_form_tuple(tupdesc, new_values, new_isnull);
+    pfree(new_values);
+    pfree(new_isnull);
+    return result;
+}
+
+HeapTuple heap_modify_tuple_by_cols(HeapTuple tuple, TupleDesc tupdesc, int ncols,
+                                    const Datum* values, const bool* isnull) {
+    int natts = tupdesc->natts;
+    Datum* new_values = static_cast<Datum*>(palloc(sizeof(Datum) * natts));
+    bool* new_isnull = static_cast<bool*>(palloc(sizeof(bool) * natts));
+
+    heap_deform_tuple(tuple, tupdesc, new_values, new_isnull);
+
+    for (int i = 0; i < ncols && i < natts; i++) {
+        new_values[i] = (values != nullptr) ? values[i] : 0;
+        new_isnull[i] = (isnull != nullptr) ? isnull[i] : false;
+    }
+
+    HeapTuple result = heap_form_tuple(tupdesc, new_values, new_isnull);
+    pfree(new_values);
+    pfree(new_isnull);
+    return result;
+}
+
+HeapTuple heap_copytuple(HeapTuple tuple) {
+    if (tuple == nullptr)
+        return nullptr;
+    HeapTuple new_tuple = makePallocNode<HeapTupleData>();
+    new_tuple->t_len = tuple->t_len;
+    new_tuple->t_self = tuple->t_self;
+    new_tuple->t_data = static_cast<HeapTupleHeaderData*>(palloc(tuple->t_len));
+    std::memcpy(new_tuple->t_data, tuple->t_data, tuple->t_len);
+    return new_tuple;
+}
+
+void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest) {
+    if (src == nullptr || dest == nullptr)
+        return;
+    dest->t_len = src->t_len;
+    dest->t_self = src->t_self;
+    dest->t_data = static_cast<HeapTupleHeaderData*>(palloc(src->t_len));
+    std::memcpy(dest->t_data, src->t_data, src->t_len);
+}
+
+bool heap_attisnull(HeapTuple tuple, int attnum, TupleDesc tupdesc) {
+    (void)tupdesc;
+    if (attnum < 0) {
+        // System columns are never NULL in MyToyDB.
+        return false;
+    }
+    HeapTupleHeaderData* header = tuple->t_data;
+    if ((header->t_infomask & kHeapHasNull) == 0) {
+        return false;
+    }
+    const char* data = reinterpret_cast<const char*>(header);
+    const uint8_t* null_bitmap = reinterpret_cast<const uint8_t*>(data + kHeapTupleHeaderSize);
+    int i = attnum - 1;
+    return (null_bitmap[i / 8] & (1 << (i % 8))) != 0;
+}
+
+HeapTuple minimal_tuple_from_heap_tuple(HeapTuple tuple) {
+    // MyToyDB simplification: minimal tuple layout == heap tuple layout.
+    return heap_copytuple(tuple);
+}
+
+HeapTuple heap_tuple_from_minimal_tuple(HeapTuple mtup) {
+    // MyToyDB simplification: minimal tuple layout == heap tuple layout.
+    return heap_copytuple(mtup);
+}
+
+Datum heap_tuple_buffer_getsysattr(HeapTuple tuple, int attnum, TupleDesc tupdesc, bool* isnull) {
+    (void)tupdesc;
+    if (isnull != nullptr)
+        *isnull = false;
+    HeapTupleHeaderData* header = tuple->t_data;
+    switch (attnum) {
+        case kSelfItemPointerAttributeNumber: {  // ctid
+            // Return a pointer to a static buffer (PG semantics: caller must
+            // copy before the next call). MyToyDB is single-process so a
+            // function-local static is safe.
+            static ItemPointerData ctid_buf;
+            ctid_buf = header->t_ctid;
+            return Datum(&ctid_buf);
+        }
+        case kMinTransactionIdAttributeNumber:  // xmin
+            return Datum(header->t_xmin);
+        case kMaxTransactionIdAttributeNumber:  // xmax
+            return Datum(header->t_xmax);
+        case kMinCommandIdAttributeNumber:  // cmin
+        case kMaxCommandIdAttributeNumber:  // cmax (MyToyDB stores cmin==cmax in t_cid)
+            return Datum(header->t_cid);
+        case kTableOidAttributeNumber:  // tableoid
+            // MyToyDB HeapTupleData does not carry the table OID; return 0.
+            return Datum(0);
+        default:
+            ereport(mytoydb::error::LogLevel::kError,
+                    "heap_tuple_buffer_getsysattr: unsupported system column " +
+                        std::to_string(attnum));
+            return 0;
+    }
+}
+
 }  // namespace mytoydb::access

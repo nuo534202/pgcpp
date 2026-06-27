@@ -27,6 +27,27 @@
 
 namespace mytoydb::access {
 
+// AttrDefault — a column DEFAULT expression (PG pg_attrdef row, simplified).
+struct AttrDefault {
+    int16_t adnum = 0;  // column number (1-based)
+    std::string adbin;  // expression text (node-tree string)
+};
+
+// CheckConstraint — a CHECK constraint expression (PG pg_constraint row).
+struct CheckConstraint {
+    std::string ccname;  // constraint name
+    std::string ccbin;   // expression text
+    bool ccvalid = true;
+    bool ccnoinherit = false;
+};
+
+// TupleConstr — per-descriptor constraint metadata (PG TupleConstrData).
+struct TupleConstr {
+    std::vector<AttrDefault> defval;     // column default expressions
+    std::vector<CheckConstraint> check;  // CHECK constraints
+    bool has_not_null = false;           // any column has NOT NULL?
+};
+
 // TupleDescData — tuple descriptor (array of column descriptions).
 //
 // In PostgreSQL this is TupleDescData with a flexible array of Form_pg_attribute.
@@ -35,6 +56,13 @@ namespace mytoydb::access {
 struct TupleDescData {
     int natts = 0;  // number of user attributes
     std::vector<mytoydb::catalog::FormData_pg_attribute> attrs;
+
+    // --- P0 extensions (Task 15.8.2 / GAP-M8-F03) ---
+    TupleConstr constr;  // constraints (defaults + CHECKs)
+    mytoydb::catalog::Oid tdtypeid = mytoydb::catalog::kInvalidOid;  // composite type OID
+    int32_t tdtypmod = -1;                                           // type modifier
+    bool tdhasoid = false;  // has OID column (MyToyDB: always false)
+    int tdrefcount = 0;     // reference count (0 => may free)
 
     // Convenience accessor.
     const mytoydb::catalog::FormData_pg_attribute* Attr(int attnum) const {
@@ -88,6 +116,37 @@ void RelationClose(Relation relation);
 // RelationGetSmgr — return the SmgrRelation, opening it lazily if needed.
 mytoydb::storage::SmgrRelation RelationGetSmgr(Relation relation);
 
+// --- PG-compatible aliases (relcache API) ---
+
+// RelationIdGetRelation — PG alias for RelationOpen.
+Relation RelationIdGetRelation(mytoydb::catalog::Oid relid);
+
+// RelationCloseByOid — close a relation identified by OID (decrement refcnt).
+// No-op if the OID is not currently cached.
+void RelationCloseByOid(mytoydb::catalog::Oid relid);
+
+// RelationBuildDesc — build a fresh RelationData from the catalog without
+// consulting the relcache. This is the cache-miss path used internally by
+// RelationOpen. The returned Relation has rd_refcnt = 1 and is owned by the
+// caller (the relcache may also take ownership via RelationOpen). Returns
+// nullptr if the catalog has no pg_class row for relid.
+Relation RelationBuildDesc(mytoydb::catalog::Oid relid);
+
+// RelationCacheInvalidate — drop the relcache entry for the given OID.
+// Decrements the refcnt by 1 (matching PG's "invalidation drops one pin"
+// semantics). The relation is removed from the cache and any storage handle
+// is closed. Safe to call with an OID that is not cached (no-op).
+void RelationCacheInvalidate(mytoydb::catalog::Oid relid);
+
+// RelationClearRelation — invalidate a specific Relation in the cache.
+// Decrements its refcnt and removes the entry. If the relation is not in
+// the cache, only the refcnt is decremented.
+void RelationClearRelation(Relation rel);
+
+// RelationGetNumberOfAttributes — return the number of user attributes
+// (rd_att->natts) of the relation.
+int RelationGetNumberOfAttributes(Relation rel);
+
 // --- Storage creation / destruction ---
 
 // RelationCreateStorage — create the physical storage file for a relation.
@@ -115,6 +174,39 @@ mytoydb::storage::BlockNumber RelationGetNumberOfBlocks(Relation relation);
 // The attributes are copied into the descriptor. natts is set from the
 // vector size.
 TupleDesc CreateTupleDesc(const std::vector<mytoydb::catalog::FormData_pg_attribute>& attrs);
+
+// --- tupdesc.c P0 extensions (Task 15.8.2 / GAP-M8-F03) ---
+
+// CreateTemplateTupleDesc — allocate a descriptor with `natts` empty slots.
+// The attrs vector is resized to natts; each slot is default-constructed.
+TupleDesc CreateTemplateTupleDesc(int natts);
+
+// CreateTupleDescCopy — deep-copy a descriptor (attrs only, no constraints).
+TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
+
+// CreateTupleDescCopyConstr — deep-copy a descriptor including constraints.
+TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
+
+// TupleDescCopyEntry — copy a single attr slot from src to dst.
+// dst_attnum and src_attnum are 1-based.
+void TupleDescCopyEntry(TupleDesc dst, int dst_attnum, TupleDesc src, int src_attnum);
+
+// FreeTupleDesc — reference-count-aware release. Decrements tdrefcount and
+// frees the descriptor (via destroyPallocNode) when it reaches 0.
+void FreeTupleDesc(TupleDesc tupdesc);
+
+// equalTupleDescs — structural equality (attrs + constr + type metadata).
+bool equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
+
+// TupleDescInitEntry — initialize attr slot `attnum` (1-based) with the given
+// name and type. Type metadata (typlen/attbyval/attalign) is resolved via the
+// catalog's pg_type; common built-in types fall back to hardcoded metadata
+// when the catalog is not populated.
+void TupleDescInitEntry(TupleDesc desc, int attnum, const std::string& name,
+                        mytoydb::catalog::Oid type_oid, int32_t typmod, int attdim);
+
+// TupleDescInitEntryCollation — set the collation of attr slot `attnum`.
+void TupleDescInitEntryCollation(TupleDesc desc, int attnum, mytoydb::catalog::Oid collation);
 
 // --- Relcache management ---
 

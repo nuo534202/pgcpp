@@ -21,6 +21,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include "mytoydb/access/nbtpage.hpp"
 #include "mytoydb/access/rel.hpp"
@@ -101,6 +102,19 @@ void btrescan(BTScanDesc scan, const BTScanKeyData* new_scan_key);
 // btendscan — release scan resources.
 void btendscan(BTScanDesc scan);
 
+// --- P0 extensions (Task 15.8.5 / GAP-M8-F05/F06) ---
+
+// btcanreturn — can the B-tree AM return heap tuples (index-only scans)?
+// Always returns true for B-tree (PostgreSQL's amcanreturn).
+bool btcanreturn(Relation index);
+
+// btgetbitmap — fetch all matching tids into a bitmap (vector).
+// Repeatedly calls btgettuple until the scan is exhausted, appending each
+// matching tid to `tids`. Returns the number of tids collected.
+// The scan must have been started with btbeginscan; this function does not
+// reset the scan position, so callers typically begin a fresh scan first.
+int64_t btgetbitmap(BTScanDesc scan, std::vector<mytoydb::transaction::ItemPointerData>* tids);
+
 // --- Index creation ---
 
 // btbuild — create a new B-tree index.
@@ -125,5 +139,32 @@ mytoydb::storage::OffsetNumber _bt_find_insert_pos(mytoydb::storage::Page page, 
 // Returns the offset number, or one past the last entry if not found.
 mytoydb::storage::OffsetNumber _bt_find_scan_pos(mytoydb::storage::Page page, BTKeyKind kind,
                                                  const void* key, uint16_t key_len);
+
+// --- P0 helper extensions (Task 15.8.5 / FN15/FN23/FN28) ---
+
+// _bt_binsrch — binary search a B-tree page for a key.
+//
+// When for_insert is false, returns the first offset whose item key is >= the
+// search key (i.e., the scan start position). When for_insert is true, returns
+// the first offset whose item key is strictly > the search key (used to place
+// new keys after all equal keys during insertion). Returns an offset in
+// [1, max_offset+1]; max_offset+1 means the key belongs past the last item.
+//
+// Assumes all line pointers on the page are normal (true for compacted
+// B-tree pages in MyToyDB; the linear _bt_find_insert_pos / _bt_find_scan_pos
+// helpers remain available for pages that may contain dead entries).
+mytoydb::storage::OffsetNumber _bt_binsrch(mytoydb::storage::Page page, BTKeyKind kind,
+                                           const void* key, uint16_t key_len, bool for_insert);
+
+// _bt_getbuf — read and pin a B-tree page by block number.
+mytoydb::storage::Buffer _bt_getbuf(Relation index, mytoydb::storage::BlockNumber blkno);
+
+// _bt_relandgetbuf — release the current buffer and read a new one.
+// Equivalent to ReleaseBuffer(buf); _bt_getbuf(index, blkno).
+mytoydb::storage::Buffer _bt_relandgetbuf(Relation index, mytoydb::storage::Buffer buf,
+                                          mytoydb::storage::BlockNumber blkno);
+
+// _bt_relbuf — release a pinned B-tree buffer.
+void _bt_relbuf(Relation index, mytoydb::storage::Buffer buf);
 
 }  // namespace mytoydb::access

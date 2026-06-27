@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "mytoydb/access/nbtpage.hpp"
 #include "mytoydb/access/rel.hpp"
@@ -29,17 +30,20 @@
 #include "mytoydb/common/memory/alloc_set.hpp"
 #include "mytoydb/common/memory/memory_context.hpp"
 #include "mytoydb/storage/bufmgr.hpp"
+#include "mytoydb/storage/bufpage.hpp"
 #include "mytoydb/storage/smgr.hpp"
 #include "mytoydb/transaction/heap_tuple.hpp"
 #include "mytoydb/transaction/transam.hpp"
 #include "mytoydb/transaction/xact.hpp"
 
+using mytoydb::access::_bt_binsrch;
 using mytoydb::access::_bt_build_item;
 using mytoydb::access::_bt_compare_int32;
 using mytoydb::access::_bt_compare_int64;
 using mytoydb::access::_bt_compare_keys;
 using mytoydb::access::_bt_compare_text;
 using mytoydb::access::_bt_get_meta;
+using mytoydb::access::_bt_getbuf;
 using mytoydb::access::_bt_init_meta_page;
 using mytoydb::access::_bt_init_page;
 using mytoydb::access::_bt_is_leaf_page;
@@ -48,9 +52,13 @@ using mytoydb::access::_bt_item_get_key;
 using mytoydb::access::_bt_item_get_key_len;
 using mytoydb::access::_bt_item_size;
 using mytoydb::access::_bt_page_getopaque;
+using mytoydb::access::_bt_relandgetbuf;
+using mytoydb::access::_bt_relbuf;
 using mytoydb::access::btbeginscan;
 using mytoydb::access::btbuild;
+using mytoydb::access::btcanreturn;
 using mytoydb::access::btendscan;
+using mytoydb::access::btgetbitmap;
 using mytoydb::access::btgettuple;
 using mytoydb::access::btinsert;
 using mytoydb::access::BTItem;
@@ -85,7 +93,13 @@ using mytoydb::catalog::SetSysCache;
 using mytoydb::catalog::SysCache;
 using mytoydb::memory::AllocSetContext;
 using mytoydb::storage::BlockNumber;
+using mytoydb::storage::Buffer;
+using mytoydb::storage::BufferGetPage;
 using mytoydb::storage::InitBufferPool;
+using mytoydb::storage::kInvalidBuffer;
+using mytoydb::storage::OffsetNumber;
+using mytoydb::storage::Page;
+using mytoydb::storage::PageGetMaxOffsetNumber;
 using mytoydb::storage::SetStorageBaseDir;
 using mytoydb::storage::ShutdownBufferPool;
 using mytoydb::storage::smgrcloseall;
@@ -715,5 +729,255 @@ TEST_F(NbtreeTest, EqualityScanAfterSplit) {
     EXPECT_FALSE(btgettuple(scan));
     btendscan(scan);
 
+    RelationClose(rel);
+}
+
+// --- P0 extensions (Task 15.8.5): btcanreturn ---
+
+TEST_F(NbtreeTest, CanReturnIsTrueForBtree) {
+    constexpr Oid kRelid = 2100;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_canreturn");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    // B-tree always supports index-only scans (amcanreturn).
+    EXPECT_TRUE(btcanreturn(rel));
+
+    RelationClose(rel);
+}
+
+// --- btgetbitmap ---
+
+TEST_F(NbtreeTest, GetBitmapCollectsAllTids) {
+    constexpr Oid kRelid = 2101;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_getbitmap");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    // Insert 10 entries with distinct keys.
+    for (int i = 1; i <= 10; i++) {
+        int32_t key = i * 10;
+        ItemPointerData tid = MakeTid(static_cast<BlockNumber>(i / 4), static_cast<uint16_t>(i));
+        ASSERT_TRUE(btinsert(rel, BTKeyKind::kInt32, &key, 4, tid));
+    }
+
+    // Full scan via btgetbitmap should collect all 10 tids.
+    std::vector<ItemPointerData> tids;
+    BTScanDesc scan = btbeginscan(rel, BTKeyKind::kInt32, nullptr);
+    int64_t n = btgetbitmap(scan, &tids);
+    EXPECT_EQ(n, 10);
+    EXPECT_EQ(static_cast<int>(tids.size()), 10);
+    btendscan(scan);
+
+    // TIDs should be in ascending key order (10, 20, ..., 100), which means
+    // offsets 1..10 in sequence.
+    for (int i = 0; i < 10; i++) {
+        EXPECT_EQ(tids[i].ip_posid, static_cast<uint16_t>(i + 1));
+    }
+
+    RelationClose(rel);
+}
+
+TEST_F(NbtreeTest, GetBitmapWithEmptyIndexReturnsZero) {
+    constexpr Oid kRelid = 2102;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_getbitmap_empty");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    std::vector<ItemPointerData> tids;
+    BTScanDesc scan = btbeginscan(rel, BTKeyKind::kInt32, nullptr);
+    int64_t n = btgetbitmap(scan, &tids);
+    EXPECT_EQ(n, 0);
+    EXPECT_TRUE(tids.empty());
+    btendscan(scan);
+
+    RelationClose(rel);
+}
+
+TEST_F(NbtreeTest, GetBitmapWithNullArgsIsZero) {
+    // Defensive: nullptr scan or tids yields 0 (no crash).
+    std::vector<ItemPointerData> tids;
+    EXPECT_EQ(btgetbitmap(nullptr, &tids), 0);
+
+    constexpr Oid kRelid = 2103;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_getbitmap_null");
+    btbuild(rel, BTKeyKind::kInt32);
+    BTScanDesc scan = btbeginscan(rel, BTKeyKind::kInt32, nullptr);
+    EXPECT_EQ(btgetbitmap(scan, nullptr), 0);
+    btendscan(scan);
+    RelationClose(rel);
+}
+
+// --- _bt_binsrch ---
+
+TEST_F(NbtreeTest, BinsrchScanModeFindsFirstGreaterOrEqual) {
+    constexpr Oid kRelid = 2104;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_binsrch_scan");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    // Insert keys 10, 20, 30, 40, 50 at offsets 1..5.
+    for (int i = 1; i <= 5; i++) {
+        int32_t key = i * 10;
+        ItemPointerData tid = MakeTid(0, static_cast<uint16_t>(i));
+        ASSERT_TRUE(btinsert(rel, BTKeyKind::kInt32, &key, 4, tid));
+    }
+
+    // Root leaf is block 1.
+    Buffer buf = _bt_getbuf(rel, 1);
+    ASSERT_NE(buf, kInvalidBuffer);
+    Page page = BufferGetPage(buf);
+    EXPECT_EQ(PageGetMaxOffsetNumber(page), 5u);
+
+    // for_insert=false: find first item with key >= search key.
+    // key=25 → first >= 25 is 30 at offset 3.
+    int32_t key25 = 25;
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key25, 4, /*for_insert=*/false),
+              static_cast<OffsetNumber>(3));
+
+    // key=10 → first >= 10 is 10 at offset 1.
+    int32_t key10 = 10;
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key10, 4, false), static_cast<OffsetNumber>(1));
+
+    // key=50 → first >= 50 is 50 at offset 5.
+    int32_t key50 = 50;
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key50, 4, false), static_cast<OffsetNumber>(5));
+
+    // key=60 → no item >= 60; returns max_offset+1 = 6 (past end).
+    int32_t key60 = 60;
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key60, 4, false), static_cast<OffsetNumber>(6));
+
+    _bt_relbuf(rel, buf);
+    RelationClose(rel);
+}
+
+TEST_F(NbtreeTest, BinsrchInsertModeFindsFirstStrictlyGreater) {
+    constexpr Oid kRelid = 2105;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_binsrch_insert");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    // Insert keys 10, 20, 20, 30 (note the duplicate 20) at offsets 1..4.
+    int32_t keys[] = {10, 20, 20, 30};
+    for (int i = 0; i < 4; i++) {
+        ItemPointerData tid = MakeTid(0, static_cast<uint16_t>(i + 1));
+        ASSERT_TRUE(btinsert(rel, BTKeyKind::kInt32, &keys[i], 4, tid));
+    }
+
+    Buffer buf = _bt_getbuf(rel, 1);
+    ASSERT_NE(buf, kInvalidBuffer);
+    Page page = BufferGetPage(buf);
+    EXPECT_EQ(PageGetMaxOffsetNumber(page), 4u);
+
+    // for_insert=true: find first item with key strictly > search key.
+    // key=20 → first > 20 is 30 at offset 4 (skips both 20s).
+    int32_t key20 = 20;
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key20, 4, /*for_insert=*/true),
+              static_cast<OffsetNumber>(4));
+
+    // key=10 → first > 10 is 20 at offset 2.
+    int32_t key10 = 10;
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key10, 4, true), static_cast<OffsetNumber>(2));
+
+    // key=30 → first > 30 is none; returns max_offset+1 = 5 (past end).
+    int32_t key30 = 30;
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key30, 4, true), static_cast<OffsetNumber>(5));
+
+    _bt_relbuf(rel, buf);
+    RelationClose(rel);
+}
+
+TEST_F(NbtreeTest, BinsrchOnEmptyPageReturnsOne) {
+    constexpr Oid kRelid = 2106;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_binsrch_empty");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    // Freshly built index: root leaf has no items.
+    Buffer buf = _bt_getbuf(rel, 1);
+    ASSERT_NE(buf, kInvalidBuffer);
+    Page page = BufferGetPage(buf);
+    EXPECT_EQ(PageGetMaxOffsetNumber(page), 0u);
+
+    int32_t key = 42;
+    // Empty page: any search returns offset 1 (the first valid insert position).
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key, 4, false), static_cast<OffsetNumber>(1));
+    EXPECT_EQ(_bt_binsrch(page, BTKeyKind::kInt32, &key, 4, true), static_cast<OffsetNumber>(1));
+
+    _bt_relbuf(rel, buf);
+    RelationClose(rel);
+}
+
+// --- _bt_getbuf / _bt_relandgetbuf / _bt_relbuf ---
+
+TEST_F(NbtreeTest, GetbufPinsMetaAndRootPages) {
+    constexpr Oid kRelid = 2107;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_getbuf");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    // btbuild creates block 0 (meta) and block 1 (root leaf).
+    Buffer meta_buf = _bt_getbuf(rel, 0);
+    EXPECT_NE(meta_buf, kInvalidBuffer);
+
+    Buffer root_buf = _bt_getbuf(rel, 1);
+    EXPECT_NE(root_buf, kInvalidBuffer);
+
+    // Different blocks yield different buffer handles.
+    EXPECT_NE(meta_buf, root_buf);
+
+    _bt_relbuf(rel, meta_buf);
+    _bt_relbuf(rel, root_buf);
+    RelationClose(rel);
+}
+
+TEST_F(NbtreeTest, RelandgetbufSwapsPinnedPage) {
+    constexpr Oid kRelid = 2108;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_relandgetbuf");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    Buffer buf = _bt_getbuf(rel, 0);
+    ASSERT_NE(buf, kInvalidBuffer);
+
+    // Release block 0 and pin block 1 in one call.
+    Buffer buf2 = _bt_relandgetbuf(rel, buf, 1);
+    EXPECT_NE(buf2, kInvalidBuffer);
+    EXPECT_NE(buf2, buf);
+
+    _bt_relbuf(rel, buf2);
+    RelationClose(rel);
+}
+
+TEST_F(NbtreeTest, RelbufOnInvalidBufferIsNoOp) {
+    constexpr Oid kRelid = 2109;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_relbuf_noop");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    // Releasing kInvalidBuffer is a safe no-op (defensive guard in _bt_relbuf).
+    _bt_relbuf(rel, kInvalidBuffer);
+
+    // The index is still usable after the no-op release.
+    int32_t key = 7;
+    ItemPointerData tid = MakeTid(0, 1);
+    EXPECT_TRUE(btinsert(rel, BTKeyKind::kInt32, &key, 4, tid));
+
+    RelationClose(rel);
+}
+
+TEST_F(NbtreeTest, GetbufAndBinsrchRoundTrip) {
+    // End-to-end: _bt_getbuf + _bt_binsrch + _bt_relbuf to locate a key.
+    constexpr Oid kRelid = 2110;
+    Relation rel = CreateTestIndex(kRelid, "test_idx_getbuf_binsrch");
+    btbuild(rel, BTKeyKind::kInt32);
+
+    for (int i = 1; i <= 5; i++) {
+        int32_t key = i * 100;  // 100, 200, 300, 400, 500
+        ItemPointerData tid = MakeTid(0, static_cast<uint16_t>(i));
+        ASSERT_TRUE(btinsert(rel, BTKeyKind::kInt32, &key, 4, tid));
+    }
+
+    Buffer buf = _bt_getbuf(rel, 1);
+    ASSERT_NE(buf, kInvalidBuffer);
+    Page page = BufferGetPage(buf);
+
+    // Locate 300 (should be at offset 3).
+    int32_t key = 300;
+    OffsetNumber off = _bt_binsrch(page, BTKeyKind::kInt32, &key, 4, false);
+    EXPECT_EQ(off, static_cast<OffsetNumber>(3));
+
+    _bt_relbuf(rel, buf);
     RelationClose(rel);
 }

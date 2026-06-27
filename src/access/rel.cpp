@@ -74,17 +74,14 @@ TupleDesc CreateTupleDesc(const std::vector<mytoydb::catalog::FormData_pg_attrib
 
 // --- Relation lifecycle ---
 
-Relation RelationOpen(mytoydb::catalog::Oid relid) {
-    // Check the relcache first.
-    auto& cache = Relcache();
-    auto it = cache.find(relid);
-    if (it != cache.end()) {
-        it->second->rd_refcnt++;
-        return it->second;
-    }
-
-    // Look up the pg_class row.
+// RelationBuildDesc — build a fresh RelationData from the catalog (cache-miss
+// path). Extracted from RelationOpen so it can be tested independently and
+// reused by invalidation/refresh paths.
+Relation RelationBuildDesc(mytoydb::catalog::Oid relid) {
     mytoydb::catalog::Catalog* cat = mytoydb::catalog::GetCatalog();
+    if (cat == nullptr) {
+        return nullptr;
+    }
     const mytoydb::catalog::FormData_pg_class* pg_class = cat->GetClassByOid(relid);
     if (pg_class == nullptr) {
         return nullptr;
@@ -113,7 +110,23 @@ Relation RelationOpen(mytoydb::catalog::Oid relid) {
     if (relfilenode != mytoydb::catalog::kInvalidOid) {
         rel->rd_smgr = mytoydb::storage::smgropen(MakeRelFileNodeBackend(relfilenode));
     }
+    return rel;
+}
 
+Relation RelationOpen(mytoydb::catalog::Oid relid) {
+    // Check the relcache first.
+    auto& cache = Relcache();
+    auto it = cache.find(relid);
+    if (it != cache.end()) {
+        it->second->rd_refcnt++;
+        return it->second;
+    }
+
+    // Cache miss: build a fresh descriptor and install it in the cache.
+    Relation rel = RelationBuildDesc(relid);
+    if (rel == nullptr) {
+        return nullptr;
+    }
     cache[relid] = rel;
     return rel;
 }
@@ -124,6 +137,70 @@ void RelationClose(Relation relation) {
     relation->rd_refcnt--;
     // We keep the relation in the relcache even at refcnt 0 for reuse.
     // The relcache is cleared explicitly by ResetRelcache().
+}
+
+Relation RelationIdGetRelation(mytoydb::catalog::Oid relid) {
+    return RelationOpen(relid);
+}
+
+void RelationCloseByOid(mytoydb::catalog::Oid relid) {
+    auto& cache = Relcache();
+    auto it = cache.find(relid);
+    if (it == cache.end()) {
+        return;
+    }
+    RelationClose(it->second);
+}
+
+void RelationCacheInvalidate(mytoydb::catalog::Oid relid) {
+    auto& cache = Relcache();
+    auto it = cache.find(relid);
+    if (it == cache.end()) {
+        return;
+    }
+    Relation rel = it->second;
+    // Drop one pin (PG semantics: invalidation removes one reference). The
+    // entry is removed regardless of remaining refcnt — callers are expected
+    // to re-open the relation if they still hold a stale pointer.
+    if (rel->rd_refcnt > 0) {
+        rel->rd_refcnt--;
+    }
+    // Close the storage handle if one was opened.
+    if (rel->rd_smgr != nullptr) {
+        mytoydb::storage::smgrclose(rel->rd_smgr);
+        rel->rd_smgr = nullptr;
+    }
+    cache.erase(it);
+}
+
+void RelationClearRelation(Relation rel) {
+    if (rel == nullptr) {
+        return;
+    }
+    auto& cache = Relcache();
+    auto it = cache.find(rel->rd_id);
+    if (it != cache.end() && it->second == rel) {
+        if (rel->rd_refcnt > 0) {
+            rel->rd_refcnt--;
+        }
+        if (rel->rd_smgr != nullptr) {
+            mytoydb::storage::smgrclose(rel->rd_smgr);
+            rel->rd_smgr = nullptr;
+        }
+        cache.erase(it);
+    } else {
+        // Not in the cache (or pointer mismatch): just decrement the refcnt.
+        if (rel->rd_refcnt > 0) {
+            rel->rd_refcnt--;
+        }
+    }
+}
+
+int RelationGetNumberOfAttributes(Relation rel) {
+    if (rel == nullptr || rel->rd_att == nullptr) {
+        return 0;
+    }
+    return rel->rd_att->natts;
 }
 
 mytoydb::storage::SmgrRelation RelationGetSmgr(Relation relation) {
