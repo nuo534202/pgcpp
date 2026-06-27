@@ -24,6 +24,16 @@ struct PlannerInfo {
     mytoydb::parser::Query* parse = nullptr;    // the query being planned
     std::vector<RelOptInfo*> simple_rel_array;  // base relation infos (1-based)
     int limit_tuples = -1;                      // LIMIT count, -1 if none
+    // --- P0 extensions (Task 15.3): PG-style planner state ---
+    std::vector<mytoydb::parser::RangeTblEntry*> simple_rte_array;  // RTE array (1-based)
+    std::vector<RelOptInfo*> join_rel_list;                         // join-relation list (skeleton)
+    PlannerInfo* parent_root = nullptr;                             // parent query's PlannerInfo
+    double tuple_fraction = 0.0;                                    // tuple fraction (LIMIT hint)
+    bool has_recursion = false;                                     // recursive CTE?
+    std::vector<mytoydb::parser::Node*> group_pathkeys;             // group pathkeys
+    std::vector<mytoydb::parser::Node*> sort_pathkeys;              // sort pathkeys
+    std::vector<mytoydb::parser::Node*> distinct_pathkeys;          // distinct pathkeys
+    int wt_param_id = -1;                                           // window-function parameter ID
 };
 
 // planner — top-level planner entry point.
@@ -38,5 +48,33 @@ mytoydb::executor::Plan* planner(mytoydb::parser::Query* query);
 // Builds RelOptInfo for each base relation, generates paths, selects the
 // cheapest, then layers aggregation/sort/limit/projection on top.
 mytoydb::executor::Plan* subplanner(PlannerInfo* root);
+
+// --- P0 extensions (Task 15.3): PG-style planner entry points ---
+//
+// These mirror PostgreSQL's planner.c entry hierarchy:
+//   standard_planner → subquery_planner → grouping_planner → query_planner
+//
+// The existing planner() entry point continues to use subplanner() for
+// ClickBench compatibility. The new entry points provide a parallel
+// PG-style pipeline exercised by the new unit tests.
+
+// standard_planner — PG-style top-level planner entry.
+// Creates a PlannerInfo and delegates to subquery_planner.
+mytoydb::executor::Plan* standard_planner(mytoydb::parser::Query* query);
+
+// subquery_planner — plan a subquery (simplified: delegates to grouping_planner).
+mytoydb::executor::Plan* subquery_planner(PlannerInfo* root, mytoydb::parser::Query* parse,
+                                          PlannerInfo* parent_root, bool has_recursion,
+                                          double tuple_fraction);
+
+// grouping_planner — handle aggregation/sort/distinct/window (simplified).
+// Delegates the base scan to query_planner, then wraps Agg/Sort on top.
+mytoydb::executor::Plan* grouping_planner(PlannerInfo* root, double tuple_fraction, bool can_sort);
+
+// query_planner — complete PG-style pipeline for the base scan:
+//   query_planner_init → path generation → create_plan → set_plan_references.
+// For single-table queries with aggregates/sort, the complete plan (including
+// Agg/Sort layers) is built via Path objects and translated by create_plan.
+mytoydb::executor::Plan* query_planner(PlannerInfo* root, mytoydb::parser::Query* parse);
 
 }  // namespace mytoydb::optimizer

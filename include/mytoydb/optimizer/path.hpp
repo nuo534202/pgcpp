@@ -14,10 +14,21 @@
 #include <vector>
 
 #include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/executor/plannodes.hpp"
 #include "mytoydb/parser/parsenodes.hpp"
 #include "mytoydb/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
+
+// Forward declaration — defined in util/restrictinfo.hpp. RestrictInfo wraps a
+// qual clause with optimizer metadata. Forward-declared here so Path subclasses
+// can hold vectors of RestrictInfo pointers without a full include dependency.
+struct RestrictInfo;
+
+// Forward declaration — defined below in this file. RelOptInfo holds
+// per-relation optimizer state. Forward-declared here so Path can hold a
+// back-pointer to its parent RelOptInfo.
+struct RelOptInfo;
 
 // Cost and cardinality types (mirrors PostgreSQL's Cost/Cardinality/Selectivity).
 using Cost = double;
@@ -28,6 +39,11 @@ using Selectivity = double;
 enum class PathType {
     kSeqScan,
     kIndexScan,
+    kNestLoop,
+    kHashJoin,
+    kSort,
+    kAgg,
+    kResult,
 };
 
 // Path — base class for all access paths.
@@ -43,6 +59,9 @@ struct Path {
     Cost total_cost = 0.0;    // total cost for all rows
     Cardinality rows = 0.0;   // estimated number of output rows
     int width = 0;            // estimated average row width in bytes
+    // Back-pointer to the RelOptInfo this path belongs to (PG's `parent`).
+    // Used by create_plan to look up the relindex and baserestrictinfo.
+    RelOptInfo* parent_rel = nullptr;
     virtual ~Path() = default;
 };
 
@@ -58,6 +77,49 @@ struct IndexPath : Path {
     std::vector<mytoydb::parser::Node*> indexqual;  // index scan qualifiers
 };
 
+// JoinPath — base class for join paths (NestLoop, HashJoin).
+// Holds outer/inner subpaths and the join restrictlist.
+struct JoinPath : Path {
+    JoinPath() = default;
+    Path* outer = nullptr;  // outer (left) subpath
+    Path* inner = nullptr;  // inner (right) subpath
+};
+
+// NestLoopPath — nested-loop join path.
+struct NestLoopPath : JoinPath {
+    NestLoopPath() { type = PathType::kNestLoop; }
+    std::vector<RestrictInfo*> restrictlist;  // join conditions
+};
+
+// HashJoinPath — hash join path.
+struct HashJoinPath : JoinPath {
+    HashJoinPath() { type = PathType::kHashJoin; }
+    std::vector<mytoydb::parser::Node*> hashclauses;  // hash join clauses
+};
+
+// SortPath — sort path (wraps a subpath with a sort).
+struct SortPath : Path {
+    SortPath() { type = PathType::kSort; }
+    Path* subpath = nullptr;                                  // the path to sort
+    std::vector<mytoydb::parser::SortGroupClause*> pathkeys;  // sort keys
+};
+
+// AggPath — aggregate path (wraps a subpath with aggregation).
+struct AggPath : Path {
+    AggPath() { type = PathType::kAgg; }
+    Path* subpath = nullptr;  // input path
+    mytoydb::executor::Agg::Strategy aggstrategy =
+        mytoydb::executor::Agg::Strategy::kPlain;      // plain/sorted/hashed
+    std::vector<mytoydb::parser::Node*> group_clause;  // GROUP BY clauses
+    int num_groups = 0;                                // estimated group count
+};
+
+// ResultPath — for queries with no FROM clause (e.g., SELECT 1).
+struct ResultPath : Path {
+    ResultPath() { type = PathType::kResult; }
+    std::vector<mytoydb::parser::Node*> quals;  // one-time filter quals
+};
+
 // RelOptInfo — per-relation optimizer state.
 //
 // Mirrors PostgreSQL's RelOptInfo. Holds the range table entry, candidate
@@ -71,6 +133,12 @@ struct RelOptInfo {
     Path* cheapest_path = nullptr;                  // cheapest path selected
     Cardinality rows = 0.0;                         // estimated row count
     int width = 0;                                  // estimated row width
+    // --- P0 extensions (Task 15.3): PG-style restrictinfo and statistics ---
+    std::vector<RestrictInfo*> baserestrictinfo;  // base-restriction clauses (WHERE)
+    std::vector<RestrictInfo*> joininfo;          // join clauses involving this rel
+    int pages = 0;                                // estimated relation pages
+    int tuples = 0;                               // estimated relation tuples
+    bool consider_startup = false;                // consider startup cost?
 };
 
 }  // namespace mytoydb::optimizer

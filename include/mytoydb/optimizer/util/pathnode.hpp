@@ -1,0 +1,62 @@
+// pathnode.h — Path construction factory functions.
+//
+// Converted from PostgreSQL 15's src/include/optimizer/pathnode.h and
+// src/backend/optimizer/util/pathnode.c.
+//
+// Provides factory functions that allocate and initialize Path subclass
+// objects (SeqScanPath, IndexPath, NestLoopPath, HashJoinPath, SortPath,
+// AggPath, ResultPath) and utilities for managing a RelOptInfo's pathlist.
+#pragma once
+
+#include <vector>
+
+#include "mytoydb/catalog/catalog.hpp"
+#include "mytoydb/executor/plannodes.hpp"
+#include "mytoydb/optimizer/path.hpp"
+#include "mytoydb/optimizer/util/restrictinfo.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
+
+namespace mytoydb::optimizer {
+
+// Forward declaration — defined in mytoydb/optimizer/planner.hpp. Forward-
+// declared here to avoid a circular include (planner.hpp → path.hpp → here).
+struct PlannerInfo;
+
+// create_seqscan_path — create a SeqScanPath for a base relation.
+SeqScanPath* create_seqscan_path(PlannerInfo* root, RelOptInfo* rel);
+
+// create_index_path — create an IndexPath for a base relation.
+IndexPath* create_index_path(PlannerInfo* root, RelOptInfo* rel, mytoydb::catalog::Oid indexid,
+                             std::vector<mytoydb::parser::Node*> indexclauses);
+
+// create_nestloop_path — create a NestLoopPath for a join relation.
+NestLoopPath* create_nestloop_path(PlannerInfo* root, RelOptInfo* joinrel, Path* outer, Path* inner,
+                                   std::vector<RestrictInfo*> restrictlist);
+
+// create_hashjoin_path — create a HashJoinPath for a join relation.
+HashJoinPath* create_hashjoin_path(PlannerInfo* root, RelOptInfo* joinrel, Path* outer, Path* inner,
+                                   std::vector<mytoydb::parser::Node*> hashclauses);
+
+// create_sort_path — create a SortPath wrapping a subpath.
+SortPath* create_sort_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
+                           std::vector<mytoydb::parser::SortGroupClause*> pathkeys);
+
+// create_agg_path — create an AggPath wrapping a subpath.
+AggPath* create_agg_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
+                         mytoydb::executor::Agg::Strategy aggstrategy,
+                         std::vector<mytoydb::parser::Node*> group_clause, int num_groups);
+
+// create_result_path — create a ResultPath (for no-FROM queries).
+ResultPath* create_result_path(PlannerInfo* root, RelOptInfo* rel,
+                               std::vector<mytoydb::parser::Node*> quals);
+
+// add_path — add a candidate path to a relation's pathlist.
+// Simplified: does not perform PG's dominator-based path pruning; just
+// pushes the path and updates cheapest_path if appropriate.
+void add_path(RelOptInfo* rel, Path* path);
+
+// cheapest_path — return the cheapest path for a relation (by total_cost).
+// Returns nullptr if the pathlist is empty.
+Path* cheapest_path(RelOptInfo* rel);
+
+}  // namespace mytoydb::optimizer
