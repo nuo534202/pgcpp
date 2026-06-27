@@ -16,6 +16,7 @@
 #include "mytoydb/common/error/elog.hpp"
 #include "mytoydb/common/memory/alloc_set.hpp"
 #include "mytoydb/common/memory/memory_context.hpp"
+#include "mytoydb/parser/parsenodes.hpp"
 #include "mytoydb/parser/primnodes.hpp"
 #include "mytoydb/types/datetime.hpp"
 #include "mytoydb/types/datum.hpp"
@@ -31,9 +32,12 @@ using mytoydb::catalog::kInvalidOid;
 using mytoydb::catalog::Oid;
 using mytoydb::memory::palloc;
 using mytoydb::nodes::NodeTag;
+using mytoydb::parser::AArrayExpr;
 using mytoydb::parser::Aggref;
 using mytoydb::parser::BoolExpr;
 using mytoydb::parser::BoolExprType;
+using mytoydb::parser::CaseExpr;
+using mytoydb::parser::CaseWhen;
 using mytoydb::parser::Const;
 using mytoydb::parser::FuncExpr;
 using mytoydb::parser::Node;
@@ -42,6 +46,7 @@ using mytoydb::parser::NullTestType;
 using mytoydb::parser::OpExpr;
 using mytoydb::parser::Param;
 using mytoydb::parser::RelabelType;
+using mytoydb::parser::ScalarArrayOpExpr;
 using mytoydb::parser::TargetEntry;
 using mytoydb::parser::Var;
 using mytoydb::types::BoolGetDatum;
@@ -332,6 +337,82 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
             return 0;
         }
 
+        case NodeTag::kScalarArrayOpExpr: {
+            // Scalar OP array, e.g. x IN (1,2,3) (use_or=true) or
+            // x OP ALL(...) (use_or=false). MyToyDB represents the IN list
+            // directly as an AArrayExpr in args[1] (no ArrayExpr coercion).
+            auto* saop = static_cast<ScalarArrayOpExpr*>(expr);
+            if (saop->args.size() != 2) {
+                *isNull = true;
+                return 0;
+            }
+            const auto* oprow = GetCatalog()->GetOperatorByOid(saop->opno);
+            if (oprow == nullptr) {
+                *isNull = true;
+                return 0;
+            }
+            const std::string& opname = oprow->oprname;
+            Oid lefttype = oprow->oprleft;
+
+            // Evaluate the scalar operand.
+            bool scalar_null = false;
+            Datum scalar = ExecEvalExpr(saop->args[0], econtext, &scalar_null);
+            if (scalar_null) {
+                // NULL IN (...) → NULL per SQL.
+                *isNull = true;
+                return 0;
+            }
+
+            // args[1] must be an AArrayExpr (MyToyDB's IN-list representation).
+            if (saop->args[1]->GetTag() != NodeTag::kAArrayExpr) {
+                *isNull = true;
+                return 0;
+            }
+            auto* arr = static_cast<AArrayExpr*>(saop->args[1]);
+
+            bool any_null = false;
+            for (Node* elem_node : arr->elements) {
+                bool elem_null = false;
+                Datum elem_val = ExecEvalExpr(elem_node, econtext, &elem_null);
+                if (elem_null) {
+                    any_null = true;
+                    continue;
+                }
+                Datum cmp = ApplyComparison(opname, lefttype, scalar, false, elem_val, false);
+                bool matched = DatumGetBool(cmp);
+                if (saop->use_or) {
+                    // ANY/IN: short-circuit on true.
+                    if (matched) {
+                        *isNull = false;
+                        return BoolGetDatum(true);
+                    }
+                } else {
+                    // ALL/NOT IN: short-circuit on false.
+                    if (!matched) {
+                        *isNull = false;
+                        return BoolGetDatum(false);
+                    }
+                }
+            }
+
+            if (saop->use_or) {
+                // No match. If any element was NULL, result is NULL per SQL.
+                if (any_null) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return BoolGetDatum(false);
+            }
+            // ALL: all elements matched (no false encountered). NULL → NULL.
+            if (any_null) {
+                *isNull = true;
+                return 0;
+            }
+            *isNull = false;
+            return BoolGetDatum(true);
+        }
+
         case NodeTag::kFuncExpr: {
             auto* fn = static_cast<FuncExpr*>(expr);
             const auto* proc = GetCatalog()->GetProcByOid(fn->funcid);
@@ -363,6 +444,21 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                 std::string field(VARDATA(text), len);
                 *isNull = false;
                 return mytoydb::types::extract(field.c_str(), arg_values[1]);
+            }
+
+            // date_trunc(field, timestamp) — truncate a timestamp to the
+            // specified precision. Symmetric with extract: arg[0] is the field
+            // name as text, arg[1] is the timestamp Datum.
+            if (fname == "date_trunc") {
+                if (arg_nulls[0] || arg_nulls[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                const char* text = DatumGetTextP(arg_values[0]);
+                int len = VARSIZE_DATA(text);
+                std::string field(VARDATA(text), len);
+                *isNull = false;
+                return mytoydb::types::date_trunc(field.c_str(), arg_values[1]);
             }
 
             // length(text) — return the number of bytes in a text value.
@@ -470,6 +566,34 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
             } else {
                 return BoolGetDatum(!arg_null);
             }
+        }
+
+        case NodeTag::kCaseExpr: {
+            auto* ce = static_cast<CaseExpr*>(expr);
+            if (ce->arg == nullptr) {
+                // Searched form: CASE WHEN cond THEN result [WHEN ...]
+                // [ELSE defresult] END. Each CaseWhen::expr is a boolean
+                // condition.
+                for (Node* when_node : ce->args) {
+                    auto* cw = static_cast<CaseWhen*>(when_node);
+                    bool cond_null = false;
+                    Datum cond_val = ExecEvalExpr(cw->expr, econtext, &cond_null);
+                    if (!cond_null && DatumGetBool(cond_val)) {
+                        return ExecEvalExpr(cw->result, econtext, isNull);
+                    }
+                }
+            }
+            // TODO(Task 15.2): simple CASE form (arg != nullptr, i.e.
+            // CASE arg WHEN v THEN r ...) needs exprType() to resolve the
+            // equality operator comparing arg against each CaseWhen::expr.
+            // ClickBench Q40 uses the searched form only.
+            //
+            // No WHEN matched — return defresult (ELSE clause), or NULL.
+            if (ce->defresult != nullptr) {
+                return ExecEvalExpr(ce->defresult, econtext, isNull);
+            }
+            *isNull = true;
+            return 0;
         }
 
         case NodeTag::kRelabelType: {

@@ -48,6 +48,7 @@
 #include "mytoydb/transaction/snapshot.hpp"
 #include "mytoydb/transaction/transam.hpp"
 #include "mytoydb/transaction/xact.hpp"
+#include "mytoydb/types/datetime.hpp"
 #include "mytoydb/types/datum.hpp"
 
 using mytoydb::access::CreateTupleDesc;
@@ -112,7 +113,10 @@ using mytoydb::memory::palloc;
 using mytoydb::memory::pfree;
 using mytoydb::nodes::destroyPallocNode;
 using mytoydb::nodes::NodeTag;
+using mytoydb::parser::AArrayExpr;
 using mytoydb::parser::Aggref;
+using mytoydb::parser::CaseExpr;
+using mytoydb::parser::CaseWhen;
 using mytoydb::parser::CmdType;
 using mytoydb::parser::Const;
 using mytoydb::parser::JoinType;
@@ -123,6 +127,7 @@ using mytoydb::parser::OpExpr;
 using mytoydb::parser::Query;
 using mytoydb::parser::RangeTblEntry;
 using mytoydb::parser::RTEKind;
+using mytoydb::parser::ScalarArrayOpExpr;
 using mytoydb::parser::TargetEntry;
 using mytoydb::parser::Var;
 using mytoydb::storage::InitBufferPool;
@@ -343,6 +348,44 @@ protected:
         return op;
     }
 
+    // Helper: create a CaseWhen node (condition + result).
+    CaseWhen* MakeCaseWhen(Node* cond, Node* result) {
+        auto* cw = makePallocNode<CaseWhen>();
+        cw->expr = cond;
+        cw->result = result;
+        return cw;
+    }
+
+    // Helper: create a searched-form CaseExpr (arg == nullptr).
+    CaseExpr* MakeCaseExpr(std::vector<CaseWhen*> whens, Node* defresult) {
+        auto* ce = makePallocNode<CaseExpr>();
+        ce->casetype = kInt4Oid;
+        for (auto* w : whens) {
+            ce->args.push_back(w);
+        }
+        ce->defresult = defresult;
+        return ce;
+    }
+
+    // Helper: create a ScalarArrayOpExpr (e.g. x IN (list)).
+    ScalarArrayOpExpr* MakeScalarArrayOpExpr(Oid opno, bool use_or, Node* scalar, AArrayExpr* arr) {
+        auto* saop = makePallocNode<ScalarArrayOpExpr>();
+        saop->opno = opno;
+        saop->use_or = use_or;
+        saop->args.push_back(scalar);
+        saop->args.push_back(arr);
+        return saop;
+    }
+
+    // Helper: create an AArrayExpr from a list of int4 constants.
+    AArrayExpr* MakeInt4Array(std::vector<int32_t> values) {
+        auto* arr = makePallocNode<AArrayExpr>();
+        for (int32_t v : values) {
+            arr->elements.push_back(MakeInt4Const(v));
+        }
+        return arr;
+    }
+
     // Helper: create an Aggref node.
     Aggref* MakeAggref(Oid aggfnoid, Oid aggtype, bool aggstar = false) {
         auto* agg = makePallocNode<Aggref>();
@@ -512,6 +555,115 @@ TEST_F(ExecutorTest, ExecEvalExpr_OpExpr) {
     EXPECT_EQ(DatumGetInt32(result), 30);
 
     RelationClose(rel);
+}
+
+TEST_F(ExecutorTest, ExecEvalExpr_CaseExpr) {
+    // CASE WHEN a = 10 THEN 100 ELSE 200 END on tuple (10, 20) → 100.
+    Oid relid = kFirstNormalObjectId;
+    auto attrs = MakeIntIntSchema(relid);
+    auto* class_row = MakeClassRow("test_rel", relid);
+    catalog_->InsertClass(class_row);
+    for (const auto& attr : attrs) {
+        auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
+        catalog_->InsertAttribute(attr_row);
+    }
+    Relation rel = RelationOpen(relid);
+    TupleTableSlot* slot = TupleTableSlot::Make(rel->rd_att);
+    Datum values[2] = {Int32GetDatum(10), Int32GetDatum(20)};
+    bool isnull[2] = {false, false};
+    slot->StoreVirtual(values, isnull);
+
+    ExprContext* econtext = CreateExprContext();
+    econtext->ecxt_scantuple = slot;
+
+    // a = 10 matches → 100.
+    Var* a = MakeVar(1, 1, kInt4Oid);
+    OpExpr* cond = MakeOpExpr(kInt4EqOp, kBoolOid, a, MakeInt4Const(10));
+    CaseWhen* when1 = MakeCaseWhen(cond, MakeInt4Const(100));
+    CaseExpr* ce = MakeCaseExpr({when1}, MakeInt4Const(200));
+
+    bool isnull_result = false;
+    Datum result = ExecEvalExpr(ce, econtext, &isnull_result);
+    EXPECT_FALSE(isnull_result);
+    EXPECT_EQ(DatumGetInt32(result), 100);
+
+    // a = 99 does not match → ELSE 200.
+    Var* a2 = MakeVar(1, 1, kInt4Oid);
+    OpExpr* cond2 = MakeOpExpr(kInt4EqOp, kBoolOid, a2, MakeInt4Const(99));
+    CaseWhen* when2 = MakeCaseWhen(cond2, MakeInt4Const(100));
+    CaseExpr* ce2 = MakeCaseExpr({when2}, MakeInt4Const(200));
+    result = ExecEvalExpr(ce2, econtext, &isnull_result);
+    EXPECT_FALSE(isnull_result);
+    EXPECT_EQ(DatumGetInt32(result), 200);
+
+    // No ELSE, no match → NULL.
+    CaseExpr* ce3 = MakeCaseExpr({when2}, nullptr);
+    result = ExecEvalExpr(ce3, econtext, &isnull_result);
+    EXPECT_TRUE(isnull_result);
+
+    RelationClose(rel);
+}
+
+TEST_F(ExecutorTest, ExecEvalExpr_ScalarArrayOpExpr_IN) {
+    // a IN (10, 20, 30) on tuple (10, 20) → true (a=10 matches).
+    Oid relid = kFirstNormalObjectId;
+    auto attrs = MakeIntIntSchema(relid);
+    auto* class_row = MakeClassRow("test_rel", relid);
+    catalog_->InsertClass(class_row);
+    for (const auto& attr : attrs) {
+        auto* attr_row = makePallocNode<FormData_pg_attribute>(attr);
+        catalog_->InsertAttribute(attr_row);
+    }
+    Relation rel = RelationOpen(relid);
+    TupleTableSlot* slot = TupleTableSlot::Make(rel->rd_att);
+    Datum values[2] = {Int32GetDatum(10), Int32GetDatum(20)};
+    bool isnull[2] = {false, false};
+    slot->StoreVirtual(values, isnull);
+
+    ExprContext* econtext = CreateExprContext();
+    econtext->ecxt_scantuple = slot;
+
+    // a IN (10, 20, 30) → true.
+    Var* a = MakeVar(1, 1, kInt4Oid);
+    AArrayExpr* arr = MakeInt4Array({10, 20, 30});
+    ScalarArrayOpExpr* saop = MakeScalarArrayOpExpr(kInt4EqOp, true, a, arr);
+
+    bool isnull_result = false;
+    Datum result = ExecEvalExpr(saop, econtext, &isnull_result);
+    EXPECT_FALSE(isnull_result);
+    EXPECT_TRUE(DatumGetBool(result));
+
+    // a IN (40, 50) → false.
+    Var* a2 = MakeVar(1, 1, kInt4Oid);
+    AArrayExpr* arr2 = MakeInt4Array({40, 50});
+    ScalarArrayOpExpr* saop2 = MakeScalarArrayOpExpr(kInt4EqOp, true, a2, arr2);
+    result = ExecEvalExpr(saop2, econtext, &isnull_result);
+    EXPECT_FALSE(isnull_result);
+    EXPECT_FALSE(DatumGetBool(result));
+
+    RelationClose(rel);
+}
+
+TEST_F(ExecutorTest, ExecEvalExpr_FuncExpr_DateTrunc) {
+    // Directly exercise the date_trunc C function. The FuncExpr dispatch path
+    // (catalog proc lookup + argument evaluation) is covered end-to-end by the
+    // ClickBench Q43 integration test, which requires a registered date_trunc
+    // pg_proc row not set up by this fixture.
+    int64_t ts = 123456789012345;  // arbitrary μs since 2000-01-01
+
+    // Truncating to minute zeroes seconds and microseconds. Since the PG
+    // epoch (2000-01-01 00:00:00) is itself a minute boundary, the result is
+    // a whole number of minutes (60s = 60,000,000 μs).
+    int64_t minute_trunc = DatumGetInt64(mytoydb::types::date_trunc("minute", Int64GetDatum(ts)));
+    EXPECT_EQ(minute_trunc % 60000000, 0);
+    EXPECT_GT(minute_trunc, 0);
+    EXPECT_LE(minute_trunc, ts);
+    EXPECT_GT(minute_trunc, ts - 60000000);
+
+    // Truncating to hour zeroes minutes/seconds/microseconds (3,600s = 3.6e9 μs).
+    int64_t hour_trunc = DatumGetInt64(mytoydb::types::date_trunc("hour", Int64GetDatum(ts)));
+    EXPECT_EQ(hour_trunc % 3600000000LL, 0);
+    EXPECT_LE(hour_trunc, minute_trunc);
 }
 
 TEST_F(ExecutorTest, ExecQual_Predicate) {
