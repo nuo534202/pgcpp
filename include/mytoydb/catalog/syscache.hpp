@@ -72,6 +72,18 @@ public:
     const FormData_pg_type* SearchTypeByName(const std::string& name, Oid namespace_oid) const;
     const FormData_pg_type* SearchTypeByOid(Oid oid) const;
 
+    // --- pg_operator lookups (4-key: name, left, right, namespace) ---
+    const FormData_pg_operator* SearchOperatorByNameLRN(const std::string& name, Oid left,
+                                                        Oid right, Oid nsp) const;
+
+    // --- pg_proc lookups (name, argtypes vector, namespace) ---
+    const FormData_pg_proc* SearchProcByNameArgsNsp(const std::string& name,
+                                                    const std::vector<Oid>& argtypes,
+                                                    Oid nsp) const;
+
+    // --- pg_cast lookups (2-key: source, target) ---
+    const FormData_pg_cast* SearchCastBySourceTarget(Oid source, Oid target) const;
+
     // --- Pin management ---
     // PostgreSQL pins rows returned by SearchSysCache; ReleaseSysCache drops
     // the pin. In MyToyDB the rows are stable (owned by Catalog), so pins are
@@ -82,6 +94,9 @@ public:
     std::size_t ClassCacheSize() const { return class_by_oid_.size(); }
     std::size_t AttributeCacheSize() const { return attribute_by_relid_num_.size(); }
     std::size_t TypeCacheSize() const { return type_by_oid_.size(); }
+    std::size_t OperatorCacheSize() const { return operator_by_name_lr_n_.size(); }
+    std::size_t ProcCacheSize() const { return proc_by_name_args_nsp_.size(); }
+    std::size_t CastCacheSize() const { return cast_by_source_target_.size(); }
 
 private:
     // Hash indexes. Keys are tuples of the indexed columns.
@@ -97,6 +112,12 @@ private:
     std::unordered_map<Oid, const FormData_pg_type*> type_by_oid_;
     // type_by_name_: (name, namespace) -> row
     std::unordered_map<std::uint64_t, const FormData_pg_type*> type_by_name_;
+    // operator_by_name_lr_n_: (name, left, right, namespace) -> row
+    std::unordered_map<std::uint64_t, const FormData_pg_operator*> operator_by_name_lr_n_;
+    // proc_by_name_args_nsp_: (name, argtypes, namespace) -> row
+    std::unordered_map<std::uint64_t, const FormData_pg_proc*> proc_by_name_args_nsp_;
+    // cast_by_source_target_: (source, target) -> row
+    std::unordered_map<std::uint64_t, const FormData_pg_cast*> cast_by_source_target_;
 
     // Mutable reference counts (mutable so Release can be const, matching
     // PostgreSQL's SearchSysCache/ReleaseSysCache const-ish semantics).
@@ -116,6 +137,11 @@ private:
     }
     // For string keys, hash the string and combine with the Oid.
     static std::uint64_t MakeKey(const std::string& s, Oid oid);
+    // 4-key helper: combine (name, left, right, nsp) into a single 64-bit key.
+    static std::uint64_t MakeKey4(const std::string& s, Oid left, Oid right, Oid nsp);
+    // Multi-Oid key for pg_proc: combine (name, argtypes vector, nsp).
+    static std::uint64_t MakeKeyProc(const std::string& s, const std::vector<Oid>& argtypes,
+                                     Oid nsp);
 };
 
 // Global syscache accessor.
@@ -142,6 +168,19 @@ const void* SearchSysCache1(SysCacheIdentifier cache_id, uintptr_t key1);
 //   kAttributeRelidName  -> (relid, name as uintptr_t pointer to std::string)
 //   kTypeName            -> (name as uintptr_t pointer to std::string, namespace_oid)
 const void* SearchSysCache2(SysCacheIdentifier cache_id, uintptr_t key1, uintptr_t key2);
+
+// SearchSysCache3: lookup with three keys. Currently used for:
+//   kCastSourceTarget -> (source, target, 0) — the third key is unused.
+const void* SearchSysCache3(SysCacheIdentifier cache_id, uintptr_t key1, uintptr_t key2,
+                            uintptr_t key3);
+
+// SearchSysCache4: lookup with four keys. Used for:
+//   kOperatorNameLrN -> (name as uintptr_t pointer to std::string,
+//                        left_type, right_type, namespace_oid)
+//   kProcNameArgsNsp -> (name as uintptr_t pointer to std::string,
+//                        argtypes_vector_ptr, nargs, namespace_oid)
+const void* SearchSysCache4(SysCacheIdentifier cache_id, uintptr_t key1, uintptr_t key2,
+                            uintptr_t key3, uintptr_t key4);
 
 // ReleaseSysCache: drop the pin on a row returned by SearchSysCache*.
 void ReleaseSysCache(const void* entry);

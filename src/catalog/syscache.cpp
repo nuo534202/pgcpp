@@ -11,7 +11,10 @@
 
 #include "mytoydb/catalog/catalog.hpp"
 #include "mytoydb/catalog/pg_attribute.hpp"
+#include "mytoydb/catalog/pg_cast.hpp"
 #include "mytoydb/catalog/pg_class.hpp"
+#include "mytoydb/catalog/pg_operator.hpp"
+#include "mytoydb/catalog/pg_proc.hpp"
 #include "mytoydb/catalog/pg_type.hpp"
 #include "mytoydb/common/error/elog.hpp"
 
@@ -30,6 +33,32 @@ std::uint64_t SysCache::MakeKey(const std::string& s, Oid oid) {
     // (s, oid) collisions are unlikely in practice.
     auto h = std::hash<std::string>{}(s);
     return h ^ (static_cast<std::uint64_t>(oid) << 32) ^ 0x9E3779B97F4A7C15ULL;
+}
+
+std::uint64_t SysCache::MakeKey4(const std::string& s, Oid left, Oid right, Oid nsp) {
+    // Mix the string hash with the three Oids. Each Oid occupies a different
+    // bit position in the mix; the string hash provides the high entropy.
+    auto h = std::hash<std::string>{}(s);
+    std::uint64_t k = h;
+    k ^= static_cast<std::uint64_t>(left) * 0x9E3779B97F4A7C15ULL;
+    k ^= static_cast<std::uint64_t>(right) * 0xC2B2AE3D27D4EB4FULL;
+    k ^= static_cast<std::uint64_t>(nsp) * 0x165667B19E3779F9ULL;
+    return k;
+}
+
+std::uint64_t SysCache::MakeKeyProc(const std::string& s, const std::vector<Oid>& argtypes,
+                                    Oid nsp) {
+    // Hash the name, each argument type, and the namespace. This deliberately
+    // re-hashes the whole argtypes vector so that (name, [int4,int4], nsp)
+    // and (name, [int4], nsp) produce distinct keys.
+    auto h = std::hash<std::string>{}(s);
+    std::uint64_t k = h;
+    for (Oid arg : argtypes) {
+        k ^= static_cast<std::uint64_t>(arg) * 0x9E3779B97F4A7C15ULL;
+        k = (k << 1) | (k >> 63);
+    }
+    k ^= static_cast<std::uint64_t>(nsp) * 0xC2B2AE3D27D4EB4FULL;
+    return k;
 }
 
 // --- Init / Invalidate ---
@@ -64,6 +93,9 @@ void SysCache::Invalidate() {
     attribute_by_relid_name_.clear();
     type_by_oid_.clear();
     type_by_name_.clear();
+    operator_by_name_lr_n_.clear();
+    proc_by_name_args_nsp_.clear();
+    cast_by_source_target_.clear();
     refcounts_.clear();
 }
 
@@ -228,6 +260,82 @@ const FormData_pg_type* SysCache::SearchTypeByName(const std::string& name,
     return row;
 }
 
+// --- pg_operator lookups (4-key) ---
+
+const FormData_pg_operator* SysCache::SearchOperatorByNameLRN(const std::string& name, Oid left,
+                                                              Oid right, Oid nsp) const {
+    auto key = MakeKey4(name, left, right, nsp);
+    auto it = operator_by_name_lr_n_.find(key);
+    if (it != operator_by_name_lr_n_.end()) {
+        Pin(it->second);
+        return it->second;
+    }
+    const Catalog* cat = GetCatalog();
+    if (cat == nullptr) {
+        return nullptr;
+    }
+    const FormData_pg_operator* row = cat->GetOperator(name, left, right);
+    // PG would also filter by namespace_oid; MyToyDB has a single namespace
+    // for built-ins, so we accept any namespace value.
+    if (row != nullptr) {
+        const_cast<SysCache*>(this)->operator_by_name_lr_n_[key] = row;
+        Pin(row);
+    }
+    return row;
+}
+
+// --- pg_proc lookups (name + argtypes + nsp) ---
+
+const FormData_pg_proc* SysCache::SearchProcByNameArgsNsp(const std::string& name,
+                                                          const std::vector<Oid>& argtypes,
+                                                          Oid nsp) const {
+    auto key = MakeKeyProc(name, argtypes, nsp);
+    auto it = proc_by_name_args_nsp_.find(key);
+    if (it != proc_by_name_args_nsp_.end()) {
+        Pin(it->second);
+        return it->second;
+    }
+    const Catalog* cat = GetCatalog();
+    if (cat == nullptr) {
+        return nullptr;
+    }
+    // Find candidates by name, then exact-match on argument types.
+    auto candidates = cat->GetProcsByName(name);
+    const FormData_pg_proc* row = nullptr;
+    for (const auto* p : candidates) {
+        if (p->proargtypes == argtypes) {
+            row = p;
+            break;
+        }
+    }
+    if (row != nullptr) {
+        const_cast<SysCache*>(this)->proc_by_name_args_nsp_[key] = row;
+        Pin(row);
+    }
+    return row;
+}
+
+// --- pg_cast lookups (source, target) ---
+
+const FormData_pg_cast* SysCache::SearchCastBySourceTarget(Oid source, Oid target) const {
+    auto key = MakeKey(source, target);
+    auto it = cast_by_source_target_.find(key);
+    if (it != cast_by_source_target_.end()) {
+        Pin(it->second);
+        return it->second;
+    }
+    const Catalog* cat = GetCatalog();
+    if (cat == nullptr) {
+        return nullptr;
+    }
+    const FormData_pg_cast* row = cat->GetCast(source, target);
+    if (row != nullptr) {
+        const_cast<SysCache*>(this)->cast_by_source_target_[key] = row;
+        Pin(row);
+    }
+    return row;
+}
+
 // --- Global accessors ---
 
 SysCache* GetSysCache() {
@@ -295,6 +403,61 @@ const void* SearchSysCache2(SysCacheIdentifier cache_id, uintptr_t key1, uintptr
         default:
             ereport(error::LogLevel::kError,
                     "SearchSysCache2: unsupported cache id for two-key lookup");
+    }
+    return nullptr;
+}
+
+const void* SearchSysCache3(SysCacheIdentifier cache_id, uintptr_t key1, uintptr_t key2,
+                            uintptr_t /*key3*/) {
+    SysCache* cache = GetSysCache();
+    if (cache == nullptr) {
+        return nullptr;
+    }
+    switch (cache_id) {
+        case SysCacheIdentifier::kCastSourceTarget:
+            // (source, target, unused) -> delegate to the 2-key cast lookup.
+            return cache->SearchCastBySourceTarget(static_cast<Oid>(key1), static_cast<Oid>(key2));
+        default:
+            ereport(error::LogLevel::kError,
+                    "SearchSysCache3: unsupported cache id for three-key lookup");
+    }
+    return nullptr;
+}
+
+const void* SearchSysCache4(SysCacheIdentifier cache_id, uintptr_t key1, uintptr_t key2,
+                            uintptr_t key3, uintptr_t key4) {
+    SysCache* cache = GetSysCache();
+    if (cache == nullptr) {
+        return nullptr;
+    }
+    switch (cache_id) {
+        case SysCacheIdentifier::kOperatorNameLrN: {
+            // key1 = pointer to std::string (operator name)
+            // key2 = left operand type OID
+            // key3 = right operand type OID
+            // key4 = namespace OID
+            const auto* name = reinterpret_cast<const std::string*>(key1);
+            if (name == nullptr) {
+                return nullptr;
+            }
+            return cache->SearchOperatorByNameLRN(*name, static_cast<Oid>(key2),
+                                                  static_cast<Oid>(key3), static_cast<Oid>(key4));
+        }
+        case SysCacheIdentifier::kProcNameArgsNsp: {
+            // key1 = pointer to std::string (function name)
+            // key2 = pointer to std::vector<Oid> (argument types)
+            // key3 = nargs (unused — derived from argtypes.size())
+            // key4 = namespace OID
+            const auto* name = reinterpret_cast<const std::string*>(key1);
+            const auto* argtypes = reinterpret_cast<const std::vector<Oid>*>(key2);
+            if (name == nullptr || argtypes == nullptr) {
+                return nullptr;
+            }
+            return cache->SearchProcByNameArgsNsp(*name, *argtypes, static_cast<Oid>(key4));
+        }
+        default:
+            ereport(error::LogLevel::kError,
+                    "SearchSysCache4: unsupported cache id for four-key lookup");
     }
     return nullptr;
 }
