@@ -146,7 +146,7 @@ Therefore, this directory is more suitable for local development and debugging, 
 4. Execute the queries in `queries.sql` in PostgreSQL.
 5. Compare whether the query output from PostgreSQL is consistent with the query output from MyToyDB, assuming that the execution results from PostgreSQL are absolutely correct.
 
-**## Test Result Recording**
+## Test Result Recording
 
 1. Record the output result of each query in a file.
 2. Record the IDs of queries that failed to execute correctly.
