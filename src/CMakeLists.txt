@@ -122,6 +122,8 @@ set(MYTOYDB_CORE_SOURCES
     server/options.cpp
     server/guc.cpp
     tools/psql_client.cpp
+    tools/psql_command.cpp
+    tools/psql_describe.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})

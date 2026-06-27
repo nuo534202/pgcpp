@@ -15,12 +15,16 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
 
 #include "mytoydb/tools/psql_client.hpp"
+#include "mytoydb/tools/psql_command.hpp"
 
+using mytoydb::tools::ExecuteMetaCommand;
 using mytoydb::tools::FormatQueryResult;
+using mytoydb::tools::MetaCommandResult;
 using mytoydb::tools::PsqlClient;
 using mytoydb::tools::QueryResult;
 
@@ -143,6 +147,7 @@ void InteractiveMode(PsqlClient& client) {
 
     std::string buffer;
     bool in_string = false;
+    std::map<std::string, std::string> psql_vars;
 
     while (true) {
         // Print prompt.
@@ -157,16 +162,13 @@ void InteractiveMode(PsqlClient& client) {
             break;  // EOF
         }
 
-        // Check for backslash commands.
+        // Check for backslash commands (only at start of buffer).
         if (buffer.empty() && !line.empty() && line[0] == '\\') {
-            if (line == "\\q" || line == "\\quit") {
+            MetaCommandResult r =
+                ExecuteMetaCommand(client, line, psql_vars, std::cout);
+            if (r == MetaCommandResult::kQuit) {
                 break;
             }
-            if (line == "\\?" || line == "\\help") {
-                std::cout << "  \\q    quit\n  \\?    show this help\n";
-                continue;
-            }
-            std::cout << "unknown command: " << line << "\n";
             continue;
         }
 
