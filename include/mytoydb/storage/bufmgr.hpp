@@ -100,4 +100,78 @@ void InitBufferPool(int n_buffers);
 // Shutdown the buffer pool (flush all dirty buffers and free memory).
 void ShutdownBufferPool();
 
+// --- M6 P0 extensions (Task 15.7.1) ---
+//
+// These functions extend the buffer manager to cover the remaining P0 API
+// surface from PostgreSQL's bufmgr.c. MyToyDB simplifies them for the
+// single-process, no-WAL model: hint dirty == dirty, and DROP/FLUSH by
+// database falls back to scanning the whole pool.
+
+// MarkBufferDirtyHint — mark a buffer as "hint dirty" (hint-bit writeback).
+// In PostgreSQL this generates a special WAL record only if the page LSN is
+// newer than the redo pointer. MyToyDB has no WAL, so a hint dirty is
+// equivalent to a normal dirty mark. If `release` is true, the buffer is
+// unpinned after being marked (matching PG's MarkBufferDirtyHint signature).
+void MarkBufferDirtyHint(Buffer buffer, bool release);
+
+// ReleaseAndReadBuffer — release (unpin) `buffer` and read the page
+// (reln, forknum, blocknum). Optimization: if the old buffer's tag matches
+// the new (reln, forknum, blocknum), the buffer is reused (no release/read).
+Buffer ReleaseAndReadBuffer(Buffer buffer, SmgrRelation reln, ForkNumber forknum,
+                            BlockNumber blocknum, ReadBufferMode mode);
+
+// IncrBufferRefCount — increment the private (per-backend) refcount of a
+// buffer handle. MyToyDB stores refcount directly in BufferDesc, so this
+// is a thin wrapper around PinBuffer.
+void IncrBufferRefCount(Buffer buffer);
+
+// BufferGetTag — fill in (rnode, forknum, blocknum) for the given buffer.
+void BufferGetTag(Buffer buffer, RelFileNode* rnode, ForkNumber* forknum, BlockNumber* blocknum);
+
+// DropRelFileNodeBuffers — drop all buffers matching the given
+// RelFileNodeBackend + forknum. Used by TRUNCATE / per-fork DDL.
+void DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forknum);
+
+// DropDatabaseBuffers — drop all buffers belonging to the given database.
+// MyToyDB simplification: scan the entire pool and drop matching buffers.
+void DropDatabaseBuffers(Oid dbid);
+
+// FlushDatabaseBuffers — flush all dirty buffers belonging to the given
+// database to disk.
+void FlushDatabaseBuffers(Oid dbid);
+
+// ReadBufferWithoutRelcache — read a buffer bypassing the relcache (used by
+// WAL redo / recovery). MyToyDB simplification: open the SmgrRelation for
+// the rnode and call ReadBuffer.
+Buffer ReadBufferWithoutRelcache(RelFileNodeBackend rnode, ForkNumber forknum, BlockNumber blocknum,
+                                 ReadBufferMode mode, BufferAccessStrategy strategy);
+
+// --- M6 P0 extensions (Task 15.7.3): access strategy ring ---
+
+// BufferAccessStrategyData — ring buffer for bulk access strategies
+// (BAS_BULKREAD / BAS_BULKWRITE / BAS_VACUUM). MyToyDB simplification: the
+// ring is allocated for API compatibility but the clock sweep is still used
+// for victim selection (single-process, the ring reuse optimization is not
+// needed for correctness). PostgreSQL uses the ring to reuse a small set of
+// buffers during sequential scans / COPY / VACUUM to avoid evicting the
+// entire cache.
+struct BufferAccessStrategyData {
+    BufferAccessStrategy type = BufferAccessStrategy::kNormal;
+    int ring_size = 0;
+    std::vector<Buffer> ring;
+    int current = 0;
+};
+using BufferAccessStrategyHandle = BufferAccessStrategyData*;
+
+// GetAccessStrategy — create a BufferAccessStrategy of the given type.
+// Ring sizes: BULKREAD=32, BULKWRITE=32, VACUUM=32, NORMAL=0 (no ring).
+BufferAccessStrategyHandle GetAccessStrategy(BufferAccessStrategy btype);
+
+// FreeAccessStrategy — release a strategy allocated by GetAccessStrategy.
+void FreeAccessStrategy(BufferAccessStrategyHandle strategy);
+
+// StrategyFreeBuffer — return a buffer to the freelist. MyToyDB is
+// single-process, so this is a no-op (the clock sweep reclaims the slot).
+void StrategyFreeBuffer(Buffer buffer);
+
 }  // namespace mytoydb::storage

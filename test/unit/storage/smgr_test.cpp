@@ -34,6 +34,7 @@ using mytoydb::storage::SetStorageBaseDir;
 using mytoydb::storage::smgrclose;
 using mytoydb::storage::smgrcloseall;
 using mytoydb::storage::smgrcreate;
+using mytoydb::storage::smgrexists;
 using mytoydb::storage::smgrextend;
 using mytoydb::storage::smgrimmedsync;
 using mytoydb::storage::smgrnblocks;
@@ -41,6 +42,7 @@ using mytoydb::storage::smgropen;
 using mytoydb::storage::smgrread;
 using mytoydb::storage::SmgrRelation;
 using mytoydb::storage::SmgrRelationData;
+using mytoydb::storage::smgrrelease;
 using mytoydb::storage::smgrtruncate;
 using mytoydb::storage::smgrwrite;
 
@@ -314,4 +316,68 @@ TEST_F(SmgrTest, DataPersistsAcrossCloseAndOpen) {
     char read_buf[kBlckSz];
     smgrread(reln, ForkNumber::kMain, 0, read_buf);
     EXPECT_EQ(std::memcmp(write_buf, read_buf, kBlckSz), 0);
+}
+
+// --- M6 P0 extension tests (Task 15.7.4) ---
+
+TEST_F(SmgrTest, smgrexists_ReturnsTrueAfterCreate) {
+    SmgrRelation reln = CreateTestRelation(200);
+
+    EXPECT_TRUE(smgrexists(reln, ForkNumber::kMain));
+}
+
+TEST_F(SmgrTest, smgrexists_ReturnsFalseBeforeCreate) {
+    // Open a relation without creating its file on disk.
+    RelFileNodeBackend rnode;
+    rnode.node.spc_node = 0;
+    rnode.node.db_node = 16384;
+    rnode.node.rel_node = 999;
+    rnode.backend = 0;
+    SmgrRelation reln = smgropen(rnode);
+
+    EXPECT_FALSE(smgrexists(reln, ForkNumber::kMain));
+
+    smgrclose(reln);
+}
+
+TEST_F(SmgrTest, smgrrelease_ReleasesFDs) {
+    SmgrRelation reln = CreateTestRelation(300);
+
+    // Extend opens the segment FD.
+    char buf[kBlckSz];
+    std::memset(buf, 0, kBlckSz);
+    PageInit(buf, kBlckSz, 0);
+    smgrextend(reln, ForkNumber::kMain, 0, buf, false);
+    EXPECT_FALSE(reln->md_fd[static_cast<int>(ForkNumber::kMain)].empty());
+
+    // Release closes all FDs but keeps the SmgrRelation entry.
+    smgrrelease(reln);
+
+    EXPECT_TRUE(reln->md_fd[static_cast<int>(ForkNumber::kMain)].empty());
+    // The file still exists on disk.
+    EXPECT_TRUE(smgrexists(reln, ForkNumber::kMain));
+    // Reading after release reopens the FD transparently.
+    char read_buf[kBlckSz];
+    smgrread(reln, ForkNumber::kMain, 0, read_buf);
+    EXPECT_EQ(std::memcmp(buf, read_buf, kBlckSz), 0);
+}
+
+TEST_F(SmgrTest, mdunlink_RemovesFiles) {
+    SmgrRelation reln = CreateTestRelation(400);
+
+    char buf[kBlckSz];
+    std::memset(buf, 0, kBlckSz);
+    PageInit(buf, kBlckSz, 0);
+    smgrextend(reln, ForkNumber::kMain, 0, buf, false);
+    EXPECT_TRUE(smgrexists(reln, ForkNumber::kMain));
+
+    // Unlink the main fork via the md-level method.
+    reln->mdunlink(ForkNumber::kMain, false);
+
+    EXPECT_FALSE(smgrexists(reln, ForkNumber::kMain));
+    // The SmgrRelation entry survives mdunlink (only smgrdounlinkall removes
+    // the entry from the hash table).
+    EXPECT_EQ(smgrnblocks(reln, ForkNumber::kMain), 0);
+
+    smgrclose(reln);
 }

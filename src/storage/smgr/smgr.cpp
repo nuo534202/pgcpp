@@ -178,4 +178,72 @@ void smgrimmedsync(SmgrRelation reln, ForkNumber fork_num) {
     reln->mdimmedsync(fork_num);
 }
 
+// --- M6 P0 extensions (Task 15.7.4) ---
+
+bool smgrexists(SmgrRelation reln, ForkNumber fork_num) {
+    return reln->mdexists(fork_num);
+}
+
+void smgrrelease(SmgrRelation reln) {
+    reln->mdrelease();
+}
+
+void smgrreleaseall() {
+    // Walk the linked list and release FDs for every open SmgrRelation,
+    // keeping the entries in the hash table.
+    for (SmgrRelation s = g_smgr_hash.head; s != nullptr; s = s->smgr_next) {
+        s->mdrelease();
+    }
+}
+
+void smgrdounlinkall(SmgrRelation reln, bool is_redo) {
+    // Unlink all forks, then close and remove the SmgrRelation entry.
+    for (int i = 0; i < kNumForks; ++i) {
+        ForkNumber fork_num = static_cast<ForkNumber>(i);
+        // Skip forks that don't exist on disk (avoids spuriously clearing
+        // the segment vector for forks the relation never had).
+        if (reln->mdexists(fork_num)) {
+            reln->mdunlink(fork_num, is_redo);
+        } else {
+            // Still close any open FDs.
+            reln->mdclose(fork_num);
+        }
+    }
+    smgrclose(reln);
+}
+
+void smgrclosenode(RelFileNodeBackend rnode) {
+    // Find the SmgrRelation matching rnode and close it.
+    for (SmgrRelation s = g_smgr_hash.head; s != nullptr; s = s->smgr_next) {
+        if (s->smgr_rnode == rnode) {
+            smgrclose(s);
+            return;
+        }
+    }
+    // Not found: no-op (matches PG behavior).
+}
+
+void smgrdosyncall() {
+    // MyToyDB simplification: fsync every open segment FD across all
+    // SmgrRelations. PostgreSQL batches this via sync.c for checkpoint
+    // efficiency; single-process MyToyDB does it directly.
+    for (SmgrRelation s = g_smgr_hash.head; s != nullptr; s = s->smgr_next) {
+        for (int f = 0; f < kNumForks; ++f) {
+            for (const auto& entry : s->md_fd[f]) {
+                if (entry.fd >= 0) {
+                    fsync(entry.fd);
+                }
+            }
+        }
+    }
+}
+
+void smgrsync() {
+    // Same as smgrdosyncall in MyToyDB's single-process model: iterate all
+    // open FDs and fsync them. PostgreSQL distinguishes smgrsync (called at
+    // checkpoint) from smgrdosyncall (called by CREATE INDEX); the
+    // distinction is moot without sync.c.
+    smgrdosyncall();
+}
+
 }  // namespace mytoydb::storage

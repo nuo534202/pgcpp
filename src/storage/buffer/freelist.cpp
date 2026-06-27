@@ -15,13 +15,21 @@
 // increments usage_count (up to a max of 5), and the clock sweep must
 // decrement it to 0 before evicting.
 
+#include "mytoydb/common/containers/node.hpp"
 #include "mytoydb/common/error/elog.hpp"
+#include "mytoydb/common/memory/memory_context.hpp"
 #include "mytoydb/storage/buf_internals.hpp"
+#include "mytoydb/storage/bufmgr.hpp"
 
 namespace mytoydb::storage {
 
 // Maximum usage count (PostgreSQL's BM_MAX_USAGE_COUNT).
 constexpr int kMaxUsageCount = 5;
+
+// Ring sizes for each strategy type (matches PostgreSQL defaults).
+constexpr int kRingSizeBulkRead = 32;
+constexpr int kRingSizeBulkWrite = 32;
+constexpr int kRingSizeVacuum = 32;
 
 // FindVictimBuffer — find a buffer to evict using the clock sweep algorithm.
 //
@@ -68,6 +76,49 @@ void BufferPool::InitFreeList() {
         descriptors_[i].free_next = first_free_;
         first_free_ = i;
     }
+}
+
+// --- M6 P0 extensions (Task 15.7.3): access strategy ring ---
+
+BufferAccessStrategyHandle GetAccessStrategy(BufferAccessStrategy btype) {
+    int ring_size;
+    switch (btype) {
+        case BufferAccessStrategy::kBulkRead:
+            ring_size = kRingSizeBulkRead;
+            break;
+        case BufferAccessStrategy::kBulkWrite:
+            ring_size = kRingSizeBulkWrite;
+            break;
+        case BufferAccessStrategy::kVacuum:
+            ring_size = kRingSizeVacuum;
+            break;
+        case BufferAccessStrategy::kNormal:
+        default:
+            ring_size = 0;
+            break;
+    }
+
+    auto* strategy = mytoydb::nodes::makePallocNode<BufferAccessStrategyData>();
+    strategy->type = btype;
+    strategy->ring_size = ring_size;
+    strategy->current = 0;
+    if (ring_size > 0) {
+        strategy->ring.resize(ring_size, kInvalidBuffer);
+    }
+    return strategy;
+}
+
+void FreeAccessStrategy(BufferAccessStrategyHandle strategy) {
+    if (strategy == nullptr)
+        return;
+    mytoydb::nodes::destroyPallocNode(strategy);
+}
+
+void StrategyFreeBuffer(Buffer /*buffer*/) {
+    // MyToyDB is single-process: there is no shared freelist to return the
+    // buffer to. The clock sweep will reclaim the slot on the next victim
+    // search. PostgreSQL uses this hook to push the buffer back onto the
+    // shared free list for fast reuse by InvalidateBuffer.
 }
 
 }  // namespace mytoydb::storage

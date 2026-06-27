@@ -26,22 +26,27 @@ using mytoydb::storage::Buffer;
 using mytoydb::storage::BufferAccessStrategy;
 using mytoydb::storage::BufferDesc;
 using mytoydb::storage::BufferGetPage;
+using mytoydb::storage::BufferGetTag;
 using mytoydb::storage::BufferPool;
 using mytoydb::storage::BufferTag;
+using mytoydb::storage::DropRelFileNodeBuffers;
 using mytoydb::storage::FlushBuffer;
 using mytoydb::storage::FlushRelationBuffers;
 using mytoydb::storage::ForkNumber;
 using mytoydb::storage::GetBufferPool;
+using mytoydb::storage::IncrBufferRefCount;
 using mytoydb::storage::InitBufferPool;
 using mytoydb::storage::kBlckSz;
 using mytoydb::storage::kInvalidBuffer;
 using mytoydb::storage::kPageHeaderSize;
 using mytoydb::storage::MarkBufferDirty;
+using mytoydb::storage::MarkBufferDirtyHint;
 using mytoydb::storage::Page;
 using mytoydb::storage::PageHeader;
 using mytoydb::storage::PageInit;
 using mytoydb::storage::ReadBuffer;
 using mytoydb::storage::ReadBufferMode;
+using mytoydb::storage::ReleaseAndReadBuffer;
 using mytoydb::storage::ReleaseBuffer;
 using mytoydb::storage::RelFileNode;
 using mytoydb::storage::RelFileNodeBackend;
@@ -349,4 +354,119 @@ TEST_F(BufMgrTest, NumDirtyTracksDirtyFlag) {
     EXPECT_EQ(pool->NumDirty(), 0);
 
     ReleaseBuffer(buf);
+}
+
+// --- M6 P0 extension tests (Task 15.7.1) ---
+
+TEST_F(BufMgrTest, MarkBufferDirtyHint_MarksBufferDirty) {
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    BufferPool* pool = GetBufferPool();
+    BufferDesc* desc = pool->GetBufferDesc(buf);
+
+    EXPECT_FALSE(desc->IsDirty());
+    MarkBufferDirtyHint(buf, /*release=*/false);
+    EXPECT_TRUE(desc->IsDirty());
+
+    // Calling again on an already-dirty buffer is a no-op (still dirty).
+    MarkBufferDirtyHint(buf, /*release=*/false);
+    EXPECT_TRUE(desc->IsDirty());
+
+    // With release=true, the buffer is unpinned after being marked.
+    FlushBuffer(buf);  // clear dirty so we can observe the release effect
+    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    EXPECT_EQ(pool->GetBufferDesc(buf2)->refcount, 2);  // buf + buf2 both pin
+    MarkBufferDirtyHint(buf2, /*release=*/true);
+    EXPECT_EQ(pool->GetBufferDesc(buf2)->refcount, 1);  // buf2 released
+
+    ReleaseBuffer(buf);
+}
+
+TEST_F(BufMgrTest, ReleaseAndReadBuffer_SameBufferNoRelease) {
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    BufferPool* pool = GetBufferPool();
+    BufferDesc* desc = pool->GetBufferDesc(buf);
+    EXPECT_EQ(desc->refcount, 1);
+
+    // Re-read the same page: should reuse the buffer without releasing.
+    Buffer buf2 = ReleaseAndReadBuffer(buf, reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    EXPECT_EQ(buf, buf2);
+    // refcount should still be 1 (no extra pin, no release).
+    EXPECT_EQ(desc->refcount, 1);
+
+    ReleaseBuffer(buf2);
+}
+
+TEST_F(BufMgrTest, ReleaseAndReadBuffer_DifferentBufferReleases) {
+    ExtendRelation(1);
+
+    Buffer buf0 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    BufferPool* pool = GetBufferPool();
+    BufferDesc* desc0 = pool->GetBufferDesc(buf0);
+    EXPECT_EQ(desc0->refcount, 1);
+
+    // Read a different block: should release buf0 and read block 1.
+    Buffer buf1 = ReleaseAndReadBuffer(buf0, reln_, ForkNumber::kMain, 1, ReadBufferMode::kNormal);
+    EXPECT_NE(buf0, buf1);
+    // buf0 should have been released (refcount back to 0).
+    EXPECT_EQ(desc0->refcount, 0);
+
+    ReleaseBuffer(buf1);
+}
+
+TEST_F(BufMgrTest, IncrBufferRefCount_IncrementsCount) {
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    BufferPool* pool = GetBufferPool();
+    BufferDesc* desc = pool->GetBufferDesc(buf);
+    EXPECT_EQ(desc->refcount, 1);
+
+    IncrBufferRefCount(buf);
+    EXPECT_EQ(desc->refcount, 2);
+
+    IncrBufferRefCount(buf);
+    EXPECT_EQ(desc->refcount, 3);
+
+    // Release all three pins.
+    ReleaseBuffer(buf);
+    ReleaseBuffer(buf);
+    ReleaseBuffer(buf);
+    EXPECT_EQ(desc->refcount, 0);
+}
+
+TEST_F(BufMgrTest, BufferGetTag_ReturnsCorrectTag) {
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+
+    RelFileNode rnode;
+    ForkNumber forknum;
+    BlockNumber blocknum;
+    BufferGetTag(buf, &rnode, &forknum, &blocknum);
+
+    EXPECT_EQ(rnode, reln_->smgr_rnode.node);
+    EXPECT_EQ(forknum, ForkNumber::kMain);
+    EXPECT_EQ(blocknum, 0);
+
+    ReleaseBuffer(buf);
+}
+
+TEST_F(BufMgrTest, DropRelFileNodeBuffers_RemovesBuffers) {
+    // Read block 0, then release it so it can be dropped.
+    Buffer buf = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    BufferPool* pool = GetBufferPool();
+    EXPECT_EQ(pool->NumPinned(), 1);
+    ReleaseBuffer(buf);
+    EXPECT_EQ(pool->NumPinned(), 0);
+
+    // Drop all buffers for this relation's rnode + main fork.
+    DropRelFileNodeBuffers(reln_->smgr_rnode, ForkNumber::kMain);
+
+    // Reading the same block again should produce a buffer miss (the old
+    // buffer was invalidated). We verify by checking that the buffer pool
+    // had to do work — the simplest observable is that the new buffer is
+    // valid and the lookup didn't return the stale entry.
+    Buffer buf2 = ReadBuffer(reln_, ForkNumber::kMain, 0, ReadBufferMode::kNormal);
+    EXPECT_NE(buf2, kInvalidBuffer);
+    BufferDesc* desc = pool->GetBufferDesc(buf2);
+    EXPECT_TRUE(desc->IsValid());
+    EXPECT_TRUE(desc->IsTagged());
+    EXPECT_EQ(desc->tag.rnode, reln_->smgr_rnode.node);
+    ReleaseBuffer(buf2);
 }

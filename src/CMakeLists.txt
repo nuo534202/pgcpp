@@ -35,12 +35,19 @@ set(MYTOYDB_CORE_SOURCES
     common/containers/node.cpp
     common/containers/list.cpp
     common/containers/string_info.cpp
+    common/containers/bitmapset.cpp
+    common/containers/node_funcs.cpp
+    common/containers/makefuncs.cpp
     types/builtins.cpp
     types/datetime.cpp
+    types/numeric.cpp
+    types/numutils.cpp
     types/string_funcs.cpp
     catalog/bootstrap_catalog.cpp
     catalog/catalog.cpp
     catalog/syscache.cpp
+    catalog/lsyscache.cpp
+    catalog/namespace.cpp
     parser/keywords.cpp
     parser/parser.cpp
     parser/scanner.cpp
@@ -71,7 +78,11 @@ set(MYTOYDB_CORE_SOURCES
     transaction/lock.cpp
     transaction/lmgr.cpp
     access/rel.cpp
+    access/common/tupdesc.cpp
+    access/common/indextuple.cpp
     access/heap/heapam.cpp
+    access/index/indexam.cpp
+    access/index/genam.cpp
     access/nbtree/nbtree.cpp
     access/nbtree/nbtpage.cpp
     executor/exec_expr.cpp
@@ -90,9 +101,16 @@ set(MYTOYDB_CORE_SOURCES
     executor/node_sort.cpp
     optimizer/plan/planner.cpp
     optimizer/plan/subplanner.cpp
+    optimizer/plan/create_plan.cpp
+    optimizer/plan/init_splan.cpp
+    optimizer/plan/set_refs.cpp
     optimizer/path/allpaths.cpp
     optimizer/path/indxpath.cpp
     optimizer/cost/costsize.cpp
+    optimizer/util/pathnode.cpp
+    optimizer/util/relnode.cpp
+    optimizer/util/restrictinfo.cpp
+    optimizer/util/plancat.cpp
     protocol/pqformat.cpp
     protocol/postgres.cpp
     server/postmaster.cpp

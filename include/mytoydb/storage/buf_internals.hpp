@@ -168,6 +168,11 @@ public:
     // Flush all dirty buffers for a relation.
     void FlushRelationBuffers(RelFileNode rnode);
 
+    // Invalidate a buffer: flush if dirty, erase from the hash table, and
+    // reset the descriptor to the free state. Used by the Drop* family.
+    // The buffer must not be pinned (caller's responsibility).
+    void InvalidateBuffer(int buf_id);
+
     // --- Stats ---
 
     int NumBuffers() const { return n_buffers_; }

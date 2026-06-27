@@ -196,4 +196,67 @@ OffsetNumber PageAddItem(Page page, Item item, Size size, OffsetNumber offset_nu
 // a new heap item (accounting for line pointer and alignment).
 int PageGetHeapFreeSpace(Page page);
 
+// --- M6 P0 extensions (Task 15.7.2) ---
+//
+// These functions extend the page API to support DELETE/UPDATE/VACUUM and
+// index page manipulation. They mirror PostgreSQL's bufpage.c semantics,
+// adapted to MyToyDB's page layout (ItemIdData bitfields, no checksums).
+
+// PageGetFreeSpace — return the number of free bytes available for a new
+// item, accounting for the new line pointer and MAXALIGN-down. Used by
+// index AMs and FSM (the heap variant is PageGetHeapFreeSpace).
+int PageGetFreeSpace(Page page);
+
+// PageGetExactFreeSpace — return the exact free space between pd_lower and
+// pd_upper, without subtracting the line pointer or aligning. Used by
+// callers that need a conservative lower bound.
+int PageGetExactFreeSpace(Page page);
+
+// PageGetFreeSpaceForMultipleTuples — return the free space available for
+// adding `n` new tuples (each needing a line pointer). The result is
+// MAXALIGN-down and accounts for `n` line pointers.
+int PageGetFreeSpaceForMultipleTuples(Page page, int n);
+
+// PageIndexTupleDelete — delete the item at `offset` and compact the page
+// (move subsequent tuples forward to fill the gap, updating line pointer
+// offsets). Lowers pd_lower if the last line pointer is removed.
+void PageIndexTupleDelete(Page page, OffsetNumber offset);
+
+// PageIndexMultiDelete — batch-delete the items at the offsets in `itemids`
+// (length `nitems`), then compact the page. Used by nbtree vacuum.
+void PageIndexMultiDelete(Page page, OffsetNumber* itemids, int nitems);
+
+// PageIndexTupleDeleteNoCompact — mark the line pointer at `offset` as
+// unused without compacting the page. Used when the caller will compact
+// later (e.g. via PageRepairFragmentation).
+void PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offset);
+
+// PageIndexTupleOverwrite — overwrite the item at `offnum` in place with
+// `newitem` of length `newsize`. Returns true on success, false if the
+// new item is larger than the old one (cannot overwrite in place).
+bool PageIndexTupleOverwrite(Page page, OffsetNumber offnum, Item newitem, Size newsize);
+
+// PageRepairFragmentation — compact the page: move all normal items to the
+// end of the page in line-pointer order, reset dead/redirect line pointers
+// to unused, and pack the line pointer array to remove unused slots.
+void PageRepairFragmentation(Page page);
+
+// PageGetTempPage — allocate a scratch page of the same size as `page`,
+// copying its header and special area but not its items. Used by btree
+// splits.
+Page PageGetTempPage(Page page);
+
+// PageGetTempPageCopy — allocate a scratch page that is a full copy of
+// `page` (header + items + special area).
+Page PageGetTempPageCopy(Page page);
+
+// PageGetTempPageCopySpecial — allocate a scratch page copying `page`'s
+// header and special area, with `special_size` overriding the special
+// area size.
+Page PageGetTempPageCopySpecial(Page page, int special_size);
+
+// PageRestoreTempPage — copy the contents of `temp_page` back into `page`
+// and free `temp_page`. Used to commit changes made in a scratch page.
+void PageRestoreTempPage(Page temp_page, Page page);
+
 }  // namespace mytoydb::storage

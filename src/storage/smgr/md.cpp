@@ -341,4 +341,44 @@ void SmgrRelationData::mdimmedsync(ForkNumber fork_num) {
     }
 }
 
+// --- M6 P0 extensions (Task 15.7.4) ---
+
+void SmgrRelationData::mdunlink(ForkNumber fork_num, bool /*is_redo*/) {
+    // Close any open FDs for this fork first.
+    mdclose(fork_num);
+
+    // Unlink all segment files. We iterate from segment 0 upward, unlinking
+    // each until we hit a segment that doesn't exist. PostgreSQL also
+    // truncates segment 0 to 0 bytes before unlinking (to signal concurrent
+    // scanners); MyToyDB skips that refinement.
+    for (int segno = 0;; ++segno) {
+        std::string path = mdFilePath(fork_num, segno);
+        if (unlink(path.c_str()) < 0) {
+            // ENOENT is expected once we run past the last segment.
+            if (errno == ENOENT)
+                break;
+            // Other errors: ignore (matching PG's mdunlinkfork behavior
+            // under is_redo). In a non-redo context PG would ereport, but
+            // MyToyDB keeps the storage layer tolerant of races.
+        }
+    }
+
+    // Clear the segment vector so subsequent mdnblocks/mdread see the fork
+    // as empty.
+    md_fd[static_cast<int>(fork_num)].clear();
+}
+
+bool SmgrRelationData::mdexists(ForkNumber fork_num) {
+    // Check existence of segment 0 via access(F_OK).
+    std::string path = mdFilePath(fork_num, 0);
+    return access(path.c_str(), F_OK) == 0;
+}
+
+void SmgrRelationData::mdrelease() {
+    // Close FDs for all forks, keeping the SmgrRelation entry alive.
+    for (int i = 0; i < kNumForks; ++i) {
+        mdclose(static_cast<ForkNumber>(i));
+    }
+}
+
 }  // namespace mytoydb::storage

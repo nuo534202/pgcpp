@@ -196,6 +196,31 @@ void BufferPool::FlushRelationBuffers(RelFileNode rnode) {
     }
 }
 
+void BufferPool::InvalidateBuffer(int buf_id) {
+    if (buf_id < 0 || buf_id >= n_buffers_)
+        return;
+    BufferDesc& desc = descriptors_[buf_id];
+
+    // Flush dirty pages before discarding.
+    if (desc.IsDirty() && desc.IsValid()) {
+        FlushBuffer(buf_id, false);
+    }
+
+    // Remove from the hash table (only if still tagged — FlushBuffer does
+    // not clear the tag).
+    if (desc.IsTagged()) {
+        hash_table_.erase(desc.tag);
+        desc.ClearTagged();
+    }
+
+    // Reset the descriptor to the free state.
+    desc.ClearValid();
+    desc.ClearDirty();
+    desc.tag = BufferTag{};
+    desc.usage_count = 0;
+    desc.free_next = -1;
+}
+
 // --- Stats ---
 
 int BufferPool::NumPinned() const {
@@ -376,6 +401,130 @@ void ShutdownBufferPool() {
         delete g_buffer_pool;
         g_buffer_pool = nullptr;
     }
+}
+
+// --- M6 P0 extensions (Task 15.7.1) ---
+
+void MarkBufferDirtyHint(Buffer buffer, bool release) {
+    BufferPool* pool = GetBufferPool();
+    if (pool == nullptr)
+        return;
+    // MyToyDB has no WAL, so a hint dirty is equivalent to a normal dirty.
+    // If the buffer is already dirty, this is a no-op.
+    BufferDesc* desc = pool->GetBufferDesc(buffer);
+    if (desc == nullptr)
+        return;
+    if (!desc->IsDirty()) {
+        pool->MarkBufferDirty(buffer);
+    }
+    if (release) {
+        pool->UnpinBuffer(buffer);
+    }
+}
+
+Buffer ReleaseAndReadBuffer(Buffer buffer, SmgrRelation reln, ForkNumber forknum,
+                            BlockNumber blocknum, ReadBufferMode mode) {
+    BufferPool* pool = GetBufferPool();
+    if (pool == nullptr) {
+        ereport(mytoydb::error::LogLevel::kError, "buffer pool not initialized");
+    }
+
+    // Optimization: if the old buffer's tag matches the new (reln, forknum,
+    // blocknum), reuse it without releasing.
+    BufferDesc* desc = pool->GetBufferDesc(buffer);
+    if (desc != nullptr && desc->IsTagged() && desc->tag.rnode == reln->smgr_rnode.node &&
+        desc->tag.fork_num == forknum && desc->tag.block_num == blocknum) {
+        return buffer;
+    }
+
+    // Different page: release the old buffer and read the new one.
+    ReleaseBuffer(buffer);
+    return ReadBuffer(reln, forknum, blocknum, mode, BufferAccessStrategy::kNormal);
+}
+
+void IncrBufferRefCount(Buffer buffer) {
+    BufferPool* pool = GetBufferPool();
+    if (pool == nullptr)
+        return;
+    pool->PinBuffer(buffer);
+}
+
+void BufferGetTag(Buffer buffer, RelFileNode* rnode, ForkNumber* forknum, BlockNumber* blocknum) {
+    BufferPool* pool = GetBufferPool();
+    if (pool == nullptr)
+        return;
+    BufferDesc* desc = pool->GetBufferDesc(buffer);
+    if (desc == nullptr)
+        return;
+    if (rnode != nullptr)
+        *rnode = desc->tag.rnode;
+    if (forknum != nullptr)
+        *forknum = desc->tag.fork_num;
+    if (blocknum != nullptr)
+        *blocknum = desc->tag.block_num;
+}
+
+void DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forknum) {
+    BufferPool* pool = GetBufferPool();
+    if (pool == nullptr)
+        return;
+
+    for (int i = 0; i < pool->NumBuffers(); ++i) {
+        BufferDesc* desc = pool->GetBufferDesc(i + 1);
+        if (!desc->IsTagged())
+            continue;
+        // Match on RelFileNode + forknum. rnode.backend is ignored (MyToyDB
+        // has no temp-table local buffers).
+        if (desc->tag.rnode != rnode.node)
+            continue;
+        if (desc->tag.fork_num != forknum)
+            continue;
+        // Pinned buffers cannot be invalidated — skip them (PG also skips).
+        if (desc->refcount > 0)
+            continue;
+        pool->InvalidateBuffer(i);
+    }
+}
+
+void DropDatabaseBuffers(Oid dbid) {
+    BufferPool* pool = GetBufferPool();
+    if (pool == nullptr)
+        return;
+
+    for (int i = 0; i < pool->NumBuffers(); ++i) {
+        BufferDesc* desc = pool->GetBufferDesc(i + 1);
+        if (!desc->IsTagged())
+            continue;
+        if (desc->tag.rnode.db_node != dbid)
+            continue;
+        if (desc->refcount > 0)
+            continue;
+        pool->InvalidateBuffer(i);
+    }
+}
+
+void FlushDatabaseBuffers(Oid dbid) {
+    BufferPool* pool = GetBufferPool();
+    if (pool == nullptr)
+        return;
+
+    for (int i = 0; i < pool->NumBuffers(); ++i) {
+        BufferDesc* desc = pool->GetBufferDesc(i + 1);
+        if (!desc->IsTagged())
+            continue;
+        if (desc->tag.rnode.db_node != dbid)
+            continue;
+        if (desc->IsDirty() && desc->IsValid()) {
+            pool->FlushBuffer(i, false);
+        }
+    }
+}
+
+Buffer ReadBufferWithoutRelcache(RelFileNodeBackend rnode, ForkNumber forknum, BlockNumber blocknum,
+                                 ReadBufferMode mode, BufferAccessStrategy strategy) {
+    // MyToyDB simplification: bypass-relcache read is just smgropen + ReadBuffer.
+    SmgrRelation reln = smgropen(rnode);
+    return ReadBuffer(reln, forknum, blocknum, mode, strategy);
 }
 
 }  // namespace mytoydb::storage
