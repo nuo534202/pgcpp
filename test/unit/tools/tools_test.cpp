@@ -215,7 +215,7 @@ TEST(FormatQueryResultTest, NonSelectResult) {
 class PsqlClientTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        test_dir_ = MakeTempDir("mytoydb_psql_test");
+        test_dir_ = MakeTempDir("pgcpp_psql_test");
         RunShell("rm -rf " + test_dir_);
 
         // Bootstrap the cluster.
@@ -368,7 +368,7 @@ TEST_F(PsqlClientTest, FormatResult) {
 class InitdbTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        test_dir_ = MakeTempDir("mytoydb_initdb_test");
+        test_dir_ = MakeTempDir("pgcpp_initdb_test");
         RunShell("rm -rf " + test_dir_);
     }
 
@@ -384,7 +384,7 @@ TEST_F(InitdbTest, CreatesCluster) {
     EXPECT_TRUE(IsDir(test_dir_ + "/base"));
     EXPECT_TRUE(IsDir(test_dir_ + "/global"));
     EXPECT_TRUE(IsDir(test_dir_ + "/pg_wal"));
-    EXPECT_TRUE(IsFile(test_dir_ + "/mytoydb_version"));
+    EXPECT_TRUE(IsFile(test_dir_ + "/pgcpp_version"));
 }
 
 TEST_F(InitdbTest, CanStartServerAfterInitdb) {

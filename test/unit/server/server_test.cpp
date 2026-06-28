@@ -152,13 +152,13 @@ int ConnectToServer(const std::string& addr, int port, int timeout_secs = 5) {
 
 // Send the PostgreSQL startup message.
 bool SendStartupMessage(int fd) {
-    // Startup message: length (4) + protocol version (4) + "user\0mytoydb\0\0"
+    // Startup message: length (4) + protocol version (4) + "user\0pgcpp\0\0"
     std::string payload;
     // Protocol version 3.0
     int32_t proto = htonl(0x00030000);
     payload.append(reinterpret_cast<const char*>(&proto), 4);
     // User parameter
-    payload.append("user\0mytoydb\0", 12);
+    payload.append("user\0pgcpp\0", 12);
     // Terminator
     payload.push_back('\0');
 
@@ -324,7 +324,7 @@ void StopServer(pid_t pid) {
 class BootstrapTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        test_dir_ = MakeTempDir("mytoydb_bootstrap_test");
+        test_dir_ = MakeTempDir("pgcpp_bootstrap_test");
         RunShell("rm -rf " + test_dir_);
     }
 
@@ -350,10 +350,10 @@ TEST_F(BootstrapTest, CreatesSubdirectories) {
 TEST_F(BootstrapTest, WritesMarker) {
     BootstrapResult result = BootstrapCluster(test_dir_);
     ASSERT_EQ(result, BootstrapResult::kOk);
-    EXPECT_TRUE(IsFile(test_dir_ + "/mytoydb_version"));
-    std::string version = ReadFile(test_dir_ + "/mytoydb_version");
+    EXPECT_TRUE(IsFile(test_dir_ + "/pgcpp_version"));
+    std::string version = ReadFile(test_dir_ + "/pgcpp_version");
     EXPECT_FALSE(version.empty());
-    EXPECT_EQ(version, "mytoydb-1.0");
+    EXPECT_EQ(version, "pgcpp-1.0");
 }
 
 TEST_F(BootstrapTest, IsBootstrappedReturnsTrue) {
@@ -386,7 +386,7 @@ TEST_F(BootstrapTest, ResultToString) {
 class PostmasterTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        test_dir_ = MakeTempDir("mytoydb_server_test");
+        test_dir_ = MakeTempDir("pgcpp_server_test");
         RunShell("rm -rf " + test_dir_);
 
         // Bootstrap the cluster first.
@@ -634,7 +634,7 @@ TEST_F(PostmasterTest, ServerShutdownOnSIGTERM) {
 
 TEST(MainTest, ParseArgsBootstrap) {
     ServerOptions opts;
-    char arg0[] = "mytoydb";
+    char arg0[] = "pgcpp";
     char arg1[] = "--bootstrap";
     char arg2[] = "-D";
     char arg3[] = "/tmp/test_dir";
@@ -647,7 +647,7 @@ TEST(MainTest, ParseArgsBootstrap) {
 
 TEST(MainTest, ParseArgsServer) {
     ServerOptions opts;
-    char arg0[] = "mytoydb";
+    char arg0[] = "pgcpp";
     char arg1[] = "-D";
     char arg2[] = "/tmp/test_dir";
     char arg3[] = "-p";
@@ -662,7 +662,7 @@ TEST(MainTest, ParseArgsServer) {
 
 TEST(MainTest, ParseArgsHelp) {
     ServerOptions opts;
-    char arg0[] = "mytoydb";
+    char arg0[] = "pgcpp";
     char arg1[] = "--help";
     char* argv[] = {arg0, arg1, nullptr};
 
@@ -672,7 +672,7 @@ TEST(MainTest, ParseArgsHelp) {
 
 TEST(MainTest, ParseArgsFailsWithoutDataDir) {
     ServerOptions opts;
-    char arg0[] = "mytoydb";
+    char arg0[] = "pgcpp";
     char* argv[] = {arg0, nullptr};
 
     EXPECT_FALSE(pgcpp::server::ParseArgs(1, argv, &opts));
@@ -680,7 +680,7 @@ TEST(MainTest, ParseArgsFailsWithoutDataDir) {
 
 TEST(MainTest, ParseArgsFailsWithUnknownOption) {
     ServerOptions opts;
-    char arg0[] = "mytoydb";
+    char arg0[] = "pgcpp";
     char arg1[] = "--unknown";
     char arg2[] = "-D";
     char arg3[] = "/tmp/test_dir";
@@ -691,7 +691,7 @@ TEST(MainTest, ParseArgsFailsWithUnknownOption) {
 
 TEST(MainTest, ParseArgsMaxConnections) {
     ServerOptions opts;
-    char arg0[] = "mytoydb";
+    char arg0[] = "pgcpp";
     char arg1[] = "-D";
     char arg2[] = "/tmp/test_dir";
     char arg3[] = "-N";
@@ -704,7 +704,7 @@ TEST(MainTest, ParseArgsMaxConnections) {
 
 TEST(MainTest, ParseArgsListenAddr) {
     ServerOptions opts;
-    char arg0[] = "mytoydb";
+    char arg0[] = "pgcpp";
     char arg1[] = "-D";
     char arg2[] = "/tmp/test_dir";
     char arg3[] = "-h";

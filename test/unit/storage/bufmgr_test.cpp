@@ -71,7 +71,7 @@ protected:
         pgcpp::memory::SetCurrentMemoryContext(context_);
 
         // Set up temp storage directory.
-        test_dir_ = "/tmp/mytoydb_bufmgr_test_" + std::to_string(getpid());
+        test_dir_ = "/tmp/pgcpp_bufmgr_test_" + std::to_string(getpid());
         SetStorageBaseDir(test_dir_);
         std::system(("rm -rf " + test_dir_).c_str());
 

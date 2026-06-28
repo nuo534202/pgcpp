@@ -104,7 +104,7 @@ protected:
         ResetTransactionState();
         InitializeTransactionSystem();
 
-        test_dir_ = "/tmp/mytoydb_indexam_test_" + std::to_string(getpid());
+        test_dir_ = "/tmp/pgcpp_indexam_test_" + std::to_string(getpid());
         SetStorageBaseDir(test_dir_);
         RunShell("rm -rf " + test_dir_);
 

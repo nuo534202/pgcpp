@@ -55,7 +55,7 @@ PgCreateReplicationSlotResult PgCreateReplicationSlot(const std::string& name,
         // PG exports a snapshot for logical slots so the subscriber can clone
         // the catalog state. We synthesize a name; the actual snapshot is a
         // no-op in pgcpp.
-        result.snapshot_name = "mytoydb_logical_snap_" + name;
+        result.snapshot_name = "pgcpp_logical_snap_" + name;
     }
     return result;
 }

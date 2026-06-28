@@ -38,9 +38,9 @@ struct SmgrHashEntry {
 
 SmgrHashEntry g_smgr_hash;
 
-// Base directory for storage files. Defaults to "/tmp/mytoydb_data".
+// Base directory for storage files. Defaults to "/tmp/pgcpp_data".
 // Set by SetStorageBaseDir() (typically in tests or server startup).
-std::string g_storage_base_dir = "/tmp/mytoydb_data";
+std::string g_storage_base_dir = "/tmp/pgcpp_data";
 
 // Hash function for RelFileNodeBackend.
 struct RelFileNodeBackendHash {

@@ -127,7 +127,7 @@ protected:
         InitializeTransactionSystem();
         BeginTransactionBlock();
 
-        test_dir_ = "/tmp/mytoydb_heapam_test_" + std::to_string(getpid());
+        test_dir_ = "/tmp/pgcpp_heapam_test_" + std::to_string(getpid());
         SetStorageBaseDir(test_dir_);
         RunShell("rm -rf " + test_dir_);
 

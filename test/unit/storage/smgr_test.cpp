@@ -56,7 +56,7 @@ protected:
         pgcpp::memory::SetCurrentMemoryContext(context_);
 
         // Create a unique temp directory for this test run.
-        test_dir_ = "/tmp/mytoydb_smgr_test_" + std::to_string(getpid());
+        test_dir_ = "/tmp/pgcpp_smgr_test_" + std::to_string(getpid());
         SetStorageBaseDir(test_dir_);
 
         // Clean up any leftover from previous runs.

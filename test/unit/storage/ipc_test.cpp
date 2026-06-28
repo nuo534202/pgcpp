@@ -174,7 +174,7 @@ using pgcpp::storage::WaitForEdges;
 using pgcpp::storage::WaitLatch;
 
 namespace {
-constexpr char kTmpFile[] = "/tmp/mytoydb_ipc_test.tmp";
+constexpr char kTmpFile[] = "/tmp/pgcpp_ipc_test.tmp";
 }  // namespace
 
 // Fixture: resets all subsystems between tests so the suite is order-independent.

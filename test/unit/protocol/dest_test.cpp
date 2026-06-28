@@ -113,7 +113,7 @@ protected:
         InitializeSnapshotManager();
         BeginTransactionBlock();
 
-        test_dir_ = "/tmp/mytoydb_dest_test_" + std::to_string(getpid());
+        test_dir_ = "/tmp/pgcpp_dest_test_" + std::to_string(getpid());
         SetStorageBaseDir(test_dir_);
         RunShell("rm -rf " + test_dir_);
 

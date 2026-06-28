@@ -444,7 +444,7 @@ void BackendMain(int client_fd) {
         msg += payload;
         WriteAll(client_fd, msg.data(), msg.size());
     };
-    send_param_status("server_version", "mytoydb 1.0");
+    send_param_status("server_version", "pgcpp 1.0");
     send_param_status("client_encoding", "UTF8");
     send_param_status("DateStyle", "ISO");
     send_param_status("integer_datetimes", "on");
@@ -716,7 +716,7 @@ int Postmaster::Run() {
     // Set up the listening socket.
     SetupListenSocket();
 
-    elog(LogLevel::kInfo, "MyToyDB server listening on port " + std::to_string(listen_port_));
+    elog(LogLevel::kInfo, "pgcpp server listening on port " + std::to_string(listen_port_));
 
     // Main accept loop.
     while (!shutdown_requested_) {

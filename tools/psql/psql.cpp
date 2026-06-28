@@ -31,7 +31,7 @@ using pgcpp::tools::QueryResult;
 namespace {
 
 void PrintUsage(const char* prog_name) {
-    std::fprintf(stderr, "MyToyDB client (psql equivalent)\n\n");
+    std::fprintf(stderr, "pgcpp client (psql equivalent)\n\n");
     std::fprintf(stderr, "Usage: %s [options]\n", prog_name);
     std::fprintf(stderr, "\nOptions:\n");
     std::fprintf(stderr, "  -h <host>    Server host (default: 127.0.0.1)\n");
@@ -143,7 +143,7 @@ void ExecuteFile(PsqlClient& client, const std::string& filename) {
 
 // Interactive mode: read SQL from stdin, execute on Enter.
 void InteractiveMode(PsqlClient& client) {
-    std::cout << "MyToyDB client — type \\q to quit, \\? for help\n";
+    std::cout << "pgcpp client — type \\q to quit, \\? for help\n";
 
     std::string buffer;
     bool in_string = false;
@@ -152,9 +152,9 @@ void InteractiveMode(PsqlClient& client) {
     while (true) {
         // Print prompt.
         if (buffer.empty()) {
-            std::cout << "mytoydb=> " << std::flush;
+            std::cout << "pgcpp=> " << std::flush;
         } else {
-            std::cout << "mytoydb-> " << std::flush;
+            std::cout << "pgcpp-> " << std::flush;
         }
 
         std::string line;

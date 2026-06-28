@@ -52,10 +52,10 @@ using pgcpp::transaction::ResetTransactionState;
 namespace {
 
 // Marker file written to the data directory after successful bootstrap.
-constexpr const char* kBootstrapMarker = "mytoydb_version";
+constexpr const char* kBootstrapMarker = "pgcpp_version";
 
 // Bootstrap marker content — the version of pgcpp that created the cluster.
-constexpr const char* kBootstrapVersion = "mytoydb-1.0";
+constexpr const char* kBootstrapVersion = "pgcpp-1.0";
 
 // Create a directory if it doesn't exist.
 // Returns true on success or if the directory already exists.

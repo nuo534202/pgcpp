@@ -21,7 +21,7 @@ using pgcpp::server::BootstrapResultToString;
 namespace {
 
 void PrintUsage(const char* prog_name) {
-    std::fprintf(stderr, "MyToyDB cluster initialization (initdb equivalent)\n\n");
+    std::fprintf(stderr, "pgcpp cluster initialization (initdb equivalent)\n\n");
     std::fprintf(stderr, "Usage: %s -D <data_dir>\n", prog_name);
     std::fprintf(stderr, "\nOptions:\n");
     std::fprintf(stderr, "  -D <dir>    Data directory (required)\n");
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
     std::fprintf(stdout,
                  "cluster successfully initialized at %s\n"
                  "You can now start the server with:\n"
-                 "  mytoydb_server -D %s\n",
+                 "  pgcpp_server -D %s\n",
                  opts.data_dir.c_str(), opts.data_dir.c_str());
     return 0;
 }

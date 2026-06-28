@@ -40,8 +40,8 @@ void PrintUsage(const char* prog_name);
 // untouched on failure). Missing file is not an error.
 bool LoadGucFromDataDir(const std::string& data_dir, GucConfig* guc);
 
-// MyToyDBMain — the main entry point.
+// pgcppMain — the main entry point.
 // Returns 0 on success, non-zero on error.
-int MyToyDBMain(int argc, char* argv[]);
+int pgcppMain(int argc, char* argv[]);
 
 }  // namespace pgcpp::server

@@ -110,11 +110,11 @@ bool PsqlClient::Connect() {
 }
 
 bool PsqlClient::SendStartupMessage() {
-    // Startup message: length (4) + protocol version (4) + "user\0mytoydb\0\0"
+    // Startup message: length (4) + protocol version (4) + "user\0pgcpp\0\0"
     std::string payload;
     int32_t proto = htonl(0x00030000);
     payload.append(reinterpret_cast<const char*>(&proto), 4);
-    payload.append("user\0mytoydb\0", 12);
+    payload.append("user\0pgcpp\0", 12);
     payload.push_back('\0');
 
     int32_t len = htonl(static_cast<int32_t>(4 + payload.size()));

@@ -256,7 +256,7 @@ TEST(GucTest, LoadFromStringParsesLines) {
 // --- LoadGucFromDataDir ---
 
 TEST(GucTest, LoadGucFromDataDirLoadsPostgresqlConf) {
-    std::string dir = "/tmp/mytoydb_guc_datadir_" + std::to_string(getpid());
+    std::string dir = "/tmp/pgcpp_guc_datadir_" + std::to_string(getpid());
     std::string rm = "rm -rf " + dir;
     std::system(rm.c_str());
     ASSERT_EQ(mkdir(dir.c_str(), 0700), 0);
@@ -282,7 +282,7 @@ TEST(GucTest, LoadGucFromDataDirReturnsFalseWhenMissing) {
 }
 
 TEST(GucTest, LoadGucFromDataDirReturnsFalseOnEmptyDir) {
-    std::string dir = "/tmp/mytoydb_guc_emptydir_" + std::to_string(getpid());
+    std::string dir = "/tmp/pgcpp_guc_emptydir_" + std::to_string(getpid());
     std::string rm = "rm -rf " + dir;
     std::system(rm.c_str());
     ASSERT_EQ(mkdir(dir.c_str(), 0700), 0);

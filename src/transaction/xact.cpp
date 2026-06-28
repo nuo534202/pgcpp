@@ -409,7 +409,7 @@ void AbortTransactionBlock() {
 
 bool PrepareTransactionBlock(const std::string& /*gid*/) {
     // 2PC not implemented in pgcpp.
-    ereport(pgcpp::error::LogLevel::kWarning, "prepared transactions are not supported in MyToyDB");
+    ereport(pgcpp::error::LogLevel::kWarning, "prepared transactions are not supported in pgcpp");
     return false;
 }
 

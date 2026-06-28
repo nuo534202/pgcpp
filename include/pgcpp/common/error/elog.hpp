@@ -96,15 +96,15 @@ void EreportImpl(LogLevel elevel, const char* filename, const char* funcname, in
 // setjmp/longjmp because the constructor returns before any error occurs,
 // invalidating the jump buffer's stack frame. Use the PG_TRY/PG_CATCH macros
 // instead. This is the same constraint as PostgreSQL's C code.
-#define PG_TRY()                                                                            \
-    do {                                                                                    \
-        pgcpp::error::JmpBufEntry* _mytoydb_jmp_entry = pgcpp::error::PushExceptionStack(); \
-        if (setjmp(_mytoydb_jmp_entry->buf) == 0) {
-#define PG_CATCH()                                       \
-    pgcpp::error::PopExceptionStack(_mytoydb_jmp_entry); \
-    }                                                    \
-    else {                                               \
-        pgcpp::error::PopExceptionStack(_mytoydb_jmp_entry);
+#define PG_TRY()                                                                          \
+    do {                                                                                  \
+        pgcpp::error::JmpBufEntry* _pgcpp_jmp_entry = pgcpp::error::PushExceptionStack(); \
+        if (setjmp(_pgcpp_jmp_entry->buf) == 0) {
+#define PG_CATCH()                                     \
+    pgcpp::error::PopExceptionStack(_pgcpp_jmp_entry); \
+    }                                                  \
+    else {                                             \
+        pgcpp::error::PopExceptionStack(_pgcpp_jmp_entry);
 
 #define PG_END_TRY() \
     }                \

@@ -13,7 +13,7 @@
 namespace pgcpp::server {
 
 void PrintUsage(const char* prog_name) {
-    std::fprintf(stderr, "MyToyDB — a C++20 conversion of PostgreSQL\n\n");
+    std::fprintf(stderr, "pgcpp — a C++20 conversion of PostgreSQL\n\n");
     std::fprintf(stderr, "Usage:\n");
     std::fprintf(stderr, "  %s [options]                    Start the server\n", prog_name);
     std::fprintf(stderr, "  %s --bootstrap -D <dir>         Initialize a new cluster\n", prog_name);

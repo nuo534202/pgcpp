@@ -16,7 +16,7 @@
 
 namespace pgcpp::server {
 
-int MyToyDBMain(int argc, char* argv[]) {
+int pgcppMain(int argc, char* argv[]) {
     ServerOptions opts;
     if (!ParseArgs(argc, argv, &opts)) {
         PrintUsage(argv[0]);
@@ -61,5 +61,5 @@ int MyToyDBMain(int argc, char* argv[]) {
 
 // --- C main entry point ---
 int main(int argc, char* argv[]) {
-    return pgcpp::server::MyToyDBMain(argc, argv);
+    return pgcpp::server::pgcppMain(argc, argv);
 }

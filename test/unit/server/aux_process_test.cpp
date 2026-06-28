@@ -604,8 +604,7 @@ TEST_F(AuxProcessTest, ShellArchiveFailureIncrementsFailures) {
 
 TEST_F(AuxProcessTest, ShellArchiveSubstitutesPathAndBasename) {
     // Echo the substituted path to a temp file, then verify its contents.
-    std::string marker_file =
-        "/tmp/mytoydb_shell_archive_test_" + std::to_string(getpid()) + ".txt";
+    std::string marker_file = "/tmp/pgcpp_shell_archive_test_" + std::to_string(getpid()) + ".txt";
     ::unlink(marker_file.c_str());
 
     // Command: write the substituted path to the marker file.
