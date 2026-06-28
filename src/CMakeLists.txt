@@ -79,6 +79,16 @@ set(MYTOYDB_CORE_SOURCES
     transaction/visibility.cpp
     transaction/lock.cpp
     transaction/lmgr.cpp
+    transaction/xlog.cpp
+    transaction/xloginsert.cpp
+    transaction/xlogreader.cpp
+    transaction/xlogrecovery.cpp
+    transaction/slru.cpp
+    transaction/commit_ts.cpp
+    transaction/multixact.cpp
+    transaction/procarray.cpp
+    transaction/sinval.cpp
+    transaction/parallel.cpp
     access/rel.cpp
     access/common/tupdesc.cpp
     access/common/indextuple.cpp

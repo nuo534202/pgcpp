@@ -69,6 +69,9 @@ mytoydb_add_test(visibility_test unit/transaction/visibility_test.cpp)
 mytoydb_add_test(lock_test unit/transaction/lock_test.cpp)
 mytoydb_add_test(snapmgr_test unit/transaction/snapmgr_test.cpp)
 
+# Phase 15.16 tests (M7: WAL + multiversion subsystem)
+mytoydb_add_test(wal_multiversion_test unit/transaction/wal_multiversion_test.cpp)
+
 # Phase 8 tests (M8: access methods)
 mytoydb_add_test(heapam_test unit/access/heapam_test.cpp)
 mytoydb_add_test(heaptuple_test unit/access/heaptuple_test.cpp)
