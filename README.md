@@ -80,18 +80,18 @@ cmake --build build --target tidy          # clang-tidy static checks
 
 ## Command-Line Tools
 
-Both live in `tools/` and link against `mytoydb_core`:
+Both live in `tools/` and link against `pgcpp_core`:
 
 | Binary | PostgreSQL equivalent | Purpose |
 | --- | --- | --- |
-| `mytoydb_initdb` | `initdb` | Initialize a new database cluster |
-| `mytoydb_psql` | `psql` | Interactive query client |
+| `pgcpp_initdb` | `initdb` | Initialize a new database cluster |
+| `pgcpp_psql` | `psql` | Interactive query client |
 
 ## Project Layout
 
 | Path | Purpose |
 | --- | --- |
-| `include/mytoydb/<module>/` | Public headers, per module |
+| `include/pgcpp/<module>/` | Public headers, per module |
 | `src/<module>/` | Implementation, per module |
 | `test/unit/<module>/` | Unit tests, per module |
 | `test/benchmark/clickbench/` | ClickBench correctness suite (data + 43 queries) |

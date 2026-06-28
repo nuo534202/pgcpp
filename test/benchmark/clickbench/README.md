@@ -140,11 +140,11 @@ Therefore, this directory is more suitable for local development and debugging, 
 
 ### 5. How to verify whether the results are correct?
 
-1. First export the data from the MyToyDB test data table.
+1. First export the data from the pgcpp test data table.
 2. Use `create.sql` to create the data table in a PostgreSQL database.
-3. Import the data table exported from MyToyDB into the corresponding PostgreSQL data table.
+3. Import the data table exported from pgcpp into the corresponding PostgreSQL data table.
 4. Execute the queries in `queries.sql` in PostgreSQL.
-5. Compare whether the query output from PostgreSQL is consistent with the query output from MyToyDB, assuming that the execution results from PostgreSQL are absolutely correct.
+5. Compare whether the query output from PostgreSQL is consistent with the query output from pgcpp, assuming that the execution results from PostgreSQL are absolutely correct.
 
 ## Test Result Recording
 
