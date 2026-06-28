@@ -114,6 +114,9 @@ pgcpp_add_test(dest_test unit/protocol/dest_test.cpp)
 pgcpp_add_test(utility_test unit/protocol/utility_test.cpp)
 pgcpp_add_test(postgres_main_test unit/protocol/postgres_main_test.cpp)
 
+# Phase 15.22 tests (M11: SSL/GSS/HBA/Large Object/Fastpath)
+pgcpp_add_test(m11_ext_test unit/protocol/m11_ext_test.cpp)
+
 # Phase 12 tests (M12: postmaster / bootstrap)
 pgcpp_add_test(server_test unit/server/server_test.cpp)
 pgcpp_add_test(guc_test unit/server/guc_test.cpp)

@@ -187,6 +187,17 @@ set(PGCPP_CORE_SOURCES
     protocol/dest.cpp
     protocol/postgres.cpp
     protocol/utility.cpp
+    # Phase 15.22 (M11 SSL/GSS/HBA/Large Object/Fastpath)
+    protocol/crypt.cpp
+    protocol/auth.cpp
+    protocol/hba.cpp
+    protocol/secure.cpp
+    protocol/gssapi.cpp
+    protocol/fsstubs.cpp
+    protocol/fastpath.cpp
+    protocol/pqmq.cpp
+    protocol/pqsignal.cpp
+    protocol/ifaddr.cpp
     commands/tablecmds.cpp
     commands/indexcmds.cpp
     commands/copy.cpp
