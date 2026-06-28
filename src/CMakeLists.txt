@@ -43,6 +43,24 @@ set(MYTOYDB_CORE_SOURCES
     types/numeric.cpp
     types/numutils.cpp
     types/string_funcs.cpp
+    types/misc_types.cpp
+    types/oid_types.cpp
+    types/network_types.cpp
+    types/uuid.cpp
+    types/varbit.cpp
+    types/array.cpp
+    types/json.cpp
+    types/range.cpp
+    types/rowtypes.cpp
+    types/geo.cpp
+    types/enum_types.cpp
+    types/acl.cpp
+    types/windowfunctions.cpp
+    types/orderedsetaggs.cpp
+    types/ts_types.cpp
+    types/xml.cpp
+    types/selfuncs.cpp
+    types/ruleutils.cpp
     catalog/bootstrap_catalog.cpp
     catalog/catalog.cpp
     catalog/syscache.cpp

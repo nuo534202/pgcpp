@@ -50,6 +50,9 @@ mytoydb_add_test(numeric_test unit/types/numeric_test.cpp)
 mytoydb_add_test(numutils_test unit/types/numutils_test.cpp)
 mytoydb_add_test(string_funcs_test unit/types/string_funcs_test.cpp)
 
+# Phase 15.19 tests (M4: extended types — acl/array/json/jsonb/uuid/network/range/geo etc.)
+mytoydb_add_test(extended_types_test unit/types/extended_types_test.cpp)
+
 # Phase 5 tests (M5: parser)
 mytoydb_add_test(parser_test unit/parser/parser_test.cpp)
 mytoydb_add_test(parse_analysis_test unit/parser/parse_analysis_test.cpp)
