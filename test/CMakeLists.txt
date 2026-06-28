@@ -63,6 +63,9 @@ mytoydb_add_test(bufpage_delete_test unit/storage/bufpage_delete_test.cpp)
 mytoydb_add_test(smgr_test unit/storage/smgr_test.cpp)
 mytoydb_add_test(bufmgr_test unit/storage/bufmgr_test.cpp)
 
+# Phase 15.18 tests (M6: shared buffers + IPC subsystems)
+mytoydb_add_test(ipc_test unit/storage/ipc_test.cpp)
+
 # Phase 7 tests (M7: transaction & MVCC)
 mytoydb_add_test(xact_test unit/transaction/xact_test.cpp)
 mytoydb_add_test(visibility_test unit/transaction/visibility_test.cpp)

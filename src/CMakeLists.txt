@@ -73,6 +73,20 @@ set(MYTOYDB_CORE_SOURCES
     storage/buffer/bufpage.cpp
     storage/buffer/bufmgr.cpp
     storage/buffer/freelist.cpp
+    storage/ipc/latch.cpp
+    storage/ipc/shmem.cpp
+    storage/ipc/shmqueue.cpp
+    storage/ipc/shm_mq.cpp
+    storage/ipc/ipci.cpp
+    storage/ipc/proc.cpp
+    storage/ipc/lwlock.cpp
+    storage/ipc/predicate.cpp
+    storage/ipc/deadlock.cpp
+    storage/file/fd.cpp
+    storage/sync/sync.cpp
+    storage/freespace/freespace.cpp
+    storage/freespace/fsmpage.cpp
+    storage/large_object/inv_api.cpp
     transaction/transam.cpp
     transaction/xact.cpp
     transaction/snapshot.cpp
