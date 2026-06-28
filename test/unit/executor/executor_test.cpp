@@ -82,8 +82,10 @@ using mytoydb::catalog::SetCatalog;
 using mytoydb::catalog::SetSysCache;
 using mytoydb::catalog::SysCache;
 using mytoydb::executor::Agg;
+using mytoydb::executor::Append;
 using mytoydb::executor::BuildTupleDescFromTargetList;
 using mytoydb::executor::CreateExprContext;
+using mytoydb::executor::CteScan;
 using mytoydb::executor::EState;
 using mytoydb::executor::ExecEndNode;
 using mytoydb::executor::ExecEvalExpr;
@@ -96,7 +98,10 @@ using mytoydb::executor::ExecutorRun;
 using mytoydb::executor::ExecutorStart;
 using mytoydb::executor::ExprContext;
 using mytoydb::executor::HashJoin;
+using mytoydb::executor::Limit;
 using mytoydb::executor::MakeTupleTableSlot;
+using mytoydb::executor::Material;
+using mytoydb::executor::MergeJoin;
 using mytoydb::executor::ModifyTable;
 using mytoydb::executor::NestLoop;
 using mytoydb::executor::Plan;
@@ -107,7 +112,10 @@ using mytoydb::executor::ResetExprContext;
 using mytoydb::executor::Result;
 using mytoydb::executor::SeqScan;
 using mytoydb::executor::Sort;
+using mytoydb::executor::SubqueryScan;
 using mytoydb::executor::TupleTableSlot;
+using mytoydb::executor::Unique;
+using mytoydb::executor::WindowAgg;
 using mytoydb::memory::AllocSetContext;
 using mytoydb::memory::palloc;
 using mytoydb::memory::pfree;
@@ -1394,6 +1402,540 @@ TEST_F(ExecutorTest, ExecInitNode_DispatchesOnPlanType) {
 
     ExecEndNode(ps);
     destroyPallocNode(estate);
+}
+
+// ===========================================================================
+// Task 15.14: Limit node — LIMIT/OFFSET
+// ===========================================================================
+
+TEST_F(ExecutorTest, Limit_TakeTwo) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    for (int i = 1; i <= 5; i++) {
+        InsertIntIntRow(rel, i, i * 10);
+    }
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* limitplan = makePallocNode<Limit>();
+    limitplan->lefttree = seqplan;
+    limitplan->limit_count = 2;
+    limitplan->offset_count = 0;
+    limitplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    limitplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = limitplan;
+
+    ExecutorStart(qd);
+    std::vector<int> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    EXPECT_EQ(results.size(), 2u);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+TEST_F(ExecutorTest, Limit_OffsetAndLimit) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    for (int i = 1; i <= 5; i++) {
+        InsertIntIntRow(rel, i, i * 10);
+    }
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    // LIMIT 2 OFFSET 1 → rows 2, 3 (skipping row 1).
+    auto* limitplan = makePallocNode<Limit>();
+    limitplan->lefttree = seqplan;
+    limitplan->limit_count = 2;
+    limitplan->offset_count = 1;
+    limitplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    limitplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = limitplan;
+
+    ExecutorStart(qd);
+    std::vector<int> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(results.size(), 2u);
+    EXPECT_EQ(results[0], 2);
+    EXPECT_EQ(results[1], 3);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// Task 15.14: Append node — UNION ALL over multiple children
+// ===========================================================================
+
+TEST_F(ExecutorTest, Append_TwoChildren) {
+    // Two Result children, each producing one row.
+    auto* child1 = makePallocNode<Result>();
+    child1->targetlist.push_back(MakeTargetEntry(MakeInt4Const(11), 1, "v"));
+
+    auto* child2 = makePallocNode<Result>();
+    child2->targetlist.push_back(MakeTargetEntry(MakeInt4Const(22), 1, "v"));
+
+    auto* appendplan = makePallocNode<Append>();
+    appendplan->append_plans.push_back(child1);
+    appendplan->append_plans.push_back(child2);
+    appendplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "v"));
+
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({});
+    qd->plan = appendplan;
+
+    ExecutorStart(qd);
+    std::vector<int> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(results.size(), 2u);
+    EXPECT_EQ(results[0], 11);
+    EXPECT_EQ(results[1], 22);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// Task 15.14: Material node — caches child output for rescans
+// ===========================================================================
+
+TEST_F(ExecutorTest, Material_CachesAndReplays) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    InsertIntIntRow(rel, 1, 10);
+    InsertIntIntRow(rel, 2, 20);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* matplan = makePallocNode<Material>();
+    matplan->lefttree = seqplan;
+    matplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    matplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = matplan;
+
+    ExecutorStart(qd);
+    // First scan: drains child into cache, returns 2 rows.
+    std::vector<int> first_pass;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        first_pass.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    EXPECT_EQ(first_pass.size(), 2u);
+
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// Task 15.14: Unique node — SELECT DISTINCT on sorted input
+// ===========================================================================
+
+TEST_F(ExecutorTest, Unique_DeduplicatesSortedInput) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    // Insert duplicates: (1,10), (1,11), (2,20), (2,21), (3,30)
+    InsertIntIntRow(rel, 1, 10);
+    InsertIntIntRow(rel, 1, 11);
+    InsertIntIntRow(rel, 2, 20);
+    InsertIntIntRow(rel, 2, 21);
+    InsertIntIntRow(rel, 3, 30);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    // SeqScan → Sort on column a → Unique on column a.
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* sortplan = makePallocNode<Sort>();
+    sortplan->lefttree = seqplan;
+    sortplan->sortColIdx = {1};
+    sortplan->sortOperators = {kInt4LtOp};
+    sortplan->nullsFirst = {false};
+    sortplan->reverse = {false};
+    sortplan->limit = -1;
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* uniqplan = makePallocNode<Unique>();
+    uniqplan->lefttree = sortplan;
+    uniqplan->uniq_colIdx = {1};  // dedupe on column a
+    uniqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    uniqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = uniqplan;
+
+    ExecutorStart(qd);
+    std::vector<int> a_values;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        a_values.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(a_values.size(), 3u);
+    EXPECT_EQ(a_values[0], 1);
+    EXPECT_EQ(a_values[1], 2);
+    EXPECT_EQ(a_values[2], 3);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// Task 15.14: SubqueryScan — FROM subquery projection
+// ===========================================================================
+
+TEST_F(ExecutorTest, SubqueryScan_ProjectsChild) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    InsertIntIntRow(rel, 5, 50);
+    InsertIntIntRow(rel, 6, 60);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    // Child = SeqScan producing (a, b).
+    auto* child = makePallocNode<SeqScan>();
+    child->scanrelid = 1;
+    child->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    child->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    // SubqueryScan projects: SELECT a+b AS sum, a FROM (SELECT a, b FROM t1) sub
+    auto* sqplan = makePallocNode<SubqueryScan>();
+    sqplan->lefttree = child;
+    sqplan->scanrelid = 1;
+    // First column: a + b
+    sqplan->targetlist.push_back(MakeTargetEntry(
+        MakeOpExpr(kInt4PlusOp, kInt4Oid, MakeVar(1, 1, kInt4Oid), MakeVar(1, 2, kInt4Oid)), 1,
+        "sum"));
+    // Second column: a
+    sqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 2, "a"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = sqplan;
+
+    ExecutorStart(qd);
+    std::vector<std::pair<int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt32(slot->tts_values[1]));
+    }
+    ASSERT_EQ(results.size(), 2u);
+    EXPECT_EQ(results[0].first, 55);  // 5+50
+    EXPECT_EQ(results[0].second, 5);
+    EXPECT_EQ(results[1].first, 66);  // 6+60
+    EXPECT_EQ(results[1].second, 6);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// Task 15.14: MergeJoin — join on sorted inputs
+// ===========================================================================
+
+TEST_F(ExecutorTest, MergeJoin_InnerJoin) {
+    // Two relations sorted on column a:
+    //   t1: (1,10), (2,20), (3,30)
+    //   t2: (2,200), (3,300), (4,400)
+    // Inner merge-join on t1.a = t2.a → expect (2, 20, 200), (3, 30, 300).
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    InsertIntIntRow(rel1, 1, 10);
+    InsertIntIntRow(rel1, 2, 20);
+    InsertIntIntRow(rel1, 3, 30);
+    InsertIntIntRow(rel2, 2, 200);
+    InsertIntIntRow(rel2, 3, 300);
+    InsertIntIntRow(rel2, 4, 400);
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    // Left SeqScan → Sort on a.
+    auto* left_scan = makePallocNode<SeqScan>();
+    left_scan->scanrelid = 1;
+    left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* left_sort = makePallocNode<Sort>();
+    left_sort->lefttree = left_scan;
+    left_sort->sortColIdx = {1};
+    left_sort->sortOperators = {kInt4LtOp};
+    left_sort->nullsFirst = {false};
+    left_sort->reverse = {false};
+    left_sort->limit = -1;
+    left_sort->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    left_sort->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    // Right SeqScan → Sort on a.
+    auto* right_scan = makePallocNode<SeqScan>();
+    right_scan->scanrelid = 2;
+    right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
+    right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
+
+    auto* right_sort = makePallocNode<Sort>();
+    right_sort->lefttree = right_scan;
+    right_sort->sortColIdx = {1};
+    right_sort->sortOperators = {kInt4LtOp};
+    right_sort->nullsFirst = {false};
+    right_sort->reverse = {false};
+    right_sort->limit = -1;
+    right_sort->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
+    right_sort->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
+
+    // MergeJoin plan.
+    auto* mjplan = makePallocNode<MergeJoin>();
+    mjplan->jointype = JoinType::kInner;
+    mjplan->lefttree = left_sort;
+    mjplan->righttree = right_sort;
+    mjplan->mergeclauses.push_back(
+        MakeOpExpr(kInt4EqOp, kBoolOid, MakeVar(1, 1, kInt4Oid), MakeVar(2, 1, kInt4Oid)));
+
+    mjplan->targetlist.push_back(MakeTargetEntry(MakeVar(kOuterVar, 1, kInt4Oid), 1, "a"));
+    mjplan->targetlist.push_back(MakeTargetEntry(MakeVar(kOuterVar, 2, kInt4Oid), 2, "b1"));
+    mjplan->targetlist.push_back(MakeTargetEntry(MakeVar(kInnerVar, 2, kInt4Oid), 3, "b2"));
+
+    auto* rte1 = MakeRTE(relid1);
+    auto* rte2 = MakeRTE(relid2);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte1, rte2});
+    qd->plan = mjplan;
+
+    ExecutorStart(qd);
+    std::vector<std::tuple<int, int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]), DatumGetInt32(slot->tts_values[1]),
+                             DatumGetInt32(slot->tts_values[2]));
+    }
+    EXPECT_EQ(results.size(), 2u);
+    bool found_2 = false, found_3 = false;
+    for (const auto& r : results) {
+        if (std::get<0>(r) == 2) {
+            EXPECT_EQ(std::get<1>(r), 20);
+            EXPECT_EQ(std::get<2>(r), 200);
+            found_2 = true;
+        }
+        if (std::get<0>(r) == 3) {
+            EXPECT_EQ(std::get<1>(r), 30);
+            EXPECT_EQ(std::get<2>(r), 300);
+            found_3 = true;
+        }
+    }
+    EXPECT_TRUE(found_2);
+    EXPECT_TRUE(found_3);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// Task 15.14: CteScan — caches CTE subplan output
+// ===========================================================================
+
+TEST_F(ExecutorTest, CteScan_CachesSubplan) {
+    // CTE subplan: Result producing two rows via Append (just use Result with a
+    // single row to keep the test simple).
+    auto* cte_subplan = makePallocNode<Result>();
+    cte_subplan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(42), 1, "v"));
+
+    auto* cteplan = makePallocNode<CteScan>();
+    cteplan->cte_id = 0;
+    cteplan->scanrelid = 0;
+    cteplan->lefttree = cte_subplan;
+    cteplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "v"));
+
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({});
+    qd->plan = cteplan;
+
+    ExecutorStart(qd);
+    TupleTableSlot* slot = ExecutorRun(qd);
+    ASSERT_NE(slot, nullptr);
+    EXPECT_EQ(DatumGetInt32(slot->tts_values[0]), 42);
+    // Second call: no more rows from the CTE.
+    EXPECT_EQ(ExecutorRun(qd), nullptr);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// Task 15.14: WindowAgg — running COUNT/SUM over a partition
+// ===========================================================================
+
+TEST_F(ExecutorTest, WindowAgg_RunningCount) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    // Single partition (no PARTITION BY), four rows.
+    for (int i = 1; i <= 4; i++) {
+        InsertIntIntRow(rel, i, i * 10);
+    }
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    // SeqScan → Sort on a (window functions require ordered input).
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* sortplan = makePallocNode<Sort>();
+    sortplan->lefttree = seqplan;
+    sortplan->sortColIdx = {1};
+    sortplan->sortOperators = {kInt4LtOp};
+    sortplan->nullsFirst = {false};
+    sortplan->reverse = {false};
+    sortplan->limit = -1;
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    // WindowAgg with COUNT(*) running.
+    auto* wplan = makePallocNode<WindowAgg>();
+    wplan->lefttree = sortplan;
+    // No PARTITION BY columns → single partition over all rows.
+    wplan->partColIdx = {};
+    wplan->ordColIdx = {1};  // ORDER BY a
+    wplan->ordReverse = {false};
+
+    // Target: a, COUNT(*)
+    wplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    Aggref* count_agg = MakeAggref(kCountInt4Oid, kInt8Oid, true);
+    wplan->targetlist.push_back(MakeTargetEntry(count_agg, 2, "running_count"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = wplan;
+
+    ExecutorStart(qd);
+    std::vector<std::pair<int, int64_t>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt64(slot->tts_values[1]));
+    }
+    ASSERT_EQ(results.size(), 4u);
+    // Running count should be 1, 2, 3, 4 for the four rows.
+    EXPECT_EQ(results[0].first, 1);
+    EXPECT_EQ(results[0].second, 1);
+    EXPECT_EQ(results[1].first, 2);
+    EXPECT_EQ(results[1].second, 2);
+    EXPECT_EQ(results[2].first, 3);
+    EXPECT_EQ(results[2].second, 3);
+    EXPECT_EQ(results[3].first, 4);
+    EXPECT_EQ(results[3].second, 4);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+TEST_F(ExecutorTest, WindowAgg_RunningSumWithPartition) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    // Two partitions: column a = part id (1 or 2), b = value.
+    // Partition 1: (1, 10), (1, 20) → running SUM = 10, 30
+    // Partition 2: (2, 100), (2, 200) → running SUM = 100, 300
+    InsertIntIntRow(rel, 1, 10);
+    InsertIntIntRow(rel, 1, 20);
+    InsertIntIntRow(rel, 2, 100);
+    InsertIntIntRow(rel, 2, 200);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    // Sort by PARTITION BY (a) then ORDER BY (b).
+    auto* sortplan = makePallocNode<Sort>();
+    sortplan->lefttree = seqplan;
+    sortplan->sortColIdx = {1, 2};
+    sortplan->sortOperators = {kInt4LtOp, kInt4LtOp};
+    sortplan->nullsFirst = {false, false};
+    sortplan->reverse = {false, false};
+    sortplan->limit = -1;
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* wplan = makePallocNode<WindowAgg>();
+    wplan->lefttree = sortplan;
+    wplan->partColIdx = {1};  // PARTITION BY a
+    wplan->ordColIdx = {2};   // ORDER BY b
+    wplan->ordReverse = {false};
+
+    // Target: a, b, SUM(b) OVER (PARTITION BY a ORDER BY b)
+    wplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    wplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+    Aggref* sum_agg = MakeAggref(kSumInt4Oid, kInt8Oid, false);
+    sum_agg->args.push_back(MakeVar(1, 2, kInt4Oid));
+    wplan->targetlist.push_back(MakeTargetEntry(sum_agg, 3, "running_sum"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = wplan;
+
+    ExecutorStart(qd);
+    std::vector<std::tuple<int, int, int64_t>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]), DatumGetInt32(slot->tts_values[1]),
+                             DatumGetInt64(slot->tts_values[2]));
+    }
+    ASSERT_EQ(results.size(), 4u);
+    // Partition 1: (1, 10, 10), (1, 20, 30)
+    EXPECT_EQ(std::get<0>(results[0]), 1);
+    EXPECT_EQ(std::get<1>(results[0]), 10);
+    EXPECT_EQ(std::get<2>(results[0]), 10);
+    EXPECT_EQ(std::get<0>(results[1]), 1);
+    EXPECT_EQ(std::get<1>(results[1]), 20);
+    EXPECT_EQ(std::get<2>(results[1]), 30);
+    // Partition 2: (2, 100, 100), (2, 200, 300) — running sum resets.
+    EXPECT_EQ(std::get<0>(results[2]), 2);
+    EXPECT_EQ(std::get<1>(results[2]), 100);
+    EXPECT_EQ(std::get<2>(results[2]), 100);
+    EXPECT_EQ(std::get<0>(results[3]), 2);
+    EXPECT_EQ(std::get<1>(results[3]), 200);
+    EXPECT_EQ(std::get<2>(results[3]), 300);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
 }
 
 }  // namespace

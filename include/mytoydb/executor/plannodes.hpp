@@ -33,6 +33,15 @@ enum class PlanType {
     kHashJoin,     // hash join
     kHash,         // hash table build (inner child of HashJoin)
     kModifyTable,  // INSERT/UPDATE/DELETE
+    // --- Task 15.14 additions ---
+    kLimit,         // LIMIT/OFFSET
+    kAppend,        // UNION ALL (iterate over multiple children)
+    kMaterial,      // materialize child output in memory
+    kUnique,        // deduplicate sorted input (SELECT DISTINCT)
+    kSubqueryScan,  // scan a subquery in FROM
+    kMergeJoin,     // merge join on sorted inputs
+    kCteScan,       // scan a CTE
+    kWindowAgg,     // window aggregate (OVER clause)
 };
 
 // Plan — base struct for all plan nodes.
@@ -123,6 +132,66 @@ struct ModifyTable : Plan {
     ModifyTable() { type = PlanType::kModifyTable; }
     mytoydb::parser::CmdType operation = mytoydb::parser::CmdType::kInsert;
     int resultRelid = 0;  // 1-based range table index of target relation
+};
+
+// --- Task 15.14: new plan node types ---
+
+// Limit — LIMIT/OFFSET applied to a child plan.
+// Wraps the child and returns at most `limit_count` rows after skipping
+// `offset_count` rows. limit_count < 0 means no limit.
+struct Limit : Plan {
+    Limit() { type = PlanType::kLimit; }
+    int64_t limit_count = -1;  // max rows to return (-1 = unlimited)
+    int64_t offset_count = 0;  // rows to skip before output
+};
+
+// Append — iterate over multiple child plans sequentially (UNION ALL).
+// Uses append_plans (not lefttree/righttree) for the child list.
+struct Append : Plan {
+    Append() { type = PlanType::kAppend; }
+    std::vector<Plan*> append_plans;  // child plans to iterate over
+};
+
+// Material — cache child output in memory for repeated scans.
+struct Material : Plan {
+    Material() { type = PlanType::kMaterial; }
+};
+
+// Unique — deduplicate a sorted input (SELECT DISTINCT).
+// Compares consecutive tuples on uniq_colIdx columns; drops duplicates.
+struct Unique : Plan {
+    Unique() { type = PlanType::kUnique; }
+    std::vector<int> uniq_colIdx;  // 1-based attr numbers to compare on
+};
+
+// SubqueryScan — scan a subquery in FROM.
+// The subquery's plan is stored in lefttree.
+struct SubqueryScan : Plan {
+    SubqueryScan() { type = PlanType::kSubqueryScan; }
+    int scanrelid = 0;  // 1-based range table index of the subquery RTE
+};
+
+// MergeJoin — join two sorted inputs by merging.
+struct MergeJoin : Plan {
+    MergeJoin() { type = PlanType::kMergeJoin; }
+    mytoydb::parser::JoinType jointype = mytoydb::parser::JoinType::kInner;
+    std::vector<mytoydb::parser::Node*> mergeclauses;  // merge join condition
+};
+
+// CteScan — scan a CTE result.
+struct CteScan : Plan {
+    CteScan() { type = PlanType::kCteScan; }
+    int cte_id = 0;     // index into the CTE list (0-based)
+    int scanrelid = 0;  // 1-based range table index
+};
+
+// WindowAgg — window aggregate (OVER clause).
+// Computes aggregates over sliding partitions.
+struct WindowAgg : Plan {
+    WindowAgg() { type = PlanType::kWindowAgg; }
+    std::vector<int> partColIdx;   // 1-based attr numbers of PARTITION BY columns
+    std::vector<int> ordColIdx;    // 1-based attribute numbers of ORDER BY columns
+    std::vector<bool> ordReverse;  // DESC per ORDER BY column
 };
 
 }  // namespace mytoydb::executor

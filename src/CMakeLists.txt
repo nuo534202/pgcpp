@@ -94,13 +94,21 @@ set(MYTOYDB_CORE_SOURCES
     executor/node_exec.cpp
     executor/tupletable.cpp
     executor/node_agg.cpp
+    executor/node_append.cpp
+    executor/node_ctescan.cpp
     executor/node_hash.cpp
     executor/node_hashjoin.cpp
     executor/node_indexscan.cpp
+    executor/node_limit.cpp
+    executor/node_material.cpp
+    executor/node_mergejoin.cpp
     executor/node_modify_table.cpp
     executor/node_nestloop.cpp
     executor/node_seqscan.cpp
     executor/node_sort.cpp
+    executor/node_subqueryscan.cpp
+    executor/node_unique.cpp
+    executor/node_windowagg.cpp
     optimizer/plan/planner.cpp
     optimizer/plan/subplanner.cpp
     optimizer/plan/create_plan.cpp

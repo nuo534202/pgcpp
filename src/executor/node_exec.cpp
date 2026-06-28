@@ -15,13 +15,21 @@
 #include "mytoydb/executor/exec_expr.hpp"
 #include "mytoydb/executor/exec_utils.hpp"
 #include "mytoydb/executor/node_agg.hpp"
+#include "mytoydb/executor/node_append.hpp"
+#include "mytoydb/executor/node_ctescan.hpp"
 #include "mytoydb/executor/node_hash.hpp"
 #include "mytoydb/executor/node_hashjoin.hpp"
 #include "mytoydb/executor/node_indexscan.hpp"
+#include "mytoydb/executor/node_limit.hpp"
+#include "mytoydb/executor/node_material.hpp"
+#include "mytoydb/executor/node_mergejoin.hpp"
 #include "mytoydb/executor/node_modify_table.hpp"
 #include "mytoydb/executor/node_nestloop.hpp"
 #include "mytoydb/executor/node_seqscan.hpp"
 #include "mytoydb/executor/node_sort.hpp"
+#include "mytoydb/executor/node_subqueryscan.hpp"
+#include "mytoydb/executor/node_unique.hpp"
+#include "mytoydb/executor/node_windowagg.hpp"
 #include "mytoydb/executor/tupletable.hpp"
 
 namespace mytoydb::executor {
@@ -67,6 +75,31 @@ PlanState* CreatePlanState(Plan* plan, EState* state) {
         }
         case PlanType::kModifyTable: {
             return makePallocNode<ModifyTableState>(plan, state);
+        }
+        // --- Task 15.14: P1/P2 executor nodes ---
+        case PlanType::kLimit: {
+            return makePallocNode<LimitState>(plan, state);
+        }
+        case PlanType::kAppend: {
+            return makePallocNode<AppendState>(plan, state);
+        }
+        case PlanType::kMaterial: {
+            return makePallocNode<MaterialState>(plan, state);
+        }
+        case PlanType::kUnique: {
+            return makePallocNode<UniqueState>(plan, state);
+        }
+        case PlanType::kSubqueryScan: {
+            return makePallocNode<SubqueryScanState>(plan, state);
+        }
+        case PlanType::kMergeJoin: {
+            return makePallocNode<MergeJoinState>(plan, state);
+        }
+        case PlanType::kCteScan: {
+            return makePallocNode<CteScanState>(plan, state);
+        }
+        case PlanType::kWindowAgg: {
+            return makePallocNode<WindowAggState>(plan, state);
         }
     }
     return nullptr;
