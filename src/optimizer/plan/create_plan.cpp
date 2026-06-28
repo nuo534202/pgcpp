@@ -11,6 +11,7 @@
 #include "mytoydb/catalog/catalog.hpp"
 #include "mytoydb/catalog/pg_attribute.hpp"
 #include "mytoydb/common/containers/node.hpp"
+#include "mytoydb/optimizer/util/pathnode.hpp"
 #include "mytoydb/optimizer/util/restrictinfo.hpp"
 #include "mytoydb/parser/primnodes.hpp"
 
@@ -19,11 +20,13 @@ using mytoydb::catalog::GetCatalog;
 using mytoydb::executor::Agg;
 using mytoydb::executor::HashJoin;
 using mytoydb::executor::IndexScan;
+using mytoydb::executor::MergeJoin;
 using mytoydb::executor::NestLoop;
 using mytoydb::executor::Plan;
 using mytoydb::executor::Result;
 using mytoydb::executor::SeqScan;
 using mytoydb::executor::Sort;
+using mytoydb::executor::SubqueryScan;
 using mytoydb::nodes::makePallocNode;
 using mytoydb::nodes::NodeTag;
 using mytoydb::parser::Aggref;
@@ -237,6 +240,9 @@ static Plan* create_scan_plan(PlannerInfo* root, Path* best_path) {
         case PathType::kIndexScan:
             return create_indexscan_plan(root, static_cast<IndexPath*>(best_path), scan_tlist,
                                          scan_clauses);
+        case PathType::kSubqueryScan:
+            // SubqueryScan carries its own tlist; scan_clauses ignored.
+            return create_subqueryscan_plan(root, static_cast<SubqueryScanPath*>(best_path));
         default:
             return nullptr;
     }
@@ -278,12 +284,39 @@ HashJoin* create_hashjoin_plan(PlannerInfo* root, HashJoinPath* path) {
     return hj;
 }
 
+// --- Task 15.15: MergeJoin + SubqueryScan plan builders ---
+
+MergeJoin* create_mergejoin_plan(PlannerInfo* root, MergeJoinPath* path) {
+    (void)root;
+    auto* mj = makePallocNode<MergeJoin>();
+    mj->jointype = path->jointype;
+    mj->mergeclauses = path->mergeclauses;
+    if (path->outer != nullptr)
+        mj->lefttree = create_plan(root, path->outer);
+    if (path->inner != nullptr)
+        mj->righttree = create_plan(root, path->inner);
+    return mj;
+}
+
+SubqueryScan* create_subqueryscan_plan(PlannerInfo* root, SubqueryScanPath* path) {
+    (void)root;
+    auto* ss = makePallocNode<SubqueryScan>();
+    ss->scanrelid = path->scanrelid;
+    ss->targetlist = path->tlist;
+    if (path->subpath != nullptr) {
+        ss->lefttree = create_plan(root, path->subpath);
+    }
+    return ss;
+}
+
 static Plan* create_join_plan(PlannerInfo* root, Path* best_path) {
     switch (best_path->type) {
         case PathType::kNestLoop:
             return create_nestloop_plan(root, static_cast<NestLoopPath*>(best_path));
         case PathType::kHashJoin:
             return create_hashjoin_plan(root, static_cast<HashJoinPath*>(best_path));
+        case PathType::kMergeJoin:
+            return create_mergejoin_plan(root, static_cast<MergeJoinPath*>(best_path));
         default:
             return nullptr;
     }
@@ -369,9 +402,11 @@ Plan* create_plan(PlannerInfo* root, Path* best_path) {
     switch (best_path->type) {
         case PathType::kSeqScan:
         case PathType::kIndexScan:
+        case PathType::kSubqueryScan:
             return create_scan_plan(root, best_path);
         case PathType::kNestLoop:
         case PathType::kHashJoin:
+        case PathType::kMergeJoin:
             return create_join_plan(root, best_path);
         case PathType::kAgg:
         case PathType::kSort:

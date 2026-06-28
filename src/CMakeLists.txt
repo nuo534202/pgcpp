@@ -114,8 +114,13 @@ set(MYTOYDB_CORE_SOURCES
     optimizer/plan/create_plan.cpp
     optimizer/plan/init_splan.cpp
     optimizer/plan/set_refs.cpp
+    optimizer/plan/subselect.cpp
     optimizer/path/allpaths.cpp
     optimizer/path/indxpath.cpp
+    optimizer/path/equivclass.cpp
+    optimizer/path/pathkeys.cpp
+    optimizer/path/joinpath.cpp
+    optimizer/path/joinrels.cpp
     optimizer/cost/costsize.cpp
     optimizer/util/pathnode.cpp
     optimizer/util/relnode.cpp

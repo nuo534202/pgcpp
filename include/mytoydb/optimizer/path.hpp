@@ -35,6 +35,12 @@ using Cost = double;
 using Cardinality = double;
 using Selectivity = double;
 
+// Relids — a simplified bitmap of relation indexes (PG uses Bitmapset).
+// Each element is a 1-based range table index. Defined here (rather than in
+// util/restrictinfo.hpp) because RelOptInfo below needs it, and restrictinfo.hpp
+// includes this file.
+using Relids = std::vector<int>;
+
 // PathType — identifies the kind of access path.
 enum class PathType {
     kSeqScan,
@@ -44,6 +50,9 @@ enum class PathType {
     kSort,
     kAgg,
     kResult,
+    // --- Task 15.15: join + subquery path types ---
+    kMergeJoin,     // merge join on sorted inputs
+    kSubqueryScan,  // scan a subquery RTE in FROM
 };
 
 // Path — base class for all access paths.
@@ -97,6 +106,26 @@ struct HashJoinPath : JoinPath {
     std::vector<mytoydb::parser::Node*> hashclauses;  // hash join clauses
 };
 
+// MergeJoinPath — merge join on sorted inputs (Task 15.15).
+// Both outer and inner subpaths must be sorted on the merge clause's
+// sort operator. The optimizer wraps each subpath in a SortPath if its
+// pathkeys do not already satisfy the merge clause's ordering.
+struct MergeJoinPath : JoinPath {
+    MergeJoinPath() { type = PathType::kMergeJoin; }
+    std::vector<mytoydb::parser::Node*> mergeclauses;  // merge join clauses
+    mytoydb::parser::JoinType jointype = mytoydb::parser::JoinType::kInner;
+};
+
+// SubqueryScanPath — scan a subquery RTE in FROM (Task 15.15).
+// Wraps the subquery's chosen path; used when a FROM-clause subquery
+// cannot be flattened into the parent query.
+struct SubqueryScanPath : Path {
+    SubqueryScanPath() { type = PathType::kSubqueryScan; }
+    Path* subpath = nullptr;                           // path for the subquery
+    int scanrelid = 0;                                 // 1-based range table index
+    std::vector<mytoydb::parser::TargetEntry*> tlist;  // output target list
+};
+
 // SortPath — sort path (wraps a subpath with a sort).
 struct SortPath : Path {
     SortPath() { type = PathType::kSort; }
@@ -125,6 +154,9 @@ struct ResultPath : Path {
 // Mirrors PostgreSQL's RelOptInfo. Holds the range table entry, candidate
 // paths, and the cheapest path selected. For MyToyDB's single-table
 // ClickBench workload, join optimization is minimal.
+//
+// Task 15.15 adds `relids` (a multi-rel bitmap for join rels) and `pathkeys`
+// (canonical pathkey list for the cheapest input path, used for merge join).
 struct RelOptInfo {
     int relid = 0;                                  // relation OID
     int relindex = 0;                               // 1-based range table index
@@ -139,6 +171,10 @@ struct RelOptInfo {
     int pages = 0;                                // estimated relation pages
     int tuples = 0;                               // estimated relation tuples
     bool consider_startup = false;                // consider startup cost?
+    // --- Task 15.15: relids bitmap for join rels (1-based RT indexes) ---
+    Relids relids;  // base rels: {relindex}; join rels: union of children's relids
+    // Pathkeys for the cheapest_path's sort order (empty = unsorted).
+    std::vector<struct PathKey*> pathkeys;
 };
 
 }  // namespace mytoydb::optimizer

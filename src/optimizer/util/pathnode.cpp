@@ -76,6 +76,52 @@ HashJoinPath* create_hashjoin_path(PlannerInfo* root, RelOptInfo* joinrel, Path*
     return path;
 }
 
+MergeJoinPath* create_mergejoin_path(PlannerInfo* root, RelOptInfo* joinrel, Path* outer,
+                                     Path* inner, std::vector<mytoydb::parser::Node*> mergeclauses,
+                                     mytoydb::parser::JoinType jointype) {
+    (void)root;
+    auto* path = makePallocNode<MergeJoinPath>();
+    path->parent_rel = joinrel;
+    path->outer = outer;
+    path->inner = inner;
+    path->mergeclauses = std::move(mergeclauses);
+    path->jointype = jointype;
+    // Cost: startup = outer.startup + inner.startup (both must be sorted, so
+    // startup is the max of the two subpaths' total costs before the first
+    // output row can be produced — for sorted inputs this is the sort's
+    // total cost). Total = outer.total + inner.total + (outer.rows + inner.rows) * cpu.
+    Cost outer_total = (outer != nullptr) ? outer->total_cost : 0.0;
+    Cost inner_total = (inner != nullptr) ? inner->total_cost : 0.0;
+    path->startup_cost = outer_total + inner_total;
+    Cardinality outer_rows = (outer != nullptr) ? outer->rows : 1.0;
+    Cardinality inner_rows = (inner != nullptr) ? inner->rows : 1.0;
+    // Merge cost: linear in outer + inner, plus a small per-tuple CPU cost.
+    path->total_cost = path->startup_cost + (outer_rows + inner_rows) * kCpuTupleCost;
+    // Output rows: heuristically, the join produces min(outer, inner) * selec.
+    // For an equi-join with no selectivity info, use 1/10 of the cross product.
+    path->rows = outer_rows * inner_rows * 0.1;
+    return path;
+}
+
+SubqueryScanPath* create_subqueryscan_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
+                                           int scanrelid,
+                                           std::vector<mytoydb::parser::TargetEntry*> tlist) {
+    (void)root;
+    auto* path = makePallocNode<SubqueryScanPath>();
+    path->parent_rel = rel;
+    path->subpath = subpath;
+    path->scanrelid = scanrelid;
+    path->tlist = std::move(tlist);
+    if (subpath != nullptr) {
+        path->rows = subpath->rows;
+        path->width = subpath->width;
+        path->startup_cost = subpath->startup_cost;
+        // SubqueryScan adds a small per-tuple overhead for the projection.
+        path->total_cost = subpath->total_cost + subpath->rows * kCpuTupleCost;
+    }
+    return path;
+}
+
 SortPath* create_sort_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
                            std::vector<mytoydb::parser::SortGroupClause*> pathkeys) {
     (void)root;

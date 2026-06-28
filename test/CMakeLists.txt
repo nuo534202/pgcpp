@@ -93,6 +93,9 @@ mytoydb_add_test(create_plan_test unit/optimizer/create_plan_test.cpp)
 mytoydb_add_test(set_refs_test unit/optimizer/set_refs_test.cpp)
 mytoydb_add_test(query_planner_test unit/optimizer/query_planner_test.cpp)
 
+# Phase 15.15 tests (M10: join path + subquery planning)
+mytoydb_add_test(join_planning_test unit/optimizer/join_planning_test.cpp)
+
 # Phase 11 tests (M11: frontend protocol)
 mytoydb_add_test(protocol_test unit/protocol/protocol_test.cpp)
 mytoydb_add_test(dest_test unit/protocol/dest_test.cpp)

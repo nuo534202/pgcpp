@@ -23,9 +23,12 @@ namespace mytoydb::optimizer {
 // planner.hpp includes path.hpp, and path.hpp is included here).
 struct PlannerInfo;
 
-// Relids — a simplified bitmap of relation indexes (PG uses Bitmapset).
-// Each element is a 1-based range table index.
-using Relids = std::vector<int>;
+struct RestrictInfo;
+
+// EquivalenceClass — forward declaration. Defined in path/equivclass.hpp.
+// Forward-declared here so RestrictInfo can hold back-pointers to the ECs
+// it was derived from (used by the join planner to find merge/hash clauses).
+struct EquivalenceClass;
 
 // RestrictInfo — optimizer wrapper for a restriction clause.
 //
@@ -33,6 +36,9 @@ using Relids = std::vector<int>;
 // tracking, merge/hash join eligibility, etc. For MyToyDB's single-table
 // workload, we keep the essential fields: the wrapped clause, the relations
 // it requires, and the estimated selectivity.
+//
+// Task 15.15 adds mergejoin/hashjoin eligibility and EC back-pointers used by
+// the join planner to find merge/hash clauses and to derive implied quals.
 struct RestrictInfo {
     mytoydb::parser::Node* clause = nullptr;     // the wrapped qual expression
     Relids required_relids;                      // rels this clause references
@@ -40,6 +46,16 @@ struct RestrictInfo {
     bool pseudoconstant = false;                 // constant clause (no Vars)
     Selectivity norm_selec = 1.0;                // normal selectivity estimate
     mytoydb::catalog::Oid hashjoinoperator = 0;  // hash-join operator OID
+
+    // --- Task 15.15: mergejoin/hashjoin eligibility (mirrors PG's RestrictInfo) ---
+    bool mergejoinable = false;      // is the clause of the form "expr op expr"?
+    bool hashjoinable = false;       // does the operator support hashing?
+    mytoydb::catalog::Oid opno = 0;  // operator OID (for op family lookup)
+    // Left/right EC members (set when the clause is processed by process_equivalence).
+    EquivalenceClass* left_ec = nullptr;
+    EquivalenceClass* right_ec = nullptr;
+    // Sort operator OID for merge join (a btree operator OID).
+    mytoydb::catalog::Oid mergeopfamilies = 0;
 };
 
 // make_restrictinfo — create a RestrictInfo wrapping a clause.

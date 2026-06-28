@@ -20,6 +20,10 @@ namespace mytoydb::optimizer {
 // Mirrors PostgreSQL's PlannerInfo. For MyToyDB's single-table ClickBench
 // workload, this is simplified: we track base relations and their RelOptInfo,
 // but skip join ordering, equivalence classes, and other advanced features.
+//
+// Task 15.15 adds `eq_classes` (EquivalenceClass list) and `canonical_pathkeys`
+// (canonical PathKey list) for join planning, subquery unfolding, and merge
+// join sort-order tracking.
 struct PlannerInfo {
     mytoydb::parser::Query* parse = nullptr;    // the query being planned
     std::vector<RelOptInfo*> simple_rel_array;  // base relation infos (1-based)
@@ -34,6 +38,13 @@ struct PlannerInfo {
     std::vector<mytoydb::parser::Node*> sort_pathkeys;              // sort pathkeys
     std::vector<mytoydb::parser::Node*> distinct_pathkeys;          // distinct pathkeys
     int wt_param_id = -1;                                           // window-function parameter ID
+    // --- Task 15.15: equivalence classes & canonical pathkeys ---
+    // All EquivalenceClass objects built from this query's join quals. Each
+    // mergejoinable qual "a.x = b.y" adds a.x and b.y to a single EC, allowing
+    // the optimizer to derive implied quals and detect mergejoinable clauses.
+    std::vector<struct EquivalenceClass*> eq_classes;
+    // Canonical PathKey objects registered during planning (deduplicated).
+    std::vector<struct PathKey*> canonical_pathkeys;
 };
 
 // planner — top-level planner entry point.

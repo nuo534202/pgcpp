@@ -42,6 +42,13 @@ mytoydb::executor::NestLoop* create_nestloop_plan(PlannerInfo* root, NestLoopPat
 // create_hashjoin_plan — build a HashJoin plan (skeleton).
 mytoydb::executor::HashJoin* create_hashjoin_plan(PlannerInfo* root, HashJoinPath* path);
 
+// create_mergejoin_plan — build a MergeJoin plan (Task 15.15).
+mytoydb::executor::MergeJoin* create_mergejoin_plan(PlannerInfo* root, MergeJoinPath* path);
+
+// create_subqueryscan_plan — build a SubqueryScan plan (Task 15.15).
+mytoydb::executor::SubqueryScan* create_subqueryscan_plan(PlannerInfo* root,
+                                                          SubqueryScanPath* path);
+
 // create_result_plan — build a Result plan (for no-FROM queries).
 mytoydb::executor::Result* create_result_plan(PlannerInfo* root, ResultPath* path);
 

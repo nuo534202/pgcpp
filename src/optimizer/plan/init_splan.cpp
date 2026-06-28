@@ -10,6 +10,7 @@
 #include "mytoydb/catalog/catalog.hpp"
 #include "mytoydb/common/containers/node.hpp"
 #include "mytoydb/optimizer/cost.hpp"
+#include "mytoydb/optimizer/path/equivclass.hpp"
 #include "mytoydb/optimizer/util/pathnode.hpp"
 #include "mytoydb/optimizer/util/plancat.hpp"
 #include "mytoydb/optimizer/util/relnode.hpp"
@@ -196,11 +197,22 @@ void distribute_quals_to_rels(PlannerInfo* root, Node* quals) {
                     EstimateSelectivity(ri->clause, (rel->tuples > 0) ? rel->tuples : 1000);
             }
         } else {
-            // Multi-table qual: attach to joininfo of the first rel (skeleton).
-            int relid = ri->required_relids[0];
-            RelOptInfo* rel = find_base_rel(root, relid);
-            if (rel != nullptr)
-                rel->joininfo.push_back(ri);
+            // Multi-table qual: this is a join clause. Classify it for
+            // merge/hash eligibility, then run it through process_equivalence
+            // to populate the planner's EquivalenceClass list. The ECs are
+            // later used by the join planner to find merge/hash clauses and
+            // to derive implied equalities (Task 15.15).
+            classify_restrictinfo(ri);
+            if (ri->mergejoinable) {
+                process_equivalence(root, ri);
+            }
+            // Attach the clause to the joininfo of each referenced rel so
+            // the join planner can find it when forming pairs.
+            for (int relid : ri->required_relids) {
+                RelOptInfo* rel = find_base_rel(root, relid);
+                if (rel != nullptr)
+                    rel->joininfo.push_back(ri);
+            }
         }
     }
 }

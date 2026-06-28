@@ -37,6 +37,20 @@ NestLoopPath* create_nestloop_path(PlannerInfo* root, RelOptInfo* joinrel, Path*
 HashJoinPath* create_hashjoin_path(PlannerInfo* root, RelOptInfo* joinrel, Path* outer, Path* inner,
                                    std::vector<mytoydb::parser::Node*> hashclauses);
 
+// create_mergejoin_path — create a MergeJoinPath for a join relation (Task 15.15).
+// Caller is responsible for ensuring outer and inner paths are sorted on the
+// merge clause's sort operator (typically by wrapping them in SortPaths).
+MergeJoinPath* create_mergejoin_path(PlannerInfo* root, RelOptInfo* joinrel, Path* outer,
+                                     Path* inner, std::vector<mytoydb::parser::Node*> mergeclauses,
+                                     mytoydb::parser::JoinType jointype);
+
+// create_subqueryscan_path — create a SubqueryScanPath wrapping a subquery's
+// chosen path (Task 15.15). Used when a FROM-clause subquery cannot be
+// flattened into the parent query.
+SubqueryScanPath* create_subqueryscan_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
+                                           int scanrelid,
+                                           std::vector<mytoydb::parser::TargetEntry*> tlist);
+
 // create_sort_path — create a SortPath wrapping a subpath.
 SortPath* create_sort_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
                            std::vector<mytoydb::parser::SortGroupClause*> pathkeys);
