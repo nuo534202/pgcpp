@@ -110,6 +110,9 @@ mytoydb_add_test(server_test unit/server/server_test.cpp)
 mytoydb_add_test(guc_test unit/server/guc_test.cpp)
 mytoydb_add_test(postmaster_startup_test unit/server/postmaster_startup_test.cpp)
 
+# Phase 15.17 tests (M12: auxiliary processes)
+mytoydb_add_test(aux_process_test unit/server/aux_process_test.cpp)
+
 # Phase 13 tests (M13: client tools)
 mytoydb_add_test(tools_test unit/tools/tools_test.cpp)
 mytoydb_add_test(psql_describe_test unit/tools/psql_describe_test.cpp)

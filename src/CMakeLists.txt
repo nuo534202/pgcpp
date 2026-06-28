@@ -163,6 +163,18 @@ set(MYTOYDB_CORE_SOURCES
     server/bootstrap.cpp
     server/options.cpp
     server/guc.cpp
+    server/auxprocess.cpp
+    server/interrupt.cpp
+    server/fork_process.cpp
+    server/bgwriter.cpp
+    server/checkpointer.cpp
+    server/startup.cpp
+    server/walwriter.cpp
+    server/autovacuum.cpp
+    server/pgarch.cpp
+    server/syslogger.cpp
+    server/bgworker.cpp
+    server/shell_archive.cpp
     tools/psql_client.cpp
     tools/psql_command.cpp
     tools/psql_describe.cpp
