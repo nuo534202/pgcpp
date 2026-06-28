@@ -26,7 +26,7 @@
 #include <map>
 #include <string>
 
-namespace mytoydb::tools {
+namespace pgcpp::tools {
 
 class PsqlClient;
 
@@ -46,4 +46,4 @@ enum class MetaCommandResult {
 MetaCommandResult ExecuteMetaCommand(PsqlClient& client, const std::string& line,
                                      std::map<std::string, std::string>& vars, std::ostream& out);
 
-}  // namespace mytoydb::tools
+}  // namespace pgcpp::tools

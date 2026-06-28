@@ -1,20 +1,20 @@
 // typecmds.cpp — CREATE TYPE implementation.
 //
 // Converted from PostgreSQL 15's src/backend/commands/typecmds.c.
-// MyToyDB has no user-defined type system yet; this is a stub.
+// pgcpp has no user-defined type system yet; this is a stub.
 #include "pgcpp/commands/typecmds.hpp"
 
 #include <string>
 
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::parser::CreateStmt;
+using pgcpp::parser::CreateStmt;
 
 std::string DefineType(CreateStmt* stmt) {
     (void)stmt;  // Stub.
     return "CREATE TYPE";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

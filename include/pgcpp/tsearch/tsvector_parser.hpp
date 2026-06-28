@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // tsvector parser (PostgreSQL src/backend/tsearch/tsvector_parser.c).
@@ -16,7 +16,7 @@ namespace mytoydb::tsearch {
 // positions, and the per-position weight (A, B, C, or D).
 //
 // Note: we define a tsearch-specific WordEntry because the existing
-// mytoydb::types::TsWordEntry (in types/ts_types.hpp) does not carry weights.
+// pgcpp::types::TsWordEntry (in types/ts_types.hpp) does not carry weights.
 // ---------------------------------------------------------------------------
 
 struct WordEntry {
@@ -29,4 +29,4 @@ struct WordEntry {
 // The returned list is NOT sorted — callers may sort as needed.
 std::vector<WordEntry> TsVectorParse(std::string_view str);
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

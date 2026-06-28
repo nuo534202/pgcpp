@@ -19,43 +19,43 @@
 #include "pgcpp/transaction/heap_tuple.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::access::CopyIndexTuple;
-using mytoydb::access::CreateTupleDesc;
-using mytoydb::access::index_compute_data_size;
-using mytoydb::access::index_deform_tuple;
-using mytoydb::access::index_form_tuple;
-using mytoydb::access::IndexTupleHasNulls;
-using mytoydb::access::IndexTupleHasVarwidth;
-using mytoydb::access::IndexTupleSize;
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
-using mytoydb::transaction::ItemPointerData;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::VARDATA;
-using mytoydb::types::VARSIZE;
+using pgcpp::access::CopyIndexTuple;
+using pgcpp::access::CreateTupleDesc;
+using pgcpp::access::index_compute_data_size;
+using pgcpp::access::index_deform_tuple;
+using pgcpp::access::index_form_tuple;
+using pgcpp::access::IndexTupleHasNulls;
+using pgcpp::access::IndexTupleHasVarwidth;
+using pgcpp::access::IndexTupleSize;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::memory::palloc;
+using pgcpp::memory::pfree;
+using pgcpp::transaction::ItemPointerData;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::VARDATA;
+using pgcpp::types::VARSIZE;
 
 namespace {
 
 class IndextupleTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("indextuple_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

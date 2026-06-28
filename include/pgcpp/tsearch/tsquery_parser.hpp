@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/ts_types.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // tsquery parser (PostgreSQL src/backend/tsearch/tsquery_parser.c).
@@ -16,13 +16,13 @@ namespace mytoydb::tsearch {
 //   !   NOT (unary prefix)
 //   ( ) grouping
 //
-// Returns the root TsQueryNode tree. Reuses mytoydb::types::TsQueryNode so
+// Returns the root TsQueryNode tree. Reuses pgcpp::types::TsQueryNode so
 // the resulting tree is interoperable with the existing types::ts_match and
 // types::tsquery_out routines.
 //
 // Precedence (highest to lowest): ! , & , |. This matches PostgreSQL.
 // ---------------------------------------------------------------------------
 
-mytoydb::types::TsQueryNode TsQueryParse(std::string_view str);
+pgcpp::types::TsQueryNode TsQueryParse(std::string_view str);
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

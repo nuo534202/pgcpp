@@ -8,7 +8,7 @@
 // xloginsert.h) and read back by XLogReader (see xlogreader.h) during crash
 // recovery.
 //
-// In PostgreSQL, WAL is stored in pg_wal/ as a series of segment files. MyToyDB
+// In PostgreSQL, WAL is stored in pg_wal/ as a series of segment files. pgcpp
 // is single-process, so we keep an in-memory byte buffer for testability; the
 // LSN semantics and record framing are identical.
 #pragma once
@@ -18,7 +18,7 @@
 
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // XLogRecPtr — Log Sequence Number: byte offset in the WAL stream.
 // InvalidXLogRecPtr (0) means "no LSN yet". The first valid record starts
@@ -33,7 +33,7 @@ constexpr XLogRecPtr kInvalidXLogRecPtr = 0;
 using XLogSegNo = uint64_t;
 
 // WAL_SEGMENT_SIZE — matches PostgreSQL's default segment size (16 MB).
-// MyToyDB's in-memory buffer is much smaller, but this constant is kept for
+// pgcpp's in-memory buffer is much smaller, but this constant is kept for
 // LSN arithmetic fidelity.
 constexpr int kWalSegmentSize = 16 * 1024 * 1024;
 
@@ -88,7 +88,7 @@ constexpr uint32_t kMaxXlogRecordLength = 1024 * 1024;
 // --- WAL buffer state ---
 //
 // In PostgreSQL, WAL is buffered in shared memory (wal_buffers, default 3MB)
-// and flushed to disk by the WAL writer or at commit. MyToyDB uses a single
+// and flushed to disk by the WAL writer or at commit. pgcpp uses a single
 // in-memory vector as the "WAL stream"; LSNs are byte offsets into it.
 
 // Initialize the WAL subsystem (clear the buffer, reset the insert pointer).
@@ -102,7 +102,7 @@ void ResetWal();
 XLogRecPtr GetXLogInsertRecPtr();
 
 // Get the current flush position (the LSN up to which WAL is durable).
-// In MyToyDB, all inserted records are immediately "flushed", so this
+// In pgcpp, all inserted records are immediately "flushed", so this
 // equals GetXLogInsertRecPtr.
 XLogRecPtr GetXLogWriteRecPtr();
 
@@ -122,8 +122,8 @@ std::size_t GetWalBufferSize();
 // Get a read-only pointer to the WAL buffer (for testing/diagnostics).
 const std::vector<uint8_t>& GetWalBuffer();
 
-// XLogFlush — flush WAL up to the given LSN. In MyToyDB this is a no-op
+// XLogFlush — flush WAL up to the given LSN. In pgcpp this is a no-op
 // (the in-memory buffer is always "durable"), but it matches the PG API.
 void XLogFlush(XLogRecPtr upto);
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

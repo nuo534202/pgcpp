@@ -12,10 +12,10 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
 
 // addRangeTableEntry — create an RTE for a relation (table).
 // Returns the RTE and sets *rtindex to its position in pstate->p_rtable.
@@ -57,4 +57,4 @@ RangeTblEntry* buildRangeTblEntry(RangeVar* relation, Alias* alias, bool inh, bo
 void addRTEToQuery(ParseState* pstate, RangeTblEntry* rte, bool addToJoinList, bool addToNameSpace,
                    bool allowVLE);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

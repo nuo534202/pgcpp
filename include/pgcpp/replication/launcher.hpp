@@ -3,14 +3,14 @@
 // Converted from PostgreSQL 15's src/backend/replication/logical/launcher.c.
 //
 // The launcher is a single background process that periodically scans
-// pg_subscription and starts / stops apply workers as needed. MyToyDB
+// pg_subscription and starts / stops apply workers as needed. pgcpp
 // keeps a tiny state object (running flag, last-run timestamp, next-id)
 // and exposes ApplyLauncherMain / ApplyLauncherWakeup as stubs.
 #pragma once
 
 #include <cstdint>
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // LogicalRepLauncherState — the launcher's state (file-static singleton).
 struct LogicalRepLauncherState {
@@ -48,4 +48,4 @@ int64_t AllocateNextSubscriptionId();
 // GetLogicalRepLauncherState — pointer to the global launcher state.
 LogicalRepLauncherState* GetLogicalRepLauncherState();
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

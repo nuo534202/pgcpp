@@ -6,7 +6,7 @@
 // fork_process.c handles the post-fork cleanup: detach from the controlling
 // terminal, close inherited file descriptors, reset signal handlers, etc.
 //
-// MyToyDB preserves the fork() model (per AGENTS.md: no std::thread). This
+// pgcpp preserves the fork() model (per AGENTS.md: no std::thread). This
 // helper wraps fork() with the standard cleanup steps and provides a
 // function-based entry point (matching PG's BackendRun / AuxProcessMain
 // pattern).
@@ -17,7 +17,7 @@
 #include <functional>
 #include <string>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // ForkProcess — fork a child process and call `child_main` in the child.
 //
@@ -55,7 +55,7 @@ void SetForkedProcessRole(const std::string& role);
 
 // CloseClientSocket — close the inherited client socket (if any).
 // In PG, this is done by fork_process to detach the aux process from the
-// postmaster's listening socket. MyToyDB simplification: closes fds 0-2
+// postmaster's listening socket. pgcpp simplification: closes fds 0-2
 // if they were inherited as sockets.
 void CloseClientSocket();
 
@@ -63,4 +63,4 @@ void CloseClientSocket();
 // auxiliary processes that should not write to the terminal.
 void CloseStdio();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

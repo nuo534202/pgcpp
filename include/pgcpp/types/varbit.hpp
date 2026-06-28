@@ -4,7 +4,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // bit / varbit — fixed and variable length bit strings.
@@ -55,4 +55,4 @@ inline VarBit* DatumGetVarBit(Datum x) {
     return reinterpret_cast<VarBit*>(x);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

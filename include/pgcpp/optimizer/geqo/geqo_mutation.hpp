@@ -5,14 +5,14 @@
 // Mutation introduces small random changes into a child chromosome to
 // maintain genetic diversity. PostgreSQL's GEQO uses a single "swap two
 // genes" mutation applied with probability geqo_mutation_prob per child.
-// MyToyDB follows the same design: pick two distinct positions uniformly at
+// pgcpp follows the same design: pick two distinct positions uniformly at
 // random and exchange their genes. Mutations must preserve the permutation
 // invariant (every relation index appears exactly once).
 #pragma once
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 // MutateChromosome — with probability `prob`, swap two uniformly chosen
 // distinct positions in `chrom->genes`. Returns true if a mutation was
@@ -21,4 +21,4 @@ namespace mytoydb::optimizer::geqo {
 // default (e.g., for testing).
 bool MutateChromosome(Chromosome* chrom, double prob);
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

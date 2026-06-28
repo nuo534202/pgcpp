@@ -19,7 +19,7 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // ExprContext — holds the context for expression evaluation.
 struct ExprContext {
@@ -29,33 +29,32 @@ struct ExprContext {
     TupleTableSlot* ecxt_aggregates = nullptr;  // aggregate results (for Aggref)
 
     // Per-tuple memory context: reset between tuples to avoid leaks.
-    mytoydb::memory::MemoryContext* ecxt_per_tuple_memory = nullptr;
+    pgcpp::memory::MemoryContext* ecxt_per_tuple_memory = nullptr;
 
     ExprContext() = default;
     ~ExprContext();
 };
 
 // ExprState — wrapper for an expression to be evaluated.
-// In PostgreSQL this carries execution-time info; in MyToyDB it's
+// In PostgreSQL this carries execution-time info; in pgcpp it's
 // minimal since we dispatch on NodeTag at evaluation time.
 struct ExprState {
-    mytoydb::parser::Node* expr = nullptr;
-    explicit ExprState(mytoydb::parser::Node* e) : expr(e) {}
+    pgcpp::parser::Node* expr = nullptr;
+    explicit ExprState(pgcpp::parser::Node* e) : expr(e) {}
 };
 
 // ExecEvalExpr — evaluate an expression in the given context.
 // Returns the resulting Datum; sets *isNull to true if the result is NULL.
-mytoydb::types::Datum ExecEvalExpr(mytoydb::parser::Node* expr, ExprContext* econtext,
-                                   bool* isNull);
+pgcpp::types::Datum ExecEvalExpr(pgcpp::parser::Node* expr, ExprContext* econtext, bool* isNull);
 
 // ExecQual — evaluate a qual (WHERE clause) predicate.
 // Returns true if the tuple satisfies the qual (or if qual is null).
-bool ExecQual(mytoydb::parser::Node* qual, ExprContext* econtext);
+bool ExecQual(pgcpp::parser::Node* qual, ExprContext* econtext);
 
 // ExecProject — evaluate a target list, producing a result tuple slot.
 // The result is stored in result_slot.
-void ExecProject(const std::vector<mytoydb::parser::TargetEntry*>& targetlist,
-                 ExprContext* econtext, TupleTableSlot* result_slot);
+void ExecProject(const std::vector<pgcpp::parser::TargetEntry*>& targetlist, ExprContext* econtext,
+                 TupleTableSlot* result_slot);
 
 // CreateExprContext — create a new ExprContext with a per-tuple memory context.
 ExprContext* CreateExprContext();
@@ -69,10 +68,9 @@ void ResetExprContext(ExprContext* econtext);
 // SetExecParams — set the bound parameter values for the current query
 // execution. Used by the extended query protocol to pass Bind parameter
 // values to ExecEvalExpr for Param node evaluation.
-void SetExecParams(const std::vector<mytoydb::types::Datum>& values,
-                   const std::vector<bool>& isnull);
+void SetExecParams(const std::vector<pgcpp::types::Datum>& values, const std::vector<bool>& isnull);
 
 // ClearExecParams — clear the bound parameter values after query execution.
 void ClearExecParams();
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

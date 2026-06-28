@@ -5,7 +5,7 @@
 // to the server via the simple query protocol.
 #include "pgcpp/tools/psql_describe.hpp"
 
-namespace mytoydb::tools {
+namespace pgcpp::tools {
 
 // Escape a single-quoted SQL string literal: ' -> ''.
 // Used to embed user-provided patterns safely into the generated SQL.
@@ -103,4 +103,4 @@ std::string BuildDescribeRelationSql(const std::string& name) {
     return sql;
 }
 
-}  // namespace mytoydb::tools
+}  // namespace pgcpp::tools

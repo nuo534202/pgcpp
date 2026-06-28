@@ -8,7 +8,7 @@
 // Deviation from PostgreSQL: the original is a concurrent open-addressed
 // hash table backed by dynamic shared memory (DSM) and protected by
 // per-partition LWLocks. This implementation is single-process and uses
-// std::unordered_map, which is sufficient for MyToyDB's existing single-
+// std::unordered_map, which is sufficient for pgcpp's existing single-
 // backend test/executor paths. The public API is preserved so future
 // hardening can swap the storage without touching call sites.
 
@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 // DsHash — a simple key/value hash table.
 //
@@ -124,4 +124,4 @@ std::vector<std::pair<K, V>> DsHash<K, V, Hash, KeyEq>::Entries() const {
     return out;
 }
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

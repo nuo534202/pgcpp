@@ -20,38 +20,38 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::access::CreateTemplateTupleDesc;
-using mytoydb::access::CreateTupleDescCopy;
-using mytoydb::access::CreateTupleDescCopyConstr;
-using mytoydb::access::equalTupleDescs;
-using mytoydb::access::FreeTupleDesc;
-using mytoydb::access::TupleDesc;
-using mytoydb::access::TupleDescCopyEntry;
-using mytoydb::access::TupleDescInitEntry;
-using mytoydb::access::TupleDescInitEntryCollation;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
+using pgcpp::access::CreateTemplateTupleDesc;
+using pgcpp::access::CreateTupleDescCopy;
+using pgcpp::access::CreateTupleDescCopyConstr;
+using pgcpp::access::equalTupleDescs;
+using pgcpp::access::FreeTupleDesc;
+using pgcpp::access::TupleDesc;
+using pgcpp::access::TupleDescCopyEntry;
+using pgcpp::access::TupleDescInitEntry;
+using pgcpp::access::TupleDescInitEntryCollation;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
 
 namespace {
 
 class TupdescTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         // No catalog set: TupleDescInitEntry uses the hardcoded fallback.
         context_ = AllocSetContext::Create("tupdesc_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

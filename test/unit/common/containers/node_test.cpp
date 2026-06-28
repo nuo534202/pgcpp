@@ -10,31 +10,31 @@
 
 namespace {
 
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::copyObject;
-using mytoydb::nodes::equal;
-using mytoydb::nodes::isA;
-using mytoydb::nodes::makeFloat;
-using mytoydb::nodes::makeInteger;
-using mytoydb::nodes::makeNull;
-using mytoydb::nodes::makeString;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::nodes::Value;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::copyObject;
+using pgcpp::nodes::equal;
+using pgcpp::nodes::isA;
+using pgcpp::nodes::makeFloat;
+using pgcpp::nodes::makeInteger;
+using pgcpp::nodes::makeNull;
+using pgcpp::nodes::makeString;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::nodes::Value;
 
 // Test fixture that sets up a memory context (same pattern as elog_test.cpp).
 // All Node allocations via palloc land in this context.
 class NodeTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("node_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

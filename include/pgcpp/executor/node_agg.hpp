@@ -12,7 +12,7 @@
 #include "pgcpp/executor/node_exec.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // Aggregate function kinds (identified by aggfnoid).
 enum class AggKind {
@@ -26,11 +26,11 @@ enum class AggKind {
 // AggStateInfo — per-aggregate runtime info.
 struct AggStateInfo {
     AggKind kind = AggKind::kCount;
-    mytoydb::catalog::Oid argtype = 0;     // type of the aggregate's argument
-    mytoydb::catalog::Oid restype = 0;     // type of the aggregate's result
-    int aggno = -1;                        // index into the state arrays
-    bool isstar = false;                   // COUNT(*) vs COUNT(expr)
-    mytoydb::parser::Node* arg = nullptr;  // argument expression (nullptr for COUNT(*))
+    pgcpp::catalog::Oid argtype = 0;     // type of the aggregate's argument
+    pgcpp::catalog::Oid restype = 0;     // type of the aggregate's result
+    int aggno = -1;                      // index into the state arrays
+    bool isstar = false;                 // COUNT(*) vs COUNT(expr)
+    pgcpp::parser::Node* arg = nullptr;  // argument expression (nullptr for COUNT(*))
 };
 
 // AggGroupKey — a GROUP BY key (vector of Datum values, hashed).
@@ -42,7 +42,7 @@ struct AggStateInfo {
 // types, `str_values[i]` is left empty and the Datum in `values[i]` is used
 // directly.
 struct AggGroupKey {
-    std::vector<mytoydb::types::Datum> values;
+    std::vector<pgcpp::types::Datum> values;
     std::vector<std::string> str_values;
     std::vector<bool> isnull;
     bool operator==(const AggGroupKey& o) const {
@@ -66,13 +66,13 @@ struct AggGroupKeyHash {
 
 // AggGroupState — per-group aggregate state.
 struct AggGroupState {
-    std::vector<int64_t> count;                  // count per aggregate
-    std::vector<int64_t> sum_int;                // integer sum per aggregate
-    std::vector<double> sum_float;               // float sum per aggregate
-    std::vector<mytoydb::types::Datum> min_val;  // min per aggregate
-    std::vector<mytoydb::types::Datum> max_val;  // max per aggregate
-    std::vector<bool> minmax_init;               // has min/max been initialized?
-    std::vector<bool> minmax_null;               // is min/max currently null?
+    std::vector<int64_t> count;                // count per aggregate
+    std::vector<int64_t> sum_int;              // integer sum per aggregate
+    std::vector<double> sum_float;             // float sum per aggregate
+    std::vector<pgcpp::types::Datum> min_val;  // min per aggregate
+    std::vector<pgcpp::types::Datum> max_val;  // max per aggregate
+    std::vector<bool> minmax_init;             // has min/max been initialized?
+    std::vector<bool> minmax_null;             // is min/max currently null?
 };
 
 class AggState : public PlanState {
@@ -106,4 +106,4 @@ private:
     TupleTableSlot* BuildOutputSlot(const AggGroupKey& key, const AggGroupState& gs);
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

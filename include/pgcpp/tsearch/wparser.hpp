@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // Word parser / tokenizer (PostgreSQL src/backend/tsearch/wparser.c).
@@ -27,4 +27,4 @@ struct Token {
 // "simple" config lowercases).
 std::vector<Token> TokenizeText(std::string_view str);
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

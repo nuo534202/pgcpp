@@ -1,7 +1,7 @@
 // origin.cpp — Replication origin tracking.
 //
 // Converted from PostgreSQL 15's src/backend/replication/logical/origin.c.
-// PG stores origins in pg_replication_origin catalog; MyToyDB keeps an
+// PG stores origins in pg_replication_origin catalog; pgcpp keeps an
 // in-process std::map<uint16, CommitOrigin> and tracks the current
 // session's origin id and LSN.
 #include "pgcpp/replication/origin.hpp"
@@ -12,9 +12,9 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -140,4 +140,4 @@ transaction::XLogRecPtr ReploriginSessionLsn() {
     return Store().session_local_lsn;
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

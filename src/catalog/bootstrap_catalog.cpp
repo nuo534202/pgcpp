@@ -20,29 +20,29 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::catalog {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::catalog {
+using pgcpp::nodes::makePallocNode;
 
 namespace {
 
 // PostgreSQL UNKNOWNOID (the "unknown" pseudo-type). Used here as the argument
 // type of input functions and the return type of output functions, standing in
-// for cstring (CSTRINGOID=2275) which MyToyDB does not yet model.
+// for cstring (CSTRINGOID=2275) which pgcpp does not yet model.
 constexpr Oid kUnknownOid = 705;
 
 // Type OID aliases (shorter names within this translation unit).
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kNumericOid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
-using mytoydb::types::kTimestamptzOid;
-using mytoydb::types::kVarcharOid;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kDateOid;
+using pgcpp::types::kFloat4Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kNumericOid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
+using pgcpp::types::kTimestamptzOid;
+using pgcpp::types::kVarcharOid;
 
 // Function OIDs (PostgreSQL pg_proc_d.h constants), used as operator oprcode.
 constexpr Oid F_INT4EQ = 350;
@@ -383,7 +383,7 @@ void BootstrapCatalog(Catalog* cat) {
     // by the pg_aggregate rows below via aggfnoid.
     //
     // PostgreSQL declares count/min/max with proargtypes = {anyelement} and
-    // prorettype = anyelement (for min/max) or int8 (for count). Since MyToyDB
+    // prorettype = anyelement (for min/max) or int8 (for count). Since pgcpp
     // does not model polymorphic types, we add one entry per concrete type.
     // Return types follow PostgreSQL:
     //   count(any) → int8
@@ -423,7 +423,7 @@ void BootstrapCatalog(Catalog* cat) {
     Oid max_text_oid =
         cat->InsertProc(MakeProc(kInvalidOid, "max", kTextOid, {kTextOid}, ProKind::kAggregate));
 
-    // AVG returns float8 for all integer/float types (MyToyDB does not
+    // AVG returns float8 for all integer/float types (pgcpp does not
     // implement the numeric type; the executor computes AVG as float8).
     cat->InsertProc(MakeProc(2107, "avg", kFloat8Oid, {kInt4Oid}, ProKind::kAggregate));
     Oid avg_int8_oid =
@@ -516,4 +516,4 @@ void BootstrapCatalog(Catalog* cat) {
     cat->InsertCollation(MakeCollation(kPOSIX_COLLATION_OID, "POSIX", CollProvider::kLibc));
 }
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

@@ -10,7 +10,7 @@
 #include <cstring>
 #include <string_view>
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 namespace {
 
@@ -62,4 +62,4 @@ std::size_t pg_regerror(int errcode, const regex_t* /*re*/, char* errbuf, std::s
     return len;
 }
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

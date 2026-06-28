@@ -8,7 +8,7 @@
 // in pg_wal/ and archiving them one at a time. This enables point-in-time
 // recovery and replication.
 //
-// In MyToyDB (single-process), the archiver is a stateful API that maintains
+// In pgcpp (single-process), the archiver is a stateful API that maintains
 // a queue of pending archive requests. PgArchiverMain processes the queue
 // by calling ShellArchive for each file.
 #pragma once
@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // PgArchState — state of the WAL archiver.
 enum class PgArchState {
@@ -78,4 +78,4 @@ PgArchState GetPgArchState();
 // GetPgArchStats — return the current archiver statistics.
 PgArchStats GetPgArchStats();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

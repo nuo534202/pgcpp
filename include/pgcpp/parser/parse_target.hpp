@@ -10,9 +10,9 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
+using pgcpp::nodes::Node;
 
 // transformTargetList — transform a raw target list (SELECT clause)
 // into a list of TargetEntry nodes.
@@ -51,4 +51,4 @@ int assignSortGroupRef(TargetEntry* tle, std::vector<Node*>& targetlist);
 TargetEntry* findTargetlistEntrySQL99(ParseState* pstate, Node* node,
                                       std::vector<Node*>* targetlist, ParseExprKind exprKind);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

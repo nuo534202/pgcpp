@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // UUID — 128-bit identifier (PostgreSQL type OID 2950).
@@ -46,4 +46,4 @@ inline UuidData UuidFromBytes(const uint8_t b[16]) {
     return u;
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

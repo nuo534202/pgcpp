@@ -23,53 +23,53 @@
 #include "pgcpp/transaction/heap_tuple.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::access::CreateTupleDesc;
-using mytoydb::access::heap_attisnull;
-using mytoydb::access::heap_compute_data_size;
-using mytoydb::access::heap_copytuple;
-using mytoydb::access::heap_copytuple_with_tuple;
-using mytoydb::access::heap_deform_tuple;
-using mytoydb::access::heap_fill_tuple;
-using mytoydb::access::heap_form_tuple;
-using mytoydb::access::heap_freetuple;
-using mytoydb::access::heap_getattr;
-using mytoydb::access::heap_modify_tuple;
-using mytoydb::access::heap_modify_tuple_by_cols;
-using mytoydb::access::heap_tuple_buffer_getsysattr;
-using mytoydb::access::heap_tuple_from_minimal_tuple;
-using mytoydb::access::kMaxCommandIdAttributeNumber;
-using mytoydb::access::kMaxTransactionIdAttributeNumber;
-using mytoydb::access::kMinCommandIdAttributeNumber;
-using mytoydb::access::kMinTransactionIdAttributeNumber;
-using mytoydb::access::kSelfItemPointerAttributeNumber;
-using mytoydb::access::kTableOidAttributeNumber;
-using mytoydb::access::minimal_tuple_from_heap_tuple;
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::transaction::HeapTupleData;
-using mytoydb::transaction::HeapTupleHeaderData;
-using mytoydb::transaction::ItemPointerData;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::Int32GetDatum;
+using pgcpp::access::CreateTupleDesc;
+using pgcpp::access::heap_attisnull;
+using pgcpp::access::heap_compute_data_size;
+using pgcpp::access::heap_copytuple;
+using pgcpp::access::heap_copytuple_with_tuple;
+using pgcpp::access::heap_deform_tuple;
+using pgcpp::access::heap_fill_tuple;
+using pgcpp::access::heap_form_tuple;
+using pgcpp::access::heap_freetuple;
+using pgcpp::access::heap_getattr;
+using pgcpp::access::heap_modify_tuple;
+using pgcpp::access::heap_modify_tuple_by_cols;
+using pgcpp::access::heap_tuple_buffer_getsysattr;
+using pgcpp::access::heap_tuple_from_minimal_tuple;
+using pgcpp::access::kMaxCommandIdAttributeNumber;
+using pgcpp::access::kMaxTransactionIdAttributeNumber;
+using pgcpp::access::kMinCommandIdAttributeNumber;
+using pgcpp::access::kMinTransactionIdAttributeNumber;
+using pgcpp::access::kSelfItemPointerAttributeNumber;
+using pgcpp::access::kTableOidAttributeNumber;
+using pgcpp::access::minimal_tuple_from_heap_tuple;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::transaction::HeapTupleData;
+using pgcpp::transaction::HeapTupleHeaderData;
+using pgcpp::transaction::ItemPointerData;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::Int32GetDatum;
 
 namespace {
 
 class HeaptupleTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("heaptuple_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -116,7 +116,7 @@ TEST_F(HeaptupleTest, FillTupleNoNullsRoundTrips) {
 
     // No nulls → no kHeapHasNull bit. Data present → kHeapHasVarWidth not set
     // for by-value fixed-length types (matches heap_form_tuple behavior).
-    EXPECT_EQ((infomask & mytoydb::transaction::kHeapHasNull), 0u);
+    EXPECT_EQ((infomask & pgcpp::transaction::kHeapHasNull), 0u);
     EXPECT_EQ(hoff, 24u);  // MAXALIGN(23) for no nulls.
 
     // heap_fill_tuple fills the data + null bitmap but leaves the header
@@ -125,7 +125,7 @@ TEST_F(HeaptupleTest, FillTupleNoNullsRoundTrips) {
     auto* hdr = reinterpret_cast<HeapTupleHeaderData*>(data);
     hdr->t_hoff = hoff;
     hdr->t_infomask = infomask;
-    mytoydb::transaction::HeapTupleHeaderSetNatts(hdr, desc->natts);
+    pgcpp::transaction::HeapTupleHeaderSetNatts(hdr, desc->natts);
 
     // Wrap and deform to verify round-trip.
     HeapTupleData tup;
@@ -156,14 +156,14 @@ TEST_F(HeaptupleTest, FillTupleWithNullSetsHasNullBit) {
     heap_fill_tuple(desc, values, isnull, data, data_size, &infomask, &hoff);
 
     // Has nulls → kHeapHasNull set. hoff = MAXALIGN(23 + 1) = 24.
-    EXPECT_NE((infomask & mytoydb::transaction::kHeapHasNull), 0u);
+    EXPECT_NE((infomask & pgcpp::transaction::kHeapHasNull), 0u);
     EXPECT_EQ(hoff, 24u);
 
     // Set the header fields (as heap_form_tuple would) so deform can read them.
     auto* hdr = reinterpret_cast<HeapTupleHeaderData*>(data);
     hdr->t_hoff = hoff;
     hdr->t_infomask = infomask;
-    mytoydb::transaction::HeapTupleHeaderSetNatts(hdr, desc->natts);
+    pgcpp::transaction::HeapTupleHeaderSetNatts(hdr, desc->natts);
 
     // Deform and verify the null bitmap is honored.
     HeapTupleData tup;
@@ -258,9 +258,9 @@ TEST_F(HeaptupleTest, CopytupleWithTupleFillsDest) {
 
     heap_freetuple(src);
     if (dest->t_data != nullptr) {
-        mytoydb::memory::pfree(dest->t_data);
+        pgcpp::memory::pfree(dest->t_data);
     }
-    mytoydb::nodes::destroyPallocNode(dest);
+    pgcpp::nodes::destroyPallocNode(dest);
 }
 
 // --- heap_attisnull ---
@@ -350,7 +350,7 @@ TEST_F(HeaptupleTest, GetSysAttrReturnsCtidXminXmax) {
                   heap_tuple_buffer_getsysattr(tup, kMaxCommandIdAttributeNumber, desc, &is_null)),
               7u);
 
-    // tableoid: MyToyDB returns 0 (HeapTupleData has no t_tableOid).
+    // tableoid: pgcpp returns 0 (HeapTupleData has no t_tableOid).
     EXPECT_EQ(heap_tuple_buffer_getsysattr(tup, kTableOidAttributeNumber, desc, &is_null),
               Datum(0));
 

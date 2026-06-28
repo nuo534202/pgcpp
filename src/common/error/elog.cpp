@@ -7,7 +7,7 @@
 #include "pgcpp/common/memory/alloc_set.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::error {
+namespace pgcpp::error {
 
 namespace {
 
@@ -136,4 +136,4 @@ void EreportImpl(LogLevel elevel, const char* filename, const char* funcname, in
     std::abort();
 }
 
-}  // namespace mytoydb::error
+}  // namespace pgcpp::error

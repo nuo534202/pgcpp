@@ -7,7 +7,7 @@
 // RTE. This allows the join planner (Task 15.15) to choose NestLoop/HashJoin
 // /MergeJoin paths instead of evaluating the subquery once per outer row.
 //
-// For MyToyDB's Task 15.15, only kAny SubLinks (expr IN (SELECT ...)) with
+// For pgcpp's Task 15.15, only kAny SubLinks (expr IN (SELECT ...)) with
 // a single-column inner query are unfolded. kExists / kAll / kRowcompare
 // are left as SubLink nodes (skeleton; the executor falls back to one-row-
 // at-a-time evaluation).
@@ -20,24 +20,24 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Alias;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::SubLink;
-using mytoydb::parser::SubLinkType;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
+namespace pgcpp::optimizer {
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Alias;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::SubLink;
+using pgcpp::parser::SubLinkType;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
 
 namespace {
 
@@ -158,13 +158,13 @@ Node* convert_any_sublink_to_join(PlannerInfo* root, SubLink* sublink) {
         inner_var->varcollid = sub_var->varcollid;
     } else {
         // Subquery's first column is not a simple Var; we'd need to look up
-        // the column type from the target entry. For MyToyDB's tests, the
+        // the column type from the target entry. For pgcpp's tests, the
         // subquery outputs a Var, so we treat this as a fallback (no unfold).
         return nullptr;
     }
 
     // Look up the equality operator for (outer_type, inner_type).
-    // For MyToyDB, the int4 = int4 operator has OID 96. We use a simple
+    // For pgcpp, the int4 = int4 operator has OID 96. We use a simple
     // heuristic: if the outer is also int4, use OID 96.
     Oid eq_op = 0;
     if (outer_expr->GetTag() == NodeTag::kVar) {
@@ -178,7 +178,7 @@ Node* convert_any_sublink_to_join(PlannerInfo* root, SubLink* sublink) {
 
     auto* join_clause = makePallocNode<OpExpr>();
     join_clause->opno = eq_op;
-    join_clause->opresulttype = mytoydb::types::kBoolOid;
+    join_clause->opresulttype = pgcpp::types::kBoolOid;
     join_clause->args.push_back(outer_expr);
     join_clause->args.push_back(inner_var);
     return join_clause;
@@ -220,4 +220,4 @@ int pull_up_sublinks(PlannerInfo* root) {
     return unfolded;
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

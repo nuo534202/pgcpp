@@ -18,7 +18,7 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
 // Forward declaration — defined in util/restrictinfo.hpp. RestrictInfo wraps a
 // qual clause with optimizer metadata. Forward-declared here so Path subclasses
@@ -82,8 +82,8 @@ struct SeqScanPath : Path {
 // IndexPath — B-tree index scan path.
 struct IndexPath : Path {
     IndexPath() { type = PathType::kIndexScan; }
-    mytoydb::catalog::Oid indexid = 0;              // index relation OID
-    std::vector<mytoydb::parser::Node*> indexqual;  // index scan qualifiers
+    pgcpp::catalog::Oid indexid = 0;              // index relation OID
+    std::vector<pgcpp::parser::Node*> indexqual;  // index scan qualifiers
 };
 
 // JoinPath — base class for join paths (NestLoop, HashJoin).
@@ -103,7 +103,7 @@ struct NestLoopPath : JoinPath {
 // HashJoinPath — hash join path.
 struct HashJoinPath : JoinPath {
     HashJoinPath() { type = PathType::kHashJoin; }
-    std::vector<mytoydb::parser::Node*> hashclauses;  // hash join clauses
+    std::vector<pgcpp::parser::Node*> hashclauses;  // hash join clauses
 };
 
 // MergeJoinPath — merge join on sorted inputs (Task 15.15).
@@ -112,8 +112,8 @@ struct HashJoinPath : JoinPath {
 // pathkeys do not already satisfy the merge clause's ordering.
 struct MergeJoinPath : JoinPath {
     MergeJoinPath() { type = PathType::kMergeJoin; }
-    std::vector<mytoydb::parser::Node*> mergeclauses;  // merge join clauses
-    mytoydb::parser::JoinType jointype = mytoydb::parser::JoinType::kInner;
+    std::vector<pgcpp::parser::Node*> mergeclauses;  // merge join clauses
+    pgcpp::parser::JoinType jointype = pgcpp::parser::JoinType::kInner;
 };
 
 // SubqueryScanPath — scan a subquery RTE in FROM (Task 15.15).
@@ -121,50 +121,50 @@ struct MergeJoinPath : JoinPath {
 // cannot be flattened into the parent query.
 struct SubqueryScanPath : Path {
     SubqueryScanPath() { type = PathType::kSubqueryScan; }
-    Path* subpath = nullptr;                           // path for the subquery
-    int scanrelid = 0;                                 // 1-based range table index
-    std::vector<mytoydb::parser::TargetEntry*> tlist;  // output target list
+    Path* subpath = nullptr;                         // path for the subquery
+    int scanrelid = 0;                               // 1-based range table index
+    std::vector<pgcpp::parser::TargetEntry*> tlist;  // output target list
 };
 
 // SortPath — sort path (wraps a subpath with a sort).
 struct SortPath : Path {
     SortPath() { type = PathType::kSort; }
-    Path* subpath = nullptr;                                  // the path to sort
-    std::vector<mytoydb::parser::SortGroupClause*> pathkeys;  // sort keys
+    Path* subpath = nullptr;                                // the path to sort
+    std::vector<pgcpp::parser::SortGroupClause*> pathkeys;  // sort keys
 };
 
 // AggPath — aggregate path (wraps a subpath with aggregation).
 struct AggPath : Path {
     AggPath() { type = PathType::kAgg; }
     Path* subpath = nullptr;  // input path
-    mytoydb::executor::Agg::Strategy aggstrategy =
-        mytoydb::executor::Agg::Strategy::kPlain;      // plain/sorted/hashed
-    std::vector<mytoydb::parser::Node*> group_clause;  // GROUP BY clauses
-    int num_groups = 0;                                // estimated group count
+    pgcpp::executor::Agg::Strategy aggstrategy =
+        pgcpp::executor::Agg::Strategy::kPlain;      // plain/sorted/hashed
+    std::vector<pgcpp::parser::Node*> group_clause;  // GROUP BY clauses
+    int num_groups = 0;                              // estimated group count
 };
 
 // ResultPath — for queries with no FROM clause (e.g., SELECT 1).
 struct ResultPath : Path {
     ResultPath() { type = PathType::kResult; }
-    std::vector<mytoydb::parser::Node*> quals;  // one-time filter quals
+    std::vector<pgcpp::parser::Node*> quals;  // one-time filter quals
 };
 
 // RelOptInfo — per-relation optimizer state.
 //
 // Mirrors PostgreSQL's RelOptInfo. Holds the range table entry, candidate
-// paths, and the cheapest path selected. For MyToyDB's single-table
+// paths, and the cheapest path selected. For pgcpp's single-table
 // ClickBench workload, join optimization is minimal.
 //
 // Task 15.15 adds `relids` (a multi-rel bitmap for join rels) and `pathkeys`
 // (canonical pathkey list for the cheapest input path, used for merge join).
 struct RelOptInfo {
-    int relid = 0;                                  // relation OID
-    int relindex = 0;                               // 1-based range table index
-    mytoydb::parser::RangeTblEntry* rte = nullptr;  // range table entry
-    std::vector<Path*> pathlist;                    // candidate paths
-    Path* cheapest_path = nullptr;                  // cheapest path selected
-    Cardinality rows = 0.0;                         // estimated row count
-    int width = 0;                                  // estimated row width
+    int relid = 0;                                // relation OID
+    int relindex = 0;                             // 1-based range table index
+    pgcpp::parser::RangeTblEntry* rte = nullptr;  // range table entry
+    std::vector<Path*> pathlist;                  // candidate paths
+    Path* cheapest_path = nullptr;                // cheapest path selected
+    Cardinality rows = 0.0;                       // estimated row count
+    int width = 0;                                // estimated row width
     // --- P0 extensions (Task 15.3): PG-style restrictinfo and statistics ---
     std::vector<RestrictInfo*> baserestrictinfo;  // base-restriction clauses (WHERE)
     std::vector<RestrictInfo*> joininfo;          // join clauses involving this rel
@@ -177,4 +177,4 @@ struct RelOptInfo {
     std::vector<struct PathKey*> pathkeys;
 };
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

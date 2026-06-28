@@ -5,7 +5,7 @@
 // stubbed; only the type table and the wal_level accessor live here.
 #include "pgcpp/replication/replutil.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 namespace {
 
@@ -62,4 +62,4 @@ const char* DefaultOutputPluginName() {
     return "pgoutput";
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

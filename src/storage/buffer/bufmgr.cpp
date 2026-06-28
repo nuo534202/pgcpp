@@ -15,7 +15,7 @@
 //   FlushBuffer — write a dirty buffer's page to disk.
 //
 // In PostgreSQL, these operations involve spinlocks, LWLocks, and
-// inter-process coordination. MyToyDB is single-process, so we use
+// inter-process coordination. pgcpp is single-process, so we use
 // plain fields and no locking. The refcount still matters (a pinned
 // buffer cannot be evicted).
 
@@ -27,7 +27,7 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // Maximum usage count (PostgreSQL's BM_MAX_USAGE_COUNT).
 constexpr int kMaxUsageCount = 5;
@@ -51,7 +51,7 @@ BufferPool::BufferPool(int n_buffers)
     : n_buffers_(n_buffers), descriptors_(n_buffers), blocks_(n_buffers, nullptr) {
     // Allocate page memory for each buffer slot.
     for (int i = 0; i < n_buffers; ++i) {
-        blocks_[i] = static_cast<char*>(mytoydb::memory::palloc(kBlckSz));
+        blocks_[i] = static_cast<char*>(pgcpp::memory::palloc(kBlckSz));
         std::memset(blocks_[i], 0, kBlckSz);
 
         descriptors_[i].buf_id = i;
@@ -75,7 +75,7 @@ BufferPool::~BufferPool() {
     // Free page memory.
     for (int i = 0; i < n_buffers_; ++i) {
         if (blocks_[i] != nullptr) {
-            mytoydb::memory::pfree(blocks_[i]);
+            pgcpp::memory::pfree(blocks_[i]);
         }
     }
 }
@@ -85,7 +85,7 @@ BufferPool::~BufferPool() {
 Page BufferPool::GetBufferPage(Buffer buffer) {
     int buf_id = buffer - 1;
     if (buf_id < 0 || buf_id >= n_buffers_) {
-        ereport(mytoydb::error::LogLevel::kError, "invalid buffer handle");
+        ereport(pgcpp::error::LogLevel::kError, "invalid buffer handle");
     }
     return blocks_[buf_id];
 }
@@ -247,7 +247,7 @@ Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block
                   ReadBufferMode mode, BufferAccessStrategy /*strategy*/) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "buffer pool not initialized");
+        ereport(pgcpp::error::LogLevel::kError, "buffer pool not initialized");
     }
 
     // Build the buffer tag.
@@ -266,8 +266,7 @@ Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block
     // Step 2: buffer miss — find a victim.
     int victim_id = pool->FindVictimBuffer();
     if (victim_id < 0) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "no buffer available in buffer pool (all pinned)");
+        ereport(pgcpp::error::LogLevel::kError, "no buffer available in buffer pool (all pinned)");
     }
 
     BufferDesc* victim = pool->GetBufferDesc(victim_id + 1);
@@ -409,7 +408,7 @@ void MarkBufferDirtyHint(Buffer buffer, bool release) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr)
         return;
-    // MyToyDB has no WAL, so a hint dirty is equivalent to a normal dirty.
+    // pgcpp has no WAL, so a hint dirty is equivalent to a normal dirty.
     // If the buffer is already dirty, this is a no-op.
     BufferDesc* desc = pool->GetBufferDesc(buffer);
     if (desc == nullptr)
@@ -426,7 +425,7 @@ Buffer ReleaseAndReadBuffer(Buffer buffer, SmgrRelation reln, ForkNumber forknum
                             BlockNumber blocknum, ReadBufferMode mode) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "buffer pool not initialized");
+        ereport(pgcpp::error::LogLevel::kError, "buffer pool not initialized");
     }
 
     // Optimization: if the old buffer's tag matches the new (reln, forknum,
@@ -473,7 +472,7 @@ void DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forknum) {
         BufferDesc* desc = pool->GetBufferDesc(i + 1);
         if (!desc->IsTagged())
             continue;
-        // Match on RelFileNode + forknum. rnode.backend is ignored (MyToyDB
+        // Match on RelFileNode + forknum. rnode.backend is ignored (pgcpp
         // has no temp-table local buffers).
         if (desc->tag.rnode != rnode.node)
             continue;
@@ -522,9 +521,9 @@ void FlushDatabaseBuffers(Oid dbid) {
 
 Buffer ReadBufferWithoutRelcache(RelFileNodeBackend rnode, ForkNumber forknum, BlockNumber blocknum,
                                  ReadBufferMode mode, BufferAccessStrategy strategy) {
-    // MyToyDB simplification: bypass-relcache read is just smgropen + ReadBuffer.
+    // pgcpp simplification: bypass-relcache read is just smgropen + ReadBuffer.
     SmgrRelation reln = smgropen(rnode);
     return ReadBuffer(reln, forknum, blocknum, mode, strategy);
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

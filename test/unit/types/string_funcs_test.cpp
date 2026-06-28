@@ -12,42 +12,42 @@
 
 namespace {
 
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetBool;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::like;
-using mytoydb::types::MakeTextDatum;
-using mytoydb::types::not_like;
-using mytoydb::types::regexp_replace;
-using mytoydb::types::substring;
-using mytoydb::types::text_btrim;
-using mytoydb::types::text_left;
-using mytoydb::types::text_length;
-using mytoydb::types::text_lower;
-using mytoydb::types::text_ltrim;
-using mytoydb::types::text_repeat;
-using mytoydb::types::text_reverse;
-using mytoydb::types::text_right;
-using mytoydb::types::text_rtrim;
-using mytoydb::types::text_substr;
-using mytoydb::types::text_upper;
-using mytoydb::types::textcat;
-using mytoydb::types::TextDatumToString;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetBool;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::like;
+using pgcpp::types::MakeTextDatum;
+using pgcpp::types::not_like;
+using pgcpp::types::regexp_replace;
+using pgcpp::types::substring;
+using pgcpp::types::text_btrim;
+using pgcpp::types::text_left;
+using pgcpp::types::text_length;
+using pgcpp::types::text_lower;
+using pgcpp::types::text_ltrim;
+using pgcpp::types::text_repeat;
+using pgcpp::types::text_reverse;
+using pgcpp::types::text_right;
+using pgcpp::types::text_rtrim;
+using pgcpp::types::text_substr;
+using pgcpp::types::text_upper;
+using pgcpp::types::textcat;
+using pgcpp::types::TextDatumToString;
 
 class StringFuncsTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("string_funcs_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -65,7 +65,7 @@ bool RaisesError(F&& fn) {
     }
     PG_CATCH() {
         caught = true;
-        ErrorData* err = mytoydb::error::GetErrorData();
+        ErrorData* err = pgcpp::error::GetErrorData();
         EXPECT_EQ(err->elevel, LogLevel::kError);
     }
     PG_END_TRY();

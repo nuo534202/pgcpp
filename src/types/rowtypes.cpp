@@ -15,11 +15,11 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/builtins.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -145,7 +145,7 @@ std::string QuoteField(const std::string& s) {
 Datum MakeRowDatum(const RowData& row) {
     auto* p = static_cast<RowData*>(palloc(sizeof(RowData)));
     new (p) RowData(row);
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(p, [](void* o) { static_cast<RowData*>(o)->~RowData(); });
     }
@@ -166,7 +166,7 @@ Datum row_in(const char* str, uint32_t typoid, int32_t /*typmod*/) {
     ++it;
     auto* row = static_cast<RowData*>(palloc(sizeof(RowData)));
     new (row) RowData();
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(row, [](void* o) { static_cast<RowData*>(o)->~RowData(); });
     }
@@ -284,4 +284,4 @@ Datum row_eq(Datum a, Datum b) {
     return BoolGetDatum(row_cmp(a, b) == 0);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

@@ -4,13 +4,13 @@
 //
 // Records the wall-clock timestamp at which each transaction committed.
 // In PostgreSQL this is backed by an SLRU persisted to pg_commit_ts/.
-// MyToyDB keeps an in-memory vector indexed by XID, which is sufficient for
+// pgcpp keeps an in-memory vector indexed by XID, which is sufficient for
 // single-process operation.
 #include "pgcpp/transaction/commit_ts.hpp"
 
 #include <vector>
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -56,4 +56,4 @@ void TransactionTreeSetCommitTsData(TransactionId xid, TimestampTz ts, int nsubx
     }
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

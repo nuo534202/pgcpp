@@ -8,9 +8,9 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/parser/parse_node.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
+using pgcpp::nodes::Node;
 
 // transformAggregateCall — transform an aggregate function call.
 // Called from transformFuncCall when the function is an aggregate.
@@ -25,4 +25,4 @@ void parseCheckAggregates(ParseState* pstate, Query* qry);
 // Used to detect aggregates in WHERE clause (which is invalid).
 int count_agg_clauses(Node* node);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

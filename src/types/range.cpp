@@ -17,10 +17,10 @@
 #include "pgcpp/types/datetime.hpp"
 #include "pgcpp/types/numeric.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -386,4 +386,4 @@ Datum range_contains_elem(Datum range, Datum elem) {
     return BoolGetDatum(lower_ok && upper_ok);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

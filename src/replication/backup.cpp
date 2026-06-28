@@ -13,9 +13,9 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -106,4 +106,4 @@ const char* BackupStateName(BackupState s) {
     return "unknown";
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

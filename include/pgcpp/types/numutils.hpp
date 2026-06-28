@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // pg_strtoint64 — PostgreSQL-style int64 parsing with strict validation.
 // Raises ereport(ERROR) on invalid syntax or out-of-range values.
@@ -15,4 +15,4 @@ int64_t pg_strtoint64(const char* str);
 // "-Infinity", and "NaN" (PostgreSQL conventions).
 char* float8_out_internal(double val);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

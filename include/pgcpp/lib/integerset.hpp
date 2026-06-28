@@ -15,7 +15,7 @@
 #include <set>
 #include <vector>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 class IntegerSet {
 public:
@@ -56,4 +56,4 @@ private:
     bool iterating_ = false;
 };
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

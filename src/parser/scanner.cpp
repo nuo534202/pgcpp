@@ -1,4 +1,4 @@
-// scanner.cpp — Hand-written SQL scanner for MyToyDB.
+// scanner.cpp — Hand-written SQL scanner for pgcpp.
 //
 // Converted from PostgreSQL 15's src/backend/parser/scan.l.
 // Instead of using Flex, the scanner is hand-written for clarity and
@@ -12,21 +12,21 @@
 #include "pgcpp/parser/keywords.hpp"
 #include "pgcpp/parser/parser_driver.hpp"
 
-namespace mytoydb_parser {
+namespace pgcpp_parser {
 
 // Forward declaration — implemented below.
 BisonParser::symbol_type yylex(ParserDriver& driver);
 
-}  // namespace mytoydb_parser
+}  // namespace pgcpp_parser
 
-using namespace mytoydb_parser;
-using namespace mytoydb::parser;
+using namespace pgcpp_parser;
+using namespace pgcpp::parser;
 
 // yylex — return the next token from the scan buffer.
 // This free function is called by the Bison-generated parser via
-// `yylex(driver)`. It lives in the mytoydb_parser namespace so that
+// `yylex(driver)`. It lives in the pgcpp_parser namespace so that
 // the call inside BisonParser::parse() resolves correctly.
-BisonParser::symbol_type mytoydb_parser::yylex(ParserDriver& driver) {
+BisonParser::symbol_type pgcpp_parser::yylex(ParserDriver& driver) {
     const std::string& s = driver.scanbuf;
     size_t& pos = driver.scanpos;
 

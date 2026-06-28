@@ -30,16 +30,16 @@
 #include "pgcpp/parser/parse_type.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_proc;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::ProKind;
-using mytoydb::nodes::Value;
-using mytoydb::types::kInt8Oid;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_proc;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::ProKind;
+using pgcpp::nodes::Value;
+using pgcpp::types::kInt8Oid;
 
 // UNKNOWNOID — PostgreSQL's OID for the "unknown" pseudo-type (705).
 static constexpr Oid kUnknownOid = 705;
@@ -57,7 +57,7 @@ std::string to_lower(const std::string& s) {
 // and the specified argument count.
 //
 // Mirrors PostgreSQL's FuncnameGetCandidates (namespace search omitted;
-// MyToyDB has a single namespace for built-ins). Returns candidates in
+// pgcpp has a single namespace for built-ins). Returns candidates in
 // catalog insertion order, which matters for tie-breaking.
 std::vector<const FormData_pg_proc*> FuncnameGetCandidates(const std::string& funcname, int nargs) {
     Catalog* cat = GetCatalog();
@@ -106,7 +106,7 @@ bool func_match_argtypes(const FormData_pg_proc* candidate, const std::vector<Oi
 //   1. Filter to viable candidates (all args exact or binary-coercible).
 //   2. Select candidates with the most exact matches.
 //   3. If there's a tie, return the first one. (PostgreSQL errors on
-//      ambiguity; MyToyDB's limited type set makes this rare and the
+//      ambiguity; pgcpp's limited type set makes this rare and the
 //      fallback avoids false errors.)
 const FormData_pg_proc* func_select_candidate(
     const std::vector<const FormData_pg_proc*>& candidates, const std::vector<Oid>& input_types) {
@@ -244,7 +244,7 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
 
     {
         // Step 1: build the function name from the funcname list.
-        // MyToyDB has a single namespace, so only the last component (the
+        // pgcpp has a single namespace, so only the last component (the
         // function name itself) is used for catalog lookup; any schema prefix
         // (e.g. "pg_catalog") is ignored.
         std::string funcname;
@@ -272,7 +272,7 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
         //
         // PostgreSQL's count() is declared with proargtypes = {anyelement}, so
         // COUNT(*) (no actual argument) is resolved to the 0-arg form. Since
-        // MyToyDB does not model polymorphic types, we handle COUNT(*) here
+        // pgcpp does not model polymorphic types, we handle COUNT(*) here
         // without a catalog lookup.
         if (simple_name == "count" && fn->agg_star) {
             auto* agg = makeNode<Aggref>();
@@ -365,9 +365,9 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
     // now destructed — safe to ereport.
 
     if (errmsg != nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, errmsg);
+        ereport(pgcpp::error::LogLevel::kError, errmsg);
     }
     return result;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

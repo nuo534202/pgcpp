@@ -15,11 +15,11 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -119,7 +119,7 @@ bool ParseUInt(const std::string& s, uint32_t& out) {
 Datum MakeAclDatum(const AclData& acl) {
     auto* p = static_cast<AclData*>(palloc(sizeof(AclData)));
     new (p) AclData(acl);
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(p, [](void* o) { static_cast<AclData*>(o)->~AclData(); });
     }
@@ -248,4 +248,4 @@ char* acl_out(Datum value) {
     return PallocCString(out);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

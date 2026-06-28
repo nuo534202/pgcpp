@@ -12,22 +12,22 @@
 
 namespace {
 
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::types::float8_out_internal;
-using mytoydb::types::pg_strtoint64;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::types::float8_out_internal;
+using pgcpp::types::pg_strtoint64;
 
 class NumutilsTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("numutils_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -45,7 +45,7 @@ bool RaisesError(F&& fn) {
     }
     PG_CATCH() {
         caught = true;
-        ErrorData* err = mytoydb::error::GetErrorData();
+        ErrorData* err = pgcpp::error::GetErrorData();
         EXPECT_EQ(err->elevel, LogLevel::kError);
     }
     PG_END_TRY();

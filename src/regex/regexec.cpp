@@ -14,7 +14,7 @@
 #include <regex>
 #include <string>
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 int pg_regexec(const regex_t* re, const char* string, std::size_t nmatch, regmatch_t pmatch[],
                int eflags) {
@@ -56,4 +56,4 @@ int pg_regexec(const regex_t* re, const char* string, std::size_t nmatch, regmat
     return kRegOk;
 }
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

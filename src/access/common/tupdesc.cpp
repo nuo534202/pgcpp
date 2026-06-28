@@ -19,29 +19,29 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::access {
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_type;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::TypeAlign;
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
-using mytoydb::types::kTimestamptzOid;
-using mytoydb::types::kVarcharOid;
+namespace pgcpp::access {
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_type;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::TypeAlign;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kDateOid;
+using pgcpp::types::kFloat4Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
+using pgcpp::types::kTimestamptzOid;
+using pgcpp::types::kVarcharOid;
 
 namespace {
 
@@ -226,7 +226,7 @@ void TupleDescInitEntry(TupleDesc desc, int attnum, const std::string& name, Oid
     if (desc == nullptr)
         return;
     if (attnum < 1 || attnum > desc->natts) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "TupleDescInitEntry: attnum " + std::to_string(attnum) +
                     " out of range (natts=" + std::to_string(desc->natts) + ")");
     }
@@ -255,9 +255,9 @@ void TupleDescInitEntry(TupleDesc desc, int attnum, const std::string& name, Oid
 
     TypeMeta meta;
     if (!LookupTypeMeta(type_oid, &meta)) {
-        ereport(mytoydb::error::LogLevel::kWarning, "TupleDescInitEntry: type OID " +
-                                                        std::to_string(type_oid) +
-                                                        " not in catalog; using varlena defaults");
+        ereport(pgcpp::error::LogLevel::kWarning, "TupleDescInitEntry: type OID " +
+                                                      std::to_string(type_oid) +
+                                                      " not in catalog; using varlena defaults");
         meta.typlen = -1;
         meta.typbyval = false;
         meta.attalign = AttAlign::kInt;
@@ -275,4 +275,4 @@ void TupleDescInitEntryCollation(TupleDesc desc, int attnum, Oid collation) {
     desc->attrs[attnum - 1].attcollation = collation;
 }
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

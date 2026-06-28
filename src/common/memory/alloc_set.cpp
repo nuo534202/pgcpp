@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace mytoydb::memory {
+namespace pgcpp::memory {
 
 // Internal block structure: a single large OS allocation carved into chunks.
 struct AllocSetContext::Block {
@@ -221,4 +221,4 @@ AllocSetContext* AllocSetContext::Create(const char* name, MemoryContext* parent
     return context;
 }
 
-}  // namespace mytoydb::memory
+}  // namespace pgcpp::memory

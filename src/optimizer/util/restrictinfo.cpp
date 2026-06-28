@@ -3,21 +3,21 @@
 // Converted from PostgreSQL 15's src/backend/optimizer/util/restrictinfo.c.
 //
 // Wraps qual clauses (WHERE conditions) in RestrictInfo structs carrying
-// optimizer metadata. For MyToyDB's single-table workload, the metadata is
+// optimizer metadata. For pgcpp's single-table workload, the metadata is
 // minimal: the wrapped clause and the relations it references.
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
 
 // Extract the 1-based relation indexes referenced by a qual expression.
 // For a single-table qual like (Var(1,1) > Const), this yields {1}.
@@ -56,7 +56,7 @@ static void ExtractRelids(Node* expr, Relids* relids) {
 
 RestrictInfo* make_restrictinfo(PlannerInfo* root, Node* clause, bool can_join, bool pseudoconstant,
                                 Relids required_relids, Relids incompatible_relids,
-                                mytoydb::catalog::Oid hashjoinoperator) {
+                                pgcpp::catalog::Oid hashjoinoperator) {
     (void)root;
     (void)incompatible_relids;  // not tracked in the simplified model
     auto* ri = makePallocNode<RestrictInfo>();
@@ -85,4 +85,4 @@ std::vector<RestrictInfo*> make_restrictinfos_from_quals(PlannerInfo* root,
     return result;
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

@@ -4,12 +4,12 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Enum types (PostgreSQL utils/adt/enum.c).
 //
-// PostgreSQL stores enum labels as rows in pg_enum. For MyToyDB we provide an
+// PostgreSQL stores enum labels as rows in pg_enum. For pgcpp we provide an
 // in-memory registry of (enumtypoid, label)<->sortorder mappings plus the
 // enum_in/enum_out/enum_cmp family of functions.
 //
@@ -42,4 +42,4 @@ int enum_cmp(Datum a, Datum b);
 Datum enum_eq(Datum a, Datum b);
 Datum enum_lt(Datum a, Datum b);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

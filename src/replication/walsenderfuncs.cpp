@@ -9,9 +9,9 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 WalSndMessageResult WalSndWriteData(int sender_idx, transaction::XLogRecPtr start_lsn,
                                     transaction::XLogRecPtr end_lsn, bool reply_requested) {
@@ -102,4 +102,4 @@ WalSndStats GetWalSndStats() {
     return stats;
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

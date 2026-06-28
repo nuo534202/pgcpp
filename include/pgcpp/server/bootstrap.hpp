@@ -2,14 +2,14 @@
 //
 // Converted from PostgreSQL 15's src/backend/bootstrap/bootstrap.c.
 //
-// The bootstrap mode is the MyToyDB equivalent of PostgreSQL's `initdb`.
+// The bootstrap mode is the pgcpp equivalent of PostgreSQL's `initdb`.
 // It creates the data directory structure and initializes the system
 // catalog so that the server can start and accept connections.
 #pragma once
 
 #include <string>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // BootstrapResult — outcome of a bootstrap operation.
 enum class BootstrapResult {
@@ -39,4 +39,4 @@ bool IsBootstrapped(const std::string& data_dir);
 // bootstrap error.
 const char* BootstrapResultToString(BootstrapResult result);
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

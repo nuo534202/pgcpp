@@ -23,15 +23,15 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
 
 // Forward declarations of internal transform functions.
 static Query* transformSelectStmt(ParseState* pstate, SelectStmt* stmt);
@@ -481,4 +481,4 @@ static Query* transformSetOperationStmt(ParseState* pstate, SelectStmt* stmt) {
     return qry;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

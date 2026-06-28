@@ -8,7 +8,7 @@
 //   2. Optional null bitmap (only if INDEX_NULL_MASK is set)
 //   3. Index key data (column values, aligned per type)
 //
-// MyToyDB preserves PostgreSQL's on-disk header layout so the storage format
+// pgcpp preserves PostgreSQL's on-disk header layout so the storage format
 // is compatible. The key-data layout follows the same alignment rules as heap
 // tuples (see heapam.cpp's att_align), starting after the (8-byte) header and
 // optional null bitmap.
@@ -21,7 +21,7 @@
 #include "pgcpp/transaction/heap_tuple.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 
 // --- t_info flag bits (PostgreSQL-compatible) ---
 //
@@ -41,8 +41,8 @@ constexpr uint16_t kIndexSizeMaxAttr = 0x3FF;  // limit on number of attrs
 //
 // Total header size: 8 bytes (already 8-byte aligned, so no padding needed).
 struct IndexTupleData {
-    mytoydb::transaction::ItemPointerData t_tid;  // 6 bytes — TID of heap tuple
-    uint16_t t_info = 0;                          // size + flags
+    pgcpp::transaction::ItemPointerData t_tid;  // 6 bytes — TID of heap tuple
+    uint16_t t_info = 0;                        // size + flags
     // null bitmap follows if kIndexNullMask is set (variable length)
     // key data follows the null bitmap
 };
@@ -81,24 +81,24 @@ inline bool IndexTupleHasVarwidth(const IndexTupleData* tup) {
 // rules. The returned IndexTuple is palloc'd in the current memory context.
 // The TID is set from the `tid` parameter (the caller already knows which
 // heap tuple this index entry points to).
-IndexTuple index_form_tuple(TupleDesc tupdesc, const mytoydb::types::Datum* values,
-                            const bool* isnull, const mytoydb::transaction::ItemPointerData& tid);
+IndexTuple index_form_tuple(TupleDesc tupdesc, const pgcpp::types::Datum* values,
+                            const bool* isnull, const pgcpp::transaction::ItemPointerData& tid);
 
 // index_deform_tuple — extract column values from an IndexTuple.
 //
 // Fills the values[] and isnull[] arrays (which must have tupdesc->natts
 // entries). For by-reference types, the Datum points into the tuple's data
 // (valid as long as the tuple is pinned).
-void index_deform_tuple(IndexTuple tup, TupleDesc tupdesc, mytoydb::types::Datum* values,
+void index_deform_tuple(IndexTuple tup, TupleDesc tupdesc, pgcpp::types::Datum* values,
                         bool* isnull);
 
 // --- Helpers ---
 
 // Compute the data portion size of an index tuple (excluding header + bitmap).
-uint32_t index_compute_data_size(TupleDesc tupdesc, const mytoydb::types::Datum* values,
+uint32_t index_compute_data_size(TupleDesc tupdesc, const pgcpp::types::Datum* values,
                                  const bool* isnull);
 
 // Copy an index tuple (deep copy of header + bitmap + data).
 IndexTuple CopyIndexTuple(IndexTuple source);
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

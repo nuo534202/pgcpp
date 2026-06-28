@@ -16,9 +16,9 @@
 
 #include "pgcpp/regex/regex_internal.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 int pg_regexec(const regex_t* re, const char* string, std::size_t nmatch, regmatch_t pmatch[],
                int eflags);
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

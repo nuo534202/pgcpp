@@ -13,10 +13,10 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/builtins.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 Datum xml_in(const char* str) {
     if (str == nullptr) {
@@ -131,4 +131,4 @@ Datum xpath_exists(Datum xml, Datum xpath) {
     return BoolGetDatum(false);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

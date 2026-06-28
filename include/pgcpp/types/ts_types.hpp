@@ -6,7 +6,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Full-text search types (PostgreSQL utils/adt/tsvector.c, tsquery.c).
@@ -66,4 +66,4 @@ inline TsQueryData* DatumGetTsQuery(Datum x) {
     return reinterpret_cast<TsQueryData*>(x);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

@@ -10,7 +10,7 @@
 
 #include <sstream>
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 std::string FormatChromosome(const Chromosome& chrom) {
     std::ostringstream os;
@@ -30,4 +30,4 @@ std::string FormatChromosome(const Chromosome& chrom) {
     return os.str();
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

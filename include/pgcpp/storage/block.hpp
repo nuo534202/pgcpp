@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // BlockNumber — the address of a page within a relation file.
 // Equivalent to PostgreSQL's BlockNumber (uint32_t).
@@ -24,10 +24,10 @@ inline bool BlockNumberIsValid(BlockNumber block_num) {
 constexpr int kBlckSz = 8192;
 
 // RELSEG_SIZE — number of blocks per segment file. PostgreSQL's default is
-// 131072 (1 GB / 8 KB). MyToyDB uses the same value for fidelity.
+// 131072 (1 GB / 8 KB). pgcpp uses the same value for fidelity.
 constexpr int kRelSegSize = 131072;
 
 // MaxBlockNumber — the highest valid BlockNumber.
 constexpr BlockNumber kMaxBlockNumber = 0xFFFFFFFE;
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

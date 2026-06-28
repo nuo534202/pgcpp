@@ -32,46 +32,46 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::GetSysCache;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::parser::AlterTableCmd;
-using mytoydb::parser::AlterTableStmt;
-using mytoydb::parser::AlterTableType;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::ColumnDef;
-using mytoydb::parser::CreateStmt;
-using mytoydb::parser::DefElem;
-using mytoydb::parser::DropBehavior;
-using mytoydb::parser::IndexElem;
-using mytoydb::parser::IndexStmt;
-using mytoydb::parser::make_parsestate;
-using mytoydb::parser::ParseState;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeVar;
-using mytoydb::parser::raw_parser;
-using mytoydb::parser::RawStmt;
-using mytoydb::parser::SortByDir;
-using mytoydb::parser::transformAlterTableStmt;
-using mytoydb::parser::transformCreateStmt;
-using mytoydb::parser::transformIndexStmt;
-using mytoydb::parser::TypeName;
-using mytoydb::parser::typenameTypeId;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::GetSysCache;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::parser::AlterTableCmd;
+using pgcpp::parser::AlterTableStmt;
+using pgcpp::parser::AlterTableType;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::ColumnDef;
+using pgcpp::parser::CreateStmt;
+using pgcpp::parser::DefElem;
+using pgcpp::parser::DropBehavior;
+using pgcpp::parser::IndexElem;
+using pgcpp::parser::IndexStmt;
+using pgcpp::parser::make_parsestate;
+using pgcpp::parser::ParseState;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeVar;
+using pgcpp::parser::raw_parser;
+using pgcpp::parser::RawStmt;
+using pgcpp::parser::SortByDir;
+using pgcpp::parser::transformAlterTableStmt;
+using pgcpp::parser::transformCreateStmt;
+using pgcpp::parser::transformIndexStmt;
+using pgcpp::parser::TypeName;
+using pgcpp::parser::typenameTypeId;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
 
 namespace {
 
@@ -79,9 +79,9 @@ namespace {
 class ParseUtilCmdTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("parse_utilcmd_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -97,7 +97,7 @@ protected:
         delete syscache_;
         delete catalog_;
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

@@ -12,7 +12,7 @@
 
 #include "pgcpp/optimizer/planner.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 int CountBaseRels(const PlannerInfo* root) {
     if (root == nullptr)
@@ -79,4 +79,4 @@ Chromosome* FindBestChromosome(std::vector<Chromosome*>& pool) {
     return best;
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

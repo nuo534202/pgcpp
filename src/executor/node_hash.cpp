@@ -17,9 +17,9 @@
 #include "pgcpp/executor/tupletable.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::types::Datum;
+using pgcpp::types::Datum;
 
 void HashTable::Insert(uint64_t hash, TupleTableSlot* slot, Datum keyval, bool keynull) {
     buckets.emplace(hash, HashEntry{slot, keyval, keynull});
@@ -65,4 +65,4 @@ void HashState::ExecReScan() {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

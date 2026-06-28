@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace mytoydb::memory {
+namespace pgcpp::memory {
 
 // Forward declarations
 class MemoryContext;
@@ -137,4 +137,4 @@ T* ContextAllocArray(MemoryContext* context, std::size_t count) {
     return static_cast<T*>(MemoryContextAlloc(context, sizeof(T) * count));
 }
 
-}  // namespace mytoydb::memory
+}  // namespace pgcpp::memory

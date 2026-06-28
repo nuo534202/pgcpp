@@ -8,7 +8,7 @@
 // running XIDs for standby.
 //
 // In PostgreSQL, ProcArray is a shared-memory array of PGPROC entries, one
-// per backend process. MyToyDB is single-process, so we keep an in-memory
+// per backend process. pgcpp is single-process, so we keep an in-memory
 // vector of XIDs that grows/shrinks as transactions start/commit.
 #include "pgcpp/transaction/procarray.hpp"
 
@@ -17,7 +17,7 @@
 
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -81,4 +81,4 @@ bool ProcArrayContains(TransactionId xid) {
     return std::find(data.begin(), data.end(), xid) != data.end();
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

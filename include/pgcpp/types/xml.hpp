@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // XML type (PostgreSQL utils/adt/xml.c).
@@ -30,4 +30,4 @@ Datum xml_validate(Datum value);
 Datum xml_concat(Datum a, Datum b);
 Datum xpath_exists(Datum xml, Datum xpath);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

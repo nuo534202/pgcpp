@@ -8,7 +8,7 @@
 
 #include "pgcpp/lib/ilist.hpp"
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 // ---------------------------------------------------------------------------
 // Doubly-linked list (dlist).
@@ -178,4 +178,4 @@ int slist_length(const SListHead* head) {
     return count;
 }
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

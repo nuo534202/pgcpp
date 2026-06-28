@@ -11,10 +11,10 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
 
 // FuncLookupResult — result of looking up a function by name and arg types.
 struct FuncLookupResult {
@@ -36,4 +36,4 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location);
 // IsAggregateFunction — check if a function name refers to an aggregate.
 bool IsAggregateFunction(const std::string& funcname);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

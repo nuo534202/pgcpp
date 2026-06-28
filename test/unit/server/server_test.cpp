@@ -30,13 +30,13 @@
 #include "pgcpp/server/main.hpp"
 #include "pgcpp/server/postmaster.hpp"
 
-using mytoydb::server::BootstrapCluster;
-using mytoydb::server::BootstrapResult;
-using mytoydb::server::IsBootstrapped;
-using mytoydb::server::Postmaster;
-using mytoydb::server::ServerConfig;
-using mytoydb::server::ServerMode;
-using mytoydb::server::ServerOptions;
+using pgcpp::server::BootstrapCluster;
+using pgcpp::server::BootstrapResult;
+using pgcpp::server::IsBootstrapped;
+using pgcpp::server::Postmaster;
+using pgcpp::server::ServerConfig;
+using pgcpp::server::ServerMode;
+using pgcpp::server::ServerOptions;
 
 namespace {
 
@@ -640,7 +640,7 @@ TEST(MainTest, ParseArgsBootstrap) {
     char arg3[] = "/tmp/test_dir";
     char* argv[] = {arg0, arg1, arg2, arg3, nullptr};
 
-    EXPECT_TRUE(mytoydb::server::ParseArgs(4, argv, &opts));
+    EXPECT_TRUE(pgcpp::server::ParseArgs(4, argv, &opts));
     EXPECT_EQ(opts.mode, ServerMode::kBootstrap);
     EXPECT_EQ(opts.data_dir, "/tmp/test_dir");
 }
@@ -654,7 +654,7 @@ TEST(MainTest, ParseArgsServer) {
     char arg4[] = "5433";
     char* argv[] = {arg0, arg1, arg2, arg3, arg4, nullptr};
 
-    EXPECT_TRUE(mytoydb::server::ParseArgs(5, argv, &opts));
+    EXPECT_TRUE(pgcpp::server::ParseArgs(5, argv, &opts));
     EXPECT_EQ(opts.mode, ServerMode::kServer);
     EXPECT_EQ(opts.data_dir, "/tmp/test_dir");
     EXPECT_EQ(opts.port, 5433);
@@ -666,7 +666,7 @@ TEST(MainTest, ParseArgsHelp) {
     char arg1[] = "--help";
     char* argv[] = {arg0, arg1, nullptr};
 
-    EXPECT_TRUE(mytoydb::server::ParseArgs(2, argv, &opts));
+    EXPECT_TRUE(pgcpp::server::ParseArgs(2, argv, &opts));
     EXPECT_EQ(opts.mode, ServerMode::kHelp);
 }
 
@@ -675,7 +675,7 @@ TEST(MainTest, ParseArgsFailsWithoutDataDir) {
     char arg0[] = "mytoydb";
     char* argv[] = {arg0, nullptr};
 
-    EXPECT_FALSE(mytoydb::server::ParseArgs(1, argv, &opts));
+    EXPECT_FALSE(pgcpp::server::ParseArgs(1, argv, &opts));
 }
 
 TEST(MainTest, ParseArgsFailsWithUnknownOption) {
@@ -686,7 +686,7 @@ TEST(MainTest, ParseArgsFailsWithUnknownOption) {
     char arg3[] = "/tmp/test_dir";
     char* argv[] = {arg0, arg1, arg2, arg3, nullptr};
 
-    EXPECT_FALSE(mytoydb::server::ParseArgs(4, argv, &opts));
+    EXPECT_FALSE(pgcpp::server::ParseArgs(4, argv, &opts));
 }
 
 TEST(MainTest, ParseArgsMaxConnections) {
@@ -698,7 +698,7 @@ TEST(MainTest, ParseArgsMaxConnections) {
     char arg4[] = "50";
     char* argv[] = {arg0, arg1, arg2, arg3, arg4, nullptr};
 
-    EXPECT_TRUE(mytoydb::server::ParseArgs(5, argv, &opts));
+    EXPECT_TRUE(pgcpp::server::ParseArgs(5, argv, &opts));
     EXPECT_EQ(opts.max_connections, 50);
 }
 
@@ -711,6 +711,6 @@ TEST(MainTest, ParseArgsListenAddr) {
     char arg4[] = "0.0.0.0";
     char* argv[] = {arg0, arg1, arg2, arg3, arg4, nullptr};
 
-    EXPECT_TRUE(mytoydb::server::ParseArgs(5, argv, &opts));
+    EXPECT_TRUE(pgcpp::server::ParseArgs(5, argv, &opts));
     EXPECT_EQ(opts.listen_addr, "0.0.0.0");
 }

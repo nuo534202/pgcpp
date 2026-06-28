@@ -13,7 +13,7 @@
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 // InitChromosomeRandom — fill `genes` with a random permutation of the
 // supplied relation indexes. Uses the global GEQO RNG so the result is
@@ -28,4 +28,4 @@ void InitChromosomeIdentity(Chromosome* chrom, const std::vector<Gene>& rel_ids)
 // Returned pointer is allocated via palloc in the current memory context.
 Chromosome* AllocateChromosome();
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

@@ -12,9 +12,9 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
+using pgcpp::nodes::Node;
 
 // parse_analyze — transform a list of RawStmt nodes into a list of Query nodes.
 // This is the main entry point for parse analysis.
@@ -33,4 +33,4 @@ Query* transformStmt(ParseState* pstate, Node* stmt);
 // transformTopLevelStmt — transform a top-level statement.
 Query* transformTopLevelStmt(ParseState* pstate, RawStmt* parse_tree);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

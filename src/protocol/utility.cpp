@@ -29,49 +29,49 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-namespace mytoydb::protocol {
+namespace pgcpp::protocol {
 
-using mytoydb::commands::AlterTable;
-using mytoydb::commands::AnalyzeCommand;
-using mytoydb::commands::createdb;
-using mytoydb::commands::CreateFunction;
-using mytoydb::commands::CreateSchemaCommand;
-using mytoydb::commands::CreateTableSpace;
-using mytoydb::commands::CreateTrigger;
-using mytoydb::commands::DefineIndex;
-using mytoydb::commands::DefineRelation;
-using mytoydb::commands::DefineSequence;
-using mytoydb::commands::DefineView;
-using mytoydb::commands::DoCopy;
-using mytoydb::commands::dropdb;
-using mytoydb::commands::DropTableSpace;
-using mytoydb::commands::ExecuteTruncate;
-using mytoydb::commands::ExecVacuum;
-using mytoydb::commands::ExplainQuery;
-using mytoydb::commands::RemoveRelations;
-using mytoydb::commands::RenameRelation;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::AlterTableStmt;
-using mytoydb::parser::CopyStmt;
-using mytoydb::parser::CreatedbStmt;
-using mytoydb::parser::CreateFunctionStmt;
-using mytoydb::parser::CreateSchemaStmt;
-using mytoydb::parser::CreateSeqStmt;
-using mytoydb::parser::CreateStmt;
-using mytoydb::parser::CreateTableSpaceStmt;
-using mytoydb::parser::CreateTrigStmt;
-using mytoydb::parser::DropdbStmt;
-using mytoydb::parser::DropStmt;
-using mytoydb::parser::DropTableSpaceStmt;
-using mytoydb::parser::ExplainStmt;
-using mytoydb::parser::IndexStmt;
-using mytoydb::parser::Node;
-using mytoydb::parser::RenameStmt;
-using mytoydb::parser::TransactionStmt;
-using mytoydb::parser::TruncateStmt;
-using mytoydb::parser::VacuumStmt;
-using mytoydb::parser::VariableSetStmt;
-using mytoydb::parser::ViewStmt;
+using pgcpp::commands::AlterTable;
+using pgcpp::commands::AnalyzeCommand;
+using pgcpp::commands::createdb;
+using pgcpp::commands::CreateFunction;
+using pgcpp::commands::CreateSchemaCommand;
+using pgcpp::commands::CreateTableSpace;
+using pgcpp::commands::CreateTrigger;
+using pgcpp::commands::DefineIndex;
+using pgcpp::commands::DefineRelation;
+using pgcpp::commands::DefineSequence;
+using pgcpp::commands::DefineView;
+using pgcpp::commands::DoCopy;
+using pgcpp::commands::dropdb;
+using pgcpp::commands::DropTableSpace;
+using pgcpp::commands::ExecuteTruncate;
+using pgcpp::commands::ExecVacuum;
+using pgcpp::commands::ExplainQuery;
+using pgcpp::commands::RemoveRelations;
+using pgcpp::commands::RenameRelation;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::AlterTableStmt;
+using pgcpp::parser::CopyStmt;
+using pgcpp::parser::CreatedbStmt;
+using pgcpp::parser::CreateFunctionStmt;
+using pgcpp::parser::CreateSchemaStmt;
+using pgcpp::parser::CreateSeqStmt;
+using pgcpp::parser::CreateStmt;
+using pgcpp::parser::CreateTableSpaceStmt;
+using pgcpp::parser::CreateTrigStmt;
+using pgcpp::parser::DropdbStmt;
+using pgcpp::parser::DropStmt;
+using pgcpp::parser::DropTableSpaceStmt;
+using pgcpp::parser::ExplainStmt;
+using pgcpp::parser::IndexStmt;
+using pgcpp::parser::Node;
+using pgcpp::parser::RenameStmt;
+using pgcpp::parser::TransactionStmt;
+using pgcpp::parser::TruncateStmt;
+using pgcpp::parser::VacuumStmt;
+using pgcpp::parser::VariableSetStmt;
+using pgcpp::parser::ViewStmt;
 
 namespace {
 
@@ -82,13 +82,13 @@ std::string ProcessTransactionStmt(TransactionStmt* stmt) {
     switch (stmt->kind) {
         case TransactionStmt::Kind::kBegin:
         case TransactionStmt::Kind::kStart:
-            mytoydb::transaction::BeginTransactionBlock();
+            pgcpp::transaction::BeginTransactionBlock();
             return "BEGIN";
         case TransactionStmt::Kind::kCommit:
-            mytoydb::transaction::EndTransactionBlock();
+            pgcpp::transaction::EndTransactionBlock();
             return "COMMIT";
         case TransactionStmt::Kind::kRollback:
-            mytoydb::transaction::AbortTransactionBlock();
+            pgcpp::transaction::AbortTransactionBlock();
             return "ROLLBACK";
         default:
             return "";
@@ -210,11 +210,11 @@ std::string CreateCommandTag(Node* stmt) {
         case NodeTag::kDropStmt: {
             auto* d = static_cast<DropStmt*>(stmt);
             switch (d->remove_type) {
-                case mytoydb::parser::ObjectType::kTable:
+                case pgcpp::parser::ObjectType::kTable:
                     return "DROP TABLE";
-                case mytoydb::parser::ObjectType::kIndex:
+                case pgcpp::parser::ObjectType::kIndex:
                     return "DROP INDEX";
-                case mytoydb::parser::ObjectType::kView:
+                case pgcpp::parser::ObjectType::kView:
                     return "DROP VIEW";
                 default:
                     return "DROP";
@@ -267,9 +267,9 @@ std::string CreateCommandTag(Node* stmt) {
 }
 
 bool UtilityReturnsTuples(Node* /*stmt*/) {
-    // EXPLAIN and VACUUM VERBOSE return tuples in PostgreSQL; MyToyDB's
+    // EXPLAIN and VACUUM VERBOSE return tuples in PostgreSQL; pgcpp's
     // EXPLAIN stub prints to stdout instead of returning rows.
     return false;
 }
 
-}  // namespace mytoydb::protocol
+}  // namespace pgcpp::protocol

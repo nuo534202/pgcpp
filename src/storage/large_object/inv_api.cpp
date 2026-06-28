@@ -7,7 +7,7 @@
 #include <cstring>
 #include <map>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -172,4 +172,4 @@ int64_t inv_tell(LargeObjectDesc* desc) {
     return static_cast<int64_t>(desc->offset);
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

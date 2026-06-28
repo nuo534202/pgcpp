@@ -6,7 +6,7 @@
 
 #include "pgcpp/common/memory/alloc_set.hpp"
 
-namespace mytoydb::memory {
+namespace pgcpp::memory {
 
 namespace {
 
@@ -142,4 +142,4 @@ void MemoryContext::UnregisterDestructor(void* obj) {
     }
 }
 
-}  // namespace mytoydb::memory
+}  // namespace pgcpp::memory

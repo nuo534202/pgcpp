@@ -11,10 +11,10 @@
 #include "pgcpp/catalog/pg_attribute.hpp"
 #include "pgcpp/catalog/pg_class.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
+namespace pgcpp::optimizer {
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
 
 void estimate_rel_size(Oid relation_oid, int* pages, int* tuples, int* allvisfrac) {
     if (allvisfrac != nullptr)
@@ -25,7 +25,7 @@ void estimate_rel_size(Oid relation_oid, int* pages, int* tuples, int* allvisfra
         *tuples = 1000;  // default heuristic
     if (relation_oid == 0 || GetCatalog() == nullptr)
         return;
-    const mytoydb::catalog::FormData_pg_class* cls = GetCatalog()->GetClassByOid(relation_oid);
+    const pgcpp::catalog::FormData_pg_class* cls = GetCatalog()->GetClassByOid(relation_oid);
     if (cls == nullptr)
         return;
     if (pages != nullptr && cls->relpages > 0)
@@ -46,7 +46,7 @@ void get_relation_info(PlannerInfo* root, Oid relation_oid, bool inhparent, RelO
     int width = 0;
     if (relation_oid != 0 && GetCatalog() != nullptr) {
         auto attrs = GetCatalog()->GetAttributes(relation_oid);
-        for (const mytoydb::catalog::FormData_pg_attribute* attr : attrs) {
+        for (const pgcpp::catalog::FormData_pg_attribute* attr : attrs) {
             if (attr->attnum < 1)
                 continue;  // skip system columns
             // Use attlen if positive (fixed-length), else a small default.
@@ -58,4 +58,4 @@ void get_relation_info(PlannerInfo* root, Oid relation_oid, bool inhparent, RelO
     rel->rows = static_cast<Cardinality>(tuples);
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

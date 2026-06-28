@@ -23,7 +23,7 @@
 #include "pgcpp/tools/psql_client.hpp"
 #include "pgcpp/tools/psql_describe.hpp"
 
-namespace mytoydb::tools {
+namespace pgcpp::tools {
 
 namespace {
 
@@ -212,7 +212,7 @@ MetaCommandResult ExecuteMetaCommand(PsqlClient& client, const std::string& line
             out << "\\c: missing required argument (database name)\n";
             return MetaCommandResult::kContinue;
         }
-        // MyToyDB doesn't currently support reconnecting on the same TCP
+        // pgcpp doesn't currently support reconnecting on the same TCP
         // socket — \c is a stub that acknowledges the request.
         out << "You are now connected to database \"" << tokens[1]
             << "\" (stub: live reconnect not supported).\n";
@@ -258,4 +258,4 @@ MetaCommandResult ExecuteMetaCommand(PsqlClient& client, const std::string& line
     return MetaCommandResult::kContinue;
 }
 
-}  // namespace mytoydb::tools
+}  // namespace pgcpp::tools

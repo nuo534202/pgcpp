@@ -1,7 +1,7 @@
 // schemacmds.cpp — CREATE SCHEMA implementation.
 //
 // Converted from PostgreSQL 15's src/backend/commands/schemacmds.c.
-// MyToyDB currently uses a single "public" namespace (OID 2200); CREATE
+// pgcpp currently uses a single "public" namespace (OID 2200); CREATE
 // SCHEMA is a stub that acknowledges the request.
 #include "pgcpp/commands/schemacmds.hpp"
 
@@ -9,9 +9,9 @@
 
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::parser::CreateSchemaStmt;
+using pgcpp::parser::CreateSchemaStmt;
 
 std::string CreateSchemaCommand(CreateSchemaStmt* stmt) {
     if (stmt == nullptr)
@@ -21,4 +21,4 @@ std::string CreateSchemaCommand(CreateSchemaStmt* stmt) {
     return "CREATE SCHEMA";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

@@ -20,10 +20,10 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/parser/primnodes.hpp"  // concrete node types
 
-namespace mytoydb::nodes {
+namespace pgcpp::nodes {
 
-using mytoydb::catalog::Oid;
-using mytoydb::parser::Node;
+using pgcpp::catalog::Oid;
+using pgcpp::parser::Node;
 
 // ---------------------------------------------------------------------------
 // Expression metadata (PG: exprType / exprTypmod / exprCollation / exprLocation)
@@ -87,4 +87,4 @@ bool contain_volatile_functions(Node* node);
 // PG: contain_subplans. Returns true if the tree contains a SubLink node.
 bool contain_subplans(Node* node);
 
-}  // namespace mytoydb::nodes
+}  // namespace pgcpp::nodes

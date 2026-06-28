@@ -18,7 +18,7 @@
 #include "pgcpp/catalog/pg_type.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 namespace {
 
@@ -26,7 +26,7 @@ namespace {
 // Returns nullptr if the input is empty AND len is zero (PG returns NULL for
 // empty names in some callers, but we preserve the actual string content).
 char* palloc_str(const std::string& s) {
-    char* out = static_cast<char*>(mytoydb::memory::palloc(s.size() + 1));
+    char* out = static_cast<char*>(pgcpp::memory::palloc(s.size() + 1));
     std::memcpy(out, s.data(), s.size());
     out[s.size()] = '\0';
     return out;
@@ -382,10 +382,10 @@ bool type_is_rowtype(Oid typoid) {
 }
 
 bool type_is_enum(Oid typoid) {
-    // MyToyDB does not yet model enum types; the bootstrap catalog contains
+    // pgcpp does not yet model enum types; the bootstrap catalog contains
     // no enum rows. Preserve the predicate for API compatibility.
     (void)typoid;
     return false;
 }
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

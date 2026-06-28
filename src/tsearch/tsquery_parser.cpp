@@ -18,11 +18,11 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
-using mytoydb::error::LogLevel;
-using mytoydb::types::TsQueryNode;
-using mytoydb::types::TsQueryNodeType;
+using pgcpp::error::LogLevel;
+using pgcpp::types::TsQueryNode;
+using pgcpp::types::TsQueryNodeType;
 
 namespace {
 
@@ -157,4 +157,4 @@ TsQueryNode TsQueryParse(std::string_view str) {
     return p.Parse();
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

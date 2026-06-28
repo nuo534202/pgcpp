@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/replication/logical/ logical.c
 // (LogicalDecodingContext and the CreateInitDecodingContext /
 // CreateDecodingContext entry points). The actual decoding loop is
-// stubbed: MyToyDB does not yet replay WAL through an output plugin, so
+// stubbed: pgcpp does not yet replay WAL through an output plugin, so
 // LogicalShippingMain returns immediately after constructing a context.
 //
 // A LogicalDecodingContext bundles:
@@ -20,7 +20,7 @@
 #include "pgcpp/replication/replutil.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // LogicalDecodingOptions — flags passed to CreateInitDecodingContext /
 // CreateDecodingContext. Mirrors PG's logical_streaming_xact_cb / options.
@@ -78,4 +78,4 @@ LogicalDecodingContext* GetLogicalDecodingContext();
 void DecodingEmitMessage(LogicalDecodingContext& ctx, LogicalRepMsgType type,
                          const std::string& payload);
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

@@ -8,7 +8,7 @@
 
 #include "pgcpp/storage/block.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -102,4 +102,4 @@ int NumPredicateLocks() {
     return static_cast<int>(Locks().size());
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

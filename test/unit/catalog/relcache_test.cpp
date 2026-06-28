@@ -20,37 +20,37 @@
 
 namespace {
 
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationBuildDesc;
-using mytoydb::access::RelationCacheInvalidate;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCloseByOid;
-using mytoydb::access::RelationGetNumberOfAttributes;
-using mytoydb::access::RelationIdGetRelation;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::ResetRelcache;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationBuildDesc;
+using pgcpp::access::RelationCacheInvalidate;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationCloseByOid;
+using pgcpp::access::RelationGetNumberOfAttributes;
+using pgcpp::access::RelationIdGetRelation;
+using pgcpp::access::RelationOpen;
+using pgcpp::access::ResetRelcache;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
 class RelcacheTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("relcache_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -81,7 +81,7 @@ protected:
         delete syscache_;
         delete catalog_;
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

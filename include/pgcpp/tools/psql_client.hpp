@@ -1,7 +1,7 @@
 // psql_client.h — PsqlClient: a programmatic PostgreSQL-protocol client.
 //
 // This is the core library behind the `psql` command-line tool (M13).
-// It connects to a MyToyDB server via TCP, performs the startup handshake,
+// It connects to a pgcpp server via TCP, performs the startup handshake,
 // and executes queries using the simple query protocol.
 //
 // The class is designed to be testable: integration tests can start a
@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::tools {
+namespace pgcpp::tools {
 
 // QueryResult — the result of executing a query.
 struct QueryResult {
@@ -24,7 +24,7 @@ struct QueryResult {
     std::string error_message;                   // error message if !success
 };
 
-// PsqlClient — a TCP client for the MyToyDB server.
+// PsqlClient — a TCP client for the pgcpp server.
 //
 // Usage:
 //   PsqlClient client("127.0.0.1", 5433);
@@ -78,4 +78,4 @@ std::string FormatQueryResult(const QueryResult& result);
 // FormatQueryResultCsv — format a QueryResult as CSV.
 std::string FormatQueryResultCsv(const QueryResult& result);
 
-}  // namespace mytoydb::tools
+}  // namespace pgcpp::tools

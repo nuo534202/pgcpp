@@ -7,7 +7,7 @@
 // backend's XID, lock-wait state, latch, and a slot in the ProcArray. PG
 // allocates a fixed-size array of PGPROCs at server startup.
 //
-// MyToyDB is single-process, so there is typically only one PGPROC at a
+// pgcpp is single-process, so there is typically only one PGPROC at a
 // time, but we keep the structure and an array API for fidelity (and for
 // the auxiliary-process / WAL-recovery use cases).
 #pragma once
@@ -18,7 +18,7 @@
 
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 class Latch;  // forward decl from latch.hpp
 
@@ -32,11 +32,11 @@ enum class ProcStatus {
 // PGPROC — per-backend state.
 struct PGPROC {
     int pid = 0;  // OS process id (0 = unused slot)
-    mytoydb::transaction::TransactionId xid =
-        mytoydb::transaction::kInvalidTransactionId;  // current top-level XID
-    mytoydb::transaction::TransactionId xmin =
-        mytoydb::transaction::kInvalidTransactionId;  // snapshot xmin
-    int lxid = 0;                                     // local XID (in-process counter)
+    pgcpp::transaction::TransactionId xid =
+        pgcpp::transaction::kInvalidTransactionId;  // current top-level XID
+    pgcpp::transaction::TransactionId xmin =
+        pgcpp::transaction::kInvalidTransactionId;  // snapshot xmin
+    int lxid = 0;                                   // local XID (in-process counter)
     ProcStatus status = ProcStatus::kIdle;
     Latch* procLatch = nullptr;  // owned externally; PGPROC does not own it
     std::string backend_id;      // logical backend identifier
@@ -60,7 +60,7 @@ PGPROC* GetMyProc();
 // SetMyProc — install a PGPROC pointer for the current backend (test hook).
 void SetMyProc(PGPROC* proc);
 
-// ProcArrayShmemSize — PG's reserved-shared-memory estimate; in MyToyDB this
+// ProcArrayShmemSize — PG's reserved-shared-memory estimate; in pgcpp this
 // is just the in-memory size of the pool.
 int ProcArrayShmemSize();
 
@@ -70,4 +70,4 @@ int NumProcs();
 // AllProcs — return the list of all currently-active PGPROCs (for inspection).
 std::vector<PGPROC*> AllProcs();
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

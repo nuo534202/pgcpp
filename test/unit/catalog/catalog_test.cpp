@@ -17,38 +17,38 @@
 
 namespace {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::CatalogTupleDelete;
-using mytoydb::catalog::CatalogTupleInsert;
-using mytoydb::catalog::CatalogTupleUpdate;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::FormData_pg_type;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::GetSysCache;
-using mytoydb::catalog::kFirstNormalObjectId;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::ReleaseSysCache;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SearchSysCache1;
-using mytoydb::catalog::SearchSysCache2;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::catalog::SysCacheIdentifier;
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::CatalogTupleDelete;
+using pgcpp::catalog::CatalogTupleInsert;
+using pgcpp::catalog::CatalogTupleUpdate;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::FormData_pg_type;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::GetSysCache;
+using pgcpp::catalog::kFirstNormalObjectId;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::ReleaseSysCache;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SearchSysCache1;
+using pgcpp::catalog::SearchSysCache2;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::catalog::SysCacheIdentifier;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
 
 class CatalogTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("catalog_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -63,7 +63,7 @@ protected:
         delete syscache_;
         delete catalog_;
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -112,7 +112,7 @@ bool RaisesError(F&& fn) {
     }
     PG_CATCH() {
         caught = true;
-        ErrorData* err = mytoydb::error::GetErrorData();
+        ErrorData* err = pgcpp::error::GetErrorData();
         EXPECT_EQ(err->elevel, LogLevel::kError);
     }
     PG_END_TRY();
@@ -207,7 +207,7 @@ TEST_F(CatalogTest, PgTypeDefaults) {
     EXPECT_TRUE(row.typname.empty());
     EXPECT_EQ(row.typlen, 0);
     EXPECT_FALSE(row.typbyval);
-    EXPECT_EQ(row.typtype, mytoydb::catalog::TypeType::kBase);
+    EXPECT_EQ(row.typtype, pgcpp::catalog::TypeType::kBase);
     EXPECT_TRUE(row.typisdefined);
 }
 

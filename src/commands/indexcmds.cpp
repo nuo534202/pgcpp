@@ -19,29 +19,29 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/types/builtins.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::access::btbuild;
-using mytoydb::access::BTKeyKind;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::IndexElem;
-using mytoydb::parser::IndexStmt;
-using mytoydb::parser::Node;
-using mytoydb::types::kInt4Oid;
+using pgcpp::access::btbuild;
+using pgcpp::access::BTKeyKind;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationCreateStorage;
+using pgcpp::access::RelationOpen;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::IndexElem;
+using pgcpp::parser::IndexStmt;
+using pgcpp::parser::Node;
+using pgcpp::types::kInt4Oid;
 
 namespace {
 
@@ -59,13 +59,13 @@ AttAlign TypeAlignForLen(int16_t typlen) {
 
 BTKeyKind BtKeyKindForType(Oid type_oid) {
     switch (type_oid) {
-        case mytoydb::types::kInt2Oid:
-        case mytoydb::types::kInt4Oid:
+        case pgcpp::types::kInt2Oid:
+        case pgcpp::types::kInt4Oid:
             return BTKeyKind::kInt32;
-        case mytoydb::types::kInt8Oid:
+        case pgcpp::types::kInt8Oid:
             return BTKeyKind::kInt64;
-        case mytoydb::types::kTextOid:
-        case mytoydb::types::kVarcharOid:
+        case pgcpp::types::kTextOid:
+        case pgcpp::types::kVarcharOid:
             return BTKeyKind::kText;
         default:
             return BTKeyKind::kInt32;
@@ -85,7 +85,7 @@ std::string DefineIndex(IndexStmt* stmt) {
     const std::string& heapname = stmt->relation->relname;
     const FormData_pg_class* heap_row = cat->GetClassByName(heapname);
     if (heap_row == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + heapname + "\" does not exist");
+        ereport(pgcpp::error::LogLevel::kError, "relation \"" + heapname + "\" does not exist");
     }
     Oid heap_oid = heap_row->oid;
 
@@ -114,7 +114,7 @@ std::string DefineIndex(IndexStmt* stmt) {
     if (cat->GetClassByName(idxname) != nullptr) {
         if (stmt->if_not_exists)
             return "CREATE INDEX";
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + idxname + "\" already exists");
+        ereport(pgcpp::error::LogLevel::kError, "relation \"" + idxname + "\" already exists");
     }
 
     auto* class_row = makePallocNode<FormData_pg_class>();
@@ -169,4 +169,4 @@ std::string DefineIndex(IndexStmt* stmt) {
     return "CREATE INDEX";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

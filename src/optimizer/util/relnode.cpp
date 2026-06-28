@@ -3,16 +3,16 @@
 // Converted from PostgreSQL 15's src/backend/optimizer/util/relnode.c.
 //
 // Builds RelOptInfo objects for base relations and (skeleton) join relations.
-// For MyToyDB's single-table workload, the join-rel machinery is minimal.
+// For pgcpp's single-table workload, the join-rel machinery is minimal.
 #include "pgcpp/optimizer/util/relnode.hpp"
 
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/optimizer/planner.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::RangeTblEntry;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::RangeTblEntry;
 
 RelOptInfo* build_simple_rel(PlannerInfo* root, int relid, RelOptInfo* parent) {
     (void)parent;  // inheritance not supported in the simplified model
@@ -77,4 +77,4 @@ void add_join_rel(PlannerInfo* root, RelOptInfo* joinrel) {
     root->join_rel_list.push_back(joinrel);
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

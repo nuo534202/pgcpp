@@ -2,7 +2,7 @@
 
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::memory {
+namespace pgcpp::memory {
 
 // AllocSetContext — the default MemoryContext implementation.
 // Faithful conversion of PostgreSQL's AllocSetContext (aset.c).
@@ -60,4 +60,4 @@ private:
     void FreeBlocks();
 };
 
-}  // namespace mytoydb::memory
+}  // namespace pgcpp::memory

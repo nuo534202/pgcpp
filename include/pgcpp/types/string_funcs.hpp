@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // length(text) — return the number of characters in a text value.
 // Returns an int4 Datum.
@@ -75,4 +75,4 @@ Datum text_repeat(Datum str, Datum n);
 // text_reverse(str) — reverse the string.
 Datum text_reverse(Datum str);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

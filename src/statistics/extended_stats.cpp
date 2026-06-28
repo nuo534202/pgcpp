@@ -6,7 +6,7 @@
 // registry. Here we keep the same surface (catalog cache, statement structs,
 // provider registry) using std::map and std::vector.
 //
-// Simplifications (consistent with the rest of MyToyDB):
+// Simplifications (consistent with the rest of pgcpp):
 //   - The catalog is an in-memory std::map rather than pg_statistic_ext rows.
 //   - Name resolution is by the dotted qualified name stored at create time;
 //     the full namespace/lookup machinery is not yet wired up.
@@ -21,9 +21,9 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::statistics {
+namespace pgcpp::statistics {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -180,4 +180,4 @@ void RemoveStatistics(Oid stxoid) {
     StatisticsCatalog::Instance().RemoveStatistics(stxoid);
 }
 
-}  // namespace mytoydb::statistics
+}  // namespace pgcpp::statistics

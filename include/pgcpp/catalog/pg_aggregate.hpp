@@ -5,7 +5,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // FormData_pg_aggregate — C++ equivalent of PostgreSQL's catalog/pg_aggregate.h.
 //
@@ -57,4 +57,4 @@ struct FormData_pg_aggregate {
 
 using Form_pg_aggregate = FormData_pg_aggregate*;
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

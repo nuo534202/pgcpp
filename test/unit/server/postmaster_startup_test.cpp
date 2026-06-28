@@ -24,8 +24,8 @@
 
 #include "pgcpp/server/postmaster.hpp"
 
-using mytoydb::server::ProcessStartupPacket;
-using mytoydb::server::StartupPacketResult;
+using pgcpp::server::ProcessStartupPacket;
+using pgcpp::server::StartupPacketResult;
 
 namespace {
 
@@ -103,7 +103,7 @@ void WriteSpecialPacket(int fd, uint32_t code) {
 // Write a CancelRequest packet (length 16: len + code + pid + secret).
 void WriteCancelPacket(int fd, uint32_t pid, uint32_t secret) {
     uint32_t len = htonl(16);
-    uint32_t net_code = htonl(mytoydb::server::kCancelRequestCode);
+    uint32_t net_code = htonl(pgcpp::server::kCancelRequestCode);
     uint32_t net_pid = htonl(pid);
     uint32_t net_secret = htonl(secret);
     WriteAll(fd, &len, 4);
@@ -259,7 +259,7 @@ TEST(ProcessStartupPacketTest, ParsesApplicationName) {
 TEST(ProcessStartupPacketTest, HandlesSslRequestPreamble) {
     auto o = RunChildAndSend([](int fd) {
         // First: SSLRequest — server should reply 'N' and continue.
-        WriteSpecialPacket(fd, mytoydb::server::kNegotiateSslCode);
+        WriteSpecialPacket(fd, pgcpp::server::kNegotiateSslCode);
         // Read the 'N' reply.
         char reply = 0;
         ReadByte(fd, &reply);
@@ -274,7 +274,7 @@ TEST(ProcessStartupPacketTest, HandlesSslRequestPreamble) {
 
 TEST(ProcessStartupPacketTest, HandlesGssRequestPreamble) {
     auto o = RunChildAndSend([](int fd) {
-        WriteSpecialPacket(fd, mytoydb::server::kNegotiateGssCode);
+        WriteSpecialPacket(fd, pgcpp::server::kNegotiateGssCode);
         char reply = 0;
         ReadByte(fd, &reply);
         EXPECT_EQ(reply, 'N');
@@ -287,10 +287,10 @@ TEST(ProcessStartupPacketTest, HandlesGssRequestPreamble) {
 
 TEST(ProcessStartupPacketTest, HandlesSslThenGssThenStartup) {
     auto o = RunChildAndSend([](int fd) {
-        WriteSpecialPacket(fd, mytoydb::server::kNegotiateSslCode);
+        WriteSpecialPacket(fd, pgcpp::server::kNegotiateSslCode);
         char r1 = 0;
         ReadByte(fd, &r1);
-        WriteSpecialPacket(fd, mytoydb::server::kNegotiateGssCode);
+        WriteSpecialPacket(fd, pgcpp::server::kNegotiateGssCode);
         char r2 = 0;
         ReadByte(fd, &r2);
         WriteStartupPacket(fd, 0x00030000, {{"user", "eve"}});

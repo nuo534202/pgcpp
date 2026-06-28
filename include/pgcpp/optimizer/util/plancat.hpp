@@ -10,17 +10,16 @@
 #include "pgcpp/optimizer/path.hpp"
 #include "pgcpp/optimizer/planner.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
 // get_relation_info — fill a RelOptInfo with catalog-derived statistics.
 // Sets rel->pages, rel->tuples, and rel->width from pg_class and pg_attribute.
 // If the relation is not in the catalog, conservative defaults are used.
-void get_relation_info(PlannerInfo* root, mytoydb::catalog::Oid relation_oid, bool inhparent,
+void get_relation_info(PlannerInfo* root, pgcpp::catalog::Oid relation_oid, bool inhparent,
                        RelOptInfo* rel);
 
 // estimate_rel_size — estimate a relation's page/tuple count.
 // Simplified: uses pg_class.reltuples/relpages if available, else defaults.
-void estimate_rel_size(mytoydb::catalog::Oid relation_oid, int* pages, int* tuples,
-                       int* allvisfrac);
+void estimate_rel_size(pgcpp::catalog::Oid relation_oid, int* pages, int* tuples, int* allvisfrac);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

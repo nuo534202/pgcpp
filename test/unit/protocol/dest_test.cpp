@@ -35,72 +35,72 @@
 #include "pgcpp/transaction/xact.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::access::CreateTupleDesc;
-using mytoydb::access::heap_beginscan;
-using mytoydb::access::heap_deform_tuple;
-using mytoydb::access::heap_endscan;
-using mytoydb::access::heap_getnext;
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::ResetRelcache;
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::kFirstNormalObjectId;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::executor::TupleTableSlot;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::protocol::CommandDest;
-using mytoydb::protocol::CreateDestReceiver;
-using mytoydb::protocol::CreateIntoRelReceiver;
-using mytoydb::protocol::CreateNoneReceiver;
-using mytoydb::protocol::CreateRemoteReceiver;
-using mytoydb::protocol::CreateTuplestoreReceiver;
-using mytoydb::protocol::DestReceiver;
-using mytoydb::protocol::EncodeDatumAsText;
-using mytoydb::protocol::GetTuplestoreSlots;
-using mytoydb::protocol::MessageReader;
-using mytoydb::protocol::MessageType;
-using mytoydb::protocol::StringSink;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::transaction::BeginTransactionBlock;
-using mytoydb::transaction::EndTransactionBlock;
-using mytoydb::transaction::GetTransactionSnapshot;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::transaction::InitializeSnapshotManager;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::types::BoolGetDatum;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
+using pgcpp::access::CreateTupleDesc;
+using pgcpp::access::heap_beginscan;
+using pgcpp::access::heap_deform_tuple;
+using pgcpp::access::heap_endscan;
+using pgcpp::access::heap_getnext;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationCreateStorage;
+using pgcpp::access::RelationOpen;
+using pgcpp::access::ResetRelcache;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::kFirstNormalObjectId;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::executor::TupleTableSlot;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::protocol::CommandDest;
+using pgcpp::protocol::CreateDestReceiver;
+using pgcpp::protocol::CreateIntoRelReceiver;
+using pgcpp::protocol::CreateNoneReceiver;
+using pgcpp::protocol::CreateRemoteReceiver;
+using pgcpp::protocol::CreateTuplestoreReceiver;
+using pgcpp::protocol::DestReceiver;
+using pgcpp::protocol::EncodeDatumAsText;
+using pgcpp::protocol::GetTuplestoreSlots;
+using pgcpp::protocol::MessageReader;
+using pgcpp::protocol::MessageType;
+using pgcpp::protocol::StringSink;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::BeginTransactionBlock;
+using pgcpp::transaction::EndTransactionBlock;
+using pgcpp::transaction::GetTransactionSnapshot;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::transaction::InitializeSnapshotManager;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ResetTransactionState;
+using pgcpp::types::BoolGetDatum;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
 
 namespace {
 
 class DestTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("dest_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -137,7 +137,7 @@ protected:
         InitializeTransactionSystem();
         InitializeSnapshotManager();
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

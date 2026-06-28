@@ -24,14 +24,14 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
 
 namespace {
 
@@ -46,7 +46,7 @@ std::string ExtractTypeNameString(TypeName* type_name) {
         return "";
     Node* last = type_name->names.back();
     if (last->GetTag() == NodeTag::kString) {
-        auto* v = static_cast<mytoydb::nodes::Value*>(last);
+        auto* v = static_cast<pgcpp::nodes::Value*>(last);
         return v->GetString();
     }
     return "";
@@ -60,7 +60,7 @@ Oid ResolveAndSetTypeOid(TypeName* type_name) {
     std::string type_str = ExtractTypeNameString(type_name);
     Oid type_oid = typenameTypeId(type_str);
     if (type_oid == kInvalidOid) {
-        ereport(mytoydb::error::LogLevel::kError, "type \"" + type_str + "\" does not exist");
+        ereport(pgcpp::error::LogLevel::kError, "type \"" + type_str + "\" does not exist");
     }
     type_name->type_oid = type_oid;
     return type_oid;
@@ -95,7 +95,7 @@ RangeTblEntry* BuildSyntheticRTEForNewTable(CreateStmt* stmt) {
         te->resno = attnum;
         rte->subquery->target_list.push_back(te);
 
-        eref->colnames.push_back(mytoydb::nodes::makeString(cd->colname));
+        eref->colnames.push_back(pgcpp::nodes::makeString(cd->colname));
         ++attnum;
     }
     rte->eref = eref;
@@ -177,7 +177,7 @@ Query* transformCreateStmt(ParseState* pstate, CreateStmt* stmt) {
             continue;
         auto* cd = static_cast<ColumnDef*>(elt);
         if (!seen.insert(cd->colname).second) {
-            ereport(mytoydb::error::LogLevel::kError,
+            ereport(pgcpp::error::LogLevel::kError,
                     "column \"" + cd->colname + "\" specified more than once");
         }
     }
@@ -275,4 +275,4 @@ Query* transformIndexStmt(ParseState* pstate, IndexStmt* stmt) {
     return qry;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

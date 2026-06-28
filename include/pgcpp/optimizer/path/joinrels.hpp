@@ -9,7 +9,7 @@
 //   3. Calls add_paths_to_joinrel to generate NestLoop/HashJoin/MergeJoin
 //      candidate paths.
 //
-// For MyToyDB's Task 15.15, the joinrel machinery is simplified:
+// For pgcpp's Task 15.15, the joinrel machinery is simplified:
 //   - Only INNER joins.
 //   - Linear join ordering: rel1 JOIN rel2 JOIN rel3 ...
 //   - No GEQO/swarm optimization for >10 tables.
@@ -17,9 +17,9 @@
 
 #include "pgcpp/optimizer/path.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
-// Forward declaration — defined in mytoydb/optimizer/planner.hpp.
+// Forward declaration — defined in pgcpp/optimizer/planner.hpp.
 struct PlannerInfo;
 
 // make_rels_by_clause_joins — for each pair of base relations in
@@ -33,9 +33,9 @@ void make_rels_by_clause_joins(PlannerInfo* root, RelOptInfo* outer_rel);
 
 // build_joinrels_for_level — build all joinrels at a given "level" (number
 // of base relations participating). Level 1 = base rels (already done);
-// level 2 = 2-way joins; level 3 = 3-way joins; etc. For MyToyDB, we only
+// level 2 = 2-way joins; level 3 = 3-way joins; etc. For pgcpp, we only
 // invoke level 2 (joins two base rels at a time) — the planner doesn't
 // chain joinrels into bigger joinrels yet.
 void build_joinrels_for_level(PlannerInfo* root, int level);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

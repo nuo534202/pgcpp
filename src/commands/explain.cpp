@@ -1,7 +1,7 @@
 // explain.cpp — EXPLAIN command implementation.
 //
 // Converted from PostgreSQL 15's src/backend/commands/explain.c.
-// MyToyDB's EXPLAIN currently prints a placeholder plan description
+// pgcpp's EXPLAIN currently prints a placeholder plan description
 // to stdout; full plan-tree dumping is deferred until the executor
 // exposes an ExplainState API.
 #include "pgcpp/commands/explain.hpp"
@@ -11,9 +11,9 @@
 
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::parser::ExplainStmt;
+using pgcpp::parser::ExplainStmt;
 
 std::string ExplainQuery(ExplainStmt* stmt) {
     if (stmt == nullptr)
@@ -27,4 +27,4 @@ std::string ExplainQuery(ExplainStmt* stmt) {
     return "EXPLAIN";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

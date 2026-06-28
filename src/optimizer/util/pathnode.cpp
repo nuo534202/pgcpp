@@ -11,8 +11,8 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/optimizer/cost.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
 
 SeqScanPath* create_seqscan_path(PlannerInfo* root, RelOptInfo* rel) {
     (void)root;
@@ -28,8 +28,8 @@ SeqScanPath* create_seqscan_path(PlannerInfo* root, RelOptInfo* rel) {
     return path;
 }
 
-IndexPath* create_index_path(PlannerInfo* root, RelOptInfo* rel, mytoydb::catalog::Oid indexid,
-                             std::vector<mytoydb::parser::Node*> indexclauses) {
+IndexPath* create_index_path(PlannerInfo* root, RelOptInfo* rel, pgcpp::catalog::Oid indexid,
+                             std::vector<pgcpp::parser::Node*> indexclauses) {
     (void)root;
     auto* path = makePallocNode<IndexPath>();
     path->parent_rel = rel;
@@ -59,7 +59,7 @@ NestLoopPath* create_nestloop_path(PlannerInfo* root, RelOptInfo* joinrel, Path*
 }
 
 HashJoinPath* create_hashjoin_path(PlannerInfo* root, RelOptInfo* joinrel, Path* outer, Path* inner,
-                                   std::vector<mytoydb::parser::Node*> hashclauses) {
+                                   std::vector<pgcpp::parser::Node*> hashclauses) {
     (void)root;
     auto* path = makePallocNode<HashJoinPath>();
     path->parent_rel = joinrel;
@@ -77,8 +77,8 @@ HashJoinPath* create_hashjoin_path(PlannerInfo* root, RelOptInfo* joinrel, Path*
 }
 
 MergeJoinPath* create_mergejoin_path(PlannerInfo* root, RelOptInfo* joinrel, Path* outer,
-                                     Path* inner, std::vector<mytoydb::parser::Node*> mergeclauses,
-                                     mytoydb::parser::JoinType jointype) {
+                                     Path* inner, std::vector<pgcpp::parser::Node*> mergeclauses,
+                                     pgcpp::parser::JoinType jointype) {
     (void)root;
     auto* path = makePallocNode<MergeJoinPath>();
     path->parent_rel = joinrel;
@@ -105,7 +105,7 @@ MergeJoinPath* create_mergejoin_path(PlannerInfo* root, RelOptInfo* joinrel, Pat
 
 SubqueryScanPath* create_subqueryscan_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
                                            int scanrelid,
-                                           std::vector<mytoydb::parser::TargetEntry*> tlist) {
+                                           std::vector<pgcpp::parser::TargetEntry*> tlist) {
     (void)root;
     auto* path = makePallocNode<SubqueryScanPath>();
     path->parent_rel = rel;
@@ -123,7 +123,7 @@ SubqueryScanPath* create_subqueryscan_path(PlannerInfo* root, RelOptInfo* rel, P
 }
 
 SortPath* create_sort_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
-                           std::vector<mytoydb::parser::SortGroupClause*> pathkeys) {
+                           std::vector<pgcpp::parser::SortGroupClause*> pathkeys) {
     (void)root;
     auto* path = makePallocNode<SortPath>();
     path->parent_rel = rel;
@@ -140,8 +140,8 @@ SortPath* create_sort_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
 }
 
 AggPath* create_agg_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
-                         mytoydb::executor::Agg::Strategy aggstrategy,
-                         std::vector<mytoydb::parser::Node*> group_clause, int num_groups) {
+                         pgcpp::executor::Agg::Strategy aggstrategy,
+                         std::vector<pgcpp::parser::Node*> group_clause, int num_groups) {
     (void)root;
     auto* path = makePallocNode<AggPath>();
     path->parent_rel = rel;
@@ -156,7 +156,7 @@ AggPath* create_agg_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
         Cost agg_cost = CostAgg(input_rows, ngroups, subpath->width);
         path->total_cost = path->startup_cost + agg_cost;
         // Aggregated output has one row per group (or one row for plain agg).
-        path->rows = (aggstrategy == mytoydb::executor::Agg::Strategy::kPlain)
+        path->rows = (aggstrategy == pgcpp::executor::Agg::Strategy::kPlain)
                          ? 1.0
                          : static_cast<Cardinality>(ngroups);
     }
@@ -164,7 +164,7 @@ AggPath* create_agg_path(PlannerInfo* root, RelOptInfo* rel, Path* subpath,
 }
 
 ResultPath* create_result_path(PlannerInfo* root, RelOptInfo* rel,
-                               std::vector<mytoydb::parser::Node*> quals) {
+                               std::vector<pgcpp::parser::Node*> quals) {
     (void)root;
     auto* path = makePallocNode<ResultPath>();
     path->parent_rel = rel;
@@ -189,4 +189,4 @@ Path* cheapest_path(RelOptInfo* rel) {
     return rel->cheapest_path;
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

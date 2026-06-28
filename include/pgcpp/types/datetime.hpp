@@ -4,7 +4,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // PostgreSQL timestamp representation: int64 microseconds since 2000-01-01
 // 00:00:00 UTC. This matches PostgreSQL's Timestamp type.
@@ -87,4 +87,4 @@ Timestamp PartsToTimestamp(const TimestampParts& parts);
 int32_t DateToDays(Date d);
 Date DaysToDate(int32_t days);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

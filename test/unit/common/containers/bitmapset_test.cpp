@@ -10,25 +10,25 @@
 
 namespace {
 
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::Bitmapset;
-using mytoydb::nodes::bms_add_member;
-using mytoydb::nodes::bms_copy;
-using mytoydb::nodes::bms_del_member;
-using mytoydb::nodes::bms_difference;
-using mytoydb::nodes::bms_equal;
-using mytoydb::nodes::bms_free;
-using mytoydb::nodes::bms_intersect;
-using mytoydb::nodes::bms_is_empty;
-using mytoydb::nodes::bms_is_member;
-using mytoydb::nodes::bms_is_subset;
-using mytoydb::nodes::bms_make_singleton;
-using mytoydb::nodes::bms_minimum_member;
-using mytoydb::nodes::bms_next_member;
-using mytoydb::nodes::bms_nonempty_difference;
-using mytoydb::nodes::bms_num_members;
-using mytoydb::nodes::bms_overlap;
-using mytoydb::nodes::bms_union;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::Bitmapset;
+using pgcpp::nodes::bms_add_member;
+using pgcpp::nodes::bms_copy;
+using pgcpp::nodes::bms_del_member;
+using pgcpp::nodes::bms_difference;
+using pgcpp::nodes::bms_equal;
+using pgcpp::nodes::bms_free;
+using pgcpp::nodes::bms_intersect;
+using pgcpp::nodes::bms_is_empty;
+using pgcpp::nodes::bms_is_member;
+using pgcpp::nodes::bms_is_subset;
+using pgcpp::nodes::bms_make_singleton;
+using pgcpp::nodes::bms_minimum_member;
+using pgcpp::nodes::bms_next_member;
+using pgcpp::nodes::bms_nonempty_difference;
+using pgcpp::nodes::bms_num_members;
+using pgcpp::nodes::bms_overlap;
+using pgcpp::nodes::bms_union;
 
 // Bitmapset does NOT use palloc (it is allocated via global new), so the
 // fixture exists only to keep parity with the rest of the test suite and to
@@ -39,11 +39,11 @@ class BitmapsetTest : public ::testing::Test {
 protected:
     void SetUp() override {
         context_ = AllocSetContext::Create("bitmapset_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

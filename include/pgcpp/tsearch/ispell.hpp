@@ -7,7 +7,7 @@
 
 #include "pgcpp/tsearch/dict.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // Ispell affix dictionary (PostgreSQL src/backend/tsearch/spell.c).
@@ -41,4 +41,4 @@ private:
     std::vector<Affix> affixes_;
 };
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

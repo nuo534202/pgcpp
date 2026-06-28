@@ -4,17 +4,17 @@
 //
 // Provides a deep-copy helper for chromosomes. PostgreSQL needs this because
 // its chromosomes are allocated as bare Gene arrays and must be copied before
-// mutation; MyToyDB uses std::vector<Gene>, so the copy is trivial, but the
+// mutation; pgcpp uses std::vector<Gene>, so the copy is trivial, but the
 // helper is kept to mirror the PG file layout and to centralize any future
 // deep-copy semantics (e.g., attached path trees).
 #pragma once
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 // CopyChromosome — deep-copy `src` into `dst`. The fitness cache is copied
 // as well, so the destination does not need to be re-evaluated.
 void CopyChromosome(Chromosome* dst, const Chromosome* src);
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

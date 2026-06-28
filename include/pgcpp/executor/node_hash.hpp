@@ -7,12 +7,12 @@
 #include "pgcpp/executor/node_exec.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // HashEntry — a tuple stored in the hash table.
 struct HashEntry {
     TupleTableSlot* slot;
-    mytoydb::types::Datum hashkey;
+    pgcpp::types::Datum hashkey;
     bool keynull;
 };
 
@@ -21,7 +21,7 @@ struct HashTable {
     // Key: hash of the join key values. Value: list of matching tuples.
     std::unordered_multimap<uint64_t, HashEntry> buckets;
 
-    void Insert(uint64_t hash, TupleTableSlot* slot, mytoydb::types::Datum keyval, bool keynull);
+    void Insert(uint64_t hash, TupleTableSlot* slot, pgcpp::types::Datum keyval, bool keynull);
     void Clear();
 };
 
@@ -30,7 +30,7 @@ public:
     HashState(Plan* p, EState* s) : PlanState(p, s) {}
 
     HashTable hashtable;
-    std::vector<mytoydb::parser::Node*> hashkeys;  // hash key expressions
+    std::vector<pgcpp::parser::Node*> hashkeys;  // hash key expressions
 
     void ExecInit() override;
     TupleTableSlot* ExecProcNode() override;
@@ -38,4 +38,4 @@ public:
     void ExecReScan() override;
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

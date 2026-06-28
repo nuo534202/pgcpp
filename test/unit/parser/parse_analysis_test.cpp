@@ -31,94 +31,94 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::FormData_pg_type;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::GetSysCache;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::parser::AConst;
-using mytoydb::parser::AExpr;
-using mytoydb::parser::AExprKind;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::Alias;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::can_coerce_type;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::CoerceViaIO;
-using mytoydb::parser::CoercionContext;
-using mytoydb::parser::CoercionForm;
-using mytoydb::parser::ColumnRef;
-using mytoydb::parser::Const;
-using mytoydb::parser::exprType;
-using mytoydb::parser::exprTypmod;
-using mytoydb::parser::free_parsestate;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::FuncCall;
-using mytoydb::parser::FuncExpr;
-using mytoydb::parser::FuncLookupResult;
-using mytoydb::parser::IsAggregateFunction;
-using mytoydb::parser::IsBinaryCoercible;
-using mytoydb::parser::JoinExpr;
-using mytoydb::parser::lookup_operator;
-using mytoydb::parser::LookupFuncName;
-using mytoydb::parser::make_op;
-using mytoydb::parser::make_parsestate;
-using mytoydb::parser::make_scalar_array_op;
-using mytoydb::parser::makeConst;
-using mytoydb::parser::NullTestType;
-using mytoydb::parser::OperatorResult;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::parse_analyze;
-using mytoydb::parser::ParseExprKind;
-using mytoydb::parser::ParseState;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RangeVar;
-using mytoydb::parser::raw_parser;
-using mytoydb::parser::RawStmt;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::ResTarget;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::ScalarArrayOpExpr;
-using mytoydb::parser::SelectStmt;
-using mytoydb::parser::SortBy;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::transformStmt;
-using mytoydb::parser::TypeCast;
-using mytoydb::parser::TypeName;
-using mytoydb::parser::typenameTypeId;
-using mytoydb::parser::Var;
-using mytoydb::types::Float8GetDatum;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kNumericOid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
-using mytoydb::types::kVarcharOid;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::FormData_pg_type;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::GetSysCache;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::parser::AConst;
+using pgcpp::parser::AExpr;
+using pgcpp::parser::AExprKind;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::Alias;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::can_coerce_type;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::CoerceViaIO;
+using pgcpp::parser::CoercionContext;
+using pgcpp::parser::CoercionForm;
+using pgcpp::parser::ColumnRef;
+using pgcpp::parser::Const;
+using pgcpp::parser::exprType;
+using pgcpp::parser::exprTypmod;
+using pgcpp::parser::free_parsestate;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::FuncCall;
+using pgcpp::parser::FuncExpr;
+using pgcpp::parser::FuncLookupResult;
+using pgcpp::parser::IsAggregateFunction;
+using pgcpp::parser::IsBinaryCoercible;
+using pgcpp::parser::JoinExpr;
+using pgcpp::parser::lookup_operator;
+using pgcpp::parser::LookupFuncName;
+using pgcpp::parser::make_op;
+using pgcpp::parser::make_parsestate;
+using pgcpp::parser::make_scalar_array_op;
+using pgcpp::parser::makeConst;
+using pgcpp::parser::NullTestType;
+using pgcpp::parser::OperatorResult;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::parse_analyze;
+using pgcpp::parser::ParseExprKind;
+using pgcpp::parser::ParseState;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RangeVar;
+using pgcpp::parser::raw_parser;
+using pgcpp::parser::RawStmt;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::ResTarget;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::ScalarArrayOpExpr;
+using pgcpp::parser::SelectStmt;
+using pgcpp::parser::SortBy;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::transformStmt;
+using pgcpp::parser::TypeCast;
+using pgcpp::parser::TypeName;
+using pgcpp::parser::typenameTypeId;
+using pgcpp::parser::Var;
+using pgcpp::types::Float8GetDatum;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kDateOid;
+using pgcpp::types::kFloat4Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kNumericOid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
+using pgcpp::types::kVarcharOid;
 
 namespace {
 
@@ -126,9 +126,9 @@ namespace {
 class ParseAnalysisTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("parse_analysis_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -150,7 +150,7 @@ protected:
         delete syscache_;
         delete catalog_;
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -242,17 +242,17 @@ TEST_F(ParseAnalysisTest, TypenameTypeIdReturnsInvalidForUnknown) {
 }
 
 TEST_F(ParseAnalysisTest, TypeCategoryPredicates) {
-    EXPECT_TRUE(mytoydb::parser::type_is_numeric(kInt4Oid));
-    EXPECT_TRUE(mytoydb::parser::type_is_numeric(kFloat8Oid));
-    EXPECT_FALSE(mytoydb::parser::type_is_numeric(kTextOid));
+    EXPECT_TRUE(pgcpp::parser::type_is_numeric(kInt4Oid));
+    EXPECT_TRUE(pgcpp::parser::type_is_numeric(kFloat8Oid));
+    EXPECT_FALSE(pgcpp::parser::type_is_numeric(kTextOid));
 
-    EXPECT_TRUE(mytoydb::parser::type_is_string(kTextOid));
-    EXPECT_TRUE(mytoydb::parser::type_is_string(kVarcharOid));
-    EXPECT_FALSE(mytoydb::parser::type_is_string(kInt4Oid));
+    EXPECT_TRUE(pgcpp::parser::type_is_string(kTextOid));
+    EXPECT_TRUE(pgcpp::parser::type_is_string(kVarcharOid));
+    EXPECT_FALSE(pgcpp::parser::type_is_string(kInt4Oid));
 
-    EXPECT_TRUE(mytoydb::parser::type_is_datetime(kDateOid));
-    EXPECT_TRUE(mytoydb::parser::type_is_datetime(kTimestampOid));
-    EXPECT_FALSE(mytoydb::parser::type_is_datetime(kInt4Oid));
+    EXPECT_TRUE(pgcpp::parser::type_is_datetime(kDateOid));
+    EXPECT_TRUE(pgcpp::parser::type_is_datetime(kTimestampOid));
+    EXPECT_FALSE(pgcpp::parser::type_is_datetime(kInt4Oid));
 }
 
 // ===========================================================================
@@ -302,19 +302,19 @@ TEST_F(ParseAnalysisTest, CanCoerceTypeExplicit) {
 // ===========================================================================
 
 TEST_F(ParseAnalysisTest, ExprTypeOfConst) {
-    auto* con = mytoydb::parser::makeConst(kInt4Oid, -1, 0, 4, mytoydb::types::Int32GetDatum(42),
-                                           false, true, -1);
+    auto* con = pgcpp::parser::makeConst(kInt4Oid, -1, 0, 4, pgcpp::types::Int32GetDatum(42), false,
+                                         true, -1);
     EXPECT_EQ(exprType(con), kInt4Oid);
     EXPECT_EQ(exprTypmod(con), -1);
 }
 
 TEST_F(ParseAnalysisTest, ExprTypeOfVar) {
-    auto* var = mytoydb::parser::makeVar(1, 2, kInt4Oid, -1, 0, 0, -1);
+    auto* var = pgcpp::parser::makeVar(1, 2, kInt4Oid, -1, 0, 0, -1);
     EXPECT_EQ(exprType(var), kInt4Oid);
 }
 
 TEST_F(ParseAnalysisTest, ExprTypeOfBoolExpr) {
-    auto* b = mytoydb::parser::makeNode<BoolExpr>();
+    auto* b = pgcpp::parser::makeNode<BoolExpr>();
     b->boolop = BoolExprType::kAnd;
     EXPECT_EQ(exprType(b), kBoolOid);
 }
@@ -781,7 +781,7 @@ TEST_F(ParseAnalysisTest, AnalyzeIsNotNull) {
     auto* from_expr = static_cast<FromExpr*>(qry->jointree);
     ASSERT_NE(from_expr->quals, nullptr);
     EXPECT_EQ(nodeTag(from_expr->quals), NodeTag::kNullTest);
-    auto* nt = static_cast<mytoydb::parser::NullTest*>(from_expr->quals);
+    auto* nt = static_cast<pgcpp::parser::NullTest*>(from_expr->quals);
     EXPECT_EQ(nt->nulltesttype, NullTestType::kIsNotNull);
 }
 
@@ -1599,7 +1599,7 @@ TEST_F(ParseAnalysisTest, TransformFuncCallAvgFloat8) {
 
 TEST_F(ParseAnalysisTest, TransformFuncCallAvgInt4) {
     // AVG(count) where count is int4 → avg(int4) → float8.
-    // MyToyDB computes AVG as float8 (numeric type not implemented).
+    // pgcpp computes AVG as float8 (numeric type not implemented).
     Query* qry = AnalyzeSingle("SELECT AVG(count) FROM hits");
     ASSERT_NE(qry, nullptr);
     ASSERT_FALSE(qry->target_list.empty());

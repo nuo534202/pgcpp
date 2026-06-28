@@ -5,7 +5,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // FormData_pg_attribute — C++ equivalent of PostgreSQL's catalog/pg_attribute.h.
 //
@@ -53,4 +53,4 @@ struct FormData_pg_attribute {
 
 using Form_pg_attribute = FormData_pg_attribute*;
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

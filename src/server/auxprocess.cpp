@@ -4,7 +4,7 @@
 //
 // In PostgreSQL, auxprocess.c provides the AuxiliaryProcessMain entry point
 // that dispatches to the specific auxiliary process's main loop based on
-// the AuxiliaryProcessType argument. MyToyDB preserves this dispatch table.
+// the AuxiliaryProcessType argument. pgcpp preserves this dispatch table.
 #include "pgcpp/server/auxprocess.hpp"
 
 #include <string>
@@ -19,7 +19,7 @@
 #include "pgcpp/server/syslogger.hpp"
 #include "pgcpp/server/walwriter.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 const char* AuxProcessTypeToString(AuxiliaryProcessType type) {
     switch (type) {
@@ -127,4 +127,4 @@ int AuxProcessMain(AuxiliaryProcessType type) {
     return -1;
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

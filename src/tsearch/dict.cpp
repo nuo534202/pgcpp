@@ -10,7 +10,7 @@
 #include <cstring>
 #include <string_view>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 namespace {
 
@@ -85,4 +85,4 @@ Lexeme StopWordsDict::Lexicalize(std::string_view word) const {
     return lex;
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

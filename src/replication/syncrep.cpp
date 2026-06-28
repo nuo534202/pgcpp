@@ -13,9 +13,9 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -158,7 +158,7 @@ bool SyncRepConfigParse(const std::string& text) {
 }
 
 transaction::XLogRecPtr SyncRepWaitForLSN(transaction::XLogRecPtr lsn) {
-    // Stubbed: PG blocks on a latch waiting for standbys to ACK; MyToyDB
+    // Stubbed: PG blocks on a latch waiting for standbys to ACK; pgcpp
     // just records the wait briefly and returns. We still record that a
     // waiter exists transiently so tests can observe the call shape.
     ++Waiters();
@@ -181,4 +181,4 @@ bool SyncRepIsSyncStandby(const std::string& application_name) {
     return false;
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

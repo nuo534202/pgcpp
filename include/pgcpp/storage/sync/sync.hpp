@@ -7,7 +7,7 @@
 // processed by the checkpointer. The checkpointer then fsyncs each segment
 // in a single pass before recording the next checkpoint LSN.
 //
-// MyToyDB is single-process, so the queue is in-memory. The API mirrors
+// pgcpp is single-process, so the queue is in-memory. The API mirrors
 // PG's RegisterSyncRequest / ProcessSyncRequests surface.
 #pragma once
 
@@ -16,7 +16,7 @@
 
 #include "pgcpp/storage/relfilenode.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // ForkNumber — re-exported from relfilenode for callers of the sync API.
 // (Already declared in relfilenode.hpp; we re-export it here for ergonomic
@@ -58,7 +58,7 @@ bool RegisterSyncRequest(const SyncRequestTag& tag);
 int ProcessSyncRequests();
 
 // SyncFile — synchronously fsync a single file (PG's mdsyncfiletag).
-// In MyToyDB this is a no-op that records the call (since the underlying
+// In pgcpp this is a no-op that records the call (since the underlying
 // smgr/md layer handles fsync at file close time for the in-memory model).
 // Returns 0 on success, -1 on error.
 int SyncFile(const SyncRequestTag& tag);
@@ -80,4 +80,4 @@ struct SyncStats {
 };
 SyncStats GetSyncStats();
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

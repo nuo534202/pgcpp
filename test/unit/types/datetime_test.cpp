@@ -11,38 +11,38 @@
 
 namespace {
 
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::types::Date;
-using mytoydb::types::date_cmp;
-using mytoydb::types::date_in;
-using mytoydb::types::date_out;
-using mytoydb::types::date_trunc;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::extract;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::PartsToTimestamp;
-using mytoydb::types::Timestamp;
-using mytoydb::types::timestamp_cmp;
-using mytoydb::types::timestamp_in;
-using mytoydb::types::timestamp_out;
-using mytoydb::types::TimestampParts;
-using mytoydb::types::TimestampToParts;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::types::Date;
+using pgcpp::types::date_cmp;
+using pgcpp::types::date_in;
+using pgcpp::types::date_out;
+using pgcpp::types::date_trunc;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::extract;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::PartsToTimestamp;
+using pgcpp::types::Timestamp;
+using pgcpp::types::timestamp_cmp;
+using pgcpp::types::timestamp_in;
+using pgcpp::types::timestamp_out;
+using pgcpp::types::TimestampParts;
+using pgcpp::types::TimestampToParts;
 
 class DatetimeTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("datetime_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -60,7 +60,7 @@ bool RaisesError(F&& fn) {
     }
     PG_CATCH() {
         caught = true;
-        ErrorData* err = mytoydb::error::GetErrorData();
+        ErrorData* err = pgcpp::error::GetErrorData();
         EXPECT_EQ(err->elevel, LogLevel::kError);
     }
     PG_END_TRY();
@@ -260,57 +260,57 @@ TEST_F(DatetimeTest, DateTruncInvalidField) {
 TEST_F(DatetimeTest, ExtractMinute) {
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("minute", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 30.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 30.0);
 }
 
 TEST_F(DatetimeTest, ExtractHour) {
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("hour", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 10.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 10.0);
 }
 
 TEST_F(DatetimeTest, ExtractDay) {
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("day", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 15.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 15.0);
 }
 
 TEST_F(DatetimeTest, ExtractMonth) {
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("month", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 7.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 7.0);
 }
 
 TEST_F(DatetimeTest, ExtractYear) {
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("year", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 2013.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 2013.0);
 }
 
 TEST_F(DatetimeTest, ExtractSecond) {
     Datum ts = timestamp_in("2013-07-15 10:30:45.500000");
     Datum result = extract("second", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 45.5);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 45.5);
 }
 
 TEST_F(DatetimeTest, ExtractQuarter) {
     Datum ts = timestamp_in("2013-08-15 10:30:45");
     Datum result = extract("quarter", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 3.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 3.0);
 }
 
 TEST_F(DatetimeTest, ExtractDow) {
     // 2013-07-15 is a Monday (dow=1)
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("dow", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 1.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 1.0);
 }
 
 TEST_F(DatetimeTest, ExtractDoy) {
     // 2013-07-15 is day 196 of the year
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("doy", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 196.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 196.0);
 }
 
 TEST_F(DatetimeTest, ExtractInvalidField) {
@@ -382,7 +382,7 @@ TEST_F(DatetimeTest, ClickBenchExtractMinute) {
     // Query 19: extract(minute FROM EventTime)
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("minute", ts);
-    EXPECT_DOUBLE_EQ(mytoydb::types::DatumGetFloat8(result), 30.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 30.0);
 }
 
 }  // namespace

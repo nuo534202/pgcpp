@@ -5,7 +5,7 @@
 
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::nodes {
+namespace pgcpp::nodes {
 
 // ---------------------------------------------------------------------------
 // Value constructors
@@ -90,4 +90,4 @@ bool equal(const Node* a, const Node* b) {
     return a->Equals(*b);
 }
 
-}  // namespace mytoydb::nodes
+}  // namespace pgcpp::nodes

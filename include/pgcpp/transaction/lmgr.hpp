@@ -15,32 +15,32 @@
 #include "pgcpp/catalog/catalog.hpp"  // Oid
 #include "pgcpp/transaction/lock.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // LockRelation — acquire a lock on a relation.
 // Returns true if the lock was acquired.
-bool LockRelation(mytoydb::catalog::Oid relid, LockMode lockmode);
+bool LockRelation(pgcpp::catalog::Oid relid, LockMode lockmode);
 
 // UnlockRelation — release a lock on a relation.
 // Returns true if the lock was released.
-bool UnlockRelation(mytoydb::catalog::Oid relid, LockMode lockmode);
+bool UnlockRelation(pgcpp::catalog::Oid relid, LockMode lockmode);
 
 // UnlockRelations — release locks on multiple relations.
-void UnlockRelations(const std::vector<mytoydb::catalog::Oid>& relids, LockMode lockmode);
+void UnlockRelations(const std::vector<pgcpp::catalog::Oid>& relids, LockMode lockmode);
 
 // LockRelationIdForSession — acquire a session-level lock (persists
 // across transactions). Used by LOCK TABLE and advisory locks.
-bool LockRelationIdForSession(mytoydb::catalog::Oid relid, LockMode lockmode);
+bool LockRelationIdForSession(pgcpp::catalog::Oid relid, LockMode lockmode);
 
 // UnlockRelationIdForSession — release a session-level lock.
-bool UnlockRelationIdForSession(mytoydb::catalog::Oid relid, LockMode lockmode);
+bool UnlockRelationIdForSession(pgcpp::catalog::Oid relid, LockMode lockmode);
 
-// --- Predicate lock stubs (not implemented in MyToyDB) ---
+// --- Predicate lock stubs (not implemented in pgcpp) ---
 //
 // PostgreSQL uses predicate locks for serializable transaction isolation.
-// MyToyDB does not implement serializable isolation, so these are no-ops.
+// pgcpp does not implement serializable isolation, so these are no-ops.
 
-inline void PredicateLockRelation(mytoydb::catalog::Oid /*relid*/) {
+inline void PredicateLockRelation(pgcpp::catalog::Oid /*relid*/) {
     // No-op (serializable isolation not supported).
 }
 
@@ -57,4 +57,4 @@ inline LockMode LockModeStronger(LockMode a, LockMode b) {
     return static_cast<int>(a) >= static_cast<int>(b) ? a : b;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

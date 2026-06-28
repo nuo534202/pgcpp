@@ -5,12 +5,12 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class CreateTableSpaceStmt;
 class DropTableSpaceStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // CreateTableSpace — execute CREATE TABLESPACE. Stub.
 std::string CreateTableSpace(parser::CreateTableSpaceStmt* stmt);
@@ -18,4 +18,4 @@ std::string CreateTableSpace(parser::CreateTableSpaceStmt* stmt);
 // DropTableSpace — execute DROP TABLESPACE. Stub.
 std::string DropTableSpace(parser::DropTableSpaceStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

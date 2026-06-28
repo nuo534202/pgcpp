@@ -17,7 +17,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::partitioning {
+namespace pgcpp::partitioning {
 
 // Oid — PostgreSQL's object identifier. We define a local alias to avoid a
 // hard dependency on catalog.hpp; it is the same uint32_t as catalog::Oid.
@@ -152,4 +152,4 @@ PartitionBoundInfoData partition_bounds_create(const std::vector<PartitionBoundS
 bool partition_bound_spec_accepts(const PartitionBoundSpec& spec, types::Datum value,
                                   bool is_null = false);
 
-}  // namespace mytoydb::partitioning
+}  // namespace pgcpp::partitioning

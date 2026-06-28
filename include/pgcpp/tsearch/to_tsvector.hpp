@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/ts_types.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // to_tsvector — main entry point (PostgreSQL to_tsvector(text)).
@@ -18,6 +18,6 @@ namespace mytoydb::tsearch {
 //   "english" (default) — lowercase + simple stemming + stop-word removal.
 // ---------------------------------------------------------------------------
 
-mytoydb::types::TsVectorData ToTsVector(std::string_view text, std::string_view config = "english");
+pgcpp::types::TsVectorData ToTsVector(std::string_view text, std::string_view config = "english");
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

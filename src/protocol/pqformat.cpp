@@ -10,7 +10,7 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::protocol {
+namespace pgcpp::protocol {
 
 // --- Message ---
 
@@ -76,14 +76,14 @@ MessageReader::MessageReader(std::string payload) : payload_(std::move(payload))
 
 char MessageReader::ReadByte() {
     if (pos_ >= payload_.size()) {
-        ereport(mytoydb::error::LogLevel::kError, "protocol message: unexpected end of data");
+        ereport(pgcpp::error::LogLevel::kError, "protocol message: unexpected end of data");
     }
     return payload_[pos_++];
 }
 
 std::string MessageReader::ReadBytes(std::size_t len) {
     if (pos_ + len > payload_.size()) {
-        ereport(mytoydb::error::LogLevel::kError, "protocol message: unexpected end of data");
+        ereport(pgcpp::error::LogLevel::kError, "protocol message: unexpected end of data");
     }
     std::string result = payload_.substr(pos_, len);
     pos_ += len;
@@ -92,7 +92,7 @@ std::string MessageReader::ReadBytes(std::size_t len) {
 
 int16_t MessageReader::ReadInt16() {
     if (pos_ + 2 > payload_.size()) {
-        ereport(mytoydb::error::LogLevel::kError, "protocol message: unexpected end of data");
+        ereport(pgcpp::error::LogLevel::kError, "protocol message: unexpected end of data");
     }
     uint16_t u =
         (static_cast<uint8_t>(payload_[pos_]) << 8) | static_cast<uint8_t>(payload_[pos_ + 1]);
@@ -102,7 +102,7 @@ int16_t MessageReader::ReadInt16() {
 
 int32_t MessageReader::ReadInt32() {
     if (pos_ + 4 > payload_.size()) {
-        ereport(mytoydb::error::LogLevel::kError, "protocol message: unexpected end of data");
+        ereport(pgcpp::error::LogLevel::kError, "protocol message: unexpected end of data");
     }
     uint32_t u = (static_cast<uint8_t>(payload_[pos_]) << 24) |
                  (static_cast<uint8_t>(payload_[pos_ + 1]) << 16) |
@@ -115,7 +115,7 @@ int32_t MessageReader::ReadInt32() {
 std::string MessageReader::ReadString() {
     std::size_t nul = payload_.find('\0', pos_);
     if (nul == std::string::npos) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "protocol message: missing null terminator in string");
     }
     std::string result = payload_.substr(pos_, nul - pos_);
@@ -204,4 +204,4 @@ Message BuildNoData() {
     return Message(MessageType::kNoData, "");
 }
 
-}  // namespace mytoydb::protocol
+}  // namespace pgcpp::protocol

@@ -11,7 +11,7 @@
 // fitness as the cost of the corresponding left-deep join tree.
 //
 // PostgreSQL activates GEQO when the number of base relations exceeds
-// geqo_threshold (default 12). MyToyDB mirrors this threshold so that >10
+// geqo_threshold (default 12). pgcpp mirrors this threshold so that >10
 // table JOINs route through the GEQO solver.
 #pragma once
 
@@ -20,9 +20,9 @@
 
 #include "pgcpp/optimizer/path.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
-// Forward declaration — defined in mytoydb/optimizer/planner.hpp.
+// Forward declaration — defined in pgcpp/optimizer/planner.hpp.
 struct PlannerInfo;
 
 namespace geqo {
@@ -66,4 +66,4 @@ bool ShouldUseGeqo(const PlannerInfo* root);
 Path* GeqoSolve(PlannerInfo* root);
 
 }  // namespace geqo
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

@@ -5,7 +5,7 @@
 // Records the wall-clock timestamp at which each transaction committed.
 // Used for logical replication and debugging. Backed by an SLRU in PG.
 //
-// MyToyDB keeps an in-memory map (XID → timestamp). Timestamps are
+// pgcpp keeps an in-memory map (XID → timestamp). Timestamps are
 // microseconds since the epoch (matches PG's TimestampTz internal rep).
 #pragma once
 
@@ -14,7 +14,7 @@
 
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // TimestampTz — microseconds since 2000-01-01 00:00:00 UTC (matches PG).
 using TimestampTz = int64_t;
@@ -39,9 +39,9 @@ void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts);
 TimestampTz TransactionIdGetCommitTs(TransactionId xid);
 
 // TransactionTreeSetCommitTsData — set commit timestamp for a transaction
-// tree (top-level + subtransactions). In MyToyDB, only the top-level XID
+// tree (top-level + subtransactions). In pgcpp, only the top-level XID
 // is recorded (subtransactions inherit the parent's timestamp).
 void TransactionTreeSetCommitTsData(TransactionId xid, TimestampTz ts, int nsubxids,
                                     const TransactionId* subxids);
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

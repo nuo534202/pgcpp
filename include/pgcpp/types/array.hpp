@@ -6,7 +6,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Array type (PostgreSQL arrayfuncs.c).
@@ -56,4 +56,4 @@ inline ArrayData* DatumGetArray(Datum x) {
     return reinterpret_cast<ArrayData*>(x);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

@@ -10,11 +10,11 @@
 #include "pgcpp/common/memory/alloc_set.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
-using mytoydb::memory::AllocSetContext;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::pfree;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::pfree;
 
 void pg_regfree(regex_t* re) {
     if (re == nullptr) {
@@ -32,4 +32,4 @@ void pg_regfree(regex_t* re) {
     pfree(re);
 }
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

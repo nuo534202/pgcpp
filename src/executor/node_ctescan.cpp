@@ -17,10 +17,10 @@
 #include "pgcpp/executor/plannodes.hpp"
 #include "pgcpp/executor/tupletable.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
 void CteScanState::ExecInit() {
     auto* cteplan = static_cast<CteScan*>(plan);
@@ -87,4 +87,4 @@ void CteScanState::ExecReScan() {
     cs_index = 0;
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

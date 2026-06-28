@@ -15,11 +15,11 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/builtins.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -189,7 +189,7 @@ bool ParseArrayRecursive(std::string_view s, std::size_t& it, uint32_t element_o
 Datum MakeArrayDatum(uint32_t element_oid, const std::vector<Datum>& values) {
     auto* arr = static_cast<ArrayData*>(palloc(sizeof(ArrayData)));
     new (arr) ArrayData();
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(arr, [](void* p) { static_cast<ArrayData*>(p)->~ArrayData(); });
     }
@@ -210,7 +210,7 @@ Datum array_in(const char* str, uint32_t element_oid, int32_t /*typmod*/) {
     std::size_t it = 0;
     auto* arr = static_cast<ArrayData*>(palloc(sizeof(ArrayData)));
     new (arr) ArrayData();
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(arr, [](void* p) { static_cast<ArrayData*>(p)->~ArrayData(); });
     }
@@ -376,7 +376,7 @@ Datum array_append(Datum array, Datum element) {
     const auto* src = DatumGetArray(array);
     auto* dst = static_cast<ArrayData*>(palloc(sizeof(ArrayData)));
     new (dst) ArrayData();
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(dst, [](void* p) { static_cast<ArrayData*>(p)->~ArrayData(); });
     }
@@ -396,4 +396,4 @@ Datum array_ndims(Datum array) {
     return Int32GetDatum(arr->ndims);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

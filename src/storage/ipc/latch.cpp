@@ -11,7 +11,7 @@
 #include <cstring>
 #include <thread>  // NOLINT
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 void WaitEventSet::AddLatch(Latch* latch) {
     WaitEvent ev;
@@ -141,4 +141,4 @@ int WaitEventSetWait(WaitEventSet* set, int64_t timeout_ms,
     }
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

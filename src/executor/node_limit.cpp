@@ -11,9 +11,9 @@
 #include "pgcpp/executor/plannodes.hpp"
 #include "pgcpp/executor/tupletable.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::makePallocNode;
 
 void LimitState::ExecInit() {
     auto* limitplan = static_cast<Limit*>(plan);
@@ -90,4 +90,4 @@ void LimitState::ExecReScan() {
         leftps->ExecReScan();
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

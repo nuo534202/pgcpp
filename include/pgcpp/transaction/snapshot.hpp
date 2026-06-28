@@ -32,7 +32,7 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // SnapshotType — the kind of snapshot (PostgreSQL's SnapshotType).
 enum class SnapshotType {
@@ -93,7 +93,7 @@ using Snapshot = SnapshotData*;
 // GetSnapshotData — compute a snapshot for the current transaction.
 //
 // Scans the transaction state to determine which XIDs are in-progress.
-// In MyToyDB (single-process), the only in-progress transaction is the
+// In pgcpp (single-process), the only in-progress transaction is the
 // current one, so xip is typically empty (the current transaction sees
 // its own changes via curcid, not via the xip list).
 //
@@ -163,7 +163,7 @@ void InvalidateCatalogSnapshot();
 Snapshot GetNonHistoricCatalogSnapshot();
 
 // RegisterSnapshot — register a snapshot for resource management.
-// In MyToyDB, this is a no-op (snapshots are managed by the caller).
+// In pgcpp, this is a no-op (snapshots are managed by the caller).
 void RegisterSnapshot(Snapshot snapshot);
 
 // UnregisterSnapshot — release a registered snapshot.
@@ -179,4 +179,4 @@ void InitializeSnapshotManager();
 SnapshotData MakeSnapshot(TransactionId xmin, TransactionId xmax,
                           const std::vector<TransactionId>& xip = {});
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

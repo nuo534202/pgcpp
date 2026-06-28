@@ -27,37 +27,37 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::GetSysCache;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::Value;
-using mytoydb::parser::LookupTypeName;
-using mytoydb::parser::make_parsestate;
-using mytoydb::parser::ParseState;
-using mytoydb::parser::TypeName;
-using mytoydb::parser::typenameTypeId;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kVarcharOid;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::GetSysCache;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::Value;
+using pgcpp::parser::LookupTypeName;
+using pgcpp::parser::make_parsestate;
+using pgcpp::parser::ParseState;
+using pgcpp::parser::TypeName;
+using pgcpp::parser::typenameTypeId;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kVarcharOid;
 
 namespace {
 
 class ParseTypeExtTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("parse_type_ext_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -73,7 +73,7 @@ protected:
         delete syscache_;
         delete catalog_;
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -82,14 +82,14 @@ protected:
     // Build a TypeName from a single component name (no schema).
     TypeName* MakeTypeName(const std::string& name) {
         auto* tn = makePallocNode<TypeName>();
-        tn->names.push_back(mytoydb::nodes::makeString(name));
+        tn->names.push_back(pgcpp::nodes::makeString(name));
         return tn;
     }
 
     // Build a TypeName from a single component name + integer typmod.
     TypeName* MakeTypeNameWithTypmod(const std::string& name, int typmod_val) {
         auto* tn = MakeTypeName(name);
-        tn->typmods.push_back(mytoydb::nodes::makeInteger(typmod_val));
+        tn->typmods.push_back(pgcpp::nodes::makeInteger(typmod_val));
         return tn;
     }
 
@@ -98,7 +98,7 @@ protected:
         auto* tn = MakeTypeName(name);
         // Array bounds: a single placeholder integer Value of -1 to denote
         // "no upper bound" (matches how PostgreSQL's scanner emits []).
-        tn->array_bounds.push_back(mytoydb::nodes::makeInteger(-1));
+        tn->array_bounds.push_back(pgcpp::nodes::makeInteger(-1));
         return tn;
     }
 

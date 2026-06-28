@@ -27,38 +27,38 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::memory::palloc;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::TargetEntry;
-using mytoydb::types::BoolGetDatum;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetBool;
-using mytoydb::types::DatumGetFloat4;
-using mytoydb::types::DatumGetFloat8;
-using mytoydb::types::DatumGetInt16;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::Float8GetDatum;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
-using mytoydb::types::TextPGetDatum;
-using mytoydb::types::VARDATA;
-using mytoydb::types::VARSIZE_DATA;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::palloc;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::TargetEntry;
+using pgcpp::types::BoolGetDatum;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetBool;
+using pgcpp::types::DatumGetFloat4;
+using pgcpp::types::DatumGetFloat8;
+using pgcpp::types::DatumGetInt16;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::Float8GetDatum;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kDateOid;
+using pgcpp::types::kFloat4Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
+using pgcpp::types::TextPGetDatum;
+using pgcpp::types::VARDATA;
+using pgcpp::types::VARSIZE_DATA;
 
 namespace {
 
@@ -103,8 +103,8 @@ int CompareTextValues(Datum a, Datum b) {
 // Recursively find all Aggref nodes in an expression tree and register them.
 // This handles Aggrefs nested inside OpExpr/FuncExpr/BoolExpr (e.g., the
 // HAVING clause `COUNT(*) > 100000` has an Aggref inside an OpExpr).
-static void CollectAggrefsRecursive(mytoydb::parser::Node* node,
-                                    std::vector<AggStateInfo>& agg_infos, int& next_aggno) {
+static void CollectAggrefsRecursive(pgcpp::parser::Node* node, std::vector<AggStateInfo>& agg_infos,
+                                    int& next_aggno) {
     if (node == nullptr)
         return;
     switch (node->GetTag()) {
@@ -120,7 +120,7 @@ static void CollectAggrefsRecursive(mytoydb::parser::Node* node,
             info.aggno = agg->aggno;
             info.isstar = agg->aggstar;
             if (!agg->aggstar && !agg->args.empty()) {
-                mytoydb::parser::Node* arg = agg->args[0];
+                pgcpp::parser::Node* arg = agg->args[0];
                 if (arg != nullptr && arg->GetTag() == NodeTag::kTargetEntry) {
                     info.arg = static_cast<TargetEntry*>(arg)->expr;
                 } else {
@@ -128,32 +128,32 @@ static void CollectAggrefsRecursive(mytoydb::parser::Node* node,
                 }
             }
             if (info.arg != nullptr) {
-                info.argtype = mytoydb::parser::exprType(info.arg);
+                info.argtype = pgcpp::parser::exprType(info.arg);
             }
             agg_infos.push_back(info);
             return;
         }
         case NodeTag::kOpExpr: {
-            auto* op = static_cast<mytoydb::parser::OpExpr*>(node);
+            auto* op = static_cast<pgcpp::parser::OpExpr*>(node);
             for (auto* arg : op->args)
                 CollectAggrefsRecursive(arg, agg_infos, next_aggno);
             return;
         }
         case NodeTag::kFuncExpr: {
-            auto* fn = static_cast<mytoydb::parser::FuncExpr*>(node);
+            auto* fn = static_cast<pgcpp::parser::FuncExpr*>(node);
             for (auto* arg : fn->args)
                 CollectAggrefsRecursive(arg, agg_infos, next_aggno);
             return;
         }
         case NodeTag::kBoolExpr: {
-            auto* be = static_cast<mytoydb::parser::BoolExpr*>(node);
+            auto* be = static_cast<pgcpp::parser::BoolExpr*>(node);
             for (auto* arg : be->args)
                 CollectAggrefsRecursive(arg, agg_infos, next_aggno);
             return;
         }
         case NodeTag::kRelabelType:
-            CollectAggrefsRecursive(static_cast<mytoydb::parser::RelabelType*>(node)->arg,
-                                    agg_infos, next_aggno);
+            CollectAggrefsRecursive(static_cast<pgcpp::parser::RelabelType*>(node)->arg, agg_infos,
+                                    next_aggno);
             return;
         case NodeTag::kTargetEntry:
             CollectAggrefsRecursive(static_cast<TargetEntry*>(node)->expr, agg_infos, next_aggno);
@@ -184,7 +184,7 @@ void AggState::CollectAggrefs() {
             // The argument is the first element of agg->args (if any).
             // agg->args is a list of TargetEntry wrapping the real arg.
             if (!agg->aggstar && !agg->args.empty()) {
-                mytoydb::parser::Node* arg = agg->args[0];
+                pgcpp::parser::Node* arg = agg->args[0];
                 if (arg != nullptr && arg->GetTag() == NodeTag::kTargetEntry) {
                     info.arg = static_cast<TargetEntry*>(arg)->expr;
                 } else {
@@ -193,7 +193,7 @@ void AggState::CollectAggrefs() {
             }
             // Determine arg type from the argument expression.
             if (info.arg != nullptr) {
-                info.argtype = mytoydb::parser::exprType(info.arg);
+                info.argtype = pgcpp::parser::exprType(info.arg);
             }
             agg_infos.push_back(info);
         }
@@ -262,7 +262,7 @@ void AggState::Accumulate(AggGroupState& gs, ExprContext* econtext) {
                 break;
             case AggKind::kAvg:
                 // AVG accumulates in double (sum_float) to avoid int64 overflow
-                // for large int8 values. PostgreSQL uses numeric; MyToyDB uses
+                // for large int8 values. PostgreSQL uses numeric; pgcpp uses
                 // float8 since numeric is not implemented.
                 if (info.argtype == kInt2Oid) {
                     gs.sum_float[i] += static_cast<double>(DatumGetInt16(val));
@@ -460,22 +460,22 @@ void AggState::ExecInit() {
     // Create the aggregates slot (one attribute per aggregate).
     if (!agg_infos.empty()) {
         // Build a tuple descriptor for the aggregates slot.
-        std::vector<mytoydb::catalog::FormData_pg_attribute> agg_attrs;
+        std::vector<pgcpp::catalog::FormData_pg_attribute> agg_attrs;
         for (const auto& info : agg_infos) {
-            mytoydb::catalog::FormData_pg_attribute attr;
+            pgcpp::catalog::FormData_pg_attribute attr;
             attr.attnum = info.aggno + 1;
             attr.attname = "agg" + std::to_string(info.aggno);
             attr.atttypid = info.restype;
             int16_t len;
             bool byval;
-            mytoydb::catalog::AttAlign align;
+            pgcpp::catalog::AttAlign align;
             FillTypeAttrs(info.restype, &len, &byval, &align);
             attr.attlen = len;
             attr.attbyval = byval;
             attr.attalign = align;
             agg_attrs.push_back(attr);
         }
-        auto* agg_desc = mytoydb::access::CreateTupleDesc(agg_attrs);
+        auto* agg_desc = pgcpp::access::CreateTupleDesc(agg_attrs);
         ps_ExprContext->ecxt_aggregates = TupleTableSlot::Make(agg_desc);
         state->es_tupleTable.push_back(ps_ExprContext->ecxt_aggregates);
     }
@@ -603,4 +603,4 @@ void AggState::ExecReScan() {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

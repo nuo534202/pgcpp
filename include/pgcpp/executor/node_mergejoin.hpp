@@ -9,13 +9,13 @@
 
 #include "pgcpp/executor/node_exec.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 class MergeJoinState : public PlanState {
 public:
     MergeJoinState(Plan* p, EState* s) : PlanState(p, s) {}
 
-    mytoydb::parser::JoinType mj_jointype = mytoydb::parser::JoinType::kInner;
+    pgcpp::parser::JoinType mj_jointype = pgcpp::parser::JoinType::kInner;
     std::vector<int> mj_clauses;     // 1-based outer attr for each merge clause
     std::vector<int> mj_inner_cols;  // 1-based inner attr for each merge clause
     TupleTableSlot* mj_OuterTupleSlot = nullptr;
@@ -37,4 +37,4 @@ private:
     bool TuplesMatch(TupleTableSlot* outer, TupleTableSlot* inner);
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

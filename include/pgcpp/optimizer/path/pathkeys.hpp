@@ -14,7 +14,7 @@
 // when an existing sort (e.g., from an index or a subplan's mergejoin) already
 // satisfies a required ordering, avoiding a redundant Sort node.
 //
-// For MyToyDB's Task 15.15, PathKey objects are simplified:
+// For pgcpp's Task 15.15, PathKey objects are simplified:
 //   - pk_eclass is a raw pointer to the EquivalenceClass (no refcount).
 //   - pk_strategy is a bool (true = descending, false = ascending).
 //   - pk_nulls_first is a bool (NULLS FIRST/LAST).
@@ -25,18 +25,18 @@
 #include "pgcpp/catalog/catalog.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
 // Forward declaration — defined in path/equivclass.hpp.
 struct EquivalenceClass;
 
-// Forward declaration — defined in mytoydb/optimizer/planner.hpp.
+// Forward declaration — defined in pgcpp/optimizer/planner.hpp.
 struct PlannerInfo;
 
 // PathKey — one sort key referencing an EquivalenceClass.
 struct PathKey {
     EquivalenceClass* pk_eclass = nullptr;  // the equivalence class of the sort expr
-    mytoydb::catalog::Oid pk_opno = 0;      // sort operator (a btree operator OID)
+    pgcpp::catalog::Oid pk_opno = 0;        // sort operator (a btree operator OID)
     bool pk_descending = false;             // true = DESC, false = ASC
     bool pk_nulls_first = false;            // true = NULLS FIRST, false = NULLS LAST
 };
@@ -45,15 +45,15 @@ struct PathKey {
 // given EC + sort operator + direction. Deduplicates against the planner's
 // canonical_pathkeys list: if an equal PathKey already exists, it is returned
 // instead of allocating a new one.
-PathKey* make_canonical_pathkey(PlannerInfo* root, EquivalenceClass* ec, mytoydb::catalog::Oid opno,
+PathKey* make_canonical_pathkey(PlannerInfo* root, EquivalenceClass* ec, pgcpp::catalog::Oid opno,
                                 bool descending, bool nulls_first);
 
 // make_pathkey_from_var — build a canonical PathKey for a Var by looking up
 // the EC that contains the Var. If no EC exists yet (the Var is not on either
 // side of a join qual), a new single-member EC is created for the Var.
 // Returns nullptr if the Var is null or the EC cannot be created.
-PathKey* make_pathkey_from_var(PlannerInfo* root, const mytoydb::parser::Var* var,
-                               mytoydb::catalog::Oid opno, bool descending, bool nulls_first);
+PathKey* make_pathkey_from_var(PlannerInfo* root, const pgcpp::parser::Var* var,
+                               pgcpp::catalog::Oid opno, bool descending, bool nulls_first);
 
 // pathkeys_is_subset — return true if `a` is a prefix of `b` (i.e., the
 // sort ordering represented by `b` satisfies the ordering required by `a`).
@@ -69,4 +69,4 @@ bool pathkeys_equal(PathKey* a, PathKey* b);
 // neither is a prefix of the other (incomparable). Mirrors PG's compare_pathkeys.
 int compare_pathkeys(const std::vector<PathKey*>& a, const std::vector<PathKey*>& b);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

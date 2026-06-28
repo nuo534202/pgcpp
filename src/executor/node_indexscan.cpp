@@ -26,34 +26,34 @@
 #include "pgcpp/transaction/heap_tuple.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::access::BTKeyKind;
-using mytoydb::access::BTScanDesc;
-using mytoydb::access::BTScanKeyData;
-using mytoydb::access::BTStrategy;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::TupleDesc;
-using mytoydb::memory::palloc;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Const;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::VARSIZE_DATA;
+using pgcpp::access::BTKeyKind;
+using pgcpp::access::BTScanDesc;
+using pgcpp::access::BTScanKeyData;
+using pgcpp::access::BTStrategy;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationOpen;
+using pgcpp::access::TupleDesc;
+using pgcpp::memory::palloc;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Const;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::VARSIZE_DATA;
 
 namespace {
 
 // Determine the B-tree key kind from a type OID.
-BTKeyKind KeyKindFromType(mytoydb::catalog::Oid typid) {
+BTKeyKind KeyKindFromType(pgcpp::catalog::Oid typid) {
     if (typid == kInt4Oid)
         return BTKeyKind::kInt32;
     if (typid == kInt8Oid)
@@ -71,21 +71,21 @@ void IndexScanState::ExecInit() {
     // Look up the range table entry.
     int rtindex = idxplan->scanrelid - 1;
     if (rtindex < 0 || rtindex >= static_cast<int>(state->es_range_table.size())) {
-        ereport(mytoydb::error::LogLevel::kError, "IndexScan: invalid scanrelid");
+        ereport(pgcpp::error::LogLevel::kError, "IndexScan: invalid scanrelid");
     }
     RangeTblEntry* rte = state->es_range_table[rtindex];
 
     // Open the heap relation.
-    iss_relation = RelationOpen(static_cast<mytoydb::catalog::Oid>(rte->relid));
+    iss_relation = RelationOpen(static_cast<pgcpp::catalog::Oid>(rte->relid));
     if (iss_relation == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "IndexScan: relation not found");
+        ereport(pgcpp::error::LogLevel::kError, "IndexScan: relation not found");
     }
     state->es_open_relations.push_back(iss_relation);
 
     // Open the index relation.
     iss_index = RelationOpen(idxplan->indexid);
     if (iss_index == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "IndexScan: index not found");
+        ereport(pgcpp::error::LogLevel::kError, "IndexScan: index not found");
     }
     state->es_open_relations.push_back(iss_index);
 
@@ -101,7 +101,7 @@ void IndexScanState::ExecInit() {
 
     if (!idxplan->indexqual.empty()) {
         // Examine the first index qual to determine the scan key.
-        mytoydb::parser::Node* qual = idxplan->indexqual[0];
+        pgcpp::parser::Node* qual = idxplan->indexqual[0];
         if (qual != nullptr && qual->GetTag() == NodeTag::kOpExpr) {
             auto* op = static_cast<OpExpr*>(qual);
             if (op->args.size() == 2) {
@@ -109,7 +109,7 @@ void IndexScanState::ExecInit() {
                 // a Const (the comparison value).
                 Var* var = nullptr;
                 Const* con = nullptr;
-                for (mytoydb::parser::Node* arg : op->args) {
+                for (pgcpp::parser::Node* arg : op->args) {
                     if (arg == nullptr)
                         continue;
                     if (arg->GetTag() == NodeTag::kVar) {
@@ -121,7 +121,7 @@ void IndexScanState::ExecInit() {
 
                 if (var != nullptr && con != nullptr) {
                     // Look up the operator name to determine the strategy.
-                    const auto* oprow = mytoydb::catalog::GetCatalog()->GetOperatorByOid(op->opno);
+                    const auto* oprow = pgcpp::catalog::GetCatalog()->GetOperatorByOid(op->opno);
                     if (oprow != nullptr) {
                         const std::string& opname = oprow->oprname;
                         key_kind = KeyKindFromType(var->vartype);
@@ -149,7 +149,7 @@ void IndexScanState::ExecInit() {
     }
 
     // Start the B-tree scan.
-    iss_scanDesc = mytoydb::access::btbeginscan(iss_index, key_kind, &scan_key);
+    iss_scanDesc = pgcpp::access::btbeginscan(iss_index, key_kind, &scan_key);
 
     // Create the result slot from the target list.
     auto* result_desc = BuildTupleDescFromTargetList(idxplan->targetlist);
@@ -164,25 +164,25 @@ void IndexScanState::ExecInit() {
 TupleTableSlot* IndexScanState::ExecProcNode() {
     for (;;) {
         // Get the next matching TID from the index.
-        if (!mytoydb::access::btgettuple(iss_scanDesc)) {
+        if (!pgcpp::access::btgettuple(iss_scanDesc)) {
             return nullptr;  // scan exhausted
         }
 
         // Fetch the heap tuple at the current TID.
-        mytoydb::transaction::ItemPointerData tid = iss_scanDesc->curr_tid;
+        pgcpp::transaction::ItemPointerData tid = iss_scanDesc->curr_tid;
         // Use a heap scan to fetch the tuple by TID.
         // For simplicity, we do a point scan: begin a scan, position to
         // the TID, and fetch. A full implementation would use heap_fetch.
         // Here we use a simplified approach: scan the heap and find the
         // matching TID.
-        mytoydb::access::HeapScanDesc hscan =
-            mytoydb::access::heap_beginscan(iss_relation, state->es_snapshot);
-        mytoydb::transaction::HeapTuple tuple = nullptr;
-        while ((tuple = mytoydb::access::heap_getnext(hscan)) != nullptr) {
+        pgcpp::access::HeapScanDesc hscan =
+            pgcpp::access::heap_beginscan(iss_relation, state->es_snapshot);
+        pgcpp::transaction::HeapTuple tuple = nullptr;
+        while ((tuple = pgcpp::access::heap_getnext(hscan)) != nullptr) {
             if (tuple->t_self == tid)
                 break;
         }
-        mytoydb::access::heap_endscan(hscan);
+        pgcpp::access::heap_endscan(hscan);
 
         if (tuple == nullptr) {
             continue;  // TID not found (tuple may have been deleted)
@@ -205,7 +205,7 @@ TupleTableSlot* IndexScanState::ExecProcNode() {
 
 void IndexScanState::ExecEnd() {
     if (iss_scanDesc != nullptr) {
-        mytoydb::access::btendscan(iss_scanDesc);
+        pgcpp::access::btendscan(iss_scanDesc);
         iss_scanDesc = nullptr;
     }
     iss_relation = nullptr;
@@ -219,8 +219,8 @@ void IndexScanState::ExecEnd() {
 
 void IndexScanState::ExecReScan() {
     if (iss_scanDesc != nullptr) {
-        mytoydb::access::btrescan(iss_scanDesc, nullptr);
+        pgcpp::access::btrescan(iss_scanDesc, nullptr);
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

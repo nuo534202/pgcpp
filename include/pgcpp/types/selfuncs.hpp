@@ -4,7 +4,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Selectivity estimation helpers (PostgreSQL utils/adt/selfuncs.c).
@@ -39,4 +39,4 @@ double eqjoinsel_inner(int32_t n_distinct_a, int32_t n_distinct_b);
 // invariants used by the unit tests.
 double cost_qual_eval_walker(int32_t num_clauses);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // ruleutils.c — render PostgreSQL parse trees back as SQL text.
@@ -26,4 +26,4 @@ std::string DeparseLiteral(uint32_t type_oid, Datum value, bool is_null);
 // schema is non-empty, otherwise just "op".
 std::string FormatOperatorName(const std::string& schema, const std::string& opname);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/storage/ipc/shmqueue.c.
 #include "pgcpp/storage/ipc/shmqueue.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 void SHMQueueInit(SHMQueue* queue) {
     queue->head.prev = &queue->head;
@@ -57,4 +57,4 @@ int SHMQueueLength(const SHMQueue* queue) {
     return count;
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

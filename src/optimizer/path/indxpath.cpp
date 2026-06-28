@@ -3,19 +3,19 @@
 // Converted from PostgreSQL 15's src/backend/optimizer/path/indxpath.c.
 //
 // Creates IndexPath candidates for relations that have B-tree indexes
-// matching the query's WHERE clause. For MyToyDB's ClickBench workload,
+// matching the query's WHERE clause. For pgcpp's ClickBench workload,
 // index path generation is minimal — most queries use full table scans.
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/optimizer/cost.hpp"
 #include "pgcpp/optimizer/path.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Var;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Var;
 
 // Check if a qual clause can be used as an index scan qualifier.
 // A usable index qual is an OpExpr of the form (Var op Const) where the
@@ -40,7 +40,7 @@ static bool IsIndexableClause(const Node* clause) {
 }
 
 // Create index path candidates for a relation.
-// Currently a stub — MyToyDB does not yet have index metadata in the catalog
+// Currently a stub — pgcpp does not yet have index metadata in the catalog
 // for the optimizer to use. When pg_index is populated, this function will
 // generate IndexPath candidates for matching indexes.
 void CreateIndexPaths(RelOptInfo* rel, const Node* qual) {
@@ -50,4 +50,4 @@ void CreateIndexPaths(RelOptInfo* rel, const Node* qual) {
     // indexable clauses in qual, and create IndexPath candidates.
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

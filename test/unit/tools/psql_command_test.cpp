@@ -15,8 +15,8 @@
 
 #include "pgcpp/tools/psql_client.hpp"
 
-using mytoydb::tools::ExecuteMetaCommand;
-using mytoydb::tools::MetaCommandResult;
+using pgcpp::tools::ExecuteMetaCommand;
+using pgcpp::tools::MetaCommandResult;
 
 namespace {
 
@@ -44,7 +44,7 @@ namespace {
 TEST(PsqlCommandTest, QuitCommandReturnsQuit) {
     // \q doesn't touch the client, so a default-constructed (disconnected)
     // PsqlClient is fine.
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     MetaCommandResult r = ExecuteMetaCommand(client, "\\q", vars, out);
@@ -53,7 +53,7 @@ TEST(PsqlCommandTest, QuitCommandReturnsQuit) {
 }
 
 TEST(PsqlCommandTest, QuitLongFormReturnsQuit) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     MetaCommandResult r = ExecuteMetaCommand(client, "\\quit", vars, out);
@@ -61,7 +61,7 @@ TEST(PsqlCommandTest, QuitLongFormReturnsQuit) {
 }
 
 TEST(PsqlCommandTest, HelpCommandListsAvailableCommands) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     MetaCommandResult r = ExecuteMetaCommand(client, "\\?", vars, out);
@@ -74,7 +74,7 @@ TEST(PsqlCommandTest, HelpCommandListsAvailableCommands) {
 }
 
 TEST(PsqlCommandTest, HelpLongFormWorks) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     MetaCommandResult r = ExecuteMetaCommand(client, "\\help", vars, out);
@@ -83,7 +83,7 @@ TEST(PsqlCommandTest, HelpLongFormWorks) {
 }
 
 TEST(PsqlCommandTest, EchoCommandPrintsArguments) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     MetaCommandResult r = ExecuteMetaCommand(client, "\\echo hello world", vars, out);
@@ -92,7 +92,7 @@ TEST(PsqlCommandTest, EchoCommandPrintsArguments) {
 }
 
 TEST(PsqlCommandTest, EchoWithNoArgsPrintsBlankLine) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\echo", vars, out);
@@ -100,7 +100,7 @@ TEST(PsqlCommandTest, EchoWithNoArgsPrintsBlankLine) {
 }
 
 TEST(PsqlCommandTest, EchoExpandsPsqlVariable) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars = {{"foo", "bar"}};
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\echo :foo", vars, out);
@@ -108,7 +108,7 @@ TEST(PsqlCommandTest, EchoExpandsPsqlVariable) {
 }
 
 TEST(PsqlCommandTest, SetCommandStoresVariable) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\set myvar 42", vars, out);
@@ -116,7 +116,7 @@ TEST(PsqlCommandTest, SetCommandStoresVariable) {
 }
 
 TEST(PsqlCommandTest, SetCommandStoresMultiWordValue) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\set greeting hello world", vars, out);
@@ -124,7 +124,7 @@ TEST(PsqlCommandTest, SetCommandStoresMultiWordValue) {
 }
 
 TEST(PsqlCommandTest, SetWithNoArgsListsAllVars) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars = {{"a", "1"}, {"b", "2"}};
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\set", vars, out);
@@ -134,7 +134,7 @@ TEST(PsqlCommandTest, SetWithNoArgsListsAllVars) {
 }
 
 TEST(PsqlCommandTest, UnsetCommandRemovesVariable) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars = {{"x", "1"}, {"y", "2"}};
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\unset x", vars, out);
@@ -143,7 +143,7 @@ TEST(PsqlCommandTest, UnsetCommandRemovesVariable) {
 }
 
 TEST(PsqlCommandTest, UnsetWithNoArgPrintsError) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\unset", vars, out);
@@ -151,7 +151,7 @@ TEST(PsqlCommandTest, UnsetWithNoArgPrintsError) {
 }
 
 TEST(PsqlCommandTest, ConnectCommandWithNoArgPrintsError) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\c", vars, out);
@@ -161,7 +161,7 @@ TEST(PsqlCommandTest, ConnectCommandWithNoArgPrintsError) {
 TEST(PsqlCommandTest, ConnectCommandPrintsStubMessage) {
     // \c <dbname> doesn't actually reconnect (no socket reuse), but should
     // print a confirmation message so users know the command was recognized.
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\c mydb", vars, out);
@@ -169,7 +169,7 @@ TEST(PsqlCommandTest, ConnectCommandPrintsStubMessage) {
 }
 
 TEST(PsqlCommandTest, IncludeWithMissingFilePrintsError) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\i /nonexistent/file.sql", vars, out);
@@ -178,7 +178,7 @@ TEST(PsqlCommandTest, IncludeWithMissingFilePrintsError) {
 }
 
 TEST(PsqlCommandTest, IncludeWithNoArgPrintsError) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\i", vars, out);
@@ -186,7 +186,7 @@ TEST(PsqlCommandTest, IncludeWithNoArgPrintsError) {
 }
 
 TEST(PsqlCommandTest, UnknownCommandPrintsError) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\nosuchcommand", vars, out);
@@ -194,7 +194,7 @@ TEST(PsqlCommandTest, UnknownCommandPrintsError) {
 }
 
 TEST(PsqlCommandTest, BareBackslashWithNoCommandNameIsRejected) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     ExecuteMetaCommand(client, "\\", vars, out);
@@ -202,7 +202,7 @@ TEST(PsqlCommandTest, BareBackslashWithNoCommandNameIsRejected) {
 }
 
 TEST(PsqlCommandTest, LeadingWhitespaceIsTolerated) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     MetaCommandResult r = ExecuteMetaCommand(client, "   \\q", vars, out);
@@ -210,7 +210,7 @@ TEST(PsqlCommandTest, LeadingWhitespaceIsTolerated) {
 }
 
 TEST(PsqlCommandTest, TokenizerHandlesQuotedArgs) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out;
     // Single-quoted argument should preserve embedded spaces.
@@ -223,7 +223,7 @@ TEST(PsqlCommandTest, TokenizerHandlesQuotedArgs) {
 // ---------------------------------------------------------------------------
 
 TEST(PsqlCommandTest, SetAndEchoSequence) {
-    mytoydb::tools::PsqlClient client("127.0.0.1", 0);
+    pgcpp::tools::PsqlClient client("127.0.0.1", 0);
     std::map<std::string, std::string> vars;
     std::ostringstream out1, out2;
     ExecuteMetaCommand(client, "\\set x 100", vars, out1);

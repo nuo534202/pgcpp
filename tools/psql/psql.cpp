@@ -1,8 +1,8 @@
-// psql.cpp — MyToyDB command-line client (psql equivalent).
+// psql.cpp — pgcpp command-line client (psql equivalent).
 //
 // Converted from PostgreSQL 15's src/bin/psql/.
 //
-// Connects to a MyToyDB server and executes SQL queries interactively
+// Connects to a pgcpp server and executes SQL queries interactively
 // or from a file/command-line argument.
 //
 // Usage:
@@ -22,11 +22,11 @@
 #include "pgcpp/tools/psql_client.hpp"
 #include "pgcpp/tools/psql_command.hpp"
 
-using mytoydb::tools::ExecuteMetaCommand;
-using mytoydb::tools::FormatQueryResult;
-using mytoydb::tools::MetaCommandResult;
-using mytoydb::tools::PsqlClient;
-using mytoydb::tools::QueryResult;
+using pgcpp::tools::ExecuteMetaCommand;
+using pgcpp::tools::FormatQueryResult;
+using pgcpp::tools::MetaCommandResult;
+using pgcpp::tools::PsqlClient;
+using pgcpp::tools::QueryResult;
 
 namespace {
 

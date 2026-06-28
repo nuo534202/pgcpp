@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string_view>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
 // Keyword categories. Matches PostgreSQL's keyword categories.
 // UNRESERVED_KEYWORD: can be used as a column/function name
@@ -41,4 +41,4 @@ extern const KeywordEntry kKeywordTable[];
 // Look up a keyword by name. Returns nullptr if not a keyword.
 const KeywordEntry* ScanKeywordLookup(std::string_view name);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

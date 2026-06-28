@@ -4,14 +4,14 @@
 //
 // GEQO needs reproducible randomness (so that re-planning the same query
 // yields the same join order) and a tiny API surface. PostgreSQL implements
-// a linear congruential generator (LCG) seeded once per query. MyToyDB
+// a linear congruential generator (LCG) seeded once per query. pgcpp
 // follows the same design: a deterministic, seedable LCG that produces
 // uniformly distributed integers in [0, n).
 #pragma once
 
 #include <cstdint>
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 // GeqoRandom — a small deterministic PRNG used by the genetic operators.
 // The state is a single 64-bit word; advances use the classic LCG step
@@ -39,7 +39,7 @@ private:
 };
 
 // Global singleton accessor. PostgreSQL's GEQO uses module-level globals
-// for the RNG; MyToyDB wraps them in a function-local static to avoid
+// for the RNG; pgcpp wraps them in a function-local static to avoid
 // global-construction-order hazards. Seed it once via SetGeqoSeed() at
 // the start of each GeqoSolve() call.
 GeqoRandom& GeqoRng();
@@ -47,4 +47,4 @@ GeqoRandom& GeqoRng();
 // Re-seed the global RNG. Convenience wrapper around GeqoRng().Seed().
 void SetGeqoSeed(uint64_t seed);
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

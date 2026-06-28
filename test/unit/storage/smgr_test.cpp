@@ -19,41 +19,41 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/storage/bufpage.hpp"
 
-using mytoydb::catalog::Oid;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::storage::BlockNumber;
-using mytoydb::storage::ForkNumber;
-using mytoydb::storage::GetStorageBaseDir;
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kInvalidBlockNumber;
-using mytoydb::storage::kPageHeaderSize;
-using mytoydb::storage::PageInit;
-using mytoydb::storage::RelFileNode;
-using mytoydb::storage::RelFileNodeBackend;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::smgrclose;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::storage::smgrcreate;
-using mytoydb::storage::smgrexists;
-using mytoydb::storage::smgrextend;
-using mytoydb::storage::smgrimmedsync;
-using mytoydb::storage::smgrnblocks;
-using mytoydb::storage::smgropen;
-using mytoydb::storage::smgrread;
-using mytoydb::storage::SmgrRelation;
-using mytoydb::storage::SmgrRelationData;
-using mytoydb::storage::smgrrelease;
-using mytoydb::storage::smgrtruncate;
-using mytoydb::storage::smgrwrite;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::storage::BlockNumber;
+using pgcpp::storage::ForkNumber;
+using pgcpp::storage::GetStorageBaseDir;
+using pgcpp::storage::kBlckSz;
+using pgcpp::storage::kInvalidBlockNumber;
+using pgcpp::storage::kPageHeaderSize;
+using pgcpp::storage::PageInit;
+using pgcpp::storage::RelFileNode;
+using pgcpp::storage::RelFileNodeBackend;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::smgrclose;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::storage::smgrcreate;
+using pgcpp::storage::smgrexists;
+using pgcpp::storage::smgrextend;
+using pgcpp::storage::smgrimmedsync;
+using pgcpp::storage::smgrnblocks;
+using pgcpp::storage::smgropen;
+using pgcpp::storage::smgrread;
+using pgcpp::storage::SmgrRelation;
+using pgcpp::storage::SmgrRelationData;
+using pgcpp::storage::smgrrelease;
+using pgcpp::storage::smgrtruncate;
+using pgcpp::storage::smgrwrite;
 
 namespace {
 
 class SmgrTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("smgr_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         // Create a unique temp directory for this test run.
         test_dir_ = "/tmp/mytoydb_smgr_test_" + std::to_string(getpid());
@@ -67,7 +67,7 @@ protected:
         smgrcloseall();
         RunShell("rm -rf " + test_dir_);
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -239,7 +239,7 @@ TEST_F(SmgrTest, SmgrExtendMultipleBlocks) {
     for (BlockNumber i = 0; i < 5; ++i) {
         char read_buf[kBlckSz];
         smgrread(reln, ForkNumber::kMain, i, read_buf);
-        auto* phdr = reinterpret_cast<mytoydb::storage::PageHeader>(read_buf);
+        auto* phdr = reinterpret_cast<pgcpp::storage::PageHeader>(read_buf);
         // The page header should be initialized.
         EXPECT_EQ(phdr->pd_lower, kPageHeaderSize);
     }

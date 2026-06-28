@@ -10,36 +10,36 @@
 
 namespace {
 
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetBool;
-using mytoydb::types::DatumGetNumeric;
-using mytoydb::types::Int32ToNumeric;
-using mytoydb::types::Int64ToNumeric;
-using mytoydb::types::numeric_accum;
-using mytoydb::types::numeric_add;
-using mytoydb::types::numeric_avg;
-using mytoydb::types::numeric_cmp;
-using mytoydb::types::numeric_div;
-using mytoydb::types::numeric_eq;
-using mytoydb::types::numeric_in;
-using mytoydb::types::numeric_lt;
-using mytoydb::types::numeric_mul;
-using mytoydb::types::numeric_out;
-using mytoydb::types::numeric_sub;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetBool;
+using pgcpp::types::DatumGetNumeric;
+using pgcpp::types::Int32ToNumeric;
+using pgcpp::types::Int64ToNumeric;
+using pgcpp::types::numeric_accum;
+using pgcpp::types::numeric_add;
+using pgcpp::types::numeric_avg;
+using pgcpp::types::numeric_cmp;
+using pgcpp::types::numeric_div;
+using pgcpp::types::numeric_eq;
+using pgcpp::types::numeric_in;
+using pgcpp::types::numeric_lt;
+using pgcpp::types::numeric_mul;
+using pgcpp::types::numeric_out;
+using pgcpp::types::numeric_sub;
 
 class NumericTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("numeric_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -57,7 +57,7 @@ bool RaisesError(F&& fn) {
     }
     PG_CATCH() {
         caught = true;
-        ErrorData* err = mytoydb::error::GetErrorData();
+        ErrorData* err = pgcpp::error::GetErrorData();
         EXPECT_EQ(err->elevel, LogLevel::kError);
     }
     PG_END_TRY();
@@ -218,13 +218,13 @@ TEST_F(NumericTest, Int32ToNumericRoundTrip) {
 }
 
 TEST_F(NumericTest, NumericToInt64) {
-    EXPECT_EQ(mytoydb::types::numeric_to_int64(numeric_in("123")), 123);
-    EXPECT_EQ(mytoydb::types::numeric_to_int64(numeric_in("123.456")), 123);
-    EXPECT_EQ(mytoydb::types::numeric_to_int64(numeric_in("-42")), -42);
+    EXPECT_EQ(pgcpp::types::numeric_to_int64(numeric_in("123")), 123);
+    EXPECT_EQ(pgcpp::types::numeric_to_int64(numeric_in("123.456")), 123);
+    EXPECT_EQ(pgcpp::types::numeric_to_int64(numeric_in("-42")), -42);
 }
 
 TEST_F(NumericTest, NumericToFloat8) {
-    EXPECT_NEAR(mytoydb::types::numeric_to_float8(numeric_in("123.456")), 123.456, 1e-9);
+    EXPECT_NEAR(pgcpp::types::numeric_to_float8(numeric_in("123.456")), 123.456, 1e-9);
 }
 
 // ===========================================================================

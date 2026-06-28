@@ -15,11 +15,11 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -41,7 +41,7 @@ bool IsWordChar(char c) {
 Datum MakeTsVectorDatum(const TsVectorData& data) {
     auto* p = static_cast<TsVectorData*>(palloc(sizeof(TsVectorData)));
     new (p) TsVectorData(data);
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(p, [](void* o) { static_cast<TsVectorData*>(o)->~TsVectorData(); });
     }
@@ -51,7 +51,7 @@ Datum MakeTsVectorDatum(const TsVectorData& data) {
 Datum MakeTsQueryDatum(const TsQueryData& data) {
     auto* p = static_cast<TsQueryData*>(palloc(sizeof(TsQueryData)));
     new (p) TsQueryData(data);
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(p, [](void* o) { static_cast<TsQueryData*>(o)->~TsQueryData(); });
     }
@@ -66,7 +66,7 @@ Datum tsvector_in(const char* str) {
     std::size_t it = 0;
     auto* v = static_cast<TsVectorData*>(palloc(sizeof(TsVectorData)));
     new (v) TsVectorData();
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(v, [](void* o) { static_cast<TsVectorData*>(o)->~TsVectorData(); });
     }
@@ -255,4 +255,4 @@ Datum ts_match(Datum tsvector, Datum tsquery) {
     return BoolGetDatum(match(q->root));
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

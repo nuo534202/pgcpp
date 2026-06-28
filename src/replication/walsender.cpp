@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/replication/walsender.c.
 //
 // PG keeps walsender state in shared memory (WalSndCtl) so that any
-// backend can inspect it (e.g. for sync-rep waits). MyToyDB is
+// backend can inspect it (e.g. for sync-rep waits). pgcpp is
 // single-process, so we hold a file-static WalSndCtlData singleton.
 // Network I/O is stubbed: the LSN accessors and state machine are the
 // meaningful surface area.
@@ -14,9 +14,9 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -98,7 +98,7 @@ void WalSndWakeupWaitingForWal(transaction::XLogRecPtr /*lsn*/) {
 
 bool WalSndWaitForWal(transaction::XLogRecPtr lsn, int wait_mode, int /*max_iterations*/) {
     // Stubbed wait: PG blocks on a latch and is woken by WalSndWakeup*;
-    // MyToyDB is synchronous, so we just verify the LSN is reachable.
+    // pgcpp is synchronous, so we just verify the LSN is reachable.
     transaction::XLogRecPtr current = transaction::GetXLogInsertRecPtr();
     if (current >= lsn) {
         return true;
@@ -145,4 +145,4 @@ WalSndCtlData* GetWalSndCtl() {
     return &Ctl();
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

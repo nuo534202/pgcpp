@@ -15,10 +15,10 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -309,4 +309,4 @@ double numeric_to_float8(Datum value) {
     return d;
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

@@ -9,7 +9,7 @@
 // regular lock manager (lmgr) because they don't have a deadlock detector
 // and use a small fixed-size lock array.
 //
-// MyToyDB is single-process, so LWLocks never actually block: Acquire
+// pgcpp is single-process, so LWLocks never actually block: Acquire
 // succeeds immediately and just tracks the held count for assertions.
 // The API is preserved for architectural fidelity.
 #pragma once
@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // LWLockMode — lock mode (mirrors PG's LW_EXCLUSIVE / LW_SHARED).
 enum class LWLockMode {
@@ -65,7 +65,7 @@ struct LWLock {
 void LWLockInitialize(LWLock* lock, LWLockId id, int tranche = 0);
 
 // LWLockAcquire — acquire a lock in the given mode.
-// In MyToyDB (single-process) this never blocks; it asserts invariants and
+// In pgcpp (single-process) this never blocks; it asserts invariants and
 // updates bookkeeping. Returns true on success.
 bool LWLockAcquire(LWLock* lock, LWLockMode mode);
 
@@ -80,7 +80,7 @@ bool LWLockHeldByMe(const LWLock* lock);
 bool LWLockHeldByMeInMode(const LWLock* lock, LWLockMode mode);
 
 // LWLockConditionalAcquire — try to acquire without blocking (always succeeds
-// in single-process MyToyDB if no other holder exists).
+// in single-process pgcpp if no other holder exists).
 bool LWLockConditionalAcquire(LWLock* lock, LWLockMode mode);
 
 // --- Named lock table (builtin tranche) ---
@@ -101,4 +101,4 @@ int NumHeldLWLocks();
 // HeldLWLockIds — return the ids of all currently-held locks.
 std::vector<LWLockId> HeldLWLockIds();
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

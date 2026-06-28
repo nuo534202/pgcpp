@@ -12,13 +12,13 @@
 
 #include "pgcpp/storage/bufpage.hpp"
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::Page;
-using mytoydb::storage::PageHeader;
-using mytoydb::storage::PageInit;
-using mytoydb::transaction::ItemPointerData;
+using pgcpp::storage::kBlckSz;
+using pgcpp::storage::Page;
+using pgcpp::storage::PageHeader;
+using pgcpp::storage::PageInit;
+using pgcpp::transaction::ItemPointerData;
 
 // --- Page initialization ---
 
@@ -106,11 +106,11 @@ uint16_t _bt_build_item(BTItem item, BTKeyKind kind, const void* key, uint16_t k
 
 // --- Meta page operations ---
 
-void _bt_init_meta_page(Page page, mytoydb::storage::BlockNumber root_block) {
+void _bt_init_meta_page(Page page, pgcpp::storage::BlockNumber root_block) {
     // Meta page has no special area (it stores meta data in the page body).
     PageInit(page, kBlckSz, 0);
 
-    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(mytoydb::storage::PageHeaderData));
+    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(pgcpp::storage::PageHeaderData));
     meta->magic = kBtreeMagic;
     meta->version = 1;
     meta->root = root_block;
@@ -119,14 +119,14 @@ void _bt_init_meta_page(Page page, mytoydb::storage::BlockNumber root_block) {
 }
 
 BTMetaPageData _bt_get_meta(Page page) {
-    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(mytoydb::storage::PageHeaderData));
+    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(pgcpp::storage::PageHeaderData));
     return *meta;
 }
 
-void _bt_update_meta(Page page, mytoydb::storage::BlockNumber root_block) {
-    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(mytoydb::storage::PageHeaderData));
+void _bt_update_meta(Page page, pgcpp::storage::BlockNumber root_block) {
+    auto* meta = reinterpret_cast<BTMetaPageData*>(page + sizeof(pgcpp::storage::PageHeaderData));
     meta->root = root_block;
     meta->fastroot = root_block;
 }
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

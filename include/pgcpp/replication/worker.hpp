@@ -4,7 +4,7 @@
 // (the per-subscription apply worker) and launcher.c (the worker pool).
 //
 // Each active logical subscription runs one apply worker (optionally
-// assisted by parallel apply workers for large transactions). MyToyDB
+// assisted by parallel apply workers for large transactions). pgcpp
 // keeps a small in-process pool (a std::vector<LogicalRepWorker>) and
 // runs workers synchronously in ApplyWorkerMain (no fork).
 #pragma once
@@ -15,7 +15,7 @@
 
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // LogicalRepWorkerType — main apply vs. parallel apply worker.
 enum class LogicalRepWorkerType : uint8_t {
@@ -27,7 +27,7 @@ enum class LogicalRepWorkerType : uint8_t {
 struct LogicalRepWorker {
     int32_t subid = 0;  // subscription OID
     int32_t relid = 0;  // relation OID (parallel workers only)
-    int32_t pid = 0;    // process id (synthetic in MyToyDB)
+    int32_t pid = 0;    // process id (synthetic in pgcpp)
     LogicalRepWorkerType type = LogicalRepWorkerType::kApply;
     // LSNs the worker has reached.
     transaction::XLogRecPtr relstate_lsn = 0;
@@ -79,4 +79,4 @@ void ApplyWorkerWakeup(int idx);
 // GetLogicalRepWorkerPool — pointer to the global pool.
 LogicalRepWorkerPool* GetLogicalRepWorkerPool();
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

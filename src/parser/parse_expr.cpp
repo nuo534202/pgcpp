@@ -20,19 +20,19 @@
 #include "pgcpp/parser/parse_type.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::nodes::Value;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::nodes::Value;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
 
 static constexpr Oid kUnknownOid = 705;
 
@@ -137,7 +137,7 @@ static Node* transformColumnRef(ParseState* pstate, ColumnRef* cref) {
             if (var != nullptr)
                 return var;
 
-            ereport(mytoydb::error::LogLevel::kError, "column does not exist");
+            ereport(pgcpp::error::LogLevel::kError, "column does not exist");
             return nullptr;
         }
     }
@@ -157,13 +157,13 @@ static Node* transformColumnRef(ParseState* pstate, ColumnRef* cref) {
             int sublevels_up = 0;
             RangeTblEntry* rte = refnameRangeTblEntry(pstate, tblname.c_str(), &sublevels_up);
             if (rte == nullptr) {
-                ereport(mytoydb::error::LogLevel::kError, "table does not exist");
+                ereport(pgcpp::error::LogLevel::kError, "table does not exist");
                 return nullptr;
             }
 
             Node* var = scanRTEForColumn(pstate, rte, colname, cref->location);
             if (var == nullptr) {
-                ereport(mytoydb::error::LogLevel::kError, "column does not exist in table");
+                ereport(pgcpp::error::LogLevel::kError, "column does not exist in table");
                 return nullptr;
             }
 
@@ -187,7 +187,7 @@ static Node* transformColumnRef(ParseState* pstate, ColumnRef* cref) {
         }
     }
 
-    ereport(mytoydb::error::LogLevel::kError, "unrecognized column reference");
+    ereport(pgcpp::error::LogLevel::kError, "unrecognized column reference");
     return nullptr;
 }
 
@@ -225,18 +225,18 @@ static Node* transformAExpr(ParseState* pstate, AExpr* a) {
             // Handle boolean operators AND/OR/NOT as BoolExpr
             if (opname == "AND" && lexpr != nullptr && rexpr != nullptr) {
                 std::vector<Node*> args = {lexpr, rexpr};
-                auto* b = static_cast<BoolExpr*>(mytoydb::parser::make_andclause(std::move(args)));
+                auto* b = static_cast<BoolExpr*>(pgcpp::parser::make_andclause(std::move(args)));
                 b->location = a->location;
                 return b;
             }
             if (opname == "OR" && lexpr != nullptr && rexpr != nullptr) {
                 std::vector<Node*> args = {lexpr, rexpr};
-                auto* b = static_cast<BoolExpr*>(mytoydb::parser::make_orclause(std::move(args)));
+                auto* b = static_cast<BoolExpr*>(pgcpp::parser::make_orclause(std::move(args)));
                 b->location = a->location;
                 return b;
             }
             if (opname == "NOT" && rexpr != nullptr) {
-                auto* b = static_cast<BoolExpr*>(mytoydb::parser::make_notclause(rexpr));
+                auto* b = static_cast<BoolExpr*>(pgcpp::parser::make_notclause(rexpr));
                 b->location = a->location;
                 return b;
             }
@@ -317,7 +317,7 @@ static Node* transformAExpr(ParseState* pstate, AExpr* a) {
             break;
     }
 
-    ereport(mytoydb::error::LogLevel::kError, "unsupported expression type in transformAExpr");
+    ereport(pgcpp::error::LogLevel::kError, "unsupported expression type in transformAExpr");
     return nullptr;
 }
 
@@ -327,7 +327,7 @@ static Node* transformAExpr(ParseState* pstate, AExpr* a) {
 
 static Node* transformFuncCall(ParseState* pstate, FuncCall* fn) {
     // Delegate to parse_func.cpp's transformFuncCall
-    return mytoydb::parser::transformFuncCall(pstate, fn, fn->location);
+    return pgcpp::parser::transformFuncCall(pstate, fn, fn->location);
 }
 
 // ---------------------------------------------------------------------------
@@ -494,4 +494,4 @@ static Node* transformParamRef(ParseState* pstate, ParamRef* pref) {
     return param;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

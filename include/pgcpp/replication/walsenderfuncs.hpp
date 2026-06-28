@@ -16,7 +16,7 @@
 #include "pgcpp/replication/walsender.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // WalSndMessageResult — what a single "send" call produced. Returned by
 // value because the values are tiny and the call sites want the result
@@ -65,4 +65,4 @@ struct WalSndStats {
 
 WalSndStats GetWalSndStats();
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

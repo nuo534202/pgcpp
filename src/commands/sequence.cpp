@@ -1,7 +1,7 @@
 // sequence.cpp — CREATE SEQUENCE implementation.
 //
 // Converted from PostgreSQL 15's src/backend/commands/sequence.c.
-// Creates a relation of relkind 'S' (sequence). MyToyDB doesn't yet
+// Creates a relation of relkind 'S' (sequence). pgcpp doesn't yet
 // implement nextval()/currval() — this stub records the catalog entry
 // so CREATE SEQUENCE doesn't fail.
 #include "pgcpp/commands/sequence.hpp"
@@ -16,17 +16,17 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::parser::CreateSeqStmt;
+using pgcpp::access::RelationCreateStorage;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::parser::CreateSeqStmt;
 
 std::string DefineSequence(CreateSeqStmt* stmt) {
     if (stmt == nullptr || stmt->sequence == nullptr)
@@ -41,7 +41,7 @@ std::string DefineSequence(CreateSeqStmt* stmt) {
     if (cat->GetClassByName(seqname) != nullptr) {
         if (stmt->if_not_exists)
             return "CREATE SEQUENCE";
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + seqname + "\" already exists");
+        ereport(pgcpp::error::LogLevel::kError, "relation \"" + seqname + "\" already exists");
     }
 
     auto* class_row = makePallocNode<FormData_pg_class>();
@@ -58,4 +58,4 @@ std::string DefineSequence(CreateSeqStmt* stmt) {
     return "CREATE SEQUENCE";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

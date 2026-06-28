@@ -17,7 +17,7 @@
 #include "pgcpp/statistics/mvdistinct.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::statistics {
+namespace pgcpp::statistics {
 
 // EstimateNDistinct — the Haas-Stefanski D1 estimator for a single column.
 //   totalrows:  total rows in the relation (0 = sample is the whole relation)
@@ -34,4 +34,4 @@ StatsBuildData SampleRows(const std::vector<AttrNumber>& attnums,
                           const std::vector<types::Datum>& values, const std::vector<bool>& nulls,
                           int nrows);
 
-}  // namespace mytoydb::statistics
+}  // namespace pgcpp::statistics

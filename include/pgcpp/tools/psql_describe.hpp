@@ -10,7 +10,7 @@
 
 #include <string>
 
-namespace mytoydb::tools {
+namespace pgcpp::tools {
 
 // BuildListTablesSql — \dt [pattern]: list user tables.
 // When `pattern` is non-empty, it is matched against the table name with
@@ -29,4 +29,4 @@ std::string BuildListRolesSql();
 // BuildDescribeRelationSql — \d <name>: describe a relation's columns.
 std::string BuildDescribeRelationSql(const std::string& name);
 
-}  // namespace mytoydb::tools
+}  // namespace pgcpp::tools

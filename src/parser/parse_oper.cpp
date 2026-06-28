@@ -28,16 +28,16 @@
 #include "pgcpp/parser/parse_type.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_operator;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_operator;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
 
 // UNKNOWNOID — PostgreSQL's OID for the "unknown" pseudo-type (705).
 static constexpr Oid kUnknownOid = 705;
@@ -48,7 +48,7 @@ namespace {
 //
 // Mirrors PostgreSQL's OpernameGetOprid (src/backend/parser/parse_oper.c).
 // Returns the pg_operator row, or nullptr if no exact match exists.
-// MyToyDB has a single namespace for built-ins, so the namespace search
+// pgcpp has a single namespace for built-ins, so the namespace search
 // in the original is omitted.
 const FormData_pg_operator* OpernameGetOprid(const std::string& opname, Oid left_type,
                                              Oid right_type) {
@@ -110,7 +110,7 @@ const FormData_pg_operator* binary_oper_exact(const std::string& opname, Oid lef
 // IsTypePreferred — is `type_oid` a preferred type in its category?
 //
 // PostgreSQL uses typcategory + typispreferred (in pg_type) to resolve
-// unknowns when multiple candidates exist. MyToyDB's bootstrap catalog
+// unknowns when multiple candidates exist. pgcpp's bootstrap catalog
 // does not yet set these fields, so we hardcode the preferred types for
 // the categories we support:
 //   Numeric category: float8
@@ -131,7 +131,7 @@ bool IsTypePreferred(Oid type_oid) {
 //   3. Preferred-type preference: if any input is unknown, prefer
 //      candidates that use preferred types on the unknown side.
 //   4. If still ambiguous, return the first viable candidate.
-//      (PostgreSQL errors on ambiguity; MyToyDB's limited type set
+//      (PostgreSQL errors on ambiguity; pgcpp's limited type set
 //      makes this rare and the fallback avoids false errors.)
 const FormData_pg_operator* oper_select_candidate(
     const std::vector<const FormData_pg_operator*>& candidates, Oid left_type, Oid right_type) {
@@ -264,13 +264,13 @@ OperatorResult lookup_operator(const std::string& opname, Oid left_type, Oid rig
 //
 // Mirrors PostgreSQL's make_op() in parse_oper.c.
 // Algorithm:
-//   1. Reject postfix operators (MyToyDB has none, so this is a no-op).
+//   1. Reject postfix operators (pgcpp has none, so this is a no-op).
 //   2. Select the operator (exact → candidate → common-type coercion).
 //   3. Reject shell operators (oprcode == InvalidOid).
 //   4. Build the OpExpr with the operator's metadata.
 //   5. (PostgreSQL also calls enforce_generic_type_consistency for
 //      polymorphic types and make_fn_arguments for coercion insertion;
-//      MyToyDB's coercion is handled inline by SelectOperator.)
+//      pgcpp's coercion is handled inline by SelectOperator.)
 // ---------------------------------------------------------------------------
 
 Node* make_op(ParseState* pstate, const std::string& opname, Node* ltree, Node* rtree,
@@ -280,14 +280,14 @@ Node* make_op(ParseState* pstate, const std::string& opname, Node* ltree, Node* 
 
     // Step 4: no match — error.
     if (op == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "operator does not exist for the given operand types");
         return nullptr;
     }
 
     // Step 5: reject shell operators.
     if (IsOperatorShell(op)) {
-        ereport(mytoydb::error::LogLevel::kError, "operator is only a shell");
+        ereport(pgcpp::error::LogLevel::kError, "operator is only a shell");
         return nullptr;
     }
 
@@ -363,12 +363,12 @@ Node* make_scalar_array_op(ParseState* pstate, const std::string& opname, bool u
     }
 
     if (op == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "operator does not exist for IN/ANY expression");
+        ereport(pgcpp::error::LogLevel::kError, "operator does not exist for IN/ANY expression");
         return nullptr;
     }
 
     if (IsOperatorShell(op)) {
-        ereport(mytoydb::error::LogLevel::kError, "operator is only a shell");
+        ereport(pgcpp::error::LogLevel::kError, "operator is only a shell");
         return nullptr;
     }
 
@@ -386,4 +386,4 @@ Node* make_scalar_array_op(ParseState* pstate, const std::string& opname, bool u
     return saop;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

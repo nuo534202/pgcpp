@@ -15,7 +15,7 @@
 #include "pgcpp/transaction/xact.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -103,4 +103,4 @@ const std::vector<uint8_t>& GetRegisteredData() {
     return RegisteredData();
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

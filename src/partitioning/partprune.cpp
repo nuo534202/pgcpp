@@ -30,7 +30,7 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::partitioning {
+namespace pgcpp::partitioning {
 
 namespace {
 
@@ -373,4 +373,4 @@ std::vector<int> partprune_from_opexprs(const PruningContext& context,
     return Normalize(std::move(acc));
 }
 
-}  // namespace mytoydb::partitioning
+}  // namespace pgcpp::partitioning

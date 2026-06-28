@@ -51,119 +51,119 @@
 #include "pgcpp/types/datetime.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::access::CreateTupleDesc;
-using mytoydb::access::heap_beginscan;
-using mytoydb::access::heap_endscan;
-using mytoydb::access::heap_form_tuple;
-using mytoydb::access::heap_freetuple;
-using mytoydb::access::heap_getnext;
-using mytoydb::access::heap_insert;
-using mytoydb::access::HeapScanDesc;
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::ResetRelcache;
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kFirstNormalObjectId;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::executor::Agg;
-using mytoydb::executor::Append;
-using mytoydb::executor::BuildTupleDescFromTargetList;
-using mytoydb::executor::CreateExprContext;
-using mytoydb::executor::CteScan;
-using mytoydb::executor::EState;
-using mytoydb::executor::ExecEndNode;
-using mytoydb::executor::ExecEvalExpr;
-using mytoydb::executor::ExecInitNode;
-using mytoydb::executor::ExecProject;
-using mytoydb::executor::ExecQual;
-using mytoydb::executor::ExecutorEnd;
-using mytoydb::executor::ExecutorFinish;
-using mytoydb::executor::ExecutorRun;
-using mytoydb::executor::ExecutorStart;
-using mytoydb::executor::ExprContext;
-using mytoydb::executor::HashJoin;
-using mytoydb::executor::Limit;
-using mytoydb::executor::MakeTupleTableSlot;
-using mytoydb::executor::Material;
-using mytoydb::executor::MergeJoin;
-using mytoydb::executor::ModifyTable;
-using mytoydb::executor::NestLoop;
-using mytoydb::executor::Plan;
-using mytoydb::executor::PlanState;
-using mytoydb::executor::PlanType;
-using mytoydb::executor::QueryDesc;
-using mytoydb::executor::ResetExprContext;
-using mytoydb::executor::Result;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::Sort;
-using mytoydb::executor::SubqueryScan;
-using mytoydb::executor::TupleTableSlot;
-using mytoydb::executor::Unique;
-using mytoydb::executor::WindowAgg;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::AArrayExpr;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::CaseExpr;
-using mytoydb::parser::CaseWhen;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::Const;
-using mytoydb::parser::JoinType;
-using mytoydb::parser::kInnerVar;
-using mytoydb::parser::kOuterVar;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::ScalarArrayOpExpr;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::transaction::AllocateNextTransactionId;
-using mytoydb::transaction::BeginTransactionBlock;
-using mytoydb::transaction::EndTransactionBlock;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::MakeSnapshot;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::transaction::SnapshotData;
-using mytoydb::transaction::TransactionIdCommit;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetBool;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
+using pgcpp::access::CreateTupleDesc;
+using pgcpp::access::heap_beginscan;
+using pgcpp::access::heap_endscan;
+using pgcpp::access::heap_form_tuple;
+using pgcpp::access::heap_freetuple;
+using pgcpp::access::heap_getnext;
+using pgcpp::access::heap_insert;
+using pgcpp::access::HeapScanDesc;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationCreateStorage;
+using pgcpp::access::RelationOpen;
+using pgcpp::access::ResetRelcache;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kFirstNormalObjectId;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::executor::Agg;
+using pgcpp::executor::Append;
+using pgcpp::executor::BuildTupleDescFromTargetList;
+using pgcpp::executor::CreateExprContext;
+using pgcpp::executor::CteScan;
+using pgcpp::executor::EState;
+using pgcpp::executor::ExecEndNode;
+using pgcpp::executor::ExecEvalExpr;
+using pgcpp::executor::ExecInitNode;
+using pgcpp::executor::ExecProject;
+using pgcpp::executor::ExecQual;
+using pgcpp::executor::ExecutorEnd;
+using pgcpp::executor::ExecutorFinish;
+using pgcpp::executor::ExecutorRun;
+using pgcpp::executor::ExecutorStart;
+using pgcpp::executor::ExprContext;
+using pgcpp::executor::HashJoin;
+using pgcpp::executor::Limit;
+using pgcpp::executor::MakeTupleTableSlot;
+using pgcpp::executor::Material;
+using pgcpp::executor::MergeJoin;
+using pgcpp::executor::ModifyTable;
+using pgcpp::executor::NestLoop;
+using pgcpp::executor::Plan;
+using pgcpp::executor::PlanState;
+using pgcpp::executor::PlanType;
+using pgcpp::executor::QueryDesc;
+using pgcpp::executor::ResetExprContext;
+using pgcpp::executor::Result;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::Sort;
+using pgcpp::executor::SubqueryScan;
+using pgcpp::executor::TupleTableSlot;
+using pgcpp::executor::Unique;
+using pgcpp::executor::WindowAgg;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::memory::palloc;
+using pgcpp::memory::pfree;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::AArrayExpr;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::CaseExpr;
+using pgcpp::parser::CaseWhen;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::Const;
+using pgcpp::parser::JoinType;
+using pgcpp::parser::kInnerVar;
+using pgcpp::parser::kOuterVar;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::ScalarArrayOpExpr;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::AllocateNextTransactionId;
+using pgcpp::transaction::BeginTransactionBlock;
+using pgcpp::transaction::EndTransactionBlock;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::MakeSnapshot;
+using pgcpp::transaction::ResetTransactionState;
+using pgcpp::transaction::SnapshotData;
+using pgcpp::transaction::TransactionIdCommit;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetBool;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
 
 namespace {
 
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::makePallocNode;
 
 // Operator OIDs (from bootstrap_catalog.cpp).
 constexpr Oid kInt4EqOp = 96;     // int4 = int4
@@ -181,9 +181,9 @@ constexpr Oid kMaxInt4Oid = 2116;
 class ExecutorTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("executor_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -193,7 +193,7 @@ protected:
 
         ResetTransactionState();
         InitializeTransactionSystem();
-        mytoydb::transaction::InitializeSnapshotManager();
+        pgcpp::transaction::InitializeSnapshotManager();
         BeginTransactionBlock();
 
         test_dir_ = "/tmp/mytoydb_executor_test_" + std::to_string(getpid());
@@ -218,9 +218,9 @@ protected:
 
         ResetTransactionState();
         InitializeTransactionSystem();
-        mytoydb::transaction::InitializeSnapshotManager();
+        pgcpp::transaction::InitializeSnapshotManager();
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -230,7 +230,7 @@ protected:
     void CommitAndStartNew() {
         EndTransactionBlock();
         // Reset the cached snapshot so the new transaction gets a fresh one.
-        mytoydb::transaction::InitializeSnapshotManager();
+        pgcpp::transaction::InitializeSnapshotManager();
         BeginTransactionBlock();
     }
 
@@ -662,14 +662,14 @@ TEST_F(ExecutorTest, ExecEvalExpr_FuncExpr_DateTrunc) {
     // Truncating to minute zeroes seconds and microseconds. Since the PG
     // epoch (2000-01-01 00:00:00) is itself a minute boundary, the result is
     // a whole number of minutes (60s = 60,000,000 μs).
-    int64_t minute_trunc = DatumGetInt64(mytoydb::types::date_trunc("minute", Int64GetDatum(ts)));
+    int64_t minute_trunc = DatumGetInt64(pgcpp::types::date_trunc("minute", Int64GetDatum(ts)));
     EXPECT_EQ(minute_trunc % 60000000, 0);
     EXPECT_GT(minute_trunc, 0);
     EXPECT_LE(minute_trunc, ts);
     EXPECT_GT(minute_trunc, ts - 60000000);
 
     // Truncating to hour zeroes minutes/seconds/microseconds (3,600s = 3.6e9 μs).
-    int64_t hour_trunc = DatumGetInt64(mytoydb::types::date_trunc("hour", Int64GetDatum(ts)));
+    int64_t hour_trunc = DatumGetInt64(pgcpp::types::date_trunc("hour", Int64GetDatum(ts)));
     EXPECT_EQ(hour_trunc % 3600000000LL, 0);
     EXPECT_LE(hour_trunc, minute_trunc);
 }
@@ -1253,7 +1253,7 @@ TEST_F(ExecutorTest, HashJoin_InnerJoin) {
     right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
 
     // Hash node (inner child of HashJoin).
-    auto* hash_plan = makePallocNode<mytoydb::executor::Hash>();
+    auto* hash_plan = makePallocNode<pgcpp::executor::Hash>();
     hash_plan->lefttree = right_scan;
     hash_plan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
     hash_plan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));

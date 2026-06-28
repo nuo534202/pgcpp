@@ -12,7 +12,7 @@
 //   - exec flags  : REG_NOTBOL, REG_NOTEOL
 //   - error codes : REG_NOMATCH, REG_BADPAT, ... (PG-compatible)
 //
-// All public API functions live in namespace mytoydb::regex.
+// All public API functions live in namespace pgcpp::regex.
 
 #pragma once
 
@@ -20,7 +20,7 @@
 #include <regex>
 #include <string>
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 // --- Compile-time flags (passed to pg_regcomp) ---
 // Values match PostgreSQL's regex.h flag values for API compatibility.
@@ -94,4 +94,4 @@ struct regex_t {
     std::regex cpp_re;    // compiled std::regex (empty if re_errno != 0)
 };
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

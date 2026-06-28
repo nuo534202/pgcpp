@@ -16,31 +16,31 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-using mytoydb::transaction::ActiveSnapshotSet;
-using mytoydb::transaction::AllocateNextTransactionId;
-using mytoydb::transaction::GetActiveSnapshot;
-using mytoydb::transaction::GetCatalogSnapshot;
-using mytoydb::transaction::GetNonHistoricCatalogSnapshot;
-using mytoydb::transaction::GetTransactionSnapshot;
-using mytoydb::transaction::InitializeSnapshotManager;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::InvalidateCatalogSnapshot;
-using mytoydb::transaction::kBootstrapTransactionId;
-using mytoydb::transaction::kFrozenTransactionId;
-using mytoydb::transaction::kInvalidTransactionId;
-using mytoydb::transaction::MakeSnapshot;
-using mytoydb::transaction::PopActiveSnapshot;
-using mytoydb::transaction::PushActiveSnapshot;
-using mytoydb::transaction::PushCopiedSnapshot;
-using mytoydb::transaction::ResetTransactionSnapshot;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::transaction::Snapshot;
-using mytoydb::transaction::SnapshotData;
-using mytoydb::transaction::TransactionId;
-using mytoydb::transaction::TransactionIdAbort;
-using mytoydb::transaction::TransactionIdCommit;
-using mytoydb::transaction::TransactionLogFetch;
-using mytoydb::transaction::XidStatus;
+using pgcpp::transaction::ActiveSnapshotSet;
+using pgcpp::transaction::AllocateNextTransactionId;
+using pgcpp::transaction::GetActiveSnapshot;
+using pgcpp::transaction::GetCatalogSnapshot;
+using pgcpp::transaction::GetNonHistoricCatalogSnapshot;
+using pgcpp::transaction::GetTransactionSnapshot;
+using pgcpp::transaction::InitializeSnapshotManager;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::InvalidateCatalogSnapshot;
+using pgcpp::transaction::kBootstrapTransactionId;
+using pgcpp::transaction::kFrozenTransactionId;
+using pgcpp::transaction::kInvalidTransactionId;
+using pgcpp::transaction::MakeSnapshot;
+using pgcpp::transaction::PopActiveSnapshot;
+using pgcpp::transaction::PushActiveSnapshot;
+using pgcpp::transaction::PushCopiedSnapshot;
+using pgcpp::transaction::ResetTransactionSnapshot;
+using pgcpp::transaction::ResetTransactionState;
+using pgcpp::transaction::Snapshot;
+using pgcpp::transaction::SnapshotData;
+using pgcpp::transaction::TransactionId;
+using pgcpp::transaction::TransactionIdAbort;
+using pgcpp::transaction::TransactionIdCommit;
+using pgcpp::transaction::TransactionLogFetch;
+using pgcpp::transaction::XidStatus;
 
 namespace {
 
@@ -50,9 +50,9 @@ namespace {
 class SnapmgrTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("snapmgr_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("snapmgr_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         ResetTransactionState();
         InitializeTransactionSystem();
@@ -67,13 +67,13 @@ protected:
         ResetTransactionState();
         InitializeTransactionSystem();
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
     }
 
-    mytoydb::memory::MemoryContext* context_ = nullptr;
+    pgcpp::memory::MemoryContext* context_ = nullptr;
 };
 
 }  // namespace

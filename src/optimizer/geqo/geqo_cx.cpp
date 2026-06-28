@@ -16,7 +16,7 @@
 #include "pgcpp/optimizer/geqo/geqo_px.hpp"
 #include "pgcpp/optimizer/geqo/geqo_random.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 bool Crossover(CrossoverType type, const Chromosome* mum, const Chromosome* dad,
                Chromosome* child) {
@@ -37,7 +37,7 @@ bool Crossover(CrossoverType type, const Chromosome* mum, const Chromosome* dad,
 
 CrossoverType RandomCrossover(const Chromosome* mum, const Chromosome* dad, Chromosome* child) {
     // Pick one of the five operators uniformly at random. ERX is slightly
-    // favored in PostgreSQL; MyToyDB keeps the uniform selection for
+    // favored in PostgreSQL; pgcpp keeps the uniform selection for
     // simplicity and deterministic behavior under a fixed seed.
     int pick = GeqoRng().NextInt(5);
     CrossoverType type = CrossoverType::kEdgeRecombination;
@@ -70,4 +70,4 @@ CrossoverType RandomCrossover(const Chromosome* mum, const Chromosome* dad, Chro
     return type;
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

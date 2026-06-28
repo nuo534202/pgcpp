@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cstring>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 ShmMq::ShmMq(std::size_t size_bytes) : buffer_(size_bytes, 0) {}
 
@@ -27,7 +27,7 @@ ShmMqResult ShmMq::Send(const uint8_t* data, std::size_t nbytes, bool non_blocki
         if (non_blocking) {
             return ShmMqResult::kWouldBlock;
         }
-        // In MyToyDB we never block; truncate to what fits.
+        // In pgcpp we never block; truncate to what fits.
         nbytes = buffer_.size() - bytes_queued_;
     }
     // Copy in chunks to handle wrap-around.
@@ -81,4 +81,4 @@ void ShmMqDestroy(ShmMq* mq) {
     delete mq;
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

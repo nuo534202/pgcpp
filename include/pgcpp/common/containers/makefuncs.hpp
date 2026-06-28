@@ -5,11 +5,11 @@
 // transformed expression nodes (Var/Const/TargetEntry/OpExpr/FuncExpr/
 // RelabelType/BoolExpr) in the current memory context via makePallocNode.
 //
-// Note: mytoydb::parser already declares makeVar/makeConst/makeNullConst with
+// Note: pgcpp::parser already declares makeVar/makeConst/makeNullConst with
 // a different (smaller) signature in primnodes.hpp. The overloads here live
-// in namespace mytoydb::nodes and add the full-parameter variants needed by
+// in namespace pgcpp::nodes and add the full-parameter variants needed by
 // the planner. Callers that want the parser-layer convenience constructors
-// should use mytoydb::parser::makeVar etc. directly.
+// should use pgcpp::parser::makeVar etc. directly.
 
 #pragma once
 
@@ -20,20 +20,20 @@
 #include "pgcpp/common/containers/node.hpp"  // makePallocNode
 #include "pgcpp/parser/primnodes.hpp"        // Var/Const/OpExpr/...
 
-namespace mytoydb::nodes {
+namespace pgcpp::nodes {
 
-using mytoydb::catalog::Oid;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::CoercionForm;
-using mytoydb::parser::Const;
-using mytoydb::parser::FuncExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::Datum;
+using pgcpp::catalog::Oid;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::CoercionForm;
+using pgcpp::parser::Const;
+using pgcpp::parser::FuncExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::Datum;
 
 // AttrNumber is int32 in PG; we use int for the C++ conversion (per the
 // project rule that Oid/int32 fields become int).
@@ -89,4 +89,4 @@ RelabelType* makeRelabelType(Node* arg, Oid resulttype, int resulttypmod, Oid re
 
 BoolExpr* makeBoolExpr(BoolExprType boolop, std::vector<Node*> args, int location);
 
-}  // namespace mytoydb::nodes
+}  // namespace pgcpp::nodes

@@ -7,9 +7,9 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -42,7 +42,7 @@ bool WalRcvStart(std::string conninfo, std::string slotname, transaction::XLogRe
     Rcv().startpoint = startpoint;
     Rcv().state = WalRcvState::kStart;
     Rcv().stream_state = WalRcvStreamState::kStreamStart;
-    // No fork in MyToyDB: skip directly to "streaming".
+    // No fork in pgcpp: skip directly to "streaming".
     Rcv().state = WalRcvState::kStreaming;
     Rcv().receive_ptr = startpoint;
     Rcv().write_ptr = startpoint;
@@ -107,4 +107,4 @@ WalRcvData* GetWalRcvData() {
     return &Rcv();
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

@@ -31,111 +31,111 @@
 #include "pgcpp/transaction/xlogrecovery.hpp"
 #include "pgcpp/transaction/xlogutils.hpp"
 
-using mytoydb::transaction::AcceptInvalidationMessages;
-using mytoydb::transaction::CacheInvalidateCatcache;
-using mytoydb::transaction::CacheInvalidateRelcache;
-using mytoydb::transaction::CacheInvalidateSmgr;
-using mytoydb::transaction::CacheInvalidateSnapshot;
-using mytoydb::transaction::CommitTsEntry;
-using mytoydb::transaction::CountRunningXacts;
-using mytoydb::transaction::CreateParallelContext;
-using mytoydb::transaction::DestroyParallelContext;
-using mytoydb::transaction::GetOldestXmin;
-using mytoydb::transaction::GetPendingInvalidationCount;
-using mytoydb::transaction::GetRegisteredData;
-using mytoydb::transaction::GetRunningTransactionData;
-using mytoydb::transaction::GetWalBuffer;
-using mytoydb::transaction::GetWalBufferSize;
-using mytoydb::transaction::GetXLogInsertRecPtr;
-using mytoydb::transaction::GetXLogWriteRecPtr;
-using mytoydb::transaction::InitializeCommitTs;
-using mytoydb::transaction::InitializeMultiXact;
-using mytoydb::transaction::InitializeParallelInfrastructure;
-using mytoydb::transaction::InitializeProcArray;
-using mytoydb::transaction::InitializeSinval;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::InitializeWal;
-using mytoydb::transaction::InvalidHandler;
-using mytoydb::transaction::kFirstMultiXactId;
-using mytoydb::transaction::kInvalidMultiXactId;
-using mytoydb::transaction::kInvalidTransactionId;
-using mytoydb::transaction::kInvalidXLogRecPtr;
-using mytoydb::transaction::kRmgrCommitTsId;
-using mytoydb::transaction::kRmgrHeapId;
-using mytoydb::transaction::kRmgrXactId;
-using mytoydb::transaction::kSizeofXlogRecord;
-using mytoydb::transaction::LaunchParallelWorkers;
-using mytoydb::transaction::MultiXactId;
-using mytoydb::transaction::MultiXactIdCreate;
-using mytoydb::transaction::MultiXactIdExpand;
-using mytoydb::transaction::MultiXactIdGetMembers;
-using mytoydb::transaction::MultiXactIdIsValid;
-using mytoydb::transaction::MultiXactMember;
-using mytoydb::transaction::ParallelContext;
-using mytoydb::transaction::ParallelContextActive;
-using mytoydb::transaction::PerformCrashRecovery;
-using mytoydb::transaction::PerformCrashRecoveryFrom;
-using mytoydb::transaction::ProcArrayAdd;
-using mytoydb::transaction::ProcArrayContains;
-using mytoydb::transaction::ProcArrayRemove;
-using mytoydb::transaction::RecoveryStats;
-using mytoydb::transaction::RedoFn;
-using mytoydb::transaction::RegisterInvalidationHandler;
-using mytoydb::transaction::RegisterRmgrRedo;
-using mytoydb::transaction::ResetCommitTs;
-using mytoydb::transaction::ResetMultiXact;
-using mytoydb::transaction::ResetProcArray;
-using mytoydb::transaction::ResetSinval;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::transaction::ResetWal;
-using mytoydb::transaction::ResetXlogInsertState;
-using mytoydb::transaction::RmgrId;
-using mytoydb::transaction::SendSharedInvalidationMessages;
-using mytoydb::transaction::SharedInvalCmdType;
-using mytoydb::transaction::SharedInvalidationMessage;
-using mytoydb::transaction::SimpleLruFlush;
-using mytoydb::transaction::SimpleLruFree;
-using mytoydb::transaction::SimpleLruInit;
-using mytoydb::transaction::SimpleLruRead;
-using mytoydb::transaction::SimpleLruReset;
-using mytoydb::transaction::SimpleLruWrite;
-using mytoydb::transaction::SlruCtl;
-using mytoydb::transaction::SlruPageStatus;
-using mytoydb::transaction::TimestampTz;
-using mytoydb::transaction::TransactionId;
-using mytoydb::transaction::TransactionIdGetCommitTs;
-using mytoydb::transaction::TransactionIdSetCommitTs;
-using mytoydb::transaction::TransactionTreeSetCommitTsData;
-using mytoydb::transaction::UnregisterInvalidationHandler;
-using mytoydb::transaction::XLByteEQ;
-using mytoydb::transaction::XLByteGE;
-using mytoydb::transaction::XLByteGT;
-using mytoydb::transaction::XLByteLE;
-using mytoydb::transaction::XLByteLT;
-using mytoydb::transaction::XLogBeginInsert;
-using mytoydb::transaction::XLogFlush;
-using mytoydb::transaction::XLogInsert;
-using mytoydb::transaction::XLogReaderAlloc;
-using mytoydb::transaction::XLogReaderFree;
-using mytoydb::transaction::XLogReaderState;
-using mytoydb::transaction::XLogReadRaw;
-using mytoydb::transaction::XLogReadRecord;
-using mytoydb::transaction::XLogReadRecordAt;
-using mytoydb::transaction::XLogRecord;
-using mytoydb::transaction::XLogRecPtr;
-using mytoydb::transaction::XLogRegisterData;
-using mytoydb::transaction::XLogResetInsert;
-using mytoydb::transaction::XLogSetRecordFlags;
-using mytoydb::transaction::XLogWriteRaw;
+using pgcpp::transaction::AcceptInvalidationMessages;
+using pgcpp::transaction::CacheInvalidateCatcache;
+using pgcpp::transaction::CacheInvalidateRelcache;
+using pgcpp::transaction::CacheInvalidateSmgr;
+using pgcpp::transaction::CacheInvalidateSnapshot;
+using pgcpp::transaction::CommitTsEntry;
+using pgcpp::transaction::CountRunningXacts;
+using pgcpp::transaction::CreateParallelContext;
+using pgcpp::transaction::DestroyParallelContext;
+using pgcpp::transaction::GetOldestXmin;
+using pgcpp::transaction::GetPendingInvalidationCount;
+using pgcpp::transaction::GetRegisteredData;
+using pgcpp::transaction::GetRunningTransactionData;
+using pgcpp::transaction::GetWalBuffer;
+using pgcpp::transaction::GetWalBufferSize;
+using pgcpp::transaction::GetXLogInsertRecPtr;
+using pgcpp::transaction::GetXLogWriteRecPtr;
+using pgcpp::transaction::InitializeCommitTs;
+using pgcpp::transaction::InitializeMultiXact;
+using pgcpp::transaction::InitializeParallelInfrastructure;
+using pgcpp::transaction::InitializeProcArray;
+using pgcpp::transaction::InitializeSinval;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::InitializeWal;
+using pgcpp::transaction::InvalidHandler;
+using pgcpp::transaction::kFirstMultiXactId;
+using pgcpp::transaction::kInvalidMultiXactId;
+using pgcpp::transaction::kInvalidTransactionId;
+using pgcpp::transaction::kInvalidXLogRecPtr;
+using pgcpp::transaction::kRmgrCommitTsId;
+using pgcpp::transaction::kRmgrHeapId;
+using pgcpp::transaction::kRmgrXactId;
+using pgcpp::transaction::kSizeofXlogRecord;
+using pgcpp::transaction::LaunchParallelWorkers;
+using pgcpp::transaction::MultiXactId;
+using pgcpp::transaction::MultiXactIdCreate;
+using pgcpp::transaction::MultiXactIdExpand;
+using pgcpp::transaction::MultiXactIdGetMembers;
+using pgcpp::transaction::MultiXactIdIsValid;
+using pgcpp::transaction::MultiXactMember;
+using pgcpp::transaction::ParallelContext;
+using pgcpp::transaction::ParallelContextActive;
+using pgcpp::transaction::PerformCrashRecovery;
+using pgcpp::transaction::PerformCrashRecoveryFrom;
+using pgcpp::transaction::ProcArrayAdd;
+using pgcpp::transaction::ProcArrayContains;
+using pgcpp::transaction::ProcArrayRemove;
+using pgcpp::transaction::RecoveryStats;
+using pgcpp::transaction::RedoFn;
+using pgcpp::transaction::RegisterInvalidationHandler;
+using pgcpp::transaction::RegisterRmgrRedo;
+using pgcpp::transaction::ResetCommitTs;
+using pgcpp::transaction::ResetMultiXact;
+using pgcpp::transaction::ResetProcArray;
+using pgcpp::transaction::ResetSinval;
+using pgcpp::transaction::ResetTransactionState;
+using pgcpp::transaction::ResetWal;
+using pgcpp::transaction::ResetXlogInsertState;
+using pgcpp::transaction::RmgrId;
+using pgcpp::transaction::SendSharedInvalidationMessages;
+using pgcpp::transaction::SharedInvalCmdType;
+using pgcpp::transaction::SharedInvalidationMessage;
+using pgcpp::transaction::SimpleLruFlush;
+using pgcpp::transaction::SimpleLruFree;
+using pgcpp::transaction::SimpleLruInit;
+using pgcpp::transaction::SimpleLruRead;
+using pgcpp::transaction::SimpleLruReset;
+using pgcpp::transaction::SimpleLruWrite;
+using pgcpp::transaction::SlruCtl;
+using pgcpp::transaction::SlruPageStatus;
+using pgcpp::transaction::TimestampTz;
+using pgcpp::transaction::TransactionId;
+using pgcpp::transaction::TransactionIdGetCommitTs;
+using pgcpp::transaction::TransactionIdSetCommitTs;
+using pgcpp::transaction::TransactionTreeSetCommitTsData;
+using pgcpp::transaction::UnregisterInvalidationHandler;
+using pgcpp::transaction::XLByteEQ;
+using pgcpp::transaction::XLByteGE;
+using pgcpp::transaction::XLByteGT;
+using pgcpp::transaction::XLByteLE;
+using pgcpp::transaction::XLByteLT;
+using pgcpp::transaction::XLogBeginInsert;
+using pgcpp::transaction::XLogFlush;
+using pgcpp::transaction::XLogInsert;
+using pgcpp::transaction::XLogReaderAlloc;
+using pgcpp::transaction::XLogReaderFree;
+using pgcpp::transaction::XLogReaderState;
+using pgcpp::transaction::XLogReadRaw;
+using pgcpp::transaction::XLogReadRecord;
+using pgcpp::transaction::XLogReadRecordAt;
+using pgcpp::transaction::XLogRecord;
+using pgcpp::transaction::XLogRecPtr;
+using pgcpp::transaction::XLogRegisterData;
+using pgcpp::transaction::XLogResetInsert;
+using pgcpp::transaction::XLogSetRecordFlags;
+using pgcpp::transaction::XLogWriteRaw;
 
 namespace {
 
 class WalMultiversionTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("wal_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("wal_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         ResetTransactionState();
         InitializeTransactionSystem();
@@ -155,13 +155,13 @@ protected:
         ResetProcArray();
         ResetSinval();
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
     }
 
-    mytoydb::memory::MemoryContext* context_ = nullptr;
+    pgcpp::memory::MemoryContext* context_ = nullptr;
 };
 
 // ===========================================================================
@@ -201,7 +201,7 @@ TEST_F(WalMultiversionTest, XLogReadRaw_ReturnsZeroPastEnd) {
     EXPECT_EQ(n, 0u);
 }
 
-// XLogFlush is a no-op in MyToyDB (in-memory buffer is always durable).
+// XLogFlush is a no-op in pgcpp (in-memory buffer is always durable).
 TEST_F(WalMultiversionTest, XLogFlush_NoOp) {
     XLogRecPtr before = GetXLogWriteRecPtr();
     XLogFlush(GetXLogInsertRecPtr());
@@ -604,7 +604,7 @@ TEST_F(WalMultiversionTest, ProcArray_GetOldestXmin) {
 
 // GetOldestXmin returns FrozenTransactionId when no transactions are running.
 TEST_F(WalMultiversionTest, ProcArray_GetOldestXminEmpty) {
-    EXPECT_EQ(GetOldestXmin(), mytoydb::transaction::kFrozenTransactionId);
+    EXPECT_EQ(GetOldestXmin(), pgcpp::transaction::kFrozenTransactionId);
 }
 
 // GetOldestXmin ignores the specified XID.
@@ -686,7 +686,7 @@ TEST_F(WalMultiversionTest, Sinval_UnregisterStopsHandler) {
 // Parallel stub tests
 // ===========================================================================
 
-// ParallelContextActive is always false in MyToyDB.
+// ParallelContextActive is always false in pgcpp.
 TEST_F(WalMultiversionTest, Parallel_AlwaysInactive) {
     EXPECT_FALSE(ParallelContextActive());
 }
@@ -700,7 +700,7 @@ TEST_F(WalMultiversionTest, Parallel_CreateDestroy) {
     EXPECT_FALSE(ctx->initialized);
 
     int launched = LaunchParallelWorkers(ctx);
-    EXPECT_EQ(launched, 0);  // no workers in MyToyDB
+    EXPECT_EQ(launched, 0);  // no workers in pgcpp
     EXPECT_TRUE(ctx->initialized);
 
     DestroyParallelContext(ctx);

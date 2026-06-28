@@ -11,18 +11,18 @@
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
-// Forward declaration — defined in mytoydb/optimizer/planner.hpp. Forward-
+// Forward declaration — defined in pgcpp/optimizer/planner.hpp. Forward-
 // declared here to avoid a circular include (planner.hpp → path.hpp → here).
 struct PlannerInfo;
 
 // SpecialJoinInfo — simplified join-info struct (PG's SpecialJoinInfo).
-// For MyToyDB's single-table workload, only a minimal skeleton is needed.
+// For pgcpp's single-table workload, only a minimal skeleton is needed.
 struct SpecialJoinInfo {
     int min_lefthand = 0;   // min relids on the left side (simplified)
     int min_righthand = 0;  // min relids on the right side
-    mytoydb::parser::JoinType jointype = mytoydb::parser::JoinType::kInner;
+    pgcpp::parser::JoinType jointype = pgcpp::parser::JoinType::kInner;
     bool lhs_strict = false;  // left join condition is strict
     bool semi_rhs_exprs = false;
 };
@@ -30,7 +30,7 @@ struct SpecialJoinInfo {
 // build_simple_rel — construct a RelOptInfo for a base relation identified by
 // its 1-based range table index. If one already exists in simple_rel_array,
 // it is returned unchanged. The `parent` argument is for child relations in
-// inheritance; for MyToyDB it is unused (kept for API compatibility).
+// inheritance; for pgcpp it is unused (kept for API compatibility).
 RelOptInfo* build_simple_rel(PlannerInfo* root, int relid, RelOptInfo* parent);
 
 // build_join_rel — construct a RelOptInfo for a join of two relations.
@@ -50,4 +50,4 @@ RelOptInfo* find_join_rel(PlannerInfo* root, Relids joinrelids);
 // add_join_rel — record a join RelOptInfo in the planner's join_rel_list.
 void add_join_rel(PlannerInfo* root, RelOptInfo* joinrel);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

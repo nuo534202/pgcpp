@@ -22,50 +22,50 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::executor::Agg;
-using mytoydb::executor::Plan;
-using mytoydb::executor::PlanType;
-using mytoydb::executor::Result;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::Sort;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::grouping_planner;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::query_planner;
-using mytoydb::optimizer::standard_planner;
-using mytoydb::optimizer::subquery_planner;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::Const;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
+using pgcpp::executor::Agg;
+using pgcpp::executor::Plan;
+using pgcpp::executor::PlanType;
+using pgcpp::executor::Result;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::Sort;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::grouping_planner;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::query_planner;
+using pgcpp::optimizer::standard_planner;
+using pgcpp::optimizer::subquery_planner;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::Const;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
 
 namespace {
 
-constexpr mytoydb::catalog::Oid kInt4EqOp = 96;   // int4 = int4
-constexpr mytoydb::catalog::Oid kInt4GtOp = 521;  // int4 > int4
+constexpr pgcpp::catalog::Oid kInt4EqOp = 96;   // int4 = int4
+constexpr pgcpp::catalog::Oid kInt4GtOp = 521;  // int4 > int4
 
 class QueryPlannerTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("query_planner_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("query_planner_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -89,7 +89,7 @@ protected:
         return con;
     }
 
-    OpExpr* MakeOpExpr(mytoydb::catalog::Oid opno, Node* left, Node* right) {
+    OpExpr* MakeOpExpr(pgcpp::catalog::Oid opno, Node* left, Node* right) {
         auto* op = makePallocNode<OpExpr>();
         op->opno = opno;
         op->opresulttype = kBoolOid;
@@ -142,7 +142,7 @@ protected:
         return query;
     }
 
-    mytoydb::memory::AllocSetContext* context_ = nullptr;
+    pgcpp::memory::AllocSetContext* context_ = nullptr;
 };
 
 // standard_planner(SELECT 1) → Result plan.
@@ -196,7 +196,7 @@ TEST_F(QueryPlannerTest, StandardPlanner_SelectCount_ProducesAggOnSeqScan) {
     query->jointree = MakeFromExpr(1);
     query->has_aggs = true;
 
-    auto* aggref = makePallocNode<mytoydb::parser::Aggref>();
+    auto* aggref = makePallocNode<pgcpp::parser::Aggref>();
     aggref->aggfnoid = 2147;
     aggref->aggtype = kInt8Oid;
     aggref->aggstar = true;
@@ -221,7 +221,7 @@ TEST_F(QueryPlannerTest, StandardPlanner_SelectGroupBy_ProducesHashedAgg) {
 
     query->target_list.push_back(MakeTargetEntry(MakeVar(1, 1), 1, "a", 1));
 
-    auto* aggref = makePallocNode<mytoydb::parser::Aggref>();
+    auto* aggref = makePallocNode<pgcpp::parser::Aggref>();
     aggref->aggfnoid = 2147;
     aggref->aggtype = kInt8Oid;
     aggref->aggstar = true;
@@ -326,7 +326,7 @@ TEST_F(QueryPlannerTest, QueryPlanner_Aggregate_ProducesAggOnSeqScan) {
     query->jointree = MakeFromExpr(1);
     query->has_aggs = true;
 
-    auto* aggref = makePallocNode<mytoydb::parser::Aggref>();
+    auto* aggref = makePallocNode<pgcpp::parser::Aggref>();
     aggref->aggfnoid = 2147;
     aggref->aggtype = kInt8Oid;
     aggref->aggstar = true;

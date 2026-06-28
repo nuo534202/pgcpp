@@ -14,16 +14,16 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationOpen;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::parser::CopyStmt;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationOpen;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::parser::CopyStmt;
 
 std::string DoCopy(CopyStmt* stmt) {
     if (stmt == nullptr || stmt->relation == nullptr)
@@ -36,12 +36,12 @@ std::string DoCopy(CopyStmt* stmt) {
     const std::string& relname = stmt->relation->relname;
     const FormData_pg_class* class_row = cat->GetClassByName(relname);
     if (class_row == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + relname + "\" does not exist");
+        ereport(pgcpp::error::LogLevel::kError, "relation \"" + relname + "\" does not exist");
     }
     Oid relid = class_row->oid;
     Relation rel = RelationOpen(relid);
     if (rel == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "cannot open relation \"" + relname + "\"");
+        ereport(pgcpp::error::LogLevel::kError, "cannot open relation \"" + relname + "\"");
     }
 
     int64_t row_count = 0;
@@ -55,4 +55,4 @@ std::string DoCopy(CopyStmt* stmt) {
     return "COPY " + std::to_string(row_count);
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

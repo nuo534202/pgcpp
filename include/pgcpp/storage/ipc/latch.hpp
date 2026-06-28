@@ -9,14 +9,14 @@
 // simultaneously via poll(2).
 //
 // In PostgreSQL, latches use shared-memory state and self-pipes for signal
-// wakeups. MyToyDB is single-process, so the state lives in heap-allocated
+// wakeups. pgcpp is single-process, so the state lives in heap-allocated
 // structs and waits are implemented via poll() with millisecond precision.
 #pragma once
 
 #include <cstdint>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // WaitEventSet event mask bits (mirrors WL_* in PostgreSQL).
 constexpr uint32_t kWaitLatchSet = 0x0001;           // WL_LATCH_SET
@@ -28,7 +28,7 @@ constexpr uint32_t kWaitExitOnSignalDeath = 0x0010;  // WL_EXIT_ON_PM_DEATH
 // Latch — a single-waiter primitive.
 //
 // Matches PG's volatile sig_atomic_t is_set + signal handling fields.
-// In MyToyDB is_set is a plain bool (no signal wakeups needed).
+// In pgcpp is_set is a plain bool (no signal wakeups needed).
 struct Latch {
     bool is_set = false;
 };
@@ -44,7 +44,7 @@ struct WaitEvent {
 // WaitEventSet — a collection of latch/socket events to wait on.
 //
 // Implemented as a std::vector<WaitEvent> wrapper. PG stores it in shared
-// memory; MyToyDB keeps it in a heap allocation owned by the caller.
+// memory; pgcpp keeps it in a heap allocation owned by the caller.
 class WaitEventSet {
 public:
     WaitEventSet() = default;
@@ -89,4 +89,4 @@ uint32_t WaitLatch(Latch* latch, int64_t timeout_ms, uint32_t wait_event_mask);
 int WaitEventSetWait(WaitEventSet* set, int64_t timeout_ms,
                      std::vector<WaitEvent>* occurred_events);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

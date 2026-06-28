@@ -6,7 +6,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // FormData_pg_proc — C++ equivalent of PostgreSQL's catalog/pg_proc.h.
 //
@@ -66,7 +66,7 @@ struct FormData_pg_proc {
     int16_t pronargdefaults = 0;   // number of arguments with defaults
     Oid prorettype = kInvalidOid;  // OID of result type
     std::vector<Oid> proargtypes;  // parameter types (IN only)
-    // Variable-length fields (NULL = empty in MyToyDB):
+    // Variable-length fields (NULL = empty in pgcpp):
     std::vector<Oid> proallargtypes;     // all param types (empty if IN only)
     std::string proargmodes;             // parameter modes (empty if IN only)
     std::string proargnames;             // parameter names (empty if no names)
@@ -81,4 +81,4 @@ struct FormData_pg_proc {
 
 using Form_pg_proc = FormData_pg_proc*;
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

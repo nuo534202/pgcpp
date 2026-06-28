@@ -44,58 +44,58 @@
 #include "pgcpp/types/datetime.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::protocol {
+namespace pgcpp::protocol {
 
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::executor::BuildTupleDescFromTargetList;
-using mytoydb::executor::ClearExecParams;
-using mytoydb::executor::ExecutorEnd;
-using mytoydb::executor::ExecutorFinish;
-using mytoydb::executor::ExecutorRun;
-using mytoydb::executor::ExecutorStart;
-using mytoydb::executor::Plan;
-using mytoydb::executor::QueryDesc;
-using mytoydb::executor::SetExecParams;
-using mytoydb::executor::TupleTableSlot;
-using mytoydb::memory::palloc;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::planner;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::Node;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeVar;
-using mytoydb::parser::RawStmt;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::TargetEntry;
-using mytoydb::transaction::AbortCurrentTransaction;
-using mytoydb::transaction::BeginTransactionBlock;
-using mytoydb::transaction::CommandCounterIncrement;
-using mytoydb::transaction::CommitTransactionCommand;
-using mytoydb::transaction::EndTransactionBlock;
-using mytoydb::transaction::IsAbortedTransactionBlock;
-using mytoydb::transaction::IsTransactionBlock;
-using mytoydb::transaction::StartTransactionCommand;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetBool;
-using mytoydb::types::DatumGetFloat4;
-using mytoydb::types::DatumGetFloat8;
-using mytoydb::types::DatumGetInt16;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
-using mytoydb::types::kVarcharOid;
-using mytoydb::types::TextDatumToString;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::executor::BuildTupleDescFromTargetList;
+using pgcpp::executor::ClearExecParams;
+using pgcpp::executor::ExecutorEnd;
+using pgcpp::executor::ExecutorFinish;
+using pgcpp::executor::ExecutorRun;
+using pgcpp::executor::ExecutorStart;
+using pgcpp::executor::Plan;
+using pgcpp::executor::QueryDesc;
+using pgcpp::executor::SetExecParams;
+using pgcpp::executor::TupleTableSlot;
+using pgcpp::memory::palloc;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::planner;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::Node;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeVar;
+using pgcpp::parser::RawStmt;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::TargetEntry;
+using pgcpp::transaction::AbortCurrentTransaction;
+using pgcpp::transaction::BeginTransactionBlock;
+using pgcpp::transaction::CommandCounterIncrement;
+using pgcpp::transaction::CommitTransactionCommand;
+using pgcpp::transaction::EndTransactionBlock;
+using pgcpp::transaction::IsAbortedTransactionBlock;
+using pgcpp::transaction::IsTransactionBlock;
+using pgcpp::transaction::StartTransactionCommand;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetBool;
+using pgcpp::types::DatumGetFloat4;
+using pgcpp::types::DatumGetFloat8;
+using pgcpp::types::DatumGetInt16;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kDateOid;
+using pgcpp::types::kFloat4Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
+using pgcpp::types::kVarcharOid;
+using pgcpp::types::TextDatumToString;
 
 namespace {
 
@@ -103,21 +103,21 @@ namespace {
 Datum ConvertParamToDatum(const std::string& text_value, Oid type_oid) {
     switch (type_oid) {
         case kBoolOid:
-            return mytoydb::types::bool_in(text_value.c_str());
+            return pgcpp::types::bool_in(text_value.c_str());
         case kInt2Oid:
         case kInt4Oid:
-            return mytoydb::types::int4_in(text_value.c_str());
+            return pgcpp::types::int4_in(text_value.c_str());
         case kInt8Oid:
-            return mytoydb::types::int8_in(text_value.c_str());
+            return pgcpp::types::int8_in(text_value.c_str());
         case kFloat4Oid:
         case kFloat8Oid:
-            return mytoydb::types::float8_in(text_value.c_str());
+            return pgcpp::types::float8_in(text_value.c_str());
         case kTextOid:
         case kVarcharOid:
-            return mytoydb::types::text_in(text_value.c_str());
+            return pgcpp::types::text_in(text_value.c_str());
         default:
             // Default: treat as int4.
-            return mytoydb::types::int4_in(text_value.c_str());
+            return pgcpp::types::int4_in(text_value.c_str());
     }
 }
 
@@ -127,7 +127,7 @@ Datum ConvertParamToDatum(const std::string& text_value, Oid type_oid) {
 std::string EncodeValue(Datum value, Oid type_oid) {
     switch (type_oid) {
         case kBoolOid: {
-            char* s = mytoydb::types::bool_out(value);
+            char* s = pgcpp::types::bool_out(value);
             std::string result(s);
             return result;
         }
@@ -135,11 +135,11 @@ std::string EncodeValue(Datum value, Oid type_oid) {
             // int2 is stored as int16; reuse int4_out (same format).
             return std::to_string(DatumGetInt16(value));
         case kInt4Oid: {
-            char* s = mytoydb::types::int4_out(value);
+            char* s = pgcpp::types::int4_out(value);
             return std::string(s);
         }
         case kInt8Oid: {
-            char* s = mytoydb::types::int8_out(value);
+            char* s = pgcpp::types::int8_out(value);
             return std::string(s);
         }
         case kFloat4Oid: {
@@ -147,7 +147,7 @@ std::string EncodeValue(Datum value, Oid type_oid) {
             return std::to_string(DatumGetFloat4(value));
         }
         case kFloat8Oid: {
-            char* s = mytoydb::types::float8_out(value);
+            char* s = pgcpp::types::float8_out(value);
             return std::string(s);
         }
         case kTextOid:
@@ -155,11 +155,11 @@ std::string EncodeValue(Datum value, Oid type_oid) {
             return TextDatumToString(value);
         }
         case kDateOid: {
-            char* s = mytoydb::types::date_out(value);
+            char* s = pgcpp::types::date_out(value);
             return std::string(s);
         }
         case kTimestampOid: {
-            char* s = mytoydb::types::timestamp_out(value);
+            char* s = pgcpp::types::timestamp_out(value);
             return std::string(s);
         }
         default:
@@ -207,24 +207,24 @@ Oid GetExprTypeOid(Node* expr) {
     if (expr == nullptr)
         return kInt4Oid;
     switch (expr->GetTag()) {
-        case mytoydb::nodes::NodeTag::kVar: {
-            auto* v = static_cast<mytoydb::parser::Var*>(expr);
+        case pgcpp::nodes::NodeTag::kVar: {
+            auto* v = static_cast<pgcpp::parser::Var*>(expr);
             return v->vartype;
         }
-        case mytoydb::nodes::NodeTag::kConst: {
-            auto* c = static_cast<mytoydb::parser::Const*>(expr);
+        case pgcpp::nodes::NodeTag::kConst: {
+            auto* c = static_cast<pgcpp::parser::Const*>(expr);
             return c->consttype;
         }
-        case mytoydb::nodes::NodeTag::kAggref: {
-            auto* a = static_cast<mytoydb::parser::Aggref*>(expr);
+        case pgcpp::nodes::NodeTag::kAggref: {
+            auto* a = static_cast<pgcpp::parser::Aggref*>(expr);
             return a->aggtype;
         }
-        case mytoydb::nodes::NodeTag::kOpExpr: {
-            auto* op = static_cast<mytoydb::parser::OpExpr*>(expr);
+        case pgcpp::nodes::NodeTag::kOpExpr: {
+            auto* op = static_cast<pgcpp::parser::OpExpr*>(expr);
             return op->opresulttype;
         }
-        case mytoydb::nodes::NodeTag::kFuncExpr: {
-            auto* fn = static_cast<mytoydb::parser::FuncExpr*>(expr);
+        case pgcpp::nodes::NodeTag::kFuncExpr: {
+            auto* fn = static_cast<pgcpp::parser::FuncExpr*>(expr);
             return fn->funcresulttype;
         }
         default:
@@ -269,10 +269,10 @@ void Backend::exec_simple_query(const std::string& query_string) {
     std::vector<RawStmt*> raw_stmts;
 
     PG_TRY() {
-        raw_stmts = mytoydb::parser::raw_parser(query_string);
+        raw_stmts = pgcpp::parser::raw_parser(query_string);
     }
     PG_CATCH() {
-        mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+        pgcpp::error::ErrorData* ed = pgcpp::error::GetErrorData();
         SendError(ed ? ed->message : "parse error");
         AbortCurrentTransaction();
         sink_->SendMessage(BuildReadyForQuery(GetCurrentTransactionStatus()));
@@ -291,7 +291,7 @@ void Backend::exec_simple_query(const std::string& query_string) {
             // TABLE) are visible to this statement's parse analysis.
             std::vector<RawStmt*> single_stmt{raw_stmt};
             std::vector<Query*> queries =
-                mytoydb::parser::parse_analyze(single_stmt, query_string.c_str());
+                pgcpp::parser::parse_analyze(single_stmt, query_string.c_str());
 
             if (queries.empty()) {
                 CommitTransactionCommand();
@@ -313,7 +313,7 @@ void Backend::exec_simple_query(const std::string& query_string) {
             sink_->SendMessage(BuildCommandComplete(tag));
         }
         PG_CATCH() {
-            mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+            pgcpp::error::ErrorData* ed = pgcpp::error::GetErrorData();
             SendError(ed ? ed->message : "execution error");
             AbortCurrentTransaction();
             // Stop processing remaining statements.
@@ -352,11 +352,11 @@ std::string Backend::ExecuteQuery(Query* query, bool send_row_description) {
     if (query->limit_count != nullptr) {
         Node* lc_node = query->limit_count;
         // Unwrap RelabelType (e.g., int4->int8 binary coercion).
-        if (lc_node->GetTag() == mytoydb::nodes::NodeTag::kRelabelType) {
+        if (lc_node->GetTag() == pgcpp::nodes::NodeTag::kRelabelType) {
             lc_node = static_cast<RelabelType*>(lc_node)->arg;
         }
-        if (lc_node != nullptr && lc_node->GetTag() == mytoydb::nodes::NodeTag::kConst) {
-            auto* lc = static_cast<mytoydb::parser::Const*>(lc_node);
+        if (lc_node != nullptr && lc_node->GetTag() == pgcpp::nodes::NodeTag::kConst) {
+            auto* lc = static_cast<pgcpp::parser::Const*>(lc_node);
             if (!lc->constisnull)
                 row_limit = DatumGetInt64(lc->constvalue);
         }
@@ -459,8 +459,8 @@ void Backend::SendError(const std::string& message) {
 void Backend::HandleParse(const std::string& stmt_name, const std::string& query,
                           const std::vector<Oid>& param_types) {
     PG_TRY() {
-        std::vector<RawStmt*> raw_stmts = mytoydb::parser::raw_parser(query);
-        std::vector<Query*> queries = mytoydb::parser::parse_analyze(raw_stmts, query.c_str());
+        std::vector<RawStmt*> raw_stmts = pgcpp::parser::raw_parser(query);
+        std::vector<Query*> queries = pgcpp::parser::parse_analyze(raw_stmts, query.c_str());
 
         // Replace any existing prepared statement with the same name.
         auto it = prepared_statements_.find(stmt_name);
@@ -479,7 +479,7 @@ void Backend::HandleParse(const std::string& stmt_name, const std::string& query
         sink_->SendMessage(BuildParseComplete());
     }
     PG_CATCH() {
-        mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+        pgcpp::error::ErrorData* ed = pgcpp::error::GetErrorData();
         SendError(ed ? ed->message : "parse error");
     }
     PG_END_TRY();
@@ -491,7 +491,7 @@ void Backend::HandleBind(const std::string& portal_name, const std::string& stmt
     PG_TRY() {
         PreparedStatement* stmt = FindPreparedStatement(stmt_name);
         if (stmt == nullptr) {
-            ereport(mytoydb::error::LogLevel::kError,
+            ereport(pgcpp::error::LogLevel::kError,
                     "prepared statement \"" + stmt_name + "\" does not exist");
         }
 
@@ -513,7 +513,7 @@ void Backend::HandleBind(const std::string& portal_name, const std::string& stmt
         sink_->SendMessage(BuildBindComplete());
     }
     PG_CATCH() {
-        mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+        pgcpp::error::ErrorData* ed = pgcpp::error::GetErrorData();
         SendError(ed ? ed->message : "bind error");
     }
     PG_END_TRY();
@@ -524,7 +524,7 @@ void Backend::HandleDescribe(DescribeKind kind, const std::string& name) {
         if (kind == DescribeKind::kStatement) {
             PreparedStatement* stmt = FindPreparedStatement(name);
             if (stmt == nullptr) {
-                ereport(mytoydb::error::LogLevel::kError,
+                ereport(pgcpp::error::LogLevel::kError,
                         "prepared statement \"" + name + "\" does not exist");
             }
 
@@ -548,7 +548,7 @@ void Backend::HandleDescribe(DescribeKind kind, const std::string& name) {
             if (portal == nullptr) {
                 char errbuf[256];
                 std::snprintf(errbuf, sizeof(errbuf), "portal \"%s\" does not exist", name.c_str());
-                ereport(mytoydb::error::LogLevel::kError, errbuf);
+                ereport(pgcpp::error::LogLevel::kError, errbuf);
             }
             if (portal->stmt != nullptr && portal->stmt->has_results &&
                 portal->query_index < static_cast<int>(portal->stmt->queries.size())) {
@@ -559,7 +559,7 @@ void Backend::HandleDescribe(DescribeKind kind, const std::string& name) {
         }
     }
     PG_CATCH() {
-        mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+        pgcpp::error::ErrorData* ed = pgcpp::error::GetErrorData();
         SendError(ed ? ed->message : "describe error");
     }
     PG_END_TRY();
@@ -572,11 +572,11 @@ void Backend::HandleExecute(const std::string& portal_name, int /*max_rows*/) {
             char errbuf[256];
             std::snprintf(errbuf, sizeof(errbuf), "portal \"%s\" does not exist",
                           portal_name.c_str());
-            ereport(mytoydb::error::LogLevel::kError, errbuf);
+            ereport(pgcpp::error::LogLevel::kError, errbuf);
         }
         if (portal->stmt == nullptr ||
             portal->query_index >= static_cast<int>(portal->stmt->queries.size())) {
-            ereport(mytoydb::error::LogLevel::kError, "portal has no query to execute");
+            ereport(pgcpp::error::LogLevel::kError, "portal has no query to execute");
         }
 
         // Convert bound parameter values from text to Datums.
@@ -615,7 +615,7 @@ void Backend::HandleExecute(const std::string& portal_name, int /*max_rows*/) {
     }
     PG_CATCH() {
         ClearExecParams();
-        mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+        pgcpp::error::ErrorData* ed = pgcpp::error::GetErrorData();
         SendError(ed ? ed->message : "execute error");
         AbortCurrentTransaction();
     }
@@ -727,11 +727,11 @@ void SetInterruptPending() {
 void ProcessInterrupts() {
     if (g_interrupt_pending) {
         g_interrupt_pending = 0;
-        ereport(mytoydb::error::LogLevel::kError, "canceling statement due to user request");
+        ereport(pgcpp::error::LogLevel::kError, "canceling statement due to user request");
     }
 }
 
-void PostgresMain(int client_fd, mytoydb::server::SocketSink* sink) {
+void PostgresMain(int client_fd, pgcpp::server::SocketSink* sink) {
     Backend backend(sink);
 
     while (true) {
@@ -829,7 +829,7 @@ void PostgresMain(int client_fd, mytoydb::server::SocketSink* sink) {
             }
         }
         PG_CATCH() {
-            mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+            pgcpp::error::ErrorData* ed = pgcpp::error::GetErrorData();
             sink->SendMessage(BuildErrorResponse(ed ? ed->message : "internal error"));
             TransactionStatus status;
             if (IsAbortedTransactionBlock()) {
@@ -845,4 +845,4 @@ void PostgresMain(int client_fd, mytoydb::server::SocketSink* sink) {
     }
 }
 
-}  // namespace mytoydb::protocol
+}  // namespace pgcpp::protocol

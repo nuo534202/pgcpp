@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/storage/lmgr/lock.cpp.
 //
 // Implements relation-level locking with the PostgreSQL compatibility
-// matrix. In MyToyDB (single-process), locks never block — a request
+// matrix. In pgcpp (single-process), locks never block — a request
 // always succeeds immediately. Locks are tracked for release at
 // transaction end (COMMIT/ABORT).
 //
@@ -15,7 +15,7 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -165,4 +165,4 @@ int GetLockCount() {
     return static_cast<int>(HeldLocks().size());
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

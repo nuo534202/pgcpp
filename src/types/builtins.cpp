@@ -15,10 +15,10 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/numutils.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -671,4 +671,4 @@ std::string TextDatumToString(Datum datum) {
     return std::string(VARDATA(text), static_cast<std::size_t>(data_len));
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

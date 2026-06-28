@@ -6,9 +6,9 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/parser/parse_node.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
+using pgcpp::nodes::Node;
 
 // transformExpr — transform a raw expression into a transformed expression.
 // Dispatches based on the node type of the input expression.
@@ -17,4 +17,4 @@ Node* transformExpr(ParseState* pstate, Node* expr, ParseExprKind exprKind);
 // transformExprRecurse — internal recursive transform dispatch.
 Node* transformExprRecurse(ParseState* pstate, Node* expr);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

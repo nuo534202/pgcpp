@@ -5,7 +5,7 @@
 
 #include <unordered_map>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -64,7 +64,7 @@ int ProcessSyncRequests() {
 }
 
 int SyncFile(const SyncRequestTag& tag) {
-    // In MyToyDB the underlying smgr/md layer does fsync at file close time,
+    // In pgcpp the underlying smgr/md layer does fsync at file close time,
     // so a per-segment fsync is effectively a no-op. We honor the call by
     // returning 0 (success) without doing anything — the in-memory storage
     // model never leaves data unsynced.
@@ -93,4 +93,4 @@ SyncStats GetSyncStats() {
     return Stats();
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

@@ -17,21 +17,21 @@
 //   IN_PROGRESS, COMMITTED, ABORTED, or SUB_COMMITTED (for subtransactions).
 //
 // In PostgreSQL, CLOG is stored in shared memory and on disk in pg_xact/.
-// MyToyDB is single-process, so we keep an in-memory status table.
+// pgcpp is single-process, so we keep an in-memory status table.
 #pragma once
 
 #include <cstdint>
 #include <vector>
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // TransactionId — the fundamental transaction identifier.
-// PostgreSQL typedefs this globally; MyToyDB keeps it in the transaction
+// PostgreSQL typedefs this globally; pgcpp keeps it in the transaction
 // namespace (see rules/04-naming-and-namespace.md).
 using TransactionId = uint32_t;
 
 // MultiXactId — identifier for a set of multixact members (used for row
-// locking). MyToyDB does not implement multixact yet; this placeholder
+// locking). pgcpp does not implement multixact yet; this placeholder
 // matches PostgreSQL's type so struct layouts are stable.
 using MultiXactId = uint32_t;
 
@@ -128,7 +128,7 @@ enum class XidStatus : uint8_t {
 // --- Commit log API ---
 //
 // In PostgreSQL, these read/write the CLOG pages in shared memory.
-// MyToyDB uses an in-memory vector that grows as XIDs are assigned.
+// pgcpp uses an in-memory vector that grows as XIDs are assigned.
 
 // Initialize the commit log. Must be called once at startup before any
 // transaction is started.
@@ -164,7 +164,7 @@ void TransactionIdSetInProgress(TransactionId xid);
 //
 // Assigns the next normal XID. In PostgreSQL, this is done by the
 // transaction manager (procArray + ShmemVariableCache->nextXid).
-// MyToyDB uses a simple monotonic counter.
+// pgcpp uses a simple monotonic counter.
 
 // Allocate the next transaction ID (does not record status).
 TransactionId AllocateNextTransactionId();
@@ -175,4 +175,4 @@ TransactionId GetNextTransactionId();
 // Reset the transaction ID counter and commit log (for testing).
 void ResetTransactionState();
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

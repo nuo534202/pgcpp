@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/postmaster/syslogger.c.
 //
 // The syslogger reads log lines from a pipe connected to all backend
-// processes' stderr and writes them to a log file (or syslog). In MyToyDB
+// processes' stderr and writes them to a log file (or syslog). In pgcpp
 // (single-process), the syslogger is a stateful API: SysLoggerWrite
 // queues a message; SysLoggerMain processes the queue.
 #include "pgcpp/server/syslogger.hpp"
@@ -17,7 +17,7 @@
 
 #include "pgcpp/server/interrupt.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -124,7 +124,7 @@ int SysLoggerMain(int max_iterations) {
         LogMessage msg = std::move(queue.front());
         queue.erase(queue.begin());
 
-        // "Write" the message: in MyToyDB we just store it.
+        // "Write" the message: in pgcpp we just store it.
         ProcessedMessages().push_back(msg);
 
         ++stats.messages_logged;
@@ -171,4 +171,4 @@ SysLoggerStats GetSysLoggerStats() {
     return Stats();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

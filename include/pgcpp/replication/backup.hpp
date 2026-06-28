@@ -2,7 +2,7 @@
 //
 // Converted from PostgreSQL 15's src/backend/replication/backup.c
 // (the `pg_basebackup`-style server-side helpers: do_pg_backup_start,
-// do_pg_backup_stop, perform_base_backup). MyToyDB stubs the actual
+// do_pg_backup_stop, perform_base_backup). pgcpp stubs the actual
 // file-copy work and exposes StartBackup / StopBackup / DoBackup so
 // other modules can drive a "consistent snapshot" lifecycle.
 #pragma once
@@ -15,7 +15,7 @@
 
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // BackupState — lifecycle state of one base backup.
 enum class BackupState : uint8_t {
@@ -62,4 +62,4 @@ BackupHandle* GetCurrentBackup();
 // BackupStateName — string form of a BackupState.
 const char* BackupStateName(BackupState s);
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

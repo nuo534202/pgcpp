@@ -5,14 +5,14 @@
 #include "pgcpp/access/rel.hpp"
 #include "pgcpp/executor/node_exec.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 class SeqScanState : public PlanState {
 public:
     SeqScanState(Plan* p, EState* s) : PlanState(p, s) {}
 
-    mytoydb::access::Relation ss_relation = nullptr;
-    mytoydb::access::HeapScanDesc ss_scanDesc = nullptr;
+    pgcpp::access::Relation ss_relation = nullptr;
+    pgcpp::access::HeapScanDesc ss_scanDesc = nullptr;
     TupleTableSlot* ss_ScanTupleSlot = nullptr;
 
     void ExecInit() override;
@@ -21,4 +21,4 @@ public:
     void ExecReScan() override;
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

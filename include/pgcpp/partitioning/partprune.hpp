@@ -23,7 +23,7 @@
 
 #include "pgcpp/partitioning/partbounds.hpp"
 
-namespace mytoydb::partitioning {
+namespace pgcpp::partitioning {
 
 // PruneCombineOp — combinator for combine steps. Matches PostgreSQL's
 // PartitionPruneCombineOp enum (which is private in C, exposed here for
@@ -110,4 +110,4 @@ std::vector<int> partprune_partitions(
 std::vector<int> partprune_from_opexprs(const PruningContext& context,
                                         const std::vector<PruneStepOp>& opexprs);
 
-}  // namespace mytoydb::partitioning
+}  // namespace pgcpp::partitioning

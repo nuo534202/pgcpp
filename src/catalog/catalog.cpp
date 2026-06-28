@@ -21,7 +21,7 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 namespace {
 
@@ -388,4 +388,4 @@ bool CatalogTupleDelete(Oid oid) {
     return cat->DeleteClass(oid);
 }
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

@@ -1,4 +1,4 @@
-// regex_test.cpp — unit tests for the MyToyDB regex module.
+// regex_test.cpp — unit tests for the pgcpp regex module.
 //
 // Verifies the PG-compatible regex API surface (pg_regcomp / pg_regexec /
 // pg_regfree / pg_regerror / pg_regprefix / pg_regexport) backed by std::regex.
@@ -19,37 +19,37 @@
 
 namespace {
 
-using mytoydb::error::InitErrorSubsystem;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::regex::kRegBadpat;
-using mytoydb::regex::kRegBadrpt;
-using mytoydb::regex::kRegExtended;
-using mytoydb::regex::kRegIcase;
-using mytoydb::regex::kRegNewline;
-using mytoydb::regex::kRegNomatch;
-using mytoydb::regex::kRegNosub;
-using mytoydb::regex::kRegNotbol;
-using mytoydb::regex::kRegNoteol;
-using mytoydb::regex::kRegOk;
-using mytoydb::regex::pg_regcomp;
-using mytoydb::regex::pg_regerror;
-using mytoydb::regex::pg_regexec;
-using mytoydb::regex::pg_regexport;
-using mytoydb::regex::pg_regfree;
-using mytoydb::regex::pg_regprefix;
-using mytoydb::regex::regex_t;
-using mytoydb::regex::regmatch_t;
+using pgcpp::error::InitErrorSubsystem;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::regex::kRegBadpat;
+using pgcpp::regex::kRegBadrpt;
+using pgcpp::regex::kRegExtended;
+using pgcpp::regex::kRegIcase;
+using pgcpp::regex::kRegNewline;
+using pgcpp::regex::kRegNomatch;
+using pgcpp::regex::kRegNosub;
+using pgcpp::regex::kRegNotbol;
+using pgcpp::regex::kRegNoteol;
+using pgcpp::regex::kRegOk;
+using pgcpp::regex::pg_regcomp;
+using pgcpp::regex::pg_regerror;
+using pgcpp::regex::pg_regexec;
+using pgcpp::regex::pg_regexport;
+using pgcpp::regex::pg_regfree;
+using pgcpp::regex::pg_regprefix;
+using pgcpp::regex::regex_t;
+using pgcpp::regex::regmatch_t;
 
 class RegexTest : public ::testing::Test {
 protected:
     void SetUp() override {
         InitErrorSubsystem();
         context_ = AllocSetContext::Create("regex_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -270,7 +270,7 @@ TEST_F(RegexTest, RegExtendedIsDefault) {
 }
 
 TEST_F(RegexTest, RegExtendedWithoutFlagAlsoWorks) {
-    // Compiling with flags==0 also yields extended behavior in MyToyDB
+    // Compiling with flags==0 also yields extended behavior in pgcpp
     // (ECMAScript is the std::regex default).
     regex_t* re = pg_regcomp("(ab)+", 0);
     ASSERT_EQ(re->re_errno, kRegOk);

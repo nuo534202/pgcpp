@@ -6,11 +6,11 @@
 #include <string_view>
 
 // Forward declare memory::MemoryContext to avoid full include in the header.
-namespace mytoydb::memory {
+namespace pgcpp::memory {
 class MemoryContext;
 }
 
-namespace mytoydb::error {
+namespace pgcpp::error {
 
 // Error severity levels (PostgreSQL enums, kept as enum class for C++ safety).
 enum class LogLevel : int {
@@ -65,11 +65,11 @@ void PopExceptionStack(JmpBufEntry* entry);
 // ereport macro: the primary error reporting mechanism.
 // Usage: ereport(LogLevel::kError, "error message");
 #define ereport(elevel, ...) \
-    mytoydb::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__)
+    pgcpp::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 // elog macro: legacy alias for ereport (same behavior).
 #define elog(elevel, ...) \
-    mytoydb::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__)
+    pgcpp::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 // Implementation function (do not call directly; use ereport/elog macros).
 // For ERROR/FATAL/PANIC: never returns (longjmps to nearest PG_CATCH).
@@ -96,19 +96,19 @@ void EreportImpl(LogLevel elevel, const char* filename, const char* funcname, in
 // setjmp/longjmp because the constructor returns before any error occurs,
 // invalidating the jump buffer's stack frame. Use the PG_TRY/PG_CATCH macros
 // instead. This is the same constraint as PostgreSQL's C code.
-#define PG_TRY()                                                                                \
-    do {                                                                                        \
-        mytoydb::error::JmpBufEntry* _mytoydb_jmp_entry = mytoydb::error::PushExceptionStack(); \
+#define PG_TRY()                                                                            \
+    do {                                                                                    \
+        pgcpp::error::JmpBufEntry* _mytoydb_jmp_entry = pgcpp::error::PushExceptionStack(); \
         if (setjmp(_mytoydb_jmp_entry->buf) == 0) {
-#define PG_CATCH()                                         \
-    mytoydb::error::PopExceptionStack(_mytoydb_jmp_entry); \
-    }                                                      \
-    else {                                                 \
-        mytoydb::error::PopExceptionStack(_mytoydb_jmp_entry);
+#define PG_CATCH()                                       \
+    pgcpp::error::PopExceptionStack(_mytoydb_jmp_entry); \
+    }                                                    \
+    else {                                               \
+        pgcpp::error::PopExceptionStack(_mytoydb_jmp_entry);
 
 #define PG_END_TRY() \
     }                \
     }                \
     while (0)
 
-}  // namespace mytoydb::error
+}  // namespace pgcpp::error

@@ -18,7 +18,7 @@
 #include "pgcpp/catalog/pg_type.hpp"
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 namespace {
 
@@ -275,7 +275,7 @@ const FormData_pg_operator* SysCache::SearchOperatorByNameLRN(const std::string&
         return nullptr;
     }
     const FormData_pg_operator* row = cat->GetOperator(name, left, right);
-    // PG would also filter by namespace_oid; MyToyDB has a single namespace
+    // PG would also filter by namespace_oid; pgcpp has a single namespace
     // for built-ins, so we accept any namespace value.
     if (row != nullptr) {
         const_cast<SysCache*>(this)->operator_by_name_lr_n_[key] = row;
@@ -469,4 +469,4 @@ void ReleaseSysCache(const void* entry) {
     }
 }
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

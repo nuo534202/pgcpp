@@ -23,11 +23,11 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
 
 namespace {
 
@@ -52,7 +52,7 @@ void AnalyzeCTE(ParseState* pstate, CommonTableExpr* cte) {
     // like INSERT/UPDATE/DELETE inside WITH, are out of scope for this
     // task — PostgreSQL supports them but ClickBench does not use them.)
     if (cte->ctequery->GetTag() != NodeTag::kSelectStmt) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "non-SELECT statement in WITH clause is not supported");
     }
 
@@ -105,4 +105,4 @@ void transformWithClause(ParseState* pstate, WithClause* with_clause) {
     }
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

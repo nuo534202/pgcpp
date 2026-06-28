@@ -14,7 +14,7 @@
 
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 XLogReaderState* XLogReaderAlloc() {
     return new XLogReaderState();
@@ -105,4 +105,4 @@ bool XLogReadRecordAt(XLogReaderState* reader, XLogRecPtr lsn) {
     return true;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

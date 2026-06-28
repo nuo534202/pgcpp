@@ -26,7 +26,7 @@
 #include "pgcpp/storage/bufpage.hpp"      // OffsetNumber, TransactionId
 #include "pgcpp/transaction/transam.hpp"  // TransactionId, MultiXactId
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // ItemPointerData — a tuple identifier (TID).
 // Identifies a tuple by (block number, offset within page).
@@ -260,4 +260,4 @@ struct HeapTupleData {
 // HeapTuple — pointer to a HeapTupleData (PostgreSQL convention).
 using HeapTuple = HeapTupleData*;
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

@@ -6,7 +6,7 @@
 // and MergeJoin candidate paths. Each candidate is added to the joinrel's
 // pathlist via add_path(); the cheapest is selected as cheapest_path.
 //
-// For MyToyDB's Task 15.15, the generation is simplified:
+// For pgcpp's Task 15.15, the generation is simplified:
 //   - Only INNER joins are supported.
 //   - HashJoin requires a hashjoinable clause (pg_operator.oprcanhash).
 //   - MergeJoin requires a mergejoinable clause (pg_operator.oprcanmerge);
@@ -26,14 +26,14 @@
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::JoinType;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::Var;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::JoinType;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::Var;
 
 namespace {
 
@@ -125,7 +125,7 @@ void AddMergeJoinPath(PlannerInfo* root, RelOptInfo* joinrel, RelOptInfo* outer_
         return;
 
     // Use the first mergejoinable clause as the merge key. (PG handles all
-    // merge clauses; for MyToyDB's tests, a single-column merge is sufficient.)
+    // merge clauses; for pgcpp's tests, a single-column merge is sufficient.)
     RestrictInfo* merge_ri = merge_clauses[0];
     auto mergeclauses = ExtractClauses({merge_ri});
 
@@ -145,7 +145,7 @@ void AddMergeJoinPath(PlannerInfo* root, RelOptInfo* joinrel, RelOptInfo* outer_
 void add_paths_to_joinrel(PlannerInfo* root, RelOptInfo* joinrel, RelOptInfo* outer_rel,
                           RelOptInfo* inner_rel, SpecialJoinInfo* sjinfo,
                           std::vector<RestrictInfo*> restrictlist) {
-    (void)sjinfo;  // only inner joins in MyToyDB for now
+    (void)sjinfo;  // only inner joins in pgcpp for now
 
     if (outer_rel == nullptr || inner_rel == nullptr || joinrel == nullptr)
         return;
@@ -181,4 +181,4 @@ void add_paths_to_joinrel(PlannerInfo* root, RelOptInfo* joinrel, RelOptInfo* ou
     AddMergeJoinPath(root, joinrel, outer_rel, inner_rel, merge_clauses);
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

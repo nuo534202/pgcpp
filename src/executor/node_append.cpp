@@ -12,9 +12,9 @@
 #include "pgcpp/executor/plannodes.hpp"
 #include "pgcpp/executor/tupletable.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::makePallocNode;
 
 void AppendState::ExecInit() {
     auto* appendplan = static_cast<Append*>(plan);
@@ -90,4 +90,4 @@ void AppendState::ExecReScan() {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

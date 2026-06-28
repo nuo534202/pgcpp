@@ -47,76 +47,76 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_operator;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::OperatorKind;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::executor::Plan;
-using mytoydb::executor::PlanType;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::add_path;
-using mytoydb::optimizer::build_simple_rel;
-using mytoydb::optimizer::Cost;
-using mytoydb::optimizer::create_seqscan_path;
-using mytoydb::optimizer::find_base_rel;
-using mytoydb::optimizer::make_restrictinfo;
-using mytoydb::optimizer::Path;
-using mytoydb::optimizer::PathType;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::query_planner;
-using mytoydb::optimizer::Relids;
-using mytoydb::optimizer::RelOptInfo;
-using mytoydb::optimizer::RestrictInfo;
-using mytoydb::optimizer::SeqScanPath;
-using mytoydb::optimizer::SpecialJoinInfo;
-using mytoydb::optimizer::geqo::AllocateChromosome;
-using mytoydb::optimizer::geqo::Chromosome;
-using mytoydb::optimizer::geqo::CollectBaseRelIds;
-using mytoydb::optimizer::geqo::ComputeGeqoParams;
-using mytoydb::optimizer::geqo::CopyChromosome;
-using mytoydb::optimizer::geqo::CountBaseRels;
-using mytoydb::optimizer::geqo::Crossover;
-using mytoydb::optimizer::geqo::CrossoverERX;
-using mytoydb::optimizer::geqo::CrossoverOX1;
-using mytoydb::optimizer::geqo::CrossoverOX2;
-using mytoydb::optimizer::geqo::CrossoverPMX;
-using mytoydb::optimizer::geqo::CrossoverPX;
-using mytoydb::optimizer::geqo::CrossoverType;
-using mytoydb::optimizer::geqo::FindBestChromosome;
-using mytoydb::optimizer::geqo::FormatChromosome;
-using mytoydb::optimizer::geqo::Gene;
-using mytoydb::optimizer::geqo::GeqoBuildBestPath;
-using mytoydb::optimizer::geqo::GeqoEvalFitness;
-using mytoydb::optimizer::geqo::GeqoParams;
-using mytoydb::optimizer::geqo::GeqoRng;
-using mytoydb::optimizer::geqo::GeqoSolve;
-using mytoydb::optimizer::geqo::InitChromosomeIdentity;
-using mytoydb::optimizer::geqo::InitChromosomeRandom;
-using mytoydb::optimizer::geqo::IsValidPermutation;
-using mytoydb::optimizer::geqo::kGeqoThreshold;
-using mytoydb::optimizer::geqo::MutateChromosome;
-using mytoydb::optimizer::geqo::RandomCrossover;
-using mytoydb::optimizer::geqo::SetGeqoSeed;
-using mytoydb::optimizer::geqo::ShouldUseGeqo;
-using mytoydb::parser::Alias;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::JoinType;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_operator;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::OperatorKind;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::executor::Plan;
+using pgcpp::executor::PlanType;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::add_path;
+using pgcpp::optimizer::build_simple_rel;
+using pgcpp::optimizer::Cost;
+using pgcpp::optimizer::create_seqscan_path;
+using pgcpp::optimizer::find_base_rel;
+using pgcpp::optimizer::make_restrictinfo;
+using pgcpp::optimizer::Path;
+using pgcpp::optimizer::PathType;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::query_planner;
+using pgcpp::optimizer::Relids;
+using pgcpp::optimizer::RelOptInfo;
+using pgcpp::optimizer::RestrictInfo;
+using pgcpp::optimizer::SeqScanPath;
+using pgcpp::optimizer::SpecialJoinInfo;
+using pgcpp::optimizer::geqo::AllocateChromosome;
+using pgcpp::optimizer::geqo::Chromosome;
+using pgcpp::optimizer::geqo::CollectBaseRelIds;
+using pgcpp::optimizer::geqo::ComputeGeqoParams;
+using pgcpp::optimizer::geqo::CopyChromosome;
+using pgcpp::optimizer::geqo::CountBaseRels;
+using pgcpp::optimizer::geqo::Crossover;
+using pgcpp::optimizer::geqo::CrossoverERX;
+using pgcpp::optimizer::geqo::CrossoverOX1;
+using pgcpp::optimizer::geqo::CrossoverOX2;
+using pgcpp::optimizer::geqo::CrossoverPMX;
+using pgcpp::optimizer::geqo::CrossoverPX;
+using pgcpp::optimizer::geqo::CrossoverType;
+using pgcpp::optimizer::geqo::FindBestChromosome;
+using pgcpp::optimizer::geqo::FormatChromosome;
+using pgcpp::optimizer::geqo::Gene;
+using pgcpp::optimizer::geqo::GeqoBuildBestPath;
+using pgcpp::optimizer::geqo::GeqoEvalFitness;
+using pgcpp::optimizer::geqo::GeqoParams;
+using pgcpp::optimizer::geqo::GeqoRng;
+using pgcpp::optimizer::geqo::GeqoSolve;
+using pgcpp::optimizer::geqo::InitChromosomeIdentity;
+using pgcpp::optimizer::geqo::InitChromosomeRandom;
+using pgcpp::optimizer::geqo::IsValidPermutation;
+using pgcpp::optimizer::geqo::kGeqoThreshold;
+using pgcpp::optimizer::geqo::MutateChromosome;
+using pgcpp::optimizer::geqo::RandomCrossover;
+using pgcpp::optimizer::geqo::SetGeqoSeed;
+using pgcpp::optimizer::geqo::ShouldUseGeqo;
+using pgcpp::parser::Alias;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::JoinType;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
 
 namespace {
 
@@ -125,9 +125,9 @@ constexpr Oid kInt4EqOp = 96;  // int4 = int4 (bootstrap OID)
 class GeqoTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("geqo_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
         // Seed the GEQO RNG deterministically so test outcomes are reproducible.
         SetGeqoSeed(0x123456789ABCDEF0ULL);
         // Install a minimal catalog with int4eq (so RestrictInfo can set
@@ -149,7 +149,7 @@ protected:
     void TearDown() override {
         SetCatalog(nullptr);
         delete catalog_;
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

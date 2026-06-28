@@ -4,7 +4,7 @@
 //
 // The launcher maintains a queue of tables that need VACUUM or ANALYZE.
 // AutoVacuumLauncherMain processes the queue by calling
-// AutoVacuumWorkerMain for each item. In MyToyDB (single-process), the
+// AutoVacuumWorkerMain for each item. In pgcpp (single-process), the
 // worker executes synchronously rather than being forked.
 #include "pgcpp/server/autovacuum.hpp"
 
@@ -17,7 +17,7 @@
 
 #include "pgcpp/server/interrupt.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -104,7 +104,7 @@ int AutoVacuumLauncherMain(int max_workers) {
 }
 
 int AutoVacuumWorkerMain(const AutoVacuumWorkItem& item) {
-    // MyToyDB simplification: VACUUM/ANALYZE are no-ops that return success
+    // pgcpp simplification: VACUUM/ANALYZE are no-ops that return success
     // (the underlying commands module already handles them eagerly). The
     // worker's role is to record the work item execution in stats.
     // Returns 0 on success, non-zero on error.
@@ -130,4 +130,4 @@ AutoVacuumStats GetAutoVacuumStats() {
     return Stats();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

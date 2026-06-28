@@ -1,7 +1,7 @@
 // psql_client.cpp — PsqlClient implementation.
 //
 // Implements the TCP connection, startup handshake, and simple query
-// protocol for the MyToyDB client.
+// protocol for the pgcpp client.
 #include "pgcpp/tools/psql_client.hpp"
 
 #include <arpa/inet.h>
@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 
-namespace mytoydb::tools {
+namespace pgcpp::tools {
 
 namespace {
 
@@ -420,4 +420,4 @@ std::string FormatQueryResultCsv(const QueryResult& result) {
     return oss.str();
 }
 
-}  // namespace mytoydb::tools
+}  // namespace pgcpp::tools

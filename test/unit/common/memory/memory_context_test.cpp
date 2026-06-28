@@ -6,7 +6,7 @@
 
 #include "pgcpp/common/memory/alloc_set.hpp"
 
-using namespace mytoydb::memory;
+using namespace pgcpp::memory;
 
 TEST(MemoryContextTest, PallocAndFree) {
     AllocSetContext* ctx = AllocSetContext::Create("test", nullptr);

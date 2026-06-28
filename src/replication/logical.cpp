@@ -11,9 +11,9 @@
 #include "pgcpp/replication/slot.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -117,4 +117,4 @@ void DecodingEmitMessage(LogicalDecodingContext& ctx, LogicalRepMsgType type,
     ctx.output_buffer.push_back('\n');
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

@@ -12,14 +12,14 @@
 #include "pgcpp/optimizer/cost.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Var;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Var;
 
 void CostSeqScan(SeqScanPath* path, int pages, int tuples) {
     // Cost = I/O cost (pages * seq_page_cost) + CPU cost (tuples * cpu_tuple_cost)
@@ -129,4 +129,4 @@ Selectivity EstimateSelectivity(const Node* qual, int total_rows) {
     return 0.5;
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

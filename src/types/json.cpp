@@ -16,10 +16,10 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 // Forward declaration — defined below.
 void FreeJsonValue(JsonValue* v);
@@ -398,7 +398,7 @@ void EmitValue(std::string& out, const JsonValue* v) {
 JsonValue* AllocJsonValue() {
     auto* v = static_cast<JsonValue*>(palloc(sizeof(JsonValue)));
     new (v) JsonValue();
-    mytoydb::memory::MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    pgcpp::memory::MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         // Each child JsonValue is allocated via AllocJsonValue and registers
         // its own destructor; we therefore only destroy this node's own
@@ -471,4 +471,4 @@ Datum json_eq(Datum a, Datum b) {
     return BoolGetDatum(json_cmp(a, b) == 0);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

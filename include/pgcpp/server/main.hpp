@@ -1,4 +1,4 @@
-// main.h — Main entry point for the MyToyDB server.
+// main.h — Main entry point for the pgcpp server.
 //
 // Converted from PostgreSQL 15's src/backend/main/main.c.
 //
@@ -8,7 +8,7 @@
 
 #include <string>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 class GucConfig;
 
@@ -44,4 +44,4 @@ bool LoadGucFromDataDir(const std::string& data_dir, GucConfig* guc);
 // Returns 0 on success, non-zero on error.
 int MyToyDBMain(int argc, char* argv[]);
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

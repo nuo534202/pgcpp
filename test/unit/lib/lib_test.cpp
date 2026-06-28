@@ -42,20 +42,20 @@
 
 namespace {
 
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
 
 class LibTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("lib_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -69,7 +69,7 @@ protected:
 // ===========================================================================
 
 TEST_F(LibTest, DsHashInsertAndLookup) {
-    mytoydb::lib::DsHash<int, std::string> table;
+    pgcpp::lib::DsHash<int, std::string> table;
     EXPECT_TRUE(table.IsEmpty());
     auto* p = table.Insert(42, "answer");
     ASSERT_NE(p, nullptr);
@@ -82,7 +82,7 @@ TEST_F(LibTest, DsHashInsertAndLookup) {
 }
 
 TEST_F(LibTest, DsHashInsertDuplicateDoesNotReplace) {
-    mytoydb::lib::DsHash<int, int> table;
+    pgcpp::lib::DsHash<int, int> table;
     table.Insert(1, 100);
     auto* p = table.Insert(1, 200);  // duplicate, no replace
     ASSERT_NE(p, nullptr);
@@ -91,7 +91,7 @@ TEST_F(LibTest, DsHashInsertDuplicateDoesNotReplace) {
 }
 
 TEST_F(LibTest, DsHashInsertDuplicateWithReplace) {
-    mytoydb::lib::DsHash<int, int> table;
+    pgcpp::lib::DsHash<int, int> table;
     table.Insert(1, 100);
     auto* p = table.Insert(1, 200, /*allow_replace=*/true);
     ASSERT_NE(p, nullptr);
@@ -100,7 +100,7 @@ TEST_F(LibTest, DsHashInsertDuplicateWithReplace) {
 }
 
 TEST_F(LibTest, DsHashDelete) {
-    mytoydb::lib::DsHash<int, int> table;
+    pgcpp::lib::DsHash<int, int> table;
     table.Insert(1, 10);
     table.Insert(2, 20);
     table.Insert(3, 30);
@@ -114,7 +114,7 @@ TEST_F(LibTest, DsHashDelete) {
 }
 
 TEST_F(LibTest, DsHashIterate) {
-    mytoydb::lib::DsHash<std::string, int> table;
+    pgcpp::lib::DsHash<std::string, int> table;
     table.Insert("a", 1);
     table.Insert("b", 2);
     table.Insert("c", 3);
@@ -127,7 +127,7 @@ TEST_F(LibTest, DsHashIterate) {
 }
 
 TEST_F(LibTest, DsHashClear) {
-    mytoydb::lib::DsHash<int, int> table;
+    pgcpp::lib::DsHash<int, int> table;
     for (int i = 0; i < 50; ++i) {
         table.Insert(i, i * 2);
     }
@@ -143,16 +143,16 @@ TEST_F(LibTest, DsHashClear) {
 
 struct DItem {
     int value;
-    mytoydb::lib::DListNode node;
+    pgcpp::lib::DListNode node;
 };
 
 struct SItem {
     int value;
-    mytoydb::lib::SListNode node;
+    pgcpp::lib::SListNode node;
 };
 
 TEST_F(LibTest, DListPushPopHeadTail) {
-    mytoydb::lib::DList list;
+    pgcpp::lib::DList list;
     EXPECT_TRUE(list.IsEmpty());
     DItem a{1, {}};
     DItem b{2, {}};
@@ -164,19 +164,19 @@ TEST_F(LibTest, DListPushPopHeadTail) {
     // c -> a -> b
     auto* head = list.Head();
     ASSERT_NE(head, nullptr);
-    EXPECT_EQ((mytoydb::lib::dlist_container<DItem, &DItem::node>(head)->value), 3);
+    EXPECT_EQ((pgcpp::lib::dlist_container<DItem, &DItem::node>(head)->value), 3);
     auto* tail = list.Tail();
     ASSERT_NE(tail, nullptr);
-    EXPECT_EQ((mytoydb::lib::dlist_container<DItem, &DItem::node>(tail)->value), 2);
+    EXPECT_EQ((pgcpp::lib::dlist_container<DItem, &DItem::node>(tail)->value), 2);
     auto* popped_head = list.PopHead();
-    EXPECT_EQ((mytoydb::lib::dlist_container<DItem, &DItem::node>(popped_head)->value), 3);
+    EXPECT_EQ((pgcpp::lib::dlist_container<DItem, &DItem::node>(popped_head)->value), 3);
     auto* popped_tail = list.PopTail();
-    EXPECT_EQ((mytoydb::lib::dlist_container<DItem, &DItem::node>(popped_tail)->value), 2);
+    EXPECT_EQ((pgcpp::lib::dlist_container<DItem, &DItem::node>(popped_tail)->value), 2);
     EXPECT_EQ(list.Length(), 1);
 }
 
 TEST_F(LibTest, DListIterate) {
-    mytoydb::lib::DList list;
+    pgcpp::lib::DList list;
     DItem items[5];
     for (int i = 0; i < 5; ++i) {
         items[i].value = i;
@@ -184,13 +184,13 @@ TEST_F(LibTest, DListIterate) {
     }
     std::vector<int> seen;
     for (auto it = list.begin(); it != list.end(); ++it) {
-        seen.push_back(mytoydb::lib::dlist_container<DItem, &DItem::node>(*it)->value);
+        seen.push_back(pgcpp::lib::dlist_container<DItem, &DItem::node>(*it)->value);
     }
     EXPECT_EQ(seen, std::vector<int>({0, 1, 2, 3, 4}));
 }
 
 TEST_F(LibTest, DListDeleteNode) {
-    mytoydb::lib::DList list;
+    pgcpp::lib::DList list;
     DItem a{1, {}};
     DItem b{2, {}};
     DItem c{3, {}};
@@ -201,19 +201,19 @@ TEST_F(LibTest, DListDeleteNode) {
     EXPECT_EQ(list.Length(), 2);
     std::vector<int> seen;
     for (auto it = list.begin(); it != list.end(); ++it) {
-        seen.push_back(mytoydb::lib::dlist_container<DItem, &DItem::node>(*it)->value);
+        seen.push_back(pgcpp::lib::dlist_container<DItem, &DItem::node>(*it)->value);
     }
     EXPECT_EQ(seen, std::vector<int>({1, 3}));
 }
 
 TEST_F(LibTest, DListPopEmpty) {
-    mytoydb::lib::DList list;
+    pgcpp::lib::DList list;
     EXPECT_EQ(list.PopHead(), nullptr);
     EXPECT_EQ(list.PopTail(), nullptr);
 }
 
 TEST_F(LibTest, DListClear) {
-    mytoydb::lib::DList list;
+    pgcpp::lib::DList list;
     DItem a{1, {}};
     DItem b{2, {}};
     list.PushTail(&a.node);
@@ -223,7 +223,7 @@ TEST_F(LibTest, DListClear) {
 }
 
 TEST_F(LibTest, SListPushPop) {
-    mytoydb::lib::SList list;
+    pgcpp::lib::SList list;
     EXPECT_TRUE(list.IsEmpty());
     SItem a{1, {}};
     SItem b{2, {}};
@@ -243,7 +243,7 @@ TEST_F(LibTest, SListPushPop) {
 }
 
 TEST_F(LibTest, SListIterate) {
-    mytoydb::lib::SList list;
+    pgcpp::lib::SList list;
     SItem items[5];
     for (int i = 0; i < 5; ++i) {
         items[i].value = i;
@@ -262,7 +262,7 @@ TEST_F(LibTest, SListIterate) {
 // ===========================================================================
 
 TEST_F(LibTest, RBTreeInsertAndFind) {
-    mytoydb::lib::RBTree<int> tree;
+    pgcpp::lib::RBTree<int> tree;
     EXPECT_TRUE(tree.IsEmpty());
     EXPECT_TRUE(tree.Insert(5));
     EXPECT_TRUE(tree.Insert(3));
@@ -278,7 +278,7 @@ TEST_F(LibTest, RBTreeInsertAndFind) {
 }
 
 TEST_F(LibTest, RBTreeDelete) {
-    mytoydb::lib::RBTree<int> tree;
+    pgcpp::lib::RBTree<int> tree;
     for (int v : {10, 5, 15, 3, 7, 12, 20, 1, 4, 6, 8, 11, 13, 18, 25}) {
         tree.Insert(v);
     }
@@ -293,7 +293,7 @@ TEST_F(LibTest, RBTreeDelete) {
 }
 
 TEST_F(LibTest, RBTreeForeachLeftAscending) {
-    mytoydb::lib::RBTree<int> tree;
+    pgcpp::lib::RBTree<int> tree;
     for (int v : {5, 3, 8, 1, 4, 7, 9}) {
         tree.Insert(v);
     }
@@ -303,7 +303,7 @@ TEST_F(LibTest, RBTreeForeachLeftAscending) {
 }
 
 TEST_F(LibTest, RBTreeForeachRightDescending) {
-    mytoydb::lib::RBTree<int> tree;
+    pgcpp::lib::RBTree<int> tree;
     for (int v : {5, 3, 8, 1, 4, 7, 9}) {
         tree.Insert(v);
     }
@@ -313,7 +313,7 @@ TEST_F(LibTest, RBTreeForeachRightDescending) {
 }
 
 TEST_F(LibTest, RBTreeClear) {
-    mytoydb::lib::RBTree<std::string> tree;
+    pgcpp::lib::RBTree<std::string> tree;
     for (int i = 0; i < 50; ++i) {
         tree.Insert(std::to_string(i));
     }
@@ -324,11 +324,11 @@ TEST_F(LibTest, RBTreeClear) {
 }
 
 TEST_F(LibTest, RBTreeMoveSemantics) {
-    mytoydb::lib::RBTree<int> tree;
+    pgcpp::lib::RBTree<int> tree;
     for (int i = 0; i < 10; ++i) {
         tree.Insert(i);
     }
-    mytoydb::lib::RBTree<int> moved = std::move(tree);
+    pgcpp::lib::RBTree<int> moved = std::move(tree);
     EXPECT_EQ(moved.Size(), 10u);
     EXPECT_TRUE(tree.IsEmpty());
     auto sorted = moved.ToSortedVector();
@@ -340,7 +340,7 @@ TEST_F(LibTest, RBTreeMoveSemantics) {
 // ===========================================================================
 
 TEST_F(LibTest, IntegerSetAddContains) {
-    mytoydb::lib::IntegerSet set;
+    pgcpp::lib::IntegerSet set;
     EXPECT_TRUE(set.IsEmpty());
     EXPECT_TRUE(set.Add(42));
     EXPECT_FALSE(set.Add(42));  // duplicate
@@ -352,7 +352,7 @@ TEST_F(LibTest, IntegerSetAddContains) {
 }
 
 TEST_F(LibTest, IntegerSetIterate) {
-    mytoydb::lib::IntegerSet set;
+    pgcpp::lib::IntegerSet set;
     for (uint64_t v : {5u, 1u, 100u, 50u, 2u}) {
         set.Add(v);
     }
@@ -366,7 +366,7 @@ TEST_F(LibTest, IntegerSetIterate) {
 }
 
 TEST_F(LibTest, IntegerSetReset) {
-    mytoydb::lib::IntegerSet set;
+    pgcpp::lib::IntegerSet set;
     for (uint64_t v = 0; v < 10; ++v) {
         set.Add(v);
     }
@@ -380,7 +380,7 @@ TEST_F(LibTest, IntegerSetReset) {
 // ===========================================================================
 
 TEST_F(LibTest, BloomFilterNoFalseNegatives) {
-    mytoydb::lib::BloomFilter bf(/*bit_count=*/4096, /*k=*/7);
+    pgcpp::lib::BloomFilter bf(/*bit_count=*/4096, /*k=*/7);
     std::vector<std::string> keys = {"alpha", "beta", "gamma", "delta", "epsilon"};
     for (const auto& k : keys) {
         bf.Add(k.data(), k.size());
@@ -392,7 +392,7 @@ TEST_F(LibTest, BloomFilterNoFalseNegatives) {
 }
 
 TEST_F(LibTest, BloomFilterReset) {
-    mytoydb::lib::BloomFilter bf(2048, 5);
+    pgcpp::lib::BloomFilter bf(2048, 5);
     std::string key = "test";
     bf.Add(key.data(), key.size());
     EXPECT_TRUE(bf.Test(key.data(), key.size()));
@@ -406,7 +406,7 @@ TEST_F(LibTest, BloomFilterReset) {
 
 TEST_F(LibTest, BloomFilterFalsePositiveRate) {
     // With a generous bit count the false positive rate should be low.
-    mytoydb::lib::BloomFilter bf(8192, 6);
+    pgcpp::lib::BloomFilter bf(8192, 6);
     for (int i = 0; i < 100; ++i) {
         std::string k = "in" + std::to_string(i);
         bf.Add(k.data(), k.size());
@@ -428,7 +428,7 @@ TEST_F(LibTest, BloomFilterFalsePositiveRate) {
 // ===========================================================================
 
 TEST_F(LibTest, HyperLogLogEstimateDistinctCount) {
-    mytoydb::lib::HyperLogLog hll(/*register_bits=*/14);
+    pgcpp::lib::HyperLogLog hll(/*register_bits=*/14);
     const int n = 1000;
     for (int i = 0; i < n; ++i) {
         std::string s = "item" + std::to_string(i);
@@ -442,7 +442,7 @@ TEST_F(LibTest, HyperLogLogEstimateDistinctCount) {
 }
 
 TEST_F(LibTest, HyperLogLogDuplicateNoOp) {
-    mytoydb::lib::HyperLogLog hll(14);
+    pgcpp::lib::HyperLogLog hll(14);
     for (int i = 0; i < 100; ++i) {
         std::string s = "same";
         hll.Add(s.data(), s.size());
@@ -454,7 +454,7 @@ TEST_F(LibTest, HyperLogLogDuplicateNoOp) {
 }
 
 TEST_F(LibTest, HyperLogLogReset) {
-    mytoydb::lib::HyperLogLog hll(14);
+    pgcpp::lib::HyperLogLog hll(14);
     for (int i = 0; i < 100; ++i) {
         std::string s = "x" + std::to_string(i);
         hll.Add(s.data(), s.size());
@@ -471,7 +471,7 @@ TEST_F(LibTest, HyperLogLogReset) {
 // ===========================================================================
 
 TEST_F(LibTest, BinaryHeapMinOrder) {
-    mytoydb::lib::BinaryHeap<int> heap;  // std::less<int> -> min-heap
+    pgcpp::lib::BinaryHeap<int> heap;  // std::less<int> -> min-heap
     for (int v : {5, 3, 8, 1, 9, 4, 7, 2, 6}) {
         heap.Add(v);
     }
@@ -486,7 +486,7 @@ TEST_F(LibTest, BinaryHeapMinOrder) {
 }
 
 TEST_F(LibTest, BinaryHeapMaxOrder) {
-    mytoydb::lib::BinaryHeap<int, std::greater<int>> heap;
+    pgcpp::lib::BinaryHeap<int, std::greater<int>> heap;
     for (int v : {5, 3, 8, 1, 9, 4, 7, 2, 6}) {
         heap.Add(v);
     }
@@ -500,7 +500,7 @@ TEST_F(LibTest, BinaryHeapMaxOrder) {
 }
 
 TEST_F(LibTest, BinaryHeapReplaceTop) {
-    mytoydb::lib::BinaryHeap<int> heap;
+    pgcpp::lib::BinaryHeap<int> heap;
     for (int v : {5, 3, 8, 1, 9}) {
         heap.Add(v);
     }
@@ -514,7 +514,7 @@ TEST_F(LibTest, BinaryHeapReplaceTop) {
 }
 
 TEST_F(LibTest, BinaryHeapBuildBulk) {
-    mytoydb::lib::BinaryHeap<int> heap;
+    pgcpp::lib::BinaryHeap<int> heap;
     std::vector<int> data = {7, 2, 9, 4, 1, 6, 3, 8, 5};
     heap.Build(data.begin(), data.end());
     EXPECT_EQ(heap.Size(), data.size());
@@ -529,7 +529,7 @@ TEST_F(LibTest, BinaryHeapBuildBulk) {
 }
 
 TEST_F(LibTest, BinaryHeapPopEmpty) {
-    mytoydb::lib::BinaryHeap<int> heap;
+    pgcpp::lib::BinaryHeap<int> heap;
     int val = 0;
     EXPECT_FALSE(heap.Pop(&val));
 }
@@ -539,7 +539,7 @@ TEST_F(LibTest, BinaryHeapPopEmpty) {
 // ===========================================================================
 
 TEST_F(LibTest, PairingHeapMinOrder) {
-    mytoydb::lib::PairingHeap<int> heap;
+    pgcpp::lib::PairingHeap<int> heap;
     for (int v : {5, 3, 8, 1, 9, 4, 7, 2, 6}) {
         heap.Add(v);
     }
@@ -554,7 +554,7 @@ TEST_F(LibTest, PairingHeapMinOrder) {
 }
 
 TEST_F(LibTest, PairingHeapMaxOrder) {
-    mytoydb::lib::PairingHeap<int, std::greater<int>> heap;
+    pgcpp::lib::PairingHeap<int, std::greater<int>> heap;
     for (int v : {5, 3, 8, 1, 9, 4, 7, 2, 6}) {
         heap.Add(v);
     }
@@ -568,8 +568,8 @@ TEST_F(LibTest, PairingHeapMaxOrder) {
 }
 
 TEST_F(LibTest, PairingHeapMeld) {
-    mytoydb::lib::PairingHeap<int> a;
-    mytoydb::lib::PairingHeap<int> b;
+    pgcpp::lib::PairingHeap<int> a;
+    pgcpp::lib::PairingHeap<int> b;
     for (int v : {1, 5, 9}) {
         a.Add(v);
     }
@@ -588,7 +588,7 @@ TEST_F(LibTest, PairingHeapMeld) {
 }
 
 TEST_F(LibTest, PairingHeapStress) {
-    mytoydb::lib::PairingHeap<int> heap;
+    pgcpp::lib::PairingHeap<int> heap;
     std::vector<int> expected;
     for (int i = 0; i < 200; ++i) {
         int v = (i * 37) % 1000;
@@ -605,7 +605,7 @@ TEST_F(LibTest, PairingHeapStress) {
 }
 
 TEST_F(LibTest, PairingHeapPopEmpty) {
-    mytoydb::lib::PairingHeap<int> heap;
+    pgcpp::lib::PairingHeap<int> heap;
     int val = 0;
     EXPECT_FALSE(heap.Pop(&val));
 }

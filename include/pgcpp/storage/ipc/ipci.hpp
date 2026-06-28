@@ -8,7 +8,7 @@
 // shmem_startup_hook / pqsignoinit mechanism, then calls them in order
 // during CreateSharedMemoryAndSemaphores().
 //
-// MyToyDB keeps the same registry-and-dispatch design: subsystems call
+// pgcpp keeps the same registry-and-dispatch design: subsystems call
 // RegisterIPCInitFn() with a name and a function pointer, then
 // CreateSharedMemoryAndSemaphores() iterates the registry.
 #pragma once
@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // IPCInitFn — signature for an initialization function. Returns true on
 // success, false on failure (which aborts startup).
@@ -39,4 +39,4 @@ void ResetIPCInitFns();
 // functions in registration order.
 std::vector<std::string> RegisteredIPCInitFns();
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

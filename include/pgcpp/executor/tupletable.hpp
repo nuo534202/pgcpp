@@ -18,29 +18,29 @@
 #include "pgcpp/transaction/heap_tuple.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // TupleTableSlot — holds a tuple in deformed form.
 struct TupleTableSlot {
-    mytoydb::access::TupleDesc tts_tupleDescriptor = nullptr;
-    mytoydb::transaction::HeapTuple tts_tuple = nullptr;  // backing tuple
-    mytoydb::types::Datum* tts_values = nullptr;          // deformed values
-    bool* tts_isnull = nullptr;                           // null flags
-    bool tts_shouldFree = false;                          // free tts_tuple on Clear?
-    bool tts_shouldFreeMin = false;                       // free minimal tuple? (unused)
-    bool tts_slow = false;                                // slow deform path used? (unused)
-    bool tts_nvalid = false;                              // are tts_values/tts_isnull valid?
-    bool tts_isempty = true;                              // slot is empty (no tuple stored)
+    pgcpp::access::TupleDesc tts_tupleDescriptor = nullptr;
+    pgcpp::transaction::HeapTuple tts_tuple = nullptr;  // backing tuple
+    pgcpp::types::Datum* tts_values = nullptr;          // deformed values
+    bool* tts_isnull = nullptr;                         // null flags
+    bool tts_shouldFree = false;                        // free tts_tuple on Clear?
+    bool tts_shouldFreeMin = false;                     // free minimal tuple? (unused)
+    bool tts_slow = false;                              // slow deform path used? (unused)
+    bool tts_nvalid = false;                            // are tts_values/tts_isnull valid?
+    bool tts_isempty = true;                            // slot is empty (no tuple stored)
 
     // Create a slot for the given tuple descriptor.
     // Allocates tts_values and tts_isnull arrays via palloc.
-    static TupleTableSlot* Make(mytoydb::access::TupleDesc tupdesc);
+    static TupleTableSlot* Make(pgcpp::access::TupleDesc tupdesc);
 
     // Store a physical heap tuple into the slot, deforming it.
-    void StoreTuple(mytoydb::transaction::HeapTuple tuple, bool shouldFree);
+    void StoreTuple(pgcpp::transaction::HeapTuple tuple, bool shouldFree);
 
     // Store virtual values (no backing tuple).
-    void StoreVirtual(const mytoydb::types::Datum* values, const bool* isnull);
+    void StoreVirtual(const pgcpp::types::Datum* values, const bool* isnull);
 
     // Clear the slot (free backing tuple if shouldFree).
     void Clear();
@@ -53,11 +53,11 @@ struct TupleTableSlot {
 
 // --- PostgreSQL-compatible API names ---
 
-inline TupleTableSlot* MakeTupleTableSlot(mytoydb::access::TupleDesc tupdesc) {
+inline TupleTableSlot* MakeTupleTableSlot(pgcpp::access::TupleDesc tupdesc) {
     return TupleTableSlot::Make(tupdesc);
 }
 
-inline void ExecStoreTuple(mytoydb::transaction::HeapTuple tuple, TupleTableSlot* slot,
+inline void ExecStoreTuple(pgcpp::transaction::HeapTuple tuple, TupleTableSlot* slot,
                            bool shouldFree) {
     slot->StoreTuple(tuple, shouldFree);
 }
@@ -66,4 +66,4 @@ inline void ExecClearTuple(TupleTableSlot* slot) {
     slot->Clear();
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

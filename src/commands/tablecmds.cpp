@@ -23,40 +23,40 @@
 #include "pgcpp/storage/smgr.hpp"
 #include "pgcpp/types/builtins.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationDropStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::AlterTableCmd;
-using mytoydb::parser::AlterTableStmt;
-using mytoydb::parser::ColumnDef;
-using mytoydb::parser::CreateStmt;
-using mytoydb::parser::DropStmt;
-using mytoydb::parser::get_typbyval;
-using mytoydb::parser::get_typlen;
-using mytoydb::parser::Node;
-using mytoydb::parser::RangeVar;
-using mytoydb::parser::RenameStmt;
-using mytoydb::parser::TruncateStmt;
-using mytoydb::parser::TypeName;
-using mytoydb::parser::typenameTypeId;
-using mytoydb::storage::smgrdounlinkall;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationCreateStorage;
+using pgcpp::access::RelationDropStorage;
+using pgcpp::access::RelationOpen;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::memory::palloc;
+using pgcpp::memory::pfree;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::AlterTableCmd;
+using pgcpp::parser::AlterTableStmt;
+using pgcpp::parser::ColumnDef;
+using pgcpp::parser::CreateStmt;
+using pgcpp::parser::DropStmt;
+using pgcpp::parser::get_typbyval;
+using pgcpp::parser::get_typlen;
+using pgcpp::parser::Node;
+using pgcpp::parser::RangeVar;
+using pgcpp::parser::RenameStmt;
+using pgcpp::parser::TruncateStmt;
+using pgcpp::parser::TypeName;
+using pgcpp::parser::typenameTypeId;
+using pgcpp::storage::smgrdounlinkall;
 
 namespace {
 
@@ -66,7 +66,7 @@ std::string ExtractTypeName(TypeName* type_name) {
         return "";
     Node* last = type_name->names.back();
     if (last->GetTag() == NodeTag::kString) {
-        auto* v = static_cast<mytoydb::nodes::Value*>(last);
+        auto* v = static_cast<pgcpp::nodes::Value*>(last);
         return v->GetString();
     }
     return "";
@@ -100,7 +100,7 @@ std::string DefineRelation(CreateStmt* stmt) {
     if (cat->GetClassByName(relname) != nullptr) {
         if (stmt->if_not_exists)
             return "CREATE TABLE";
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + relname + "\" already exists");
+        ereport(pgcpp::error::LogLevel::kError, "relation \"" + relname + "\" already exists");
     }
 
     // Resolve column types.
@@ -122,8 +122,8 @@ std::string DefineRelation(CreateStmt* stmt) {
         ci.name = coldef->colname;
         std::string type_name = ExtractTypeName(coldef->type_name);
         ci.type_oid = typenameTypeId(type_name);
-        if (ci.type_oid == mytoydb::types::kInvalidOid) {
-            ereport(mytoydb::error::LogLevel::kError, "type \"" + type_name + "\" does not exist");
+        if (ci.type_oid == pgcpp::types::kInvalidOid) {
+            ereport(pgcpp::error::LogLevel::kError, "type \"" + type_name + "\" does not exist");
         }
         ci.typlen = get_typlen(ci.type_oid);
         ci.typbyval = get_typbyval(ci.type_oid);
@@ -171,13 +171,13 @@ std::string RemoveRelations(DropStmt* stmt) {
 
     std::string tag;
     switch (stmt->remove_type) {
-        case mytoydb::parser::ObjectType::kTable:
+        case pgcpp::parser::ObjectType::kTable:
             tag = "DROP TABLE";
             break;
-        case mytoydb::parser::ObjectType::kIndex:
+        case pgcpp::parser::ObjectType::kIndex:
             tag = "DROP INDEX";
             break;
-        case mytoydb::parser::ObjectType::kView:
+        case pgcpp::parser::ObjectType::kView:
             tag = "DROP VIEW";
             break;
         default:
@@ -192,14 +192,14 @@ std::string RemoveRelations(DropStmt* stmt) {
     for (Node* obj : stmt->objects) {
         if (obj == nullptr || obj->GetTag() != NodeTag::kString)
             continue;
-        auto* v = static_cast<mytoydb::nodes::Value*>(obj);
+        auto* v = static_cast<pgcpp::nodes::Value*>(obj);
         const std::string& relname = v->GetString();
 
         const FormData_pg_class* class_row = cat->GetClassByName(relname);
         if (class_row == nullptr) {
             if (stmt->missing_ok)
                 continue;
-            ereport(mytoydb::error::LogLevel::kError, "table \"" + relname + "\" does not exist");
+            ereport(pgcpp::error::LogLevel::kError, "table \"" + relname + "\" does not exist");
         }
 
         Oid relid = class_row->oid;
@@ -228,7 +228,7 @@ std::string AlterTable(AlterTableStmt* stmt) {
     if (class_row == nullptr) {
         if (stmt->missing_ok)
             return "ALTER TABLE";
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + relname + "\" does not exist");
+        ereport(pgcpp::error::LogLevel::kError, "relation \"" + relname + "\" does not exist");
     }
     Oid relid = class_row->oid;
 
@@ -238,15 +238,15 @@ std::string AlterTable(AlterTableStmt* stmt) {
         auto* cmd = static_cast<AlterTableCmd*>(cmd_node);
 
         switch (cmd->subtype) {
-            case mytoydb::parser::AlterTableType::kAddColumn:
-            case mytoydb::parser::AlterTableType::kAddColumnRecurse: {
+            case pgcpp::parser::AlterTableType::kAddColumn:
+            case pgcpp::parser::AlterTableType::kAddColumnRecurse: {
                 if (cmd->def == nullptr || cmd->def->GetTag() != NodeTag::kColumnDef)
                     break;
                 auto* coldef = static_cast<ColumnDef*>(cmd->def);
                 std::string type_name = ExtractTypeName(coldef->type_name);
                 Oid type_oid = typenameTypeId(type_name);
-                if (type_oid == mytoydb::types::kInvalidOid) {
-                    ereport(mytoydb::error::LogLevel::kError,
+                if (type_oid == pgcpp::types::kInvalidOid) {
+                    ereport(pgcpp::error::LogLevel::kError,
                             "type \"" + type_name + "\" does not exist");
                 }
                 int16_t attnum = class_row->relnatts + 1;
@@ -267,8 +267,8 @@ std::string AlterTable(AlterTableStmt* stmt) {
                 mut->relnatts = attnum;
                 break;
             }
-            case mytoydb::parser::AlterTableType::kDropColumn:
-            case mytoydb::parser::AlterTableType::kDropColumnRecurse: {
+            case pgcpp::parser::AlterTableType::kDropColumn:
+            case pgcpp::parser::AlterTableType::kDropColumnRecurse: {
                 auto attrs = cat->GetAttributes(relid);
                 bool found = false;
                 for (const FormData_pg_attribute* attr : attrs) {
@@ -280,9 +280,9 @@ std::string AlterTable(AlterTableStmt* stmt) {
                     }
                 }
                 if (!found && !cmd->missing_ok) {
-                    ereport(mytoydb::error::LogLevel::kError, "column \"" + cmd->name +
-                                                                  "\" of relation \"" + relname +
-                                                                  "\" does not exist");
+                    ereport(pgcpp::error::LogLevel::kError, "column \"" + cmd->name +
+                                                                "\" of relation \"" + relname +
+                                                                "\" does not exist");
                 }
                 auto* mut = const_cast<FormData_pg_class*>(class_row);
                 if (mut->relnatts > 0)
@@ -311,7 +311,7 @@ std::string RenameRelation(RenameStmt* stmt) {
     if (class_row == nullptr) {
         if (stmt->missing_ok)
             return "ALTER TABLE";
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + relname + "\" does not exist");
+        ereport(pgcpp::error::LogLevel::kError, "relation \"" + relname + "\" does not exist");
     }
     Oid relid = class_row->oid;
 
@@ -332,7 +332,7 @@ std::string RenameRelation(RenameStmt* stmt) {
         }
     }
     if (!found) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "column \"" + stmt->subname + "\" of relation \"" + relname + "\" does not exist");
     }
     return "ALTER TABLE";
@@ -352,13 +352,13 @@ std::string ExecuteTruncate(TruncateStmt* stmt) {
         auto* rv = static_cast<RangeVar*>(node);
         const FormData_pg_class* class_row = cat->GetClassByName(rv->relname);
         if (class_row == nullptr) {
-            ereport(mytoydb::error::LogLevel::kError,
+            ereport(pgcpp::error::LogLevel::kError,
                     "relation \"" + rv->relname + "\" does not exist");
         }
         Oid relid = class_row->oid;
         Relation rel = RelationOpen(relid);
         if (rel != nullptr) {
-            auto srel = mytoydb::access::RelationGetSmgr(rel);
+            auto srel = pgcpp::access::RelationGetSmgr(rel);
             if (srel != nullptr) {
                 smgrdounlinkall(srel, false);
                 rel->rd_smgr = nullptr;
@@ -370,4 +370,4 @@ std::string ExecuteTruncate(TruncateStmt* stmt) {
     return "TRUNCATE TABLE";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

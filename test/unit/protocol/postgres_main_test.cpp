@@ -29,36 +29,36 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::ResetRelcache;
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::protocol::PostgresMain;
-using mytoydb::protocol::ProcessInterrupts;
-using mytoydb::protocol::SetInterruptPending;
-using mytoydb::server::SocketSink;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::transaction::BeginTransactionBlock;
-using mytoydb::transaction::EndTransactionBlock;
-using mytoydb::transaction::InitializeSnapshotManager;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::ResetTransactionState;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::ResetRelcache;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::protocol::PostgresMain;
+using pgcpp::protocol::ProcessInterrupts;
+using pgcpp::protocol::SetInterruptPending;
+using pgcpp::server::SocketSink;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::BeginTransactionBlock;
+using pgcpp::transaction::EndTransactionBlock;
+using pgcpp::transaction::InitializeSnapshotManager;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ResetTransactionState;
 
 namespace {
 
 class PostgresMainTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("pgmain_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -95,7 +95,7 @@ protected:
         InitializeTransactionSystem();
         InitializeSnapshotManager();
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -184,7 +184,7 @@ TEST_F(PostgresMainTest, SetInterruptPending_TriggersProcessInterrupts) {
     }
     PG_CATCH() {
         caught = true;
-        mytoydb::error::ErrorData* ed = mytoydb::error::GetErrorData();
+        pgcpp::error::ErrorData* ed = pgcpp::error::GetErrorData();
         message = ed ? ed->message : "";
     }
     PG_END_TRY();

@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 class HyperLogLog {
 public:
@@ -58,4 +58,4 @@ private:
     std::vector<uint8_t> registers_;
 };
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

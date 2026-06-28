@@ -5,13 +5,13 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class CreateStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // DefineAggregate — execute CREATE AGGREGATE. Stub.
 std::string DefineAggregate(parser::CreateStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

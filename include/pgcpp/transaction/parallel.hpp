@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/include/storage/parallel.h.
 //
 // PostgreSQL supports parallel query via worker processes that share memory
-// and cooperate on query execution. MyToyDB is single-process and does not
+// and cooperate on query execution. pgcpp is single-process and does not
 // implement parallel workers, but we provide the API surface so that
 // higher-level modules (executor, planner) can compile against it.
 #pragma once
@@ -11,9 +11,9 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
-// ParallelContext — opaque handle (unused in MyToyDB).
+// ParallelContext — opaque handle (unused in pgcpp).
 struct ParallelContext {
     int nworkers = 0;
     bool initialized = false;
@@ -22,20 +22,20 @@ struct ParallelContext {
 // InitializeParallelInfrastructure — set up the parallel subsystem (no-op).
 void InitializeParallelInfrastructure();
 
-// ParallelContextActive — false in MyToyDB (no parallel workers).
+// ParallelContextActive — false in pgcpp (no parallel workers).
 inline bool ParallelContextActive() {
     return false;
 }
 
 // CreateParallelContext — create a context for `nworkers` workers.
-// In MyToyDB, returns a context with nworkers=0 (no actual parallelism).
+// In pgcpp, returns a context with nworkers=0 (no actual parallelism).
 ParallelContext* CreateParallelContext(int nworkers);
 
 // DestroyParallelContext — release a context.
 void DestroyParallelContext(ParallelContext* ctx);
 
-// LaunchParallelWorkers — start `ctx->nworkers` workers. In MyToyDB, returns
+// LaunchParallelWorkers — start `ctx->nworkers` workers. In pgcpp, returns
 // 0 (no workers started).
 int LaunchParallelWorkers(ParallelContext* ctx);
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

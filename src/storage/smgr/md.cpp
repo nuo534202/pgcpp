@@ -13,7 +13,7 @@
 // The main fork has no forkname suffix. Segment 0 has no segment suffix
 // for backward compatibility with PostgreSQL's layout.
 //
-// All I/O is synchronous (MyToyDB is single-process). Errors are reported
+// All I/O is synchronous (pgcpp is single-process). Errors are reported
 // via ereport(ERROR), which longjmps to the nearest PG_CATCH handler.
 
 #include <fcntl.h>
@@ -28,7 +28,7 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/storage/smgr.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -70,7 +70,7 @@ void EnsureParentDir(const std::string& file_path) {
             // If the directory already exists, that's fine.
             struct stat st;
             if (stat(component.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
-                ereport(mytoydb::error::LogLevel::kError,
+                ereport(pgcpp::error::LogLevel::kError,
                         "could not create directory " + component + ": " + std::strerror(errno));
             }
         }
@@ -86,7 +86,7 @@ int OpenFile(const std::string& path, bool create) {
 
     int fd = open(path.c_str(), flags, 0600);
     if (fd < 0) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "could not open file " + path + ": " + std::strerror(errno));
     }
     return fd;
@@ -96,34 +96,34 @@ int OpenFile(const std::string& path, bool create) {
 // Errors if the read is short or fails.
 void FileReadBlock(int fd, off_t offset, char* buffer) {
     if (lseek(fd, offset, SEEK_SET) < 0) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 std::string("lseek failed: ") + std::strerror(errno));
     }
     ssize_t n = read(fd, buffer, kBlckSz);
     if (n < 0) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 std::string("read failed: ") + std::strerror(errno));
     }
     if (n < kBlckSz) {
         // Short read: this means the block doesn't exist yet.
         // PostgreSQL treats this as an error for mdread (block should exist).
-        ereport(mytoydb::error::LogLevel::kError, "could not read block: unexpected end of file");
+        ereport(pgcpp::error::LogLevel::kError, "could not read block: unexpected end of file");
     }
 }
 
 // Write exactly BLCKSZ bytes at `offset` to the file descriptor.
 void FileWriteBlock(int fd, off_t offset, const char* buffer) {
     if (lseek(fd, offset, SEEK_SET) < 0) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 std::string("lseek failed: ") + std::strerror(errno));
     }
     ssize_t n = write(fd, buffer, kBlckSz);
     if (n < 0) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 std::string("write failed: ") + std::strerror(errno));
     }
     if (n < kBlckSz) {
-        ereport(mytoydb::error::LogLevel::kError, "could not write block: short write");
+        ereport(pgcpp::error::LogLevel::kError, "could not write block: short write");
     }
 }
 
@@ -193,7 +193,7 @@ void SmgrRelationData::mdcreate(ForkNumber fork_num, bool /*is_redo*/) {
     // path is now destructed — safe to ereport
 
     if (error) {
-        ereport(mytoydb::error::LogLevel::kError, errbuf);
+        ereport(pgcpp::error::LogLevel::kError, errbuf);
     }
 
     // Open it through the normal path so it's cached.
@@ -245,7 +245,7 @@ void SmgrRelationData::mdextend(ForkNumber fork_num, BlockNumber block_num, cons
 
     // If we just wrote to a new segment, the previous segment might need
     // to be extended to full RELSEG_SIZE. PostgreSQL handles this in
-    // mdextend; for MyToyDB's testing scale, we skip this complexity.
+    // mdextend; for pgcpp's testing scale, we skip this complexity.
     (void)skip_fsync;
 }
 
@@ -306,7 +306,7 @@ void SmgrRelationData::mdtruncate(ForkNumber fork_num, BlockNumber nblocks) {
     if (blocks_in_last > 0) {
         int fd = mdGetFd(fork_num, last_seg, false);
         if (ftruncate(fd, truncate_offset) < 0) {
-            ereport(mytoydb::error::LogLevel::kError,
+            ereport(pgcpp::error::LogLevel::kError,
                     std::string("could not truncate file: ") + std::strerror(errno));
         }
     }
@@ -350,7 +350,7 @@ void SmgrRelationData::mdunlink(ForkNumber fork_num, bool /*is_redo*/) {
     // Unlink all segment files. We iterate from segment 0 upward, unlinking
     // each until we hit a segment that doesn't exist. PostgreSQL also
     // truncates segment 0 to 0 bytes before unlinking (to signal concurrent
-    // scanners); MyToyDB skips that refinement.
+    // scanners); pgcpp skips that refinement.
     for (int segno = 0;; ++segno) {
         std::string path = mdFilePath(fork_num, segno);
         if (unlink(path.c_str()) < 0) {
@@ -359,7 +359,7 @@ void SmgrRelationData::mdunlink(ForkNumber fork_num, bool /*is_redo*/) {
                 break;
             // Other errors: ignore (matching PG's mdunlinkfork behavior
             // under is_redo). In a non-redo context PG would ereport, but
-            // MyToyDB keeps the storage layer tolerant of races.
+            // pgcpp keeps the storage layer tolerant of races.
         }
     }
 
@@ -381,4 +381,4 @@ void SmgrRelationData::mdrelease() {
     }
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

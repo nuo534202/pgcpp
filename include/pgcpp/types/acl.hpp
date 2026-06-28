@@ -5,13 +5,13 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Access Control List (PostgreSQL utils/adt/acl.c).
 //
 // An aclitem stores a (grantee_oid, grantor_oid, privilege_bits) tuple.
-// An ACL is a varlena-like sequence of aclitems. For MyToyDB we expose a
+// An ACL is a varlena-like sequence of aclitems. For pgcpp we expose a
 // simplified in-memory AclData: a vector of AclItem with a total length.
 //
 // Privilege bits and their character codes follow PostgreSQL's acl.h
@@ -59,4 +59,4 @@ inline AclData* DatumGetAcl(Datum x) {
 // Convenience: build a single-item ACL from raw fields.
 Datum MakeAclItemDatum(uint32_t grantee, uint32_t grantor, uint32_t privileges);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

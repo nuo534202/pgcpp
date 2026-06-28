@@ -14,10 +14,10 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
 
 // ---------------------------------------------------------------------------
 // ParseExprKind — what kind of expression we're parsing.
@@ -184,4 +184,4 @@ Oid exprType(const Node* expr);
 // exprTypmod — get the type modifier of an expression node.
 int exprTypmod(const Node* expr);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

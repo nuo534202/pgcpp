@@ -5,13 +5,13 @@
 // PostgreSQL selects a crossover operator at random from {ERX, PMX, OX1, OX2,
 // PX} for each child produced. Each operator produces a valid permutation
 // from two parent permutations using a different gene-inheritance strategy.
-// MyToyDB mirrors this dispatcher so the choice of operator can be varied
+// pgcpp mirrors this dispatcher so the choice of operator can be varied
 // at runtime (and overridden in tests).
 #pragma once
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 // CrossoverType — identifies the crossover operator. Matches PostgreSQL's
 // geqo_cx variable values (ERX is the default and the most effective for
@@ -36,4 +36,4 @@ bool Crossover(CrossoverType type, const Chromosome* mum, const Chromosome* dad,
 // fails). Convenience wrapper used by the main GA loop.
 CrossoverType RandomCrossover(const Chromosome* mum, const Chromosome* dad, Chromosome* child);
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

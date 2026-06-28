@@ -11,10 +11,10 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
 
 // Operator lookup result.
 struct OperatorResult {
@@ -35,4 +35,4 @@ Node* make_op(ParseState* pstate, const std::string& opname, Node* ltree, Node* 
 Node* make_scalar_array_op(ParseState* pstate, const std::string& opname, bool useOr, Node* ltree,
                            Node* rtree, int location);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

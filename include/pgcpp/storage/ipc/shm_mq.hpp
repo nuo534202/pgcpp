@@ -7,7 +7,7 @@
 // query infrastructure to pass tuples between worker processes. The queue
 // lives in shared memory and supports non-blocking send/receive.
 //
-// MyToyDB is single-process, so the queue is a std::vector<uint8_t> ring
+// pgcpp is single-process, so the queue is a std::vector<uint8_t> ring
 // buffer in heap memory. The API mirrors PG's shm_mq_send / shm_mq_receive.
 #pragma once
 
@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // ShmMqResult — return code from Send/Receive (mirrors PG's shm_mq_result).
 enum class ShmMqResult {
@@ -66,4 +66,4 @@ ShmMq* ShmMqCreate(std::size_t size_bytes);
 // ShmMqDestroy — destroy a queue created by ShmMqCreate.
 void ShmMqDestroy(ShmMq* mq);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

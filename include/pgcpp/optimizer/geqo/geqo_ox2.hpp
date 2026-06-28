@@ -11,8 +11,8 @@
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 bool CrossoverOX2(const Chromosome* mum, const Chromosome* dad, Chromosome* child);
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

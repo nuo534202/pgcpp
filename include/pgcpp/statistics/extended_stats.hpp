@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::statistics {
+namespace pgcpp::statistics {
 
 // Oid — PostgreSQL object identifier. Local alias to avoid a hard dependency
 // on catalog.hpp; identical to catalog::Oid (uint32_t).
@@ -141,4 +141,4 @@ Oid CreateStatistics(const CreateStatisticsStmt& stmt);
 void AlterStatistics(const AlterStatisticsStmt& stmt);
 void RemoveStatistics(Oid stxoid);
 
-}  // namespace mytoydb::statistics
+}  // namespace pgcpp::statistics

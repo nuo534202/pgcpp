@@ -20,7 +20,7 @@
 #include <functional>
 #include <vector>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 template<typename T, typename Compare = std::less<T>>
 class BinaryHeap {
@@ -189,4 +189,4 @@ void BinaryHeap<T, Compare>::Heapify() {
     }
 }
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

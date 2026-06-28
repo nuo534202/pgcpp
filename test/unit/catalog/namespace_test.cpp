@@ -2,7 +2,7 @@
 // (M3 Task 15.6.4).
 //
 // Verifies RangeVarGetRelid, RelnameGetRelid, makeRangeVarFromNameList, and
-// get_namespace_name against a manually-inserted pg_class row. MyToyDB has a
+// get_namespace_name against a manually-inserted pg_class row. pgcpp has a
 // single implicit "public" namespace; schemaname is ignored.
 #include "pgcpp/catalog/namespace.hpp"
 
@@ -22,31 +22,31 @@
 
 namespace {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::get_namespace_name;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::makeRangeVarFromNameList;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RangeVarGetRelid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelnameGetRelid;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::parser::RangeVar;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::get_namespace_name;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::makeRangeVarFromNameList;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RangeVarGetRelid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelnameGetRelid;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::parser::RangeVar;
 
 constexpr Oid kHitsOid = 20000;
 
 class NamespaceTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("namespace_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -68,7 +68,7 @@ protected:
         delete syscache_;
         delete catalog_;
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -111,7 +111,7 @@ TEST_F(NamespaceTest, RelnameGetRelid_ReturnsInvalidForMissing) {
 }
 
 TEST_F(NamespaceTest, get_namespace_name_ReturnsPublic) {
-    // MyToyDB has a single implicit namespace; any OID maps to "public".
+    // pgcpp has a single implicit namespace; any OID maps to "public".
     EXPECT_STREQ(get_namespace_name(2200), "public");
     EXPECT_STREQ(get_namespace_name(kInvalidOid), "public");
 }

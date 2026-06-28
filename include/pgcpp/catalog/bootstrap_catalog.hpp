@@ -1,6 +1,6 @@
 #pragma once
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 class Catalog;
 
@@ -9,4 +9,4 @@ class Catalog;
 // via palloc in the current memory context; the catalog takes ownership.
 void BootstrapCatalog(Catalog* cat);
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::protocol {
+namespace pgcpp::protocol {
 
 // MessageType — ASCII message type codes used in the wire protocol.
 //
@@ -241,4 +241,4 @@ Message BuildBindComplete();
 Message BuildCloseComplete();
 Message BuildNoData();
 
-}  // namespace mytoydb::protocol
+}  // namespace pgcpp::protocol

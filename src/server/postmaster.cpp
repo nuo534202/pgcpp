@@ -40,34 +40,34 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::ResetRelcache;
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::error::InitErrorSubsystem;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::SetCurrentMemoryContext;
-using mytoydb::protocol::Backend;
-using mytoydb::protocol::DescribeKind;
-using mytoydb::protocol::Message;
-using mytoydb::protocol::MessageReader;
-using mytoydb::protocol::MessageType;
-using mytoydb::protocol::TransactionStatus;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::transaction::InitializeSnapshotManager;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::ResetTransactionState;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::ResetRelcache;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::error::InitErrorSubsystem;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::SetCurrentMemoryContext;
+using pgcpp::protocol::Backend;
+using pgcpp::protocol::DescribeKind;
+using pgcpp::protocol::Message;
+using pgcpp::protocol::MessageReader;
+using pgcpp::protocol::MessageType;
+using pgcpp::protocol::TransactionStatus;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::InitializeSnapshotManager;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ResetTransactionState;
 
 // ---------------------------------------------------------------------------
 // Signal handling
@@ -504,10 +504,10 @@ void BackendMain(int client_fd) {
                 std::string query = reader.ReadString();
                 // Read parameter type OIDs.
                 int16_t num_params = reader.ReadInt16();
-                std::vector<mytoydb::catalog::Oid> param_types;
+                std::vector<pgcpp::catalog::Oid> param_types;
                 param_types.reserve(static_cast<std::size_t>(num_params));
                 for (int16_t i = 0; i < num_params; ++i) {
-                    param_types.push_back(static_cast<mytoydb::catalog::Oid>(reader.ReadInt32()));
+                    param_types.push_back(static_cast<pgcpp::catalog::Oid>(reader.ReadInt32()));
                 }
                 backend.HandleParse(stmt_name, query, param_types);
                 break;
@@ -750,4 +750,4 @@ int Postmaster::Run() {
     return 0;
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

@@ -12,10 +12,10 @@
 #include "pgcpp/executor/plannodes.hpp"
 #include "pgcpp/executor/tupletable.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
 void MaterialState::ExecInit() {
     auto* result_desc = BuildTupleDescFromTargetList(plan->targetlist);
@@ -80,4 +80,4 @@ void MaterialState::ExecReScan() {
     mat_index = 0;
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

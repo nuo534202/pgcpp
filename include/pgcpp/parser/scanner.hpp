@@ -6,7 +6,7 @@
 
 #include "pgcpp/parser/keywords.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
 // Token location — byte offset from the start of the input string.
 // PostgreSQL tracks only the start position, not end.
@@ -55,4 +55,4 @@ struct ScannerState {
     YYLTYPE yylloc = 0;
 };
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

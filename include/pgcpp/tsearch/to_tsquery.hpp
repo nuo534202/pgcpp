@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/ts_types.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // to_tsquery — main entry point (PostgreSQL to_tsquery(text)).
@@ -16,6 +16,6 @@ namespace mytoydb::tsearch {
 // `config` selects the dictionary configuration (same options as ToTsVector).
 // ---------------------------------------------------------------------------
 
-mytoydb::types::TsQueryData ToTsQuery(std::string_view text, std::string_view config = "english");
+pgcpp::types::TsQueryData ToTsQuery(std::string_view text, std::string_view config = "english");
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

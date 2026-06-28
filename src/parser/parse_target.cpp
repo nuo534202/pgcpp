@@ -16,18 +16,18 @@
 #include "pgcpp/parser/parse_relation.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::nodes::Value;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::nodes::Value;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
 
 static constexpr Oid kUnknownOid = 705;
 
@@ -114,7 +114,7 @@ static std::vector<Node*> ExpandColumnRefStar(ParseState* pstate, ColumnRef* cre
     int sublevels_up = 0;
     RangeTblEntry* rte = refnameRangeTblEntry(pstate, tblname.c_str(), &sublevels_up);
     if (rte == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "table does not exist for star expansion");
+        ereport(pgcpp::error::LogLevel::kError, "table does not exist for star expansion");
         return result;
     }
 
@@ -152,7 +152,7 @@ static std::vector<Node*> ExpandAllTables(ParseState* pstate, int location) {
     }
 
     if (result.empty()) {
-        ereport(mytoydb::error::LogLevel::kError, "SELECT * with no tables specified is not valid");
+        ereport(pgcpp::error::LogLevel::kError, "SELECT * with no tables specified is not valid");
     }
 
     return result;
@@ -448,7 +448,7 @@ std::vector<Node*> transformSortClause(ParseState* pstate, const std::vector<Nod
         sgc->tle_sort_group_ref = tle->ressortgroupref;
         sgc->eqop = 0;  // Would be looked up from the operator
         // Encode sort direction in sortop: 0 = ASC (default), 1 = DESC.
-        // PostgreSQL uses the actual operator OID; MyToyDB uses this sentinel
+        // PostgreSQL uses the actual operator OID; pgcpp uses this sentinel
         // since it does not yet implement full operator lookup.
         sgc->sortop = (sortby->sortby_dir == SortByDir::kDesc) ? 1 : 0;
         sgc->nulls_first = (sortby->sortby_nulls == SortByNulls::kFirst);
@@ -569,4 +569,4 @@ std::vector<Node*> transformDistinctClause(ParseState* pstate, std::vector<Node*
     return result;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

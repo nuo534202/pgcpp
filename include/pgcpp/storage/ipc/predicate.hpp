@@ -7,7 +7,7 @@
 // between transactions at the predicate (tuple / page / relation) granularity.
 // PG stores them in a shared-memory hash table keyed by (relation, page, tuple).
 //
-// MyToyDB is single-process and does not yet implement true SERIALIZABLE
+// pgcpp is single-process and does not yet implement true SERIALIZABLE
 // conflict detection, but the API is preserved so callers can register
 // predicate locks and query them. PredicateLockConflicts returns whether a
 // given (relation, page, tuple) conflicts with any held predicate lock.
@@ -18,7 +18,7 @@
 
 #include "pgcpp/storage/relfilenode.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // PredicateLockTargetTag — identifies what a predicate lock is on.
 // Matches PG's PREDICATELOCKTARGETTAG layout (relation + page + tuple).
@@ -75,4 +75,4 @@ std::vector<PredicateLock> GetPredicateLocks();
 // NumPredicateLocks — count of currently-held predicate locks.
 int NumPredicateLocks();
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

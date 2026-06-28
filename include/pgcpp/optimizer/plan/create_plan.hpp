@@ -15,47 +15,46 @@
 #include "pgcpp/optimizer/planner.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
 // create_plan — top-level Path→Plan translation.
 // Dispatches on best_path->type to the appropriate builder. For upper nodes
 // (Agg/Sort), recursively translates the subpath first.
-mytoydb::executor::Plan* create_plan(PlannerInfo* root, Path* best_path);
+pgcpp::executor::Plan* create_plan(PlannerInfo* root, Path* best_path);
 
 // --- Individual builders (public for unit testing) ---
 
 // create_seqscan_plan — build a SeqScan plan from a SeqScanPath.
 // `tlist` is the scan's target list; `scan_clauses` are the WHERE quals
 // (extracted from RelOptInfo->baserestrictinfo).
-mytoydb::executor::SeqScan* create_seqscan_plan(PlannerInfo* root, SeqScanPath* path,
-                                                std::vector<mytoydb::parser::TargetEntry*> tlist,
-                                                std::vector<mytoydb::parser::Node*> scan_clauses);
+pgcpp::executor::SeqScan* create_seqscan_plan(PlannerInfo* root, SeqScanPath* path,
+                                              std::vector<pgcpp::parser::TargetEntry*> tlist,
+                                              std::vector<pgcpp::parser::Node*> scan_clauses);
 
 // create_indexscan_plan — build an IndexScan plan from an IndexPath.
-mytoydb::executor::IndexScan* create_indexscan_plan(
-    PlannerInfo* root, IndexPath* path, std::vector<mytoydb::parser::TargetEntry*> tlist,
-    std::vector<mytoydb::parser::Node*> scan_clauses);
+pgcpp::executor::IndexScan* create_indexscan_plan(PlannerInfo* root, IndexPath* path,
+                                                  std::vector<pgcpp::parser::TargetEntry*> tlist,
+                                                  std::vector<pgcpp::parser::Node*> scan_clauses);
 
 // create_nestloop_plan — build a NestLoop plan (skeleton).
-mytoydb::executor::NestLoop* create_nestloop_plan(PlannerInfo* root, NestLoopPath* path);
+pgcpp::executor::NestLoop* create_nestloop_plan(PlannerInfo* root, NestLoopPath* path);
 
 // create_hashjoin_plan — build a HashJoin plan (skeleton).
-mytoydb::executor::HashJoin* create_hashjoin_plan(PlannerInfo* root, HashJoinPath* path);
+pgcpp::executor::HashJoin* create_hashjoin_plan(PlannerInfo* root, HashJoinPath* path);
 
 // create_mergejoin_plan — build a MergeJoin plan (Task 15.15).
-mytoydb::executor::MergeJoin* create_mergejoin_plan(PlannerInfo* root, MergeJoinPath* path);
+pgcpp::executor::MergeJoin* create_mergejoin_plan(PlannerInfo* root, MergeJoinPath* path);
 
 // create_subqueryscan_plan — build a SubqueryScan plan (Task 15.15).
-mytoydb::executor::SubqueryScan* create_subqueryscan_plan(PlannerInfo* root,
-                                                          SubqueryScanPath* path);
+pgcpp::executor::SubqueryScan* create_subqueryscan_plan(PlannerInfo* root, SubqueryScanPath* path);
 
 // create_result_plan — build a Result plan (for no-FROM queries).
-mytoydb::executor::Result* create_result_plan(PlannerInfo* root, ResultPath* path);
+pgcpp::executor::Result* create_result_plan(PlannerInfo* root, ResultPath* path);
 
 // create_agg_plan — build an Agg plan from an AggPath.
-mytoydb::executor::Agg* create_agg_plan(PlannerInfo* root, AggPath* path);
+pgcpp::executor::Agg* create_agg_plan(PlannerInfo* root, AggPath* path);
 
 // create_sort_plan — build a Sort plan from a SortPath.
-mytoydb::executor::Sort* create_sort_plan(PlannerInfo* root, SortPath* path);
+pgcpp::executor::Sort* create_sort_plan(PlannerInfo* root, SortPath* path);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

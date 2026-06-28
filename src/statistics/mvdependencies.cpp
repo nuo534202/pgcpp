@@ -26,7 +26,7 @@
 
 #include "pgcpp/statistics/mvdistinct.hpp"  // StatsBuildData
 
-namespace mytoydb::statistics {
+namespace pgcpp::statistics {
 
 MVDependencies BuildMVDependencies(const StatsBuildData& data) {
     MVDependencies result;
@@ -147,4 +147,4 @@ MVDependencies DeserializeMVDependencies(std::string_view data) {
     return result;
 }
 
-}  // namespace mytoydb::statistics
+}  // namespace pgcpp::statistics

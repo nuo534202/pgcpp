@@ -38,70 +38,70 @@
 #include "pgcpp/transaction/xact.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::access::CreateTupleDesc;
-using mytoydb::access::heap_form_tuple;
-using mytoydb::access::heap_freetuple;
-using mytoydb::access::heap_insert;
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::ResetRelcache;
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kFirstNormalObjectId;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::memory::palloc;
-using mytoydb::protocol::Backend;
-using mytoydb::protocol::BuildBindComplete;
-using mytoydb::protocol::BuildCloseComplete;
-using mytoydb::protocol::BuildCommandComplete;
-using mytoydb::protocol::BuildDataRow;
-using mytoydb::protocol::BuildEmptyQueryResponse;
-using mytoydb::protocol::BuildErrorResponse;
-using mytoydb::protocol::BuildNoData;
-using mytoydb::protocol::BuildParseComplete;
-using mytoydb::protocol::BuildReadyForQuery;
-using mytoydb::protocol::BuildRowDescription;
-using mytoydb::protocol::DescribeKind;
-using mytoydb::protocol::Message;
-using mytoydb::protocol::MessageReader;
-using mytoydb::protocol::MessageType;
-using mytoydb::protocol::MessageWriter;
-using mytoydb::protocol::RowDescriptionField;
-using mytoydb::protocol::StringSink;
-using mytoydb::protocol::TransactionStatus;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::transaction::BeginTransactionBlock;
-using mytoydb::transaction::EndTransactionBlock;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::transaction::InitializeSnapshotManager;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::types::Datum;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::kInt4Oid;
+using pgcpp::access::CreateTupleDesc;
+using pgcpp::access::heap_form_tuple;
+using pgcpp::access::heap_freetuple;
+using pgcpp::access::heap_insert;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationCreateStorage;
+using pgcpp::access::RelationOpen;
+using pgcpp::access::ResetRelcache;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kFirstNormalObjectId;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::memory::palloc;
+using pgcpp::protocol::Backend;
+using pgcpp::protocol::BuildBindComplete;
+using pgcpp::protocol::BuildCloseComplete;
+using pgcpp::protocol::BuildCommandComplete;
+using pgcpp::protocol::BuildDataRow;
+using pgcpp::protocol::BuildEmptyQueryResponse;
+using pgcpp::protocol::BuildErrorResponse;
+using pgcpp::protocol::BuildNoData;
+using pgcpp::protocol::BuildParseComplete;
+using pgcpp::protocol::BuildReadyForQuery;
+using pgcpp::protocol::BuildRowDescription;
+using pgcpp::protocol::DescribeKind;
+using pgcpp::protocol::Message;
+using pgcpp::protocol::MessageReader;
+using pgcpp::protocol::MessageType;
+using pgcpp::protocol::MessageWriter;
+using pgcpp::protocol::RowDescriptionField;
+using pgcpp::protocol::StringSink;
+using pgcpp::protocol::TransactionStatus;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::BeginTransactionBlock;
+using pgcpp::transaction::EndTransactionBlock;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::transaction::InitializeSnapshotManager;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ResetTransactionState;
+using pgcpp::types::Datum;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::kInt4Oid;
 
 namespace {
 
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::makePallocNode;
 
 // ===========================================================================
 // Part 1: pqformat tests — message encoding/decoding (no full stack needed)
@@ -336,9 +336,9 @@ TEST(PqFormatTest, MessageWriter_RoundTrip) {
 class ProtocolTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("protocol_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -375,7 +375,7 @@ protected:
         InitializeTransactionSystem();
         InitializeSnapshotManager();
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

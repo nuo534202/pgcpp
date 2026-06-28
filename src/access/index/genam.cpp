@@ -4,15 +4,15 @@
 //
 // Implements ScanKeyInit and ScanKeyEntryInitialize, which populate a
 // ScanKeyData with the comparison-qualification metadata used by the AM
-// during a scan. MyToyDB extends ScanKeyData with sk_key_kind / sk_key_len
+// during a scan. pgcpp extends ScanKeyData with sk_key_kind / sk_key_len
 // so the B-tree AM can compare without a function manager.
 
 #include "pgcpp/access/genam.hpp"
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 
-void ScanKeyInit(ScanKey key, int attno, int strategy, mytoydb::catalog::Oid subtype,
-                 mytoydb::types::Datum argument) {
+void ScanKeyInit(ScanKey key, int attno, int strategy, pgcpp::catalog::Oid subtype,
+                 pgcpp::types::Datum argument) {
     if (key == nullptr)
         return;
     key->sk_flags = 0;
@@ -26,8 +26,8 @@ void ScanKeyInit(ScanKey key, int attno, int strategy, mytoydb::catalog::Oid sub
 }
 
 void ScanKeyEntryInitialize(ScanKey key, int flags, int attno, int strategy,
-                            mytoydb::catalog::Oid subtype, BTKeyKind key_kind, uint16_t key_len,
-                            mytoydb::types::Datum argument) {
+                            pgcpp::catalog::Oid subtype, BTKeyKind key_kind, uint16_t key_len,
+                            pgcpp::types::Datum argument) {
     if (key == nullptr)
         return;
     key->sk_flags = flags;
@@ -39,4 +39,4 @@ void ScanKeyEntryInitialize(ScanKey key, int flags, int attno, int strategy,
     key->sk_key_len = key_len;
 }
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

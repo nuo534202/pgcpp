@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -251,4 +251,4 @@ int NumOpenFiles() {
     return count;
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

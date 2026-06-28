@@ -9,7 +9,7 @@
 
 #include "pgcpp/optimizer/path.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
 // Cost constants (mirrors PostgreSQL's costsize.c defaults).
 constexpr Cost kSeqPageCost = 1.0;          // cost of a sequential page fetch
@@ -40,6 +40,6 @@ Cardinality ClampRowEst(Cardinality rows);
 
 // Estimate selectivity of a simple equality qual (col = const).
 // Returns a fraction between 0.0 and 1.0.
-Selectivity EstimateSelectivity(const mytoydb::parser::Node* qual, int total_rows);
+Selectivity EstimateSelectivity(const pgcpp::parser::Node* qual, int total_rows);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

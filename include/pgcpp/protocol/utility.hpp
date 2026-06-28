@@ -17,20 +17,20 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/protocol/pqformat.hpp"
 
-namespace mytoydb::protocol {
+namespace pgcpp::protocol {
 
 // ProcessUtility — execute a utility (non-SELECT/DML) statement.
 // Dispatches on the node type to the appropriate handler.
 // Returns the command tag (e.g., "DROP TABLE", "CREATE INDEX").
 // On error, ereport(ERROR) is called (caller should PG_TRY/PG_CATCH).
-std::string ProcessUtility(mytoydb::nodes::Node* stmt, OutputSink* sink);
+std::string ProcessUtility(pgcpp::nodes::Node* stmt, OutputSink* sink);
 
 // CreateCommandTag — return the canonical command tag for a utility statement.
 // Used for protocol CommandComplete messages and logging.
-std::string CreateCommandTag(mytoydb::nodes::Node* stmt);
+std::string CreateCommandTag(pgcpp::nodes::Node* stmt);
 
 // UtilityReturnsTuples — true if the utility returns rows (e.g., EXPLAIN,
 // VACUUM VERBOSE). Simplified: returns false for all utility statements.
-bool UtilityReturnsTuples(mytoydb::nodes::Node* stmt);
+bool UtilityReturnsTuples(pgcpp::nodes::Node* stmt);
 
-}  // namespace mytoydb::protocol
+}  // namespace pgcpp::protocol

@@ -13,7 +13,7 @@
 #include <string>
 #include <utility>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -117,4 +117,4 @@ ShellArchiveStats GetShellArchiveStats() {
     return Stats();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

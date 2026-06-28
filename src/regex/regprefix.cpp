@@ -5,7 +5,7 @@
 // rather than a full NFA traversal as PostgreSQL does: it scans the pattern left
 // to right, requires a leading '^', then collects literal characters until the
 // first metacharacter. This covers the common index-optimization cases used by
-// MyToyDB's planner (e.g. '^prefix.*', '^literal$').
+// pgcpp's planner (e.g. '^prefix.*', '^literal$').
 
 #include "pgcpp/regex/regprefix.hpp"
 
@@ -15,9 +15,9 @@
 
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
-using mytoydb::memory::palloc;
+using pgcpp::memory::palloc;
 
 int pg_regprefix(const regex_t* re, char** prefix, std::size_t* prefix_size) {
     if (re == nullptr || prefix == nullptr || prefix_size == nullptr) {
@@ -63,4 +63,4 @@ int pg_regprefix(const regex_t* re, char** prefix, std::size_t* prefix_size) {
     return static_cast<int>(prefix_len);
 }
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

@@ -6,7 +6,7 @@
 #include <map>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -48,7 +48,7 @@ void LWLockInitialize(LWLock* lock, LWLockId id, int tranche) {
 
 bool LWLockAcquire(LWLock* lock, LWLockMode mode) {
     if (mode == LWLockMode::kExclusive) {
-        // In single-process MyToyDB, exclusive acquire requires no shared
+        // In single-process pgcpp, exclusive acquire requires no shared
         // holders and no existing exclusive hold.
         if (lock->exclusive_held) {
             // Recursive exclusive acquire by the same backend: bump count.
@@ -160,4 +160,4 @@ std::vector<LWLockId> HeldLWLockIds() {
     return ids;
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

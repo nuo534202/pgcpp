@@ -1,10 +1,10 @@
-// main.cpp — Main entry point for the MyToyDB server.
+// main.cpp — Main entry point for the pgcpp server.
 //
 // Converted from PostgreSQL 15's src/backend/main/main.c.
 //
 // Parses command-line arguments and dispatches to the postmaster or
 // bootstrap mode. The argument parsing logic is in options.cpp (linked
-// into mytoydb_core) so it can be tested independently.
+// into pgcpp_core) so it can be tested independently.
 #include "pgcpp/server/main.hpp"
 
 #include <cstdio>
@@ -14,7 +14,7 @@
 #include "pgcpp/server/guc.hpp"
 #include "pgcpp/server/postmaster.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 int MyToyDBMain(int argc, char* argv[]) {
     ServerOptions opts;
@@ -57,9 +57,9 @@ int MyToyDBMain(int argc, char* argv[]) {
     return postmaster.Run();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server
 
 // --- C main entry point ---
 int main(int argc, char* argv[]) {
-    return mytoydb::server::MyToyDBMain(argc, argv);
+    return pgcpp::server::MyToyDBMain(argc, argv);
 }

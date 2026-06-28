@@ -9,7 +9,7 @@
 //                  mode, so the flag is stored for pg_regexec to apply as match
 //                  flags)
 //   REG_EXTENDED-> treated as the default (ECMAScript syntax is used, which is a
-//                  superset of ERE for the constructs MyToyDB exercises)
+//                  superset of ERE for the constructs pgcpp exercises)
 
 #include "pgcpp/regex/regcomp.hpp"
 
@@ -20,11 +20,11 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -70,7 +70,7 @@ regex_t* pg_regcomp(const char* pattern, int flags) {
     // MemoryContext is reset/deleted.
     auto* re = static_cast<regex_t*>(palloc(sizeof(regex_t)));
     new (re) regex_t();
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(re, [](void* o) { static_cast<regex_t*>(o)->~regex_t(); });
     }
@@ -81,7 +81,7 @@ regex_t* pg_regcomp(const char* pattern, int flags) {
 
     // Build std::regex flags. ECMAScript is the project-wide default (matches
     // string_funcs.cpp). REG_EXTENDED is treated as ECMAScript since it covers
-    // the ERE constructs MyToyDB relies on.
+    // the ERE constructs pgcpp relies on.
     std::regex_constants::syntax_option_type syn = std::regex_constants::ECMAScript;
     if ((flags & kRegIcase) != 0) {
         syn |= std::regex_constants::icase;
@@ -100,4 +100,4 @@ regex_t* pg_regcomp(const char* pattern, int flags) {
     return re;
 }
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

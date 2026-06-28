@@ -9,15 +9,15 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class CreateStmt;
 class DropStmt;
 class AlterTableStmt;
 class RenameStmt;
 class TruncateStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // DefineRelation — CREATE TABLE. Creates pg_class + pg_attribute entries
 // and physical storage. Returns the command tag ("CREATE TABLE").
@@ -36,4 +36,4 @@ std::string RenameRelation(parser::RenameStmt* stmt);
 // ExecuteTruncate — TRUNCATE TABLE.
 std::string ExecuteTruncate(parser::TruncateStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

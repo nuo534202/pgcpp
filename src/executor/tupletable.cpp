@@ -14,14 +14,14 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::executor {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::executor {
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::access::TupleDesc;
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::types::Datum;
+using pgcpp::access::TupleDesc;
+using pgcpp::memory::palloc;
+using pgcpp::memory::pfree;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::types::Datum;
 
 TupleTableSlot* TupleTableSlot::Make(TupleDesc tupdesc) {
     auto* slot = makePallocNode<TupleTableSlot>();
@@ -43,12 +43,12 @@ TupleTableSlot* TupleTableSlot::Make(TupleDesc tupdesc) {
 void TupleTableSlot::StoreTuple(HeapTuple tuple, bool shouldFree) {
     // Free any previously-stored tuple if we own it.
     if (tts_shouldFree && tts_tuple != nullptr) {
-        mytoydb::access::heap_freetuple(tts_tuple);
+        pgcpp::access::heap_freetuple(tts_tuple);
     }
     tts_tuple = tuple;
     tts_shouldFree = shouldFree;
     if (tuple != nullptr && tts_tupleDescriptor != nullptr) {
-        mytoydb::access::heap_deform_tuple(tuple, tts_tupleDescriptor, tts_values, tts_isnull);
+        pgcpp::access::heap_deform_tuple(tuple, tts_tupleDescriptor, tts_values, tts_isnull);
         tts_nvalid = true;
         tts_isempty = false;
     } else {
@@ -60,7 +60,7 @@ void TupleTableSlot::StoreTuple(HeapTuple tuple, bool shouldFree) {
 void TupleTableSlot::StoreVirtual(const Datum* values, const bool* isnull) {
     // Free any previously-stored physical tuple if we own it.
     if (tts_shouldFree && tts_tuple != nullptr) {
-        mytoydb::access::heap_freetuple(tts_tuple);
+        pgcpp::access::heap_freetuple(tts_tuple);
     }
     tts_tuple = nullptr;
     tts_shouldFree = false;
@@ -75,7 +75,7 @@ void TupleTableSlot::StoreVirtual(const Datum* values, const bool* isnull) {
 
 void TupleTableSlot::Clear() {
     if (tts_shouldFree && tts_tuple != nullptr) {
-        mytoydb::access::heap_freetuple(tts_tuple);
+        pgcpp::access::heap_freetuple(tts_tuple);
     }
     tts_tuple = nullptr;
     tts_shouldFree = false;
@@ -90,7 +90,7 @@ void TupleTableSlot::Clear() {
 
 TupleTableSlot::~TupleTableSlot() {
     if (tts_shouldFree && tts_tuple != nullptr) {
-        mytoydb::access::heap_freetuple(tts_tuple);
+        pgcpp::access::heap_freetuple(tts_tuple);
     }
     if (tts_values != nullptr) {
         pfree(tts_values);
@@ -100,4 +100,4 @@ TupleTableSlot::~TupleTableSlot() {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

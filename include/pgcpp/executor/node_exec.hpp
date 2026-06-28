@@ -18,7 +18,7 @@
 #include "pgcpp/executor/plannodes.hpp"
 #include "pgcpp/executor/tupletable.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // PlanState — base class for per-node executor state.
 class PlanState {
@@ -74,4 +74,4 @@ inline TupleTableSlot* ExecProcNode(PlanState* node) {
 // ExecEndNode — clean up a node and its children.
 void ExecEndNode(PlanState* node);
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

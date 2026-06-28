@@ -7,7 +7,7 @@
 // pg_wal storage before applying it. PG stores its state in shared
 // memory (WalRcvData *WalRcv).
 //
-// MyToyDB keeps a single in-process WalRcvData singleton (only one
+// pgcpp keeps a single in-process WalRcvData singleton (only one
 // walreceiver is ever active per node in the simplified model). The
 // network code is stubbed: WalRcvStart records the requested conninfo /
 // slotname / startpoint and transitions the state to kStreaming.
@@ -19,7 +19,7 @@
 #include "pgcpp/replication/replutil.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // WalRcvState — lifecycle of the walreceiver. Mirrors PG's WALRCV_STOPPED
 // ... WALRCV_STREAMING enum (one value dropped: PG has an intermediate
@@ -89,4 +89,4 @@ void WalRcvReportLsn(WalRcvLsnKind kind, transaction::XLogRecPtr lsn);
 // WalRcvGetData — return a pointer to the global singleton (may be null).
 WalRcvData* GetWalRcvData();
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

@@ -4,7 +4,7 @@
 //
 // In PG, the postmaster maintains a registry of background workers and
 // forks them on startup or on demand. Each worker has a name, type, and
-// main function. MyToyDB preserves the registry/launch/dispatch structure
+// main function. pgcpp preserves the registry/launch/dispatch structure
 // but runs workers synchronously (no actual fork).
 #include "pgcpp/server/bgworker.hpp"
 
@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -140,4 +140,4 @@ BgWorkerState GetBgWorkerState(int worker_id) {
     return Registry()[static_cast<std::size_t>(worker_id)].state;
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

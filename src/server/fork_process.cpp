@@ -18,7 +18,7 @@
 
 #include "pgcpp/server/interrupt.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -86,7 +86,7 @@ void SetForkedProcessRole(const std::string& role) {
 }
 
 void CloseClientSocket() {
-    // MyToyDB simplification: close fds 0-2 (stdin/stdout/stderr) if they
+    // pgcpp simplification: close fds 0-2 (stdin/stdout/stderr) if they
     // were inherited as sockets. In PG this closes the postmaster's listening
     // socket and the accepted client socket.
     // We don't track inherited fds explicitly, so this is effectively a no-op
@@ -107,4 +107,4 @@ void CloseStdio() {
     }
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

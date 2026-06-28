@@ -5,14 +5,14 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class IndexStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // DefineIndex — CREATE INDEX. Creates pg_class + pg_attribute entries for
 // the index relation and builds the B-tree on the heap.
 std::string DefineIndex(parser::IndexStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

@@ -5,15 +5,15 @@
 #include "pgcpp/access/rel.hpp"
 #include "pgcpp/executor/node_exec.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 class ModifyTableState : public PlanState {
 public:
     ModifyTableState(Plan* p, EState* s) : PlanState(p, s) {}
 
-    mytoydb::parser::CmdType mt_operation = mytoydb::parser::CmdType::kInsert;
-    mytoydb::access::Relation mt_relation = nullptr;
-    mytoydb::access::TupleDesc mt_tupDesc = nullptr;
+    pgcpp::parser::CmdType mt_operation = pgcpp::parser::CmdType::kInsert;
+    pgcpp::access::Relation mt_relation = nullptr;
+    pgcpp::access::TupleDesc mt_tupDesc = nullptr;
 
     void ExecInit() override;
     TupleTableSlot* ExecProcNode() override;
@@ -21,4 +21,4 @@ public:
     void ExecReScan() override;
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

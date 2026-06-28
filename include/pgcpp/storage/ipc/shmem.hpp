@@ -8,7 +8,7 @@
 // subsystem (BufferPool, ProcArray, LWLock array, etc.) calls
 // ShmemInitStruct() during IPC initialization to claim its region.
 //
-// MyToyDB is single-process, so we keep a std::map<string, vector<uint8_t>>
+// pgcpp is single-process, so we keep a std::map<string, vector<uint8_t>>
 // instead of a SysV/POSIX shared-memory segment. The API preserves PG's
 // "named region" semantics for architectural fidelity.
 #pragma once
@@ -17,10 +17,10 @@
 #include <cstdint>
 #include <string>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // ShmemAddrIsValid — true if the pointer is within the shared-memory region.
-// In MyToyDB we always return true for non-null pointers (no contiguous
+// In pgcpp we always return true for non-null pointers (no contiguous
 // shared-memory segment).
 bool ShmemAddrIsValid(const void* addr);
 
@@ -29,7 +29,7 @@ bool ShmemAddrIsValid(const void* addr);
 // is set to true if the region already existed (PG's ShmemInitStruct semantic).
 void* ShmemInitStruct(const char* name, std::size_t size, bool* found_in_ptr);
 
-// ShmemInitHash — convenience wrapper; in MyToyDB this is identical to
+// ShmemInitHash — convenience wrapper; in pgcpp this is identical to
 // ShmemInitStruct since we use std::unordered_map rather than PG's dynahash.
 void* ShmemInitHash(const char* name, std::size_t size);
 
@@ -48,4 +48,4 @@ int NumShmemRegions();
 // CreateSharedMemoryAndSemaphores is defined in ipci.hpp (the dispatcher).
 // shmem.cpp's role is to manage the named-region index (InitShmemIndex).
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

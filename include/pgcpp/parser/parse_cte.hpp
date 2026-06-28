@@ -10,7 +10,7 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
 // transformWithClause — analyze each CTE in `with_clause` and add it to
 // pstate->p_ctenamespace. No-op when with_clause is nullptr.
@@ -22,4 +22,4 @@ namespace mytoydb::parser {
 // then promoted to p_ctenamespace after analysis.
 void transformWithClause(ParseState* pstate, WithClause* with_clause);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

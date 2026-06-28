@@ -25,58 +25,58 @@
 
 namespace {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::FormData_pg_operator;
-using mytoydb::catalog::FormData_pg_proc;
-using mytoydb::catalog::FormData_pg_type;
-using mytoydb::catalog::get_att;
-using mytoydb::catalog::get_attname;
-using mytoydb::catalog::get_attnotnull;
-using mytoydb::catalog::get_attnum;
-using mytoydb::catalog::get_atttype;
-using mytoydb::catalog::get_commutator;
-using mytoydb::catalog::get_func_name;
-using mytoydb::catalog::get_func_nargs;
-using mytoydb::catalog::get_func_prokind;
-using mytoydb::catalog::get_func_rettype;
-using mytoydb::catalog::get_negator;
-using mytoydb::catalog::get_op;
-using mytoydb::catalog::get_opcode;
-using mytoydb::catalog::get_opname;
-using mytoydb::catalog::get_rel_name;
-using mytoydb::catalog::get_rel_namespace;
-using mytoydb::catalog::get_rel_persistence;
-using mytoydb::catalog::get_rel_relkind;
-using mytoydb::catalog::get_typalign;
-using mytoydb::catalog::get_typbyval;
-using mytoydb::catalog::get_typcategory;
-using mytoydb::catalog::get_type_name;
-using mytoydb::catalog::get_typelem;
-using mytoydb::catalog::get_typisdefined;
-using mytoydb::catalog::get_typlen;
-using mytoydb::catalog::get_typstorage;
-using mytoydb::catalog::kInvalidAttrNumber;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::op_mergejoinable;
-using mytoydb::catalog::op_strict;
-using mytoydb::catalog::OperatorKind;
-using mytoydb::catalog::ProKind;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::catalog::type_is_enum;
-using mytoydb::catalog::type_is_rowtype;
-using mytoydb::catalog::TypeAlign;
-using mytoydb::catalog::TypeCategory;
-using mytoydb::catalog::TypeStorage;
-using mytoydb::catalog::TypeType;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::FormData_pg_operator;
+using pgcpp::catalog::FormData_pg_proc;
+using pgcpp::catalog::FormData_pg_type;
+using pgcpp::catalog::get_att;
+using pgcpp::catalog::get_attname;
+using pgcpp::catalog::get_attnotnull;
+using pgcpp::catalog::get_attnum;
+using pgcpp::catalog::get_atttype;
+using pgcpp::catalog::get_commutator;
+using pgcpp::catalog::get_func_name;
+using pgcpp::catalog::get_func_nargs;
+using pgcpp::catalog::get_func_prokind;
+using pgcpp::catalog::get_func_rettype;
+using pgcpp::catalog::get_negator;
+using pgcpp::catalog::get_op;
+using pgcpp::catalog::get_opcode;
+using pgcpp::catalog::get_opname;
+using pgcpp::catalog::get_rel_name;
+using pgcpp::catalog::get_rel_namespace;
+using pgcpp::catalog::get_rel_persistence;
+using pgcpp::catalog::get_rel_relkind;
+using pgcpp::catalog::get_typalign;
+using pgcpp::catalog::get_typbyval;
+using pgcpp::catalog::get_typcategory;
+using pgcpp::catalog::get_type_name;
+using pgcpp::catalog::get_typelem;
+using pgcpp::catalog::get_typisdefined;
+using pgcpp::catalog::get_typlen;
+using pgcpp::catalog::get_typstorage;
+using pgcpp::catalog::kInvalidAttrNumber;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::op_mergejoinable;
+using pgcpp::catalog::op_strict;
+using pgcpp::catalog::OperatorKind;
+using pgcpp::catalog::ProKind;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::catalog::type_is_enum;
+using pgcpp::catalog::type_is_rowtype;
+using pgcpp::catalog::TypeAlign;
+using pgcpp::catalog::TypeCategory;
+using pgcpp::catalog::TypeStorage;
+using pgcpp::catalog::TypeType;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
 
 // Test OID constants — chosen to not collide with bootstrap OIDs (< 16384).
 constexpr Oid kOpOid = 21000;     // "=" operator (int4 = int4)
@@ -92,9 +92,9 @@ constexpr Oid kRelid = 20000;
 class LsyscacheTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("lsyscache_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -184,7 +184,7 @@ protected:
         SetCatalog(nullptr);
         delete syscache_;
         delete catalog_;
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -204,7 +204,7 @@ protected:
     // Helper: free a palloc'd char* (called inside the memory context).
     static void FreeChar(char* p) {
         if (p != nullptr) {
-            mytoydb::memory::pfree(p);
+            pgcpp::memory::pfree(p);
         }
     }
 

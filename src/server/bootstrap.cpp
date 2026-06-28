@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/bootstrap/bootstrap.c.
 //
 // Creates the data directory structure and initializes the system catalog.
-// This is the MyToyDB equivalent of PostgreSQL's `initdb` command.
+// This is the pgcpp equivalent of PostgreSQL's `initdb` command.
 #include "pgcpp/server/bootstrap.hpp"
 
 #include <sys/stat.h>
@@ -27,34 +27,34 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::ResetRelcache;
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::error::InitErrorSubsystem;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::SetCurrentMemoryContext;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::transaction::InitializeSnapshotManager;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::ResetTransactionState;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::ResetRelcache;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::error::InitErrorSubsystem;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::SetCurrentMemoryContext;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::InitializeSnapshotManager;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ResetTransactionState;
 
 namespace {
 
 // Marker file written to the data directory after successful bootstrap.
 constexpr const char* kBootstrapMarker = "mytoydb_version";
 
-// Bootstrap marker content — the version of MyToyDB that created the cluster.
+// Bootstrap marker content — the version of pgcpp that created the cluster.
 constexpr const char* kBootstrapVersion = "mytoydb-1.0";
 
 // Create a directory if it doesn't exist.
@@ -183,4 +183,4 @@ const char* BootstrapResultToString(BootstrapResult result) {
     }
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

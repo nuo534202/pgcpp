@@ -25,25 +25,25 @@
 
 namespace {
 
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::partitioning::MakePruneStepCombine;
-using mytoydb::partitioning::MakePruneStepOp;
-using mytoydb::partitioning::Oid;
-using mytoydb::partitioning::PartitionBoundInfoData;
-using mytoydb::partitioning::PartitionBoundSpec;
-using mytoydb::partitioning::PartitionDescriptorCache;
-using mytoydb::partitioning::PartitionRangeDatum;
-using mytoydb::partitioning::PartitionRangeDatumKind;
-using mytoydb::partitioning::PartitionStrategy;
-using mytoydb::partitioning::PruneCombineOp;
-using mytoydb::partitioning::PruneOp;
-using mytoydb::partitioning::PruneStepCombine;
-using mytoydb::partitioning::PruneStepOp;
-using mytoydb::partitioning::PruningContext;
-using mytoydb::types::Datum;
-using mytoydb::types::Int32GetDatum;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::partitioning::MakePruneStepCombine;
+using pgcpp::partitioning::MakePruneStepOp;
+using pgcpp::partitioning::Oid;
+using pgcpp::partitioning::PartitionBoundInfoData;
+using pgcpp::partitioning::PartitionBoundSpec;
+using pgcpp::partitioning::PartitionDescriptorCache;
+using pgcpp::partitioning::PartitionRangeDatum;
+using pgcpp::partitioning::PartitionRangeDatumKind;
+using pgcpp::partitioning::PartitionStrategy;
+using pgcpp::partitioning::PruneCombineOp;
+using pgcpp::partitioning::PruneOp;
+using pgcpp::partitioning::PruneStepCombine;
+using pgcpp::partitioning::PruneStepOp;
+using pgcpp::partitioning::PruningContext;
+using pgcpp::types::Datum;
+using pgcpp::types::Int32GetDatum;
 
 // Convenience: build a list-value PartitionBoundSpec.
 PartitionBoundSpec MakeListSpec(std::vector<int32_t> values) {
@@ -84,13 +84,13 @@ PartitionBoundSpec MakeHashSpec(int modulus, int remainder) {
 class PartitioningTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("partitioning_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -105,28 +105,28 @@ protected:
 
 TEST_F(PartitioningTest, ListBoundAcceptsValueInList) {
     auto spec = MakeListSpec({10, 20, 30});
-    EXPECT_TRUE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(10)));
-    EXPECT_TRUE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(20)));
-    EXPECT_TRUE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(30)));
+    EXPECT_TRUE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(10)));
+    EXPECT_TRUE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(20)));
+    EXPECT_TRUE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(30)));
 }
 
 TEST_F(PartitioningTest, ListBoundRejectsValueNotInList) {
     auto spec = MakeListSpec({10, 20, 30});
-    EXPECT_FALSE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(15)));
-    EXPECT_FALSE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(99)));
-    EXPECT_FALSE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(0)));
+    EXPECT_FALSE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(15)));
+    EXPECT_FALSE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(99)));
+    EXPECT_FALSE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(0)));
 }
 
 TEST_F(PartitioningTest, ListBoundInfoAcceptsRoutesToCorrectPartition) {
     // Partition 0: {10, 20}; Partition 1: {30, 40}.
     std::vector<PartitionBoundSpec> specs = {MakeListSpec({10, 20}), MakeListSpec({30, 40})};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kList);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(10)), 0);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(20)), 0);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(30)), 1);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(40)), 1);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kList);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(10)), 0);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(20)), 0);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(30)), 1);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(40)), 1);
     // No match -> -1 (no default partition configured).
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(15)), -1);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(15)), -1);
 }
 
 // =============================================================================
@@ -136,33 +136,33 @@ TEST_F(PartitioningTest, ListBoundInfoAcceptsRoutesToCorrectPartition) {
 TEST_F(PartitioningTest, RangeBoundAcceptsValueInRange) {
     auto spec = MakeRangeSpec(10, 20);
     // Half-open: [10, 20).
-    EXPECT_TRUE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(10)));
-    EXPECT_TRUE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(15)));
-    EXPECT_TRUE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(19)));
+    EXPECT_TRUE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(10)));
+    EXPECT_TRUE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(15)));
+    EXPECT_TRUE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(19)));
 }
 
 TEST_F(PartitioningTest, RangeBoundRejectsOutOfRange) {
     auto spec = MakeRangeSpec(10, 20);
-    EXPECT_FALSE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(9)));
-    EXPECT_FALSE(mytoydb::partitioning::partition_bound_spec_accepts(
+    EXPECT_FALSE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(9)));
+    EXPECT_FALSE(pgcpp::partitioning::partition_bound_spec_accepts(
         spec, Int32GetDatum(20)));  // upper bound exclusive
-    EXPECT_FALSE(mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(21)));
+    EXPECT_FALSE(pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(21)));
 }
 
 TEST_F(PartitioningTest, RangeBoundInfoAcceptsRoutesToCorrectPartition) {
     // Three contiguous range partitions: [10,20), [20,40), [40,60).
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40),
                                              MakeRangeSpec(40, 60)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(15)), 0);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(10)), 0);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(25)), 1);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(39)), 1);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(50)), 2);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(15)), 0);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(10)), 0);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(25)), 1);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(39)), 1);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(50)), 2);
     // Above all bounds -> -1 (no default).
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(60)), -1);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(60)), -1);
     // Below all bounds -> -1.
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(5)), -1);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(5)), -1);
 }
 
 TEST_F(PartitioningTest, RangeBoundWithMinMaxValueSentinels) {
@@ -188,13 +188,13 @@ TEST_F(PartitioningTest, RangeBoundWithMinMaxValueSentinels) {
     last.upper_values.push_back(up_max);
 
     std::vector<PartitionBoundSpec> specs = {first, last};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(-1000)), 0);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(9)), 0);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(50)), 1);
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(10000)), 1);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(-1000)), 0);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(9)), 0);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(50)), 1);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(10000)), 1);
     // Gap (10, 50): no partition matches.
-    EXPECT_EQ(mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(30)), -1);
+    EXPECT_EQ(pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(30)), -1);
 }
 
 // =============================================================================
@@ -205,9 +205,9 @@ TEST_F(PartitioningTest, HashBoundAcceptsValueWithMatchingRemainder) {
     auto spec = MakeHashSpec(/*modulus=*/4, /*remainder=*/1);
     // Verify the spec accepts values whose hash remainder (mod 4) is 1.
     for (int32_t v = 0; v < 100; ++v) {
-        int rem = mytoydb::partitioning::partition_hash_identity(4, Int32GetDatum(v));
+        int rem = pgcpp::partitioning::partition_hash_identity(4, Int32GetDatum(v));
         bool expected = (rem == 1);
-        bool actual = mytoydb::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(v));
+        bool actual = pgcpp::partitioning::partition_bound_spec_accepts(spec, Int32GetDatum(v));
         EXPECT_EQ(expected, actual) << "value=" << v;
     }
 }
@@ -217,7 +217,7 @@ TEST_F(PartitioningTest, HashBoundInfoRoutesToCorrectPartition) {
     // (PostgreSQL splits a 4-modulus table into two 2-modulus partitions
     // with remainders 0 and 1.)
     std::vector<PartitionBoundSpec> specs = {MakeHashSpec(2, 0), MakeHashSpec(2, 1)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kHash);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kHash);
     EXPECT_EQ(bi.greatest_modulus, 2);
     // Each remainder slot should map to a partition.
     ASSERT_EQ(static_cast<int>(bi.indexes.size()), 2);
@@ -227,9 +227,9 @@ TEST_F(PartitioningTest, HashBoundInfoRoutesToCorrectPartition) {
     // For each int value, partition_bound_accepts should agree with the
     // spec_accepts of the matched partition.
     for (int32_t v = 0; v < 50; ++v) {
-        int idx = mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(v));
+        int idx = pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(v));
         ASSERT_TRUE(idx == 0 || idx == 1) << "value=" << v;
-        EXPECT_TRUE(mytoydb::partitioning::partition_bound_spec_accepts(
+        EXPECT_TRUE(pgcpp::partitioning::partition_bound_spec_accepts(
             specs[static_cast<std::size_t>(idx)], Int32GetDatum(v)))
             << "value=" << v << " idx=" << idx;
     }
@@ -303,8 +303,8 @@ TEST_F(PartitioningTest, GetDefaultOidFromPartDescWithNoDefault) {
     std::vector<Oid> oids = {1234};
     std::vector<bool> is_leaf = {true};
     auto* desc = cache.Create(/*parent_oid=*/1, specs, oids, is_leaf, PartitionStrategy::kList);
-    EXPECT_EQ(mytoydb::partitioning::get_default_oid_from_partdesc(desc), 0u);
-    EXPECT_EQ(mytoydb::partitioning::get_default_oid_from_partdesc(nullptr), 0u);
+    EXPECT_EQ(pgcpp::partitioning::get_default_oid_from_partdesc(desc), 0u);
+    EXPECT_EQ(pgcpp::partitioning::get_default_oid_from_partdesc(nullptr), 0u);
 }
 
 TEST_F(PartitioningTest, GetDefaultOidFromPartDescWithDefault) {
@@ -316,7 +316,7 @@ TEST_F(PartitioningTest, GetDefaultOidFromPartDescWithDefault) {
     std::vector<Oid> oids = {1234, 5678};
     std::vector<bool> is_leaf = {true, true};
     auto* desc = cache.Create(/*parent_oid=*/1, specs, oids, is_leaf, PartitionStrategy::kList);
-    EXPECT_EQ(mytoydb::partitioning::get_default_oid_from_partdesc(desc), 5678u);
+    EXPECT_EQ(pgcpp::partitioning::get_default_oid_from_partdesc(desc), 5678u);
 }
 
 // =============================================================================
@@ -328,7 +328,7 @@ TEST_F(PartitioningTest, PruneByRangeEqualValue15) {
     // WHERE pk = 15 should prune to partition 0.
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(30, 40),
                                              MakeRangeSpec(50, 60)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -336,10 +336,10 @@ TEST_F(PartitioningTest, PruneByRangeEqualValue15) {
     ctx.nparts = 3;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kEqual, Int32GetDatum(15)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     ASSERT_EQ(matches.size(), 1u);
     EXPECT_EQ(matches[0], 0);
 }
@@ -347,7 +347,7 @@ TEST_F(PartitioningTest, PruneByRangeEqualValue15) {
 TEST_F(PartitioningTest, PruneByListEqualValueMatchesOnePartition) {
     // Two list partitions: {10,20}, {30,40}. WHERE pk = 30 -> partition 1.
     std::vector<PartitionBoundSpec> specs = {MakeListSpec({10, 20}), MakeListSpec({30, 40})};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kList);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kList);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kList;
@@ -355,10 +355,10 @@ TEST_F(PartitioningTest, PruneByListEqualValueMatchesOnePartition) {
     ctx.nparts = 2;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kEqual, Int32GetDatum(30)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     ASSERT_EQ(matches.size(), 1u);
     EXPECT_EQ(matches[0], 1);
 }
@@ -369,7 +369,7 @@ TEST_F(PartitioningTest, PruneByRangeLessThan) {
     // below 25).
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40),
                                              MakeRangeSpec(40, 60)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -377,10 +377,10 @@ TEST_F(PartitioningTest, PruneByRangeLessThan) {
     ctx.nparts = 3;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kLess, Int32GetDatum(25)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     // Partitions [10,20) and [20,40) both have lower < 25.
     ASSERT_EQ(matches.size(), 2u);
     EXPECT_EQ(matches[0], 0);
@@ -393,7 +393,7 @@ TEST_F(PartitioningTest, PruneByRangeGreaterThan) {
     // above 25).
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40),
                                              MakeRangeSpec(40, 60)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -401,10 +401,10 @@ TEST_F(PartitioningTest, PruneByRangeGreaterThan) {
     ctx.nparts = 3;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kGreater, Int32GetDatum(25)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     // Partitions [20,40) (upper 40 > 25+1) and [40,60) (upper 60 > 25+1).
     ASSERT_EQ(matches.size(), 2u);
     EXPECT_EQ(matches[0], 1);
@@ -415,7 +415,7 @@ TEST_F(PartitioningTest, PruneByListLessThanMatchesPartitionsWithLowValue) {
     // List partitions: {5, 100}, {50, 60}. WHERE pk < 10 -> partition 0
     // (has value 5 < 10) only.
     std::vector<PartitionBoundSpec> specs = {MakeListSpec({5, 100}), MakeListSpec({50, 60})};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kList);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kList);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kList;
@@ -423,10 +423,10 @@ TEST_F(PartitioningTest, PruneByListLessThanMatchesPartitionsWithLowValue) {
     ctx.nparts = 2;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kLess, Int32GetDatum(10)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     ASSERT_EQ(matches.size(), 1u);
     EXPECT_EQ(matches[0], 0);
 }
@@ -442,7 +442,7 @@ TEST_F(PartitioningTest, PruneCombineAndIntersects) {
     // has values < 25 in [20,25)).
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40),
                                              MakeRangeSpec(40, 60)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -450,15 +450,15 @@ TEST_F(PartitioningTest, PruneCombineAndIntersects) {
     ctx.nparts = 3;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> sub_steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> sub_steps;
     sub_steps.push_back(MakePruneStepOp(/*step_id=*/1, PruneOp::kGreaterEqual, Int32GetDatum(15)));
     sub_steps.push_back(MakePruneStepOp(/*step_id=*/2, PruneOp::kLess, Int32GetDatum(25)));
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(
         MakePruneStepCombine(/*step_id=*/0, PruneCombineOp::kAnd, std::move(sub_steps)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     // Partition 0 ([10,20)): lower 10 <= 15 satisfies GE, lower 10 < 25
     //   satisfies LT (since lower < 25). Match.
     // Partition 1 ([20,40)): upper 40 > 15+1 satisfies GE, upper 40 > 25+1
@@ -480,7 +480,7 @@ TEST_F(PartitioningTest, PruneCombineOrUnions) {
     // pk=50 matches partition 2. OR should yield {2}.
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40),
                                              MakeRangeSpec(40, 60)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -488,14 +488,14 @@ TEST_F(PartitioningTest, PruneCombineOrUnions) {
     ctx.nparts = 3;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> sub_steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> sub_steps;
     sub_steps.push_back(MakePruneStepOp(/*step_id=*/1, PruneOp::kEqual, Int32GetDatum(5)));
     sub_steps.push_back(MakePruneStepOp(/*step_id=*/2, PruneOp::kEqual, Int32GetDatum(50)));
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepCombine(/*step_id=*/0, PruneCombineOp::kOr, std::move(sub_steps)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     ASSERT_EQ(matches.size(), 1u);
     EXPECT_EQ(matches[0], 2);
 }
@@ -504,7 +504,7 @@ TEST_F(PartitioningTest, PruneCombineAndOfTwoEqualsYieldsSinglePartition) {
     // WHERE pk = 15 AND pk = 25 -> no partition matches both (15 in
     // partition 0, 25 in partition 1, intersection is empty).
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -512,15 +512,15 @@ TEST_F(PartitioningTest, PruneCombineAndOfTwoEqualsYieldsSinglePartition) {
     ctx.nparts = 2;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> sub_steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> sub_steps;
     sub_steps.push_back(MakePruneStepOp(/*step_id=*/1, PruneOp::kEqual, Int32GetDatum(15)));
     sub_steps.push_back(MakePruneStepOp(/*step_id=*/2, PruneOp::kEqual, Int32GetDatum(25)));
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(
         MakePruneStepCombine(/*step_id=*/0, PruneCombineOp::kAnd, std::move(sub_steps)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     EXPECT_TRUE(matches.empty());
 }
 
@@ -533,7 +533,7 @@ TEST_F(PartitioningTest, PruneTopLevelStepsAreAnded) {
     // table where 50 is in partition 2 should yield {2}.
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40),
                                              MakeRangeSpec(40, 60)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -541,17 +541,17 @@ TEST_F(PartitioningTest, PruneTopLevelStepsAreAnded) {
     ctx.nparts = 3;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kEqual, Int32GetDatum(50)));
 
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     ASSERT_EQ(matches.size(), 1u);
     EXPECT_EQ(matches[0], 2);
 }
 
 TEST_F(PartitioningTest, PruneEmptyStepsReturnsAll) {
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -559,8 +559,8 @@ TEST_F(PartitioningTest, PruneEmptyStepsReturnsAll) {
     ctx.nparts = 2;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     ASSERT_EQ(matches.size(), 2u);
     EXPECT_EQ(matches[0], 0);
     EXPECT_EQ(matches[1], 1);
@@ -568,7 +568,7 @@ TEST_F(PartitioningTest, PruneEmptyStepsReturnsAll) {
 
 TEST_F(PartitioningTest, PruneFromOpExprsAndsAll) {
     std::vector<PartitionBoundSpec> specs = {MakeRangeSpec(10, 20), MakeRangeSpec(20, 40)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kRange);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kRange;
@@ -586,7 +586,7 @@ TEST_F(PartitioningTest, PruneFromOpExprsAndsAll) {
     lt.value = Int32GetDatum(20);
     opexprs.push_back(lt);
 
-    auto matches = mytoydb::partitioning::partprune_from_opexprs(ctx, opexprs);
+    auto matches = pgcpp::partitioning::partprune_from_opexprs(ctx, opexprs);
     // Partition 0 [10,20) has lower 10 <= 15 (GE matches) and lower 10 < 20
     // (LT matches).
     // Partition 1 [20,40) has upper 40 > 15+1 (GE matches) but for LT we
@@ -602,7 +602,7 @@ TEST_F(PartitioningTest, PruneFromOpExprsAndsAll) {
 
 TEST_F(PartitioningTest, PruneHashEqualRoutesToSinglePartition) {
     std::vector<PartitionBoundSpec> specs = {MakeHashSpec(2, 0), MakeHashSpec(2, 1)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kHash);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kHash);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kHash;
@@ -613,10 +613,10 @@ TEST_F(PartitioningTest, PruneHashEqualRoutesToSinglePartition) {
     // Pick a value and verify pruning matches what partition_bound_accepts
     // would return.
     for (int32_t v = 0; v < 30; ++v) {
-        std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+        std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
         steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kEqual, Int32GetDatum(v)));
-        auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
-        int expected = mytoydb::partitioning::partition_bound_accepts(bi, Int32GetDatum(v));
+        auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
+        int expected = pgcpp::partitioning::partition_bound_accepts(bi, Int32GetDatum(v));
         if (expected == -1) {
             EXPECT_TRUE(matches.empty()) << "value=" << v;
         } else {
@@ -628,7 +628,7 @@ TEST_F(PartitioningTest, PruneHashEqualRoutesToSinglePartition) {
 
 TEST_F(PartitioningTest, PruneHashInequalityReturnsAllPartitions) {
     std::vector<PartitionBoundSpec> specs = {MakeHashSpec(2, 0), MakeHashSpec(2, 1)};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kHash);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kHash);
 
     PruningContext ctx;
     ctx.strategy = PartitionStrategy::kHash;
@@ -636,9 +636,9 @@ TEST_F(PartitioningTest, PruneHashInequalityReturnsAllPartitions) {
     ctx.nparts = 2;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kLess, Int32GetDatum(5)));
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     // Cannot prune under hash partitioning for inequality -> all partitions.
     ASSERT_EQ(matches.size(), 2u);
     EXPECT_EQ(matches[0], 0);
@@ -653,7 +653,7 @@ TEST_F(PartitioningTest, PruneNullValueRoutesToNullPartition) {
     // Two list partitions: partition 1 accepts NULL (we set null_index = 1
     // manually for this test).
     std::vector<PartitionBoundSpec> specs = {MakeListSpec({10, 20}), MakeListSpec({30, 40})};
-    auto bi = mytoydb::partitioning::partition_bounds_create(specs, PartitionStrategy::kList);
+    auto bi = pgcpp::partitioning::partition_bounds_create(specs, PartitionStrategy::kList);
     bi.null_index = 1;
 
     PruningContext ctx;
@@ -662,10 +662,10 @@ TEST_F(PartitioningTest, PruneNullValueRoutesToNullPartition) {
     ctx.nparts = 2;
     ctx.boundinfo = &bi;
 
-    std::vector<std::unique_ptr<mytoydb::partitioning::PartitionPruneStep>> steps;
+    std::vector<std::unique_ptr<pgcpp::partitioning::PartitionPruneStep>> steps;
     steps.push_back(MakePruneStepOp(/*step_id=*/0, PruneOp::kEqual,
                                     /*value=*/0, /*is_null=*/true));
-    auto matches = mytoydb::partitioning::partprune_partitions(ctx, steps);
+    auto matches = pgcpp::partitioning::partprune_partitions(ctx, steps);
     ASSERT_EQ(matches.size(), 1u);
     EXPECT_EQ(matches[0], 1);
 }
@@ -676,11 +676,11 @@ TEST_F(PartitioningTest, PruneNullValueRoutesToNullPartition) {
 
 TEST_F(PartitioningTest, PartitionHashIdentityIsDeterministicAndInRange) {
     for (int32_t v = -50; v < 50; ++v) {
-        int rem = mytoydb::partitioning::partition_hash_identity(7, Int32GetDatum(v));
+        int rem = pgcpp::partitioning::partition_hash_identity(7, Int32GetDatum(v));
         EXPECT_GE(rem, 0);
         EXPECT_LT(rem, 7);
         // Same input always yields same output.
-        int rem2 = mytoydb::partitioning::partition_hash_identity(7, Int32GetDatum(v));
+        int rem2 = pgcpp::partitioning::partition_hash_identity(7, Int32GetDatum(v));
         EXPECT_EQ(rem, rem2);
     }
 }
@@ -689,7 +689,7 @@ TEST_F(PartitioningTest, PartitionHashIdentityDifferentValuesDistribute) {
     // Sanity: not all values hash to the same bucket for modulus 4.
     int counts[4] = {0, 0, 0, 0};
     for (int32_t v = 0; v < 1000; ++v) {
-        int rem = mytoydb::partitioning::partition_hash_identity(4, Int32GetDatum(v));
+        int rem = pgcpp::partitioning::partition_hash_identity(4, Int32GetDatum(v));
         counts[rem]++;
     }
     for (int i = 0; i < 4; ++i) {

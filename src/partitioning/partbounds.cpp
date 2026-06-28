@@ -26,7 +26,7 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::partitioning {
+namespace pgcpp::partitioning {
 
 namespace {
 
@@ -302,4 +302,4 @@ PartitionBoundInfoData partition_bounds_create(const std::vector<PartitionBoundS
     return bi;
 }
 
-}  // namespace mytoydb::partitioning
+}  // namespace pgcpp::partitioning

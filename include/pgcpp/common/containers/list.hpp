@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace mytoydb::containers {
+namespace pgcpp::containers {
 
 // Forward declaration for Node (used in typed List<T>)
 namespace nodes {
@@ -103,4 +103,4 @@ private:
     List list_;
 };
 
-}  // namespace mytoydb::containers
+}  // namespace pgcpp::containers

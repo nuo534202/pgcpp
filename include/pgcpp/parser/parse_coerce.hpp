@@ -8,10 +8,10 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
 
 // CoercionContext — controls how strict the coercion is.
 enum class CoercionContext {
@@ -48,4 +48,4 @@ Node* coerce_to_common_type(ParseState* pstate, Node* node, Oid common_type, con
 // IsBinaryCoercible — can source be binary-coerced to target?
 bool IsBinaryCoercible(Oid srctype, Oid targettype);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

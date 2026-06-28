@@ -8,14 +8,14 @@
 // for fsync at commit time.
 //
 // In PostgreSQL, the WAL writer is a separate process forked by the
-// postmaster. MyToyDB represents it as a stateful API (in-memory WAL
+// postmaster. pgcpp represents it as a stateful API (in-memory WAL
 // buffer is always "durable", so flushes are no-ops; the API preserves
 // the schedule/flush/main-loop structure).
 #pragma once
 
 #include <cstdint>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // WalWriterStats — statistics tracked by the WAL writer.
 struct WalWriterStats {
@@ -58,4 +58,4 @@ bool WalWriterIsRunning();
 // GetWalWriterStats — return the current WAL writer statistics.
 WalWriterStats GetWalWriterStats();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

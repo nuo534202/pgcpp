@@ -13,37 +13,37 @@
 
 namespace {
 
-using mytoydb::catalog::Oid;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::contain_aggs_of_level;
-using mytoydb::nodes::contain_subplans;
-using mytoydb::nodes::contain_volatile_functions;
-using mytoydb::nodes::exprCollation;
-using mytoydb::nodes::expression_tree_walker;
-using mytoydb::nodes::exprLocation;
-using mytoydb::nodes::exprType;
-using mytoydb::nodes::exprTypmod;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::Const;
-using mytoydb::parser::FuncExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::NullTest;
-using mytoydb::parser::NullTestType;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Param;
-using mytoydb::parser::ParamKind;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::SubLink;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInvalidOid;
-using mytoydb::types::kTextOid;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::contain_aggs_of_level;
+using pgcpp::nodes::contain_subplans;
+using pgcpp::nodes::contain_volatile_functions;
+using pgcpp::nodes::exprCollation;
+using pgcpp::nodes::expression_tree_walker;
+using pgcpp::nodes::exprLocation;
+using pgcpp::nodes::exprType;
+using pgcpp::nodes::exprTypmod;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::Const;
+using pgcpp::parser::FuncExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::NullTest;
+using pgcpp::parser::NullTestType;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Param;
+using pgcpp::parser::ParamKind;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::SubLink;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInvalidOid;
+using pgcpp::types::kTextOid;
 
 constexpr Oid kTestOidA = 1001;
 constexpr Oid kTestOidB = 1002;
@@ -51,13 +51,13 @@ constexpr Oid kTestOidB = 1002;
 class NodeFuncsTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("node_funcs_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

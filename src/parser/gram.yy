@@ -1,4 +1,4 @@
-// gram.yy — Bison C++ grammar for MyToyDB (converted from PostgreSQL 15).
+// gram.yy — Bison C++ grammar for pgcpp (converted from PostgreSQL 15).
 //
 // This is a C++20 conversion of PostgreSQL's src/backend/parser/gram.y.
 // It uses the lalr1.cc skeleton with type-safe variant semantic values.
@@ -8,7 +8,7 @@
 %require "3.8"
 %skeleton "lalr1.cc"
 %defines
-%define api.namespace {mytoydb_parser}
+%define api.namespace {pgcpp_parser}
 %define api.parser.class {BisonParser}
 %define api.value.type variant
 %define api.token.constructor
@@ -26,9 +26,9 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/parser/parser_driver.hpp"
 
-using namespace mytoydb::nodes;
-using namespace mytoydb::parser;
-using mytoydb::memory::palloc;
+using namespace pgcpp::nodes;
+using namespace pgcpp::parser;
+using pgcpp::memory::palloc;
 
 // YYLLOC_DEFAULT for int location type: just take the first location.
 #ifndef YYLLOC_DEFAULT
@@ -42,13 +42,13 @@ using mytoydb::memory::palloc;
 %code {
 // Helper functions — C++20 conversions of PostgreSQL's makeNode()/makeFoo().
 // All allocations use palloc() + placement new to stay within MemoryContext.
-// makeNode<T>() is provided by mytoydb/parser/primnodes.h.
+// makeNode<T>() is provided by pgcpp/parser/primnodes.h.
 
 // Forward declaration of the hand-written scanner function (defined in
 // scanner.cpp). The Bison-generated parser calls yylex(driver) to obtain
-// the next token. Must be in the mytoydb_parser namespace to match the
+// the next token. Must be in the pgcpp_parser namespace to match the
 // definition in scanner.cpp.
-namespace mytoydb_parser {
+namespace pgcpp_parser {
 BisonParser::symbol_type yylex(ParserDriver& driver);
 }
 

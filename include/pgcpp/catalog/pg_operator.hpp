@@ -5,7 +5,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // FormData_pg_operator — C++ equivalent of PostgreSQL's catalog/pg_operator.h.
 //
@@ -38,4 +38,4 @@ struct FormData_pg_operator {
 
 using Form_pg_operator = FormData_pg_operator*;
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

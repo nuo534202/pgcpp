@@ -4,10 +4,10 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // PostgreSQL OID family — uint32 underlying type with name<->OID resolution.
-// For MyToyDB, we keep the storage as uint32 (Datum by-value) and provide
+// For pgcpp, we keep the storage as uint32 (Datum by-value) and provide
 // in/out that follow PG conventions: input may accept either a numeric OID
 // or a name (resolved through a stub name->oid table), output emits the
 // registered name when known, otherwise the numeric OID.
@@ -84,4 +84,4 @@ uint32_t LookupRegOid(RegCatalog cat, const char* name);
 // Reset all registered entries (used by tests).
 void ResetRegCatalogs();
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

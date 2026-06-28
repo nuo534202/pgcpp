@@ -8,13 +8,13 @@
 // search for a slot with at least X free bytes can walk down the tree in
 // log(N) time. PG stores this array inside a heap page (FSM fork).
 //
-// MyToyDB models the FSM page as an in-memory struct so we can unit-test the
+// pgcpp models the FSM page as an in-memory struct so we can unit-test the
 // tree-search algorithm without a real on-disk page.
 #pragma once
 
 #include <cstdint>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // LeafNodes — number of leaf slots in one FSM page (PG default: 162).
 constexpr int kFsmLeafNodesPerPage = 162;
@@ -57,4 +57,4 @@ int FSMRightChild(int node_index);
 // FSMSlotToNodeIndex — convert a leaf slot number to a node-tree index.
 int FSMSlotToNodeIndex(int slot);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

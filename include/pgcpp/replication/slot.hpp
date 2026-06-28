@@ -5,7 +5,7 @@
 // live in slotfuncs.h to keep this file focused on the slot store).
 //
 // A replication slot preserves resources (WAL, catalog tuples) needed by
-// a downstream consumer. PG stores slots in shared memory; MyToyDB keeps
+// a downstream consumer. PG stores slots in shared memory; pgcpp keeps
 // an in-process std::map<std::string, ReplicationSlot> keyed by slot name.
 //
 // Two flavors of slot exist:
@@ -23,7 +23,7 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // SlotType — physical vs. logical (PG: RS_LOGICAL vs. RS_PHYSICAL).
 enum class SlotType : uint8_t {
@@ -38,7 +38,7 @@ enum class SlotPersistence : uint8_t {
 };
 
 // ReplicationSlot — one slot. Field names match PG's ReplicationSlotPersistentData
-// (subset relevant to MyToyDB).
+// (subset relevant to pgcpp).
 struct ReplicationSlot {
     std::string name;  // unique slot name
     SlotType type = SlotType::kPhysical;
@@ -107,4 +107,4 @@ ReplicationSlotCtlData* GetReplicationSlotCtl();
 const char* SlotTypeName(SlotType t);
 const char* SlotPersistenceName(SlotPersistence p);
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

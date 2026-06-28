@@ -5,7 +5,7 @@
 // The startup process is the first auxiliary process forked by the
 // postmaster after a crash. It reads the WAL from the start (or from the
 // last checkpoint) and replays all records to restore the database to
-// a consistent state. MyToyDB wraps PerformCrashRecovery (xlogrecovery.h).
+// a consistent state. pgcpp wraps PerformCrashRecovery (xlogrecovery.h).
 #include "pgcpp/server/startup.hpp"
 
 #include <chrono>
@@ -15,7 +15,7 @@
 #include "pgcpp/transaction/xlog.hpp"
 #include "pgcpp/transaction/xlogrecovery.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -91,4 +91,4 @@ void SetRecoveryStartLsn(transaction::XLogRecPtr lsn) {
     StartLsn() = lsn;
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

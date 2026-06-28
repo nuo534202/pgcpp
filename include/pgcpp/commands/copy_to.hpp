@@ -7,14 +7,14 @@
 #include <cstdint>
 #include <string>
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 struct RelationData;
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // CopyToText — scan `rel` and write tab-delimited rows to `filename`.
 // Returns the number of rows written.
 int64_t CopyToText(access::RelationData* rel, const std::string& filename);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

@@ -29,7 +29,7 @@
 #include "pgcpp/transaction/xact.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 
 // --- System column attribute numbers (PostgreSQL-compatible, negative) ---
 //
@@ -52,7 +52,7 @@ enum class ScanDirection {
 
 // Maximum number of visible tuples cached per page during a scan.
 // PostgreSQL uses HEAPTUPLES_PER_PAGE (typically 291 for 8KB pages).
-// MyToyDB uses a smaller value for simplicity.
+// pgcpp uses a smaller value for simplicity.
 constexpr int kHeapTuplesPerPage = 256;
 
 // HeapScanDescData — descriptor for a heap sequential scan.
@@ -70,22 +70,22 @@ constexpr int kHeapTuplesPerPage = 256;
 //   rs_vistuple_index — index of the next tuple to return from rs_vistuples
 struct HeapScanDescData {
     Relation rs_base = nullptr;
-    mytoydb::transaction::Snapshot rs_snapshot = nullptr;
+    pgcpp::transaction::Snapshot rs_snapshot = nullptr;
 
-    mytoydb::storage::BlockNumber rs_nblocks = 0;
-    mytoydb::storage::BlockNumber rs_cblock = 0;
-    mytoydb::storage::Buffer rs_cbuf = mytoydb::storage::kInvalidBuffer;
-    mytoydb::storage::OffsetNumber rs_coffset = 0;
+    pgcpp::storage::BlockNumber rs_nblocks = 0;
+    pgcpp::storage::BlockNumber rs_cblock = 0;
+    pgcpp::storage::Buffer rs_cbuf = pgcpp::storage::kInvalidBuffer;
+    pgcpp::storage::OffsetNumber rs_coffset = 0;
     bool rs_inited = false;
 
     // Cache of visible tuple offsets on the current page.
-    mytoydb::storage::OffsetNumber rs_vistuples[kHeapTuplesPerPage] = {};
+    pgcpp::storage::OffsetNumber rs_vistuples[kHeapTuplesPerPage] = {};
     int rs_ntuples = 0;
     int rs_vistuple_index = 0;
 
     // The current tuple being returned to the caller. Points into the
     // buffer page (valid until the next heap_getnext call).
-    mytoydb::transaction::HeapTupleData rs_ctup;
+    pgcpp::transaction::HeapTupleData rs_ctup;
 };
 
 // HeapScanDesc — pointer to a HeapScanDescData.
@@ -105,24 +105,24 @@ using HeapScanDesc = HeapScanDescData*;
 //
 // The tuple's t_data is modified in place (header fields are set).
 // Returns the TID of the inserted tuple.
-mytoydb::transaction::ItemPointerData heap_insert(Relation relation,
-                                                  mytoydb::transaction::HeapTuple tup);
+pgcpp::transaction::ItemPointerData heap_insert(Relation relation,
+                                                pgcpp::transaction::HeapTuple tup);
 
 // heap_delete — mark a tuple as deleted.
 //
 // Sets t_xmax = current transaction ID on the tuple identified by tid.
 // The tuple is not physically removed (that's VACUUM's job); it becomes
 // invisible to new snapshots.
-void heap_delete(Relation relation, const mytoydb::transaction::ItemPointerData& tid);
+void heap_delete(Relation relation, const pgcpp::transaction::ItemPointerData& tid);
 
 // heap_update — replace a tuple with a new version.
 //
 // Marks the old tuple as deleted (sets t_xmax) and inserts the new tuple.
 // The old tuple's t_ctid is updated to point to the new tuple.
 // Returns the TID of the new tuple.
-mytoydb::transaction::ItemPointerData heap_update(Relation relation,
-                                                  const mytoydb::transaction::ItemPointerData& otid,
-                                                  mytoydb::transaction::HeapTuple tup);
+pgcpp::transaction::ItemPointerData heap_update(Relation relation,
+                                                const pgcpp::transaction::ItemPointerData& otid,
+                                                pgcpp::transaction::HeapTuple tup);
 
 // --- Heap scan operations ---
 
@@ -130,7 +130,7 @@ mytoydb::transaction::ItemPointerData heap_update(Relation relation,
 //
 // Allocates a HeapScanDesc, computes the number of blocks, and positions
 // the scan before the first block. The snapshot determines visibility.
-HeapScanDesc heap_beginscan(Relation relation, mytoydb::transaction::Snapshot snapshot);
+HeapScanDesc heap_beginscan(Relation relation, pgcpp::transaction::Snapshot snapshot);
 
 // heap_getnext — fetch the next visible tuple from a scan.
 //
@@ -138,7 +138,7 @@ HeapScanDesc heap_beginscan(Relation relation, mytoydb::transaction::Snapshot sn
 // Returns nullptr when the scan is complete.
 // The returned HeapTuple points into the scan descriptor's tuple buffer;
 // the caller must not free it.
-mytoydb::transaction::HeapTuple heap_getnext(HeapScanDesc scan);
+pgcpp::transaction::HeapTuple heap_getnext(HeapScanDesc scan);
 
 // heap_endscan — release scan resources (unpin the current buffer, free
 // the descriptor).
@@ -154,36 +154,35 @@ void heap_rescan(HeapScanDesc scan);
 // Lays out the tuple data according to the tuple descriptor's alignment
 // rules. The returned HeapTuple is palloc'd in the current memory context.
 // The caller must set t_self separately (heap_insert does this).
-mytoydb::transaction::HeapTuple heap_form_tuple(TupleDesc tupdesc,
-                                                const mytoydb::types::Datum* values,
-                                                const bool* isnull);
+pgcpp::transaction::HeapTuple heap_form_tuple(TupleDesc tupdesc, const pgcpp::types::Datum* values,
+                                              const bool* isnull);
 
 // heap_deform_tuple — extract column values from a HeapTuple.
 //
 // Fills the values[] and isnull[] arrays (which must have tupdesc->natts
 // entries). For by-reference types, the Datum points into the tuple's data
 // (valid as long as the tuple is pinned).
-void heap_deform_tuple(mytoydb::transaction::HeapTuple tuple, TupleDesc tupdesc,
-                       mytoydb::types::Datum* values, bool* isnull);
+void heap_deform_tuple(pgcpp::transaction::HeapTuple tuple, TupleDesc tupdesc,
+                       pgcpp::types::Datum* values, bool* isnull);
 
 // heap_freetuple — free a HeapTuple allocated by heap_form_tuple.
-void heap_freetuple(mytoydb::transaction::HeapTuple tuple);
+void heap_freetuple(pgcpp::transaction::HeapTuple tuple);
 
 // --- Helpers ---
 
 // heap_getattr — extract a single attribute value from a tuple.
 // Returns the Datum for the attribute (attnum is 1-based).
 // Sets *isnull if the attribute is null.
-mytoydb::types::Datum heap_getattr(mytoydb::transaction::HeapTuple tuple, int attnum,
-                                   TupleDesc tupdesc, bool* isnull);
+pgcpp::types::Datum heap_getattr(pgcpp::transaction::HeapTuple tuple, int attnum, TupleDesc tupdesc,
+                                 bool* isnull);
 
 // Compute the data portion size of a tuple (excluding header).
 // Used by heap_form_tuple to allocate the right amount of memory.
-uint32_t heap_compute_data_size(TupleDesc tupdesc, const mytoydb::types::Datum* values,
+uint32_t heap_compute_data_size(TupleDesc tupdesc, const pgcpp::types::Datum* values,
                                 const bool* isnull);
 
 // Align an offset to the given alignment type.
-uint32_t att_align(uint32_t offset, mytoydb::catalog::AttAlign align);
+uint32_t att_align(uint32_t offset, pgcpp::catalog::AttAlign align);
 
 // Align an offset to MAXALIGN (8 bytes).
 uint32_t att_align_max(uint32_t offset);
@@ -205,7 +204,7 @@ uint32_t att_align_max(uint32_t offset);
 // Outputs:
 //   *infomask_out    — receives the HEAP_HASNULL / HEAP_HASVARWIDTH bits
 //   *tuple_hoff_out  — receives the computed hoff (aligned header size)
-void heap_fill_tuple(TupleDesc tupdesc, const mytoydb::types::Datum* values, const bool* isnull,
+void heap_fill_tuple(TupleDesc tupdesc, const pgcpp::types::Datum* values, const bool* isnull,
                      char* data, uint32_t data_size, uint16_t* infomask_out,
                      uint8_t* tuple_hoff_out);
 
@@ -214,40 +213,39 @@ void heap_fill_tuple(TupleDesc tupdesc, const mytoydb::types::Datum* values, con
 // For each column i: if `do_replace[i]` is true, the new value/isnull is used;
 // otherwise the original value from `tuple` is preserved. If `do_replace` is
 // nullptr, every column is replaced (equivalent to heap_form_tuple).
-mytoydb::transaction::HeapTuple heap_modify_tuple(mytoydb::transaction::HeapTuple tuple,
-                                                  TupleDesc tupdesc,
-                                                  const mytoydb::types::Datum* values,
-                                                  const bool* isnull, const bool* do_replace);
+pgcpp::transaction::HeapTuple heap_modify_tuple(pgcpp::transaction::HeapTuple tuple,
+                                                TupleDesc tupdesc,
+                                                const pgcpp::types::Datum* values,
+                                                const bool* isnull, const bool* do_replace);
 
 // heap_modify_tuple_by_cols — replace only the first `ncols` columns.
 // Columns beyond `ncols` keep their original values.
-mytoydb::transaction::HeapTuple heap_modify_tuple_by_cols(mytoydb::transaction::HeapTuple tuple,
-                                                          TupleDesc tupdesc, int ncols,
-                                                          const mytoydb::types::Datum* values,
-                                                          const bool* isnull);
+pgcpp::transaction::HeapTuple heap_modify_tuple_by_cols(pgcpp::transaction::HeapTuple tuple,
+                                                        TupleDesc tupdesc, int ncols,
+                                                        const pgcpp::types::Datum* values,
+                                                        const bool* isnull);
 
 // heap_copytuple — deep-copy a HeapTuple (wrapper + t_data buffer).
-mytoydb::transaction::HeapTuple heap_copytuple(mytoydb::transaction::HeapTuple tuple);
+pgcpp::transaction::HeapTuple heap_copytuple(pgcpp::transaction::HeapTuple tuple);
 
 // heap_copytuple_with_tuple — copy src into dest's wrapper, allocating a fresh
 // t_data buffer. dest must already be allocated (e.g. via makePallocNode).
-void heap_copytuple_with_tuple(mytoydb::transaction::HeapTuple src,
-                               mytoydb::transaction::HeapTuple dest);
+void heap_copytuple_with_tuple(pgcpp::transaction::HeapTuple src,
+                               pgcpp::transaction::HeapTuple dest);
 
 // heap_attisnull — true if attribute `attnum` (1-based user column) is NULL.
-// Negative attnum values request system columns (always non-NULL in MyToyDB).
-bool heap_attisnull(mytoydb::transaction::HeapTuple tuple, int attnum, TupleDesc tupdesc);
+// Negative attnum values request system columns (always non-NULL in pgcpp).
+bool heap_attisnull(pgcpp::transaction::HeapTuple tuple, int attnum, TupleDesc tupdesc);
 
 // Minimal tuple conversions.
 //
-// MyToyDB simplification: a minimal tuple uses the same on-disk layout as a
+// pgcpp simplification: a minimal tuple uses the same on-disk layout as a
 // heap tuple (HeapTupleHeaderData + data). The conversion functions are
 // therefore deep copies. PostgreSQL's real minimal-tuple format omits the
 // t_ctid field to save space, but that optimization is unnecessary for
 // ClickBench and the _tuplesort/tuplestore callers accept this simplification.
-mytoydb::transaction::HeapTuple minimal_tuple_from_heap_tuple(
-    mytoydb::transaction::HeapTuple tuple);
-mytoydb::transaction::HeapTuple heap_tuple_from_minimal_tuple(mytoydb::transaction::HeapTuple mtup);
+pgcpp::transaction::HeapTuple minimal_tuple_from_heap_tuple(pgcpp::transaction::HeapTuple tuple);
+pgcpp::transaction::HeapTuple heap_tuple_from_minimal_tuple(pgcpp::transaction::HeapTuple mtup);
 
 // heap_tuple_buffer_getsysattr — extract a system column Datum.
 //
@@ -255,7 +253,7 @@ mytoydb::transaction::HeapTuple heap_tuple_from_minimal_tuple(mytoydb::transacti
 // ctid). `attnum` is negative (see kSelfItemPointerAttributeNumber etc.).
 // Sets *isnull to false for all supported system columns. ereport(ERROR) for
 // unsupported system columns.
-mytoydb::types::Datum heap_tuple_buffer_getsysattr(mytoydb::transaction::HeapTuple tuple,
-                                                   int attnum, TupleDesc tupdesc, bool* isnull);
+pgcpp::types::Datum heap_tuple_buffer_getsysattr(pgcpp::transaction::HeapTuple tuple, int attnum,
+                                                 TupleDesc tupdesc, bool* isnull);
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

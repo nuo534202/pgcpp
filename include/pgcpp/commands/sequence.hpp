@@ -5,14 +5,14 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class CreateSeqStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // DefineSequence — execute CREATE SEQUENCE. Creates a relation of relkind
 // 'S' (sequence). Returns "CREATE SEQUENCE".
 std::string DefineSequence(parser::CreateSeqStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

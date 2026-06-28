@@ -25,9 +25,9 @@
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::optimizer::geqo {
-using mytoydb::nodes::makePallocNode;
-using mytoydb::parser::JoinType;
+namespace pgcpp::optimizer::geqo {
+using pgcpp::nodes::makePallocNode;
+using pgcpp::parser::JoinType;
 
 namespace {
 
@@ -225,4 +225,4 @@ Path* GeqoBuildBestPath(PlannerInfo* root, const std::vector<Gene>& chromosome) 
     return current->cheapest_path;
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

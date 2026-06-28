@@ -9,7 +9,7 @@
 
 #include "pgcpp/executor/node_exec.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // CteScanState — scan a CTE result.
 // On first call, executes the CTE's subplan and caches all tuples.
@@ -29,4 +29,4 @@ public:
     void ExecReScan() override;
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

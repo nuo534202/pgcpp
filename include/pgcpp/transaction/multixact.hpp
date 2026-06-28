@@ -6,7 +6,7 @@
 // on a tuple (e.g., SELECT ... FOR SHARE creates a multixact). PG stores
 // multixact members in pg_multixact/members and offsets in pg_multixact/offsets.
 //
-// MyToyDB keeps an in-memory vector of member-lists indexed by MultiXactId.
+// pgcpp keeps an in-memory vector of member-lists indexed by MultiXactId.
 #pragma once
 
 #include <cstdint>
@@ -14,7 +14,7 @@
 
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // MultiXactMember — one transaction's lock membership in a multixact.
 struct MultiXactMember {
@@ -53,4 +53,4 @@ bool MultiXactIdIsValid(MultiXactId multi);
 // GetNextMultiXactId — the next MultiXactId that will be allocated.
 MultiXactId GetNextMultiXactId();
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

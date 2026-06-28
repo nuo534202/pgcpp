@@ -37,96 +37,96 @@
 #include "pgcpp/transaction/xloginsert.hpp"
 #include "pgcpp/transaction/xlogrecovery.hpp"
 
-using mytoydb::server::AutoVacuumStats;
-using mytoydb::server::AutoVacuumWorkItem;
-using mytoydb::server::AuxiliaryProcessType;
-using mytoydb::server::AuxProcessMain;
-using mytoydb::server::AuxProcessTypeToString;
-using mytoydb::server::BackgroundWorker;
-using mytoydb::server::BgWorkerState;
-using mytoydb::server::BgWorkerType;
-using mytoydb::server::BgWriterStats;
-using mytoydb::server::CheckpointerIsRunning;
-using mytoydb::server::CheckpointerMain;
-using mytoydb::server::CheckpointStats;
-using mytoydb::server::CloseStdio;
-using mytoydb::server::CreateCheckPoint;
-using mytoydb::server::GetBgWorkerState;
-using mytoydb::server::GetBgWriterStats;
-using mytoydb::server::GetCheckpointStats;
-using mytoydb::server::GetPendingArchiveRequests;
-using mytoydb::server::GetPgArchState;
-using mytoydb::server::GetPgArchStats;
-using mytoydb::server::GetShellArchiveStats;
-using mytoydb::server::GetStartupState;
-using mytoydb::server::GetStartupStats;
-using mytoydb::server::GetSysLoggerMessages;
-using mytoydb::server::GetSysLoggerState;
-using mytoydb::server::GetSysLoggerStats;
-using mytoydb::server::GetWalWriterStats;
-using mytoydb::server::HandleInterrupts;
-using mytoydb::server::InitializeAutoVacuum;
-using mytoydb::server::InitializeBgWorker;
-using mytoydb::server::InitializeBgWriter;
-using mytoydb::server::InitializeCheckpointer;
-using mytoydb::server::InitializePgArch;
-using mytoydb::server::InitializeShellArchive;
-using mytoydb::server::InitializeStartupProcess;
-using mytoydb::server::InitializeSysLogger;
-using mytoydb::server::InitializeWalWriter;
-using mytoydb::server::InterruptFlags;
-using mytoydb::server::InterruptRequested;
-using mytoydb::server::IsArchiveCommandSet;
-using mytoydb::server::IsInForkedProcess;
-using mytoydb::server::kCheckpointCauseTime;
-using mytoydb::server::kCheckpointForce;
-using mytoydb::server::kCheckpointImmediate;
-using mytoydb::server::kCheckpointIsShutdown;
-using mytoydb::server::kCheckpointWait;
-using mytoydb::server::LastCheckpointLSN;
-using mytoydb::server::LookupAuxProcessType;
-using mytoydb::server::LookupBgworkerName;
-using mytoydb::server::PgArchiveWALFile;
-using mytoydb::server::PgArchStart;
-using mytoydb::server::PgArchState;
-using mytoydb::server::PgArchStop;
-using mytoydb::server::QueueArchiveRequest;
-using mytoydb::server::RegisterAutoVacuumWorkItem;
-using mytoydb::server::RegisterBackgroundWorker;
-using mytoydb::server::RegisterInterruptHandler;
-using mytoydb::server::ResetAutoVacuum;
-using mytoydb::server::ResetBgWorker;
-using mytoydb::server::ResetBgWriter;
-using mytoydb::server::ResetCheckpointer;
-using mytoydb::server::ResetInterruptFlags;
-using mytoydb::server::ResetPgArch;
-using mytoydb::server::ResetShellArchive;
-using mytoydb::server::ResetStartupProcess;
-using mytoydb::server::ResetSysLogger;
-using mytoydb::server::ResetWalWriter;
-using mytoydb::server::SetArchiveCommand;
-using mytoydb::server::SetInForkedProcess;
-using mytoydb::server::ShellArchive;
-using mytoydb::server::ShellArchiveStats;
-using mytoydb::server::StartupState;
-using mytoydb::server::StartupStats;
-using mytoydb::server::SysLoggerStart;
-using mytoydb::server::SysLoggerState;
-using mytoydb::server::SysLoggerStop;
-using mytoydb::server::SysLoggerWrite;
-using mytoydb::server::WalWriterStats;
-using mytoydb::transaction::GetXLogInsertRecPtr;
-using mytoydb::transaction::InitializeWal;
-using mytoydb::transaction::kInvalidXLogRecPtr;
-using mytoydb::transaction::kRmgrXactId;
-using mytoydb::transaction::kSizeofXlogRecord;
-using mytoydb::transaction::RegisterRmgrRedo;
-using mytoydb::transaction::ResetWal;
-using mytoydb::transaction::ResetXlogInsertState;
-using mytoydb::transaction::XLogBeginInsert;
-using mytoydb::transaction::XLogFlush;
-using mytoydb::transaction::XLogInsert;
-using mytoydb::transaction::XLogRecPtr;
+using pgcpp::server::AutoVacuumStats;
+using pgcpp::server::AutoVacuumWorkItem;
+using pgcpp::server::AuxiliaryProcessType;
+using pgcpp::server::AuxProcessMain;
+using pgcpp::server::AuxProcessTypeToString;
+using pgcpp::server::BackgroundWorker;
+using pgcpp::server::BgWorkerState;
+using pgcpp::server::BgWorkerType;
+using pgcpp::server::BgWriterStats;
+using pgcpp::server::CheckpointerIsRunning;
+using pgcpp::server::CheckpointerMain;
+using pgcpp::server::CheckpointStats;
+using pgcpp::server::CloseStdio;
+using pgcpp::server::CreateCheckPoint;
+using pgcpp::server::GetBgWorkerState;
+using pgcpp::server::GetBgWriterStats;
+using pgcpp::server::GetCheckpointStats;
+using pgcpp::server::GetPendingArchiveRequests;
+using pgcpp::server::GetPgArchState;
+using pgcpp::server::GetPgArchStats;
+using pgcpp::server::GetShellArchiveStats;
+using pgcpp::server::GetStartupState;
+using pgcpp::server::GetStartupStats;
+using pgcpp::server::GetSysLoggerMessages;
+using pgcpp::server::GetSysLoggerState;
+using pgcpp::server::GetSysLoggerStats;
+using pgcpp::server::GetWalWriterStats;
+using pgcpp::server::HandleInterrupts;
+using pgcpp::server::InitializeAutoVacuum;
+using pgcpp::server::InitializeBgWorker;
+using pgcpp::server::InitializeBgWriter;
+using pgcpp::server::InitializeCheckpointer;
+using pgcpp::server::InitializePgArch;
+using pgcpp::server::InitializeShellArchive;
+using pgcpp::server::InitializeStartupProcess;
+using pgcpp::server::InitializeSysLogger;
+using pgcpp::server::InitializeWalWriter;
+using pgcpp::server::InterruptFlags;
+using pgcpp::server::InterruptRequested;
+using pgcpp::server::IsArchiveCommandSet;
+using pgcpp::server::IsInForkedProcess;
+using pgcpp::server::kCheckpointCauseTime;
+using pgcpp::server::kCheckpointForce;
+using pgcpp::server::kCheckpointImmediate;
+using pgcpp::server::kCheckpointIsShutdown;
+using pgcpp::server::kCheckpointWait;
+using pgcpp::server::LastCheckpointLSN;
+using pgcpp::server::LookupAuxProcessType;
+using pgcpp::server::LookupBgworkerName;
+using pgcpp::server::PgArchiveWALFile;
+using pgcpp::server::PgArchStart;
+using pgcpp::server::PgArchState;
+using pgcpp::server::PgArchStop;
+using pgcpp::server::QueueArchiveRequest;
+using pgcpp::server::RegisterAutoVacuumWorkItem;
+using pgcpp::server::RegisterBackgroundWorker;
+using pgcpp::server::RegisterInterruptHandler;
+using pgcpp::server::ResetAutoVacuum;
+using pgcpp::server::ResetBgWorker;
+using pgcpp::server::ResetBgWriter;
+using pgcpp::server::ResetCheckpointer;
+using pgcpp::server::ResetInterruptFlags;
+using pgcpp::server::ResetPgArch;
+using pgcpp::server::ResetShellArchive;
+using pgcpp::server::ResetStartupProcess;
+using pgcpp::server::ResetSysLogger;
+using pgcpp::server::ResetWalWriter;
+using pgcpp::server::SetArchiveCommand;
+using pgcpp::server::SetInForkedProcess;
+using pgcpp::server::ShellArchive;
+using pgcpp::server::ShellArchiveStats;
+using pgcpp::server::StartupState;
+using pgcpp::server::StartupStats;
+using pgcpp::server::SysLoggerStart;
+using pgcpp::server::SysLoggerState;
+using pgcpp::server::SysLoggerStop;
+using pgcpp::server::SysLoggerWrite;
+using pgcpp::server::WalWriterStats;
+using pgcpp::transaction::GetXLogInsertRecPtr;
+using pgcpp::transaction::InitializeWal;
+using pgcpp::transaction::kInvalidXLogRecPtr;
+using pgcpp::transaction::kRmgrXactId;
+using pgcpp::transaction::kSizeofXlogRecord;
+using pgcpp::transaction::RegisterRmgrRedo;
+using pgcpp::transaction::ResetWal;
+using pgcpp::transaction::ResetXlogInsertState;
+using pgcpp::transaction::XLogBeginInsert;
+using pgcpp::transaction::XLogFlush;
+using pgcpp::transaction::XLogInsert;
+using pgcpp::transaction::XLogRecPtr;
 
 // ===========================================================================
 // Test fixture — resets all auxiliary process subsystems between tests.
@@ -136,7 +136,7 @@ protected:
     void SetUp() override {
         // Reset all auxiliary process state.
         ResetInterruptFlags();
-        mytoydb::server::ClearInterruptHandlers();
+        pgcpp::server::ClearInterruptHandlers();
         InitializeBgWriter();
         InitializeCheckpointer();
         InitializeStartupProcess();
@@ -199,24 +199,24 @@ TEST_F(AuxProcessTest, InterruptFlagsInitiallyFalse) {
 }
 
 TEST_F(AuxProcessTest, QueryCancelSignalSetsFlags) {
-    mytoydb::server::HandleQueryCancelSignal(SIGINT);
+    pgcpp::server::HandleQueryCancelSignal(SIGINT);
     EXPECT_TRUE(InterruptFlags::QueryCancelPending);
     EXPECT_TRUE(InterruptFlags::InterruptPending);
 }
 
 TEST_F(AuxProcessTest, ShutdownSignalSetsFlags) {
-    mytoydb::server::HandleShutdownSignal(SIGTERM);
+    pgcpp::server::HandleShutdownSignal(SIGTERM);
     EXPECT_TRUE(InterruptFlags::ShutdownRequested);
     EXPECT_TRUE(InterruptFlags::InterruptPending);
 }
 
 TEST_F(AuxProcessTest, InterruptRequestedAfterCancel) {
-    mytoydb::server::HandleQueryCancelSignal(SIGINT);
+    pgcpp::server::HandleQueryCancelSignal(SIGINT);
     EXPECT_TRUE(InterruptRequested());
 }
 
 TEST_F(AuxProcessTest, HandleInterruptsClearsFlags) {
-    mytoydb::server::HandleQueryCancelSignal(SIGINT);
+    pgcpp::server::HandleQueryCancelSignal(SIGINT);
     ASSERT_TRUE(InterruptFlags::QueryCancelPending);
     HandleInterrupts();
     EXPECT_FALSE(InterruptFlags::QueryCancelPending);
@@ -228,7 +228,7 @@ TEST_F(AuxProcessTest, RegisterAndDispatchInterruptHandler) {
     int id = RegisterInterruptHandler("QueryCancel", [&]() { ++call_count; });
     ASSERT_GT(id, 0);
 
-    mytoydb::server::HandleQueryCancelSignal(SIGINT);
+    pgcpp::server::HandleQueryCancelSignal(SIGINT);
     HandleInterrupts();
     EXPECT_EQ(call_count.load(), 1);
 }
@@ -236,24 +236,24 @@ TEST_F(AuxProcessTest, RegisterAndDispatchInterruptHandler) {
 TEST_F(AuxProcessTest, UnregisterInterruptHandler) {
     std::atomic<int> call_count{0};
     int id = RegisterInterruptHandler("QueryCancel", [&]() { ++call_count; });
-    mytoydb::server::UnregisterInterruptHandler(id);
+    pgcpp::server::UnregisterInterruptHandler(id);
 
-    mytoydb::server::HandleQueryCancelSignal(SIGINT);
+    pgcpp::server::HandleQueryCancelSignal(SIGINT);
     HandleInterrupts();
     EXPECT_EQ(call_count.load(), 0);
 }
 
 TEST_F(AuxProcessTest, WaitForInterruptReturnsFalseOnTimeout) {
-    EXPECT_FALSE(mytoydb::server::WaitForInterrupt(/*timeout_ms=*/10));
+    EXPECT_FALSE(pgcpp::server::WaitForInterrupt(/*timeout_ms=*/10));
 }
 
 TEST_F(AuxProcessTest, WaitForInterruptReturnsTrueWhenSet) {
     // Set the flag in a separate thread after a short delay.
     std::thread setter([&]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        mytoydb::server::HandleShutdownSignal(SIGTERM);
+        pgcpp::server::HandleShutdownSignal(SIGTERM);
     });
-    bool got = mytoydb::server::WaitForInterrupt(/*timeout_ms=*/1000);
+    bool got = pgcpp::server::WaitForInterrupt(/*timeout_ms=*/1000);
     setter.join();
     EXPECT_TRUE(got);
 }
@@ -264,16 +264,16 @@ TEST_F(AuxProcessTest, WaitForInterruptReturnsTrueWhenSet) {
 
 TEST_F(AuxProcessTest, ForkProcessRoleTracking) {
     EXPECT_FALSE(IsInForkedProcess());
-    EXPECT_TRUE(mytoydb::server::GetForkedProcessRole().empty());
+    EXPECT_TRUE(pgcpp::server::GetForkedProcessRole().empty());
 
     SetInForkedProcess(true);
-    mytoydb::server::SetForkedProcessRole("test_worker");
+    pgcpp::server::SetForkedProcessRole("test_worker");
 
     EXPECT_TRUE(IsInForkedProcess());
-    EXPECT_EQ(mytoydb::server::GetForkedProcessRole(), "test_worker");
+    EXPECT_EQ(pgcpp::server::GetForkedProcessRole(), "test_worker");
 
     SetInForkedProcess(false);
-    mytoydb::server::SetForkedProcessRole("");
+    pgcpp::server::SetForkedProcessRole("");
     EXPECT_FALSE(IsInForkedProcess());
 }
 
@@ -289,28 +289,28 @@ TEST_F(AuxProcessTest, BgWriterInitialState) {
 }
 
 TEST_F(AuxProcessTest, BgWriterScheduleFlushSetsTarget) {
-    mytoydb::server::BgWriterScheduleFlush(/*target_count=*/10);
+    pgcpp::server::BgWriterScheduleFlush(/*target_count=*/10);
     // FlushBuffers drains the target.
-    int flushed = mytoydb::server::BgWriterFlushBuffers(/*max_buffers=*/5);
+    int flushed = pgcpp::server::BgWriterFlushBuffers(/*max_buffers=*/5);
     EXPECT_EQ(flushed, 5);
-    flushed = mytoydb::server::BgWriterFlushBuffers(/*max_buffers=*/5);
+    flushed = pgcpp::server::BgWriterFlushBuffers(/*max_buffers=*/5);
     EXPECT_EQ(flushed, 5);
     // Target exhausted.
-    flushed = mytoydb::server::BgWriterFlushBuffers(/*max_buffers=*/5);
+    flushed = pgcpp::server::BgWriterFlushBuffers(/*max_buffers=*/5);
     EXPECT_EQ(flushed, 0);
 }
 
 TEST_F(AuxProcessTest, BgWriterFlushUpdatesStats) {
-    mytoydb::server::BgWriterScheduleFlush(/*target_count=*/100);
-    mytoydb::server::BgWriterFlushBuffers(/*max_buffers=*/30);
+    pgcpp::server::BgWriterScheduleFlush(/*target_count=*/100);
+    pgcpp::server::BgWriterFlushBuffers(/*max_buffers=*/30);
 
     BgWriterStats stats = GetBgWriterStats();
     EXPECT_EQ(stats.buffers_written, 30u);
 }
 
 TEST_F(AuxProcessTest, BgWriterMainFlushesScheduledBuffers) {
-    mytoydb::server::BgWriterScheduleFlush(/*target_count=*/100);
-    int total = mytoydb::server::BgWriterMain(/*max_iterations=*/10);
+    pgcpp::server::BgWriterScheduleFlush(/*target_count=*/100);
+    int total = pgcpp::server::BgWriterMain(/*max_iterations=*/10);
     EXPECT_GT(total, 0);
 
     BgWriterStats stats = GetBgWriterStats();
@@ -320,8 +320,8 @@ TEST_F(AuxProcessTest, BgWriterMainFlushesScheduledBuffers) {
 
 TEST_F(AuxProcessTest, BgWriterMainExitsOnShutdown) {
     InterruptFlags::BgWriterShutdownRequested = true;
-    mytoydb::server::BgWriterScheduleFlush(/*target_count=*/1000);
-    int total = mytoydb::server::BgWriterMain(/*max_iterations=*/100);
+    pgcpp::server::BgWriterScheduleFlush(/*target_count=*/1000);
+    int total = pgcpp::server::BgWriterMain(/*max_iterations=*/100);
     // Should not flush anything due to immediate shutdown.
     EXPECT_EQ(total, 0);
 }
@@ -364,7 +364,7 @@ TEST_F(AuxProcessTest, CreateCheckPointWithCauseTimeIncrementsTimed) {
 }
 
 TEST_F(AuxProcessTest, RequestCheckpointQueuesForMainLoop) {
-    mytoydb::server::RequestCheckpoint(kCheckpointForce);
+    pgcpp::server::RequestCheckpoint(kCheckpointForce);
     int done = CheckpointerMain(/*max_iterations=*/10);
     EXPECT_EQ(done, 1);
 
@@ -374,7 +374,7 @@ TEST_F(AuxProcessTest, RequestCheckpointQueuesForMainLoop) {
 
 TEST_F(AuxProcessTest, CheckpointerMainExitsOnShutdown) {
     InterruptFlags::ShutdownRequested = true;
-    mytoydb::server::RequestCheckpoint(kCheckpointForce);
+    pgcpp::server::RequestCheckpoint(kCheckpointForce);
     int done = CheckpointerMain(/*max_iterations=*/10);
     EXPECT_EQ(done, 0);
 }
@@ -390,14 +390,14 @@ TEST_F(AuxProcessTest, CheckpointerMainNoPendingExitsEarly) {
 
 TEST_F(AuxProcessTest, StartupInitialState) {
     EXPECT_EQ(GetStartupState(), StartupState::kNotStarted);
-    EXPECT_FALSE(mytoydb::server::IsRecoveryInProgress());
+    EXPECT_FALSE(pgcpp::server::IsRecoveryInProgress());
 }
 
 TEST_F(AuxProcessTest, StartupProcessMainTransitionsState) {
-    int rc = mytoydb::server::StartupProcessMain();
+    int rc = pgcpp::server::StartupProcessMain();
     EXPECT_EQ(rc, 0);
     EXPECT_EQ(GetStartupState(), StartupState::kDone);
-    EXPECT_FALSE(mytoydb::server::IsRecoveryInProgress());
+    EXPECT_FALSE(pgcpp::server::IsRecoveryInProgress());
 }
 
 TEST_F(AuxProcessTest, StartupReplaysWALRecords) {
@@ -412,7 +412,7 @@ TEST_F(AuxProcessTest, StartupReplaysWALRecords) {
         XLogInsert(kRmgrXactId, /*info=*/0);
     }
 
-    int rc = mytoydb::server::StartupProcessMain();
+    int rc = pgcpp::server::StartupProcessMain();
     EXPECT_EQ(rc, 0);
 
     StartupStats stats = GetStartupStats();
@@ -426,7 +426,7 @@ TEST_F(AuxProcessTest, StartupSkipsUnregisteredRmgrs) {
     XLogBeginInsert();
     XLogInsert(/*rmid=*/200, /*info=*/0);
 
-    int rc = mytoydb::server::StartupProcessMain();
+    int rc = pgcpp::server::StartupProcessMain();
     EXPECT_EQ(rc, 0);
 
     StartupStats stats = GetStartupStats();
@@ -449,8 +449,8 @@ TEST_F(AuxProcessTest, SetRecoveryStartLsnChangesStartPoint) {
                                       std::size_t /*len*/, XLogRecPtr /*lsn*/) { ++redo_calls; });
 
     // Start recovery from the second record — should replay only 1.
-    mytoydb::server::SetRecoveryStartLsn(second_lsn);
-    int rc = mytoydb::server::StartupProcessMain();
+    pgcpp::server::SetRecoveryStartLsn(second_lsn);
+    int rc = pgcpp::server::StartupProcessMain();
     EXPECT_EQ(rc, 0);
 
     StartupStats stats = GetStartupStats();
@@ -474,7 +474,7 @@ TEST_F(AuxProcessTest, WalWriterFlushReportsBytesWritten) {
     XLogBeginInsert();
     XLogInsert(kRmgrXactId, /*info=*/0);
 
-    uint64_t bytes = mytoydb::server::WalWriterFlush();
+    uint64_t bytes = pgcpp::server::WalWriterFlush();
     EXPECT_GT(bytes, 0u);
 
     WalWriterStats stats = GetWalWriterStats();
@@ -485,10 +485,10 @@ TEST_F(AuxProcessTest, WalWriterFlushReportsBytesWritten) {
 TEST_F(AuxProcessTest, WalWriterFlushNoNewWALReturnsZero) {
     // No WAL written — first flush moves from 0 to kSizeofXlogRecord (24)
     // because InitializeWal advances the insert pointer past the header.
-    uint64_t bytes = mytoydb::server::WalWriterFlush();
+    uint64_t bytes = pgcpp::server::WalWriterFlush();
     // The first flush always sees at least the WAL header area as "new".
     // After that, subsequent flushes return 0.
-    bytes = mytoydb::server::WalWriterFlush();
+    bytes = pgcpp::server::WalWriterFlush();
     EXPECT_EQ(bytes, 0u);
 }
 
@@ -496,7 +496,7 @@ TEST_F(AuxProcessTest, WalWriterMainRunsCycles) {
     XLogBeginInsert();
     XLogInsert(kRmgrXactId, /*info=*/0);
 
-    int cycles = mytoydb::server::WalWriterMain(/*max_iterations=*/5);
+    int cycles = pgcpp::server::WalWriterMain(/*max_iterations=*/5);
     EXPECT_GT(cycles, 0);
 
     WalWriterStats stats = GetWalWriterStats();
@@ -505,7 +505,7 @@ TEST_F(AuxProcessTest, WalWriterMainRunsCycles) {
 
 TEST_F(AuxProcessTest, WalWriterMainExitsOnShutdown) {
     InterruptFlags::WalWriterShutdownRequested = true;
-    int cycles = mytoydb::server::WalWriterMain(/*max_iterations=*/5);
+    int cycles = pgcpp::server::WalWriterMain(/*max_iterations=*/5);
     EXPECT_EQ(cycles, 0);
 }
 
@@ -520,7 +520,7 @@ TEST_F(AuxProcessTest, AutoVacuumRegisterWorkItem) {
     item.is_vacuum = true;
 
     EXPECT_TRUE(RegisterAutoVacuumWorkItem(item));
-    auto pending = mytoydb::server::GetPendingAutoVacuumItems();
+    auto pending = pgcpp::server::GetPendingAutoVacuumItems();
     EXPECT_EQ(pending.size(), 1u);
     EXPECT_EQ(pending[0].database, "testdb");
     EXPECT_EQ(pending[0].table, "public.users");
@@ -533,7 +533,7 @@ TEST_F(AuxProcessTest, AutoVacuumDuplicateRejected) {
 
     EXPECT_TRUE(RegisterAutoVacuumWorkItem(item));
     EXPECT_FALSE(RegisterAutoVacuumWorkItem(item));  // Duplicate.
-    EXPECT_EQ(mytoydb::server::GetPendingAutoVacuumItems().size(), 1u);
+    EXPECT_EQ(pgcpp::server::GetPendingAutoVacuumItems().size(), 1u);
 }
 
 TEST_F(AuxProcessTest, AutoVacuumLauncherMainProcessesQueue) {
@@ -541,31 +541,31 @@ TEST_F(AuxProcessTest, AutoVacuumLauncherMainProcessesQueue) {
     RegisterAutoVacuumWorkItem({"testdb", "public.t2", true, false, 0});
     RegisterAutoVacuumWorkItem({"testdb", "public.t3", false, true, 0});
 
-    int launched = mytoydb::server::AutoVacuumLauncherMain(/*max_workers=*/10);
+    int launched = pgcpp::server::AutoVacuumLauncherMain(/*max_workers=*/10);
     EXPECT_EQ(launched, 3);
 
-    AutoVacuumStats stats = mytoydb::server::GetAutoVacuumStats();
+    AutoVacuumStats stats = pgcpp::server::GetAutoVacuumStats();
     EXPECT_EQ(stats.workers_launched, 3u);
     EXPECT_EQ(stats.workers_completed, 3u);
     EXPECT_EQ(stats.vacuums_run, 2u);
     EXPECT_EQ(stats.analyzes_run, 1u);
-    EXPECT_EQ(mytoydb::server::GetPendingAutoVacuumItems().size(), 0u);
+    EXPECT_EQ(pgcpp::server::GetPendingAutoVacuumItems().size(), 0u);
 }
 
 TEST_F(AuxProcessTest, AutoVacuumWorkerRejectsEmptyNames) {
     AutoVacuumWorkItem empty;
-    EXPECT_NE(mytoydb::server::AutoVacuumWorkerMain(empty), 0);
+    EXPECT_NE(pgcpp::server::AutoVacuumWorkerMain(empty), 0);
 
     AutoVacuumWorkItem valid;
     valid.database = "db";
     valid.table = "t";
-    EXPECT_EQ(mytoydb::server::AutoVacuumWorkerMain(valid), 0);
+    EXPECT_EQ(pgcpp::server::AutoVacuumWorkerMain(valid), 0);
 }
 
 TEST_F(AuxProcessTest, AutoVacuumLauncherExitsOnShutdown) {
     RegisterAutoVacuumWorkItem({"db", "t", false, true, 0});
     InterruptFlags::ShutdownRequested = true;
-    int launched = mytoydb::server::AutoVacuumLauncherMain(/*max_workers=*/10);
+    int launched = pgcpp::server::AutoVacuumLauncherMain(/*max_workers=*/10);
     EXPECT_EQ(launched, 0);
 }
 
@@ -676,7 +676,7 @@ TEST_F(AuxProcessTest, PgArchiverMainProcessesQueue) {
     QueueArchiveRequest("/tmp/wal_005");
     PgArchStart();
 
-    int archived = mytoydb::server::PgArchiverMain(/*max_iterations=*/10);
+    int archived = pgcpp::server::PgArchiverMain(/*max_iterations=*/10);
     EXPECT_EQ(archived, 2);
     EXPECT_EQ(GetPendingArchiveRequests().size(), 0u);
 
@@ -689,7 +689,7 @@ TEST_F(AuxProcessTest, PgArchiverMainRequeuesOnFailure) {
     QueueArchiveRequest("/tmp/wal_006");
     PgArchStart();
 
-    int archived = mytoydb::server::PgArchiverMain(/*max_iterations=*/10);
+    int archived = pgcpp::server::PgArchiverMain(/*max_iterations=*/10);
     EXPECT_EQ(archived, 0);
     // Failed file should be re-queued for retry.
     EXPECT_EQ(GetPendingArchiveRequests().size(), 1u);
@@ -722,7 +722,7 @@ TEST_F(AuxProcessTest, SysLoggerWriteQueuesMessage) {
     SysLoggerWrite("INFO", "hello world");
     SysLoggerWrite("ERROR", "something broke");
 
-    int processed = mytoydb::server::SysLoggerMain(/*max_iterations=*/10);
+    int processed = pgcpp::server::SysLoggerMain(/*max_iterations=*/10);
     EXPECT_EQ(processed, 2);
 
     auto messages = GetSysLoggerMessages();
@@ -742,7 +742,7 @@ TEST_F(AuxProcessTest, SysLoggerStatsByLevel) {
     SysLoggerWrite("ERROR", "e");
     SysLoggerWrite("FATAL", "f");
 
-    mytoydb::server::SysLoggerMain(/*max_iterations=*/10);
+    pgcpp::server::SysLoggerMain(/*max_iterations=*/10);
 
     auto stats = GetSysLoggerStats();
     EXPECT_EQ(stats.debug_count, 1u);
@@ -757,7 +757,7 @@ TEST_F(AuxProcessTest, SysLoggerStatsByLevel) {
 
 TEST_F(AuxProcessTest, SysLoggerMainNoOpWhenStopped) {
     SysLoggerWrite("INFO", "should not process");
-    int processed = mytoydb::server::SysLoggerMain(/*max_iterations=*/10);
+    int processed = pgcpp::server::SysLoggerMain(/*max_iterations=*/10);
     EXPECT_EQ(processed, 0);
 }
 
@@ -799,7 +799,7 @@ TEST_F(AuxProcessTest, BgWorkerLaunchInvokesMain) {
     ASSERT_GE(id, 0);
     EXPECT_EQ(GetBgWorkerState(id), BgWorkerState::kRegistered);
 
-    EXPECT_TRUE(mytoydb::server::LaunchBackgroundWorker(id));
+    EXPECT_TRUE(pgcpp::server::LaunchBackgroundWorker(id));
     EXPECT_EQ(call_count.load(), 1);
     EXPECT_EQ(GetBgWorkerState(id), BgWorkerState::kStopped);
 }
@@ -811,7 +811,7 @@ TEST_F(AuxProcessTest, BgWorkerMainDispatches) {
     w.main_fn = [&]() { ++call_count; };
 
     int id = RegisterBackgroundWorker(w);
-    int rc = mytoydb::server::BgWorkerMain(id);
+    int rc = pgcpp::server::BgWorkerMain(id);
     EXPECT_EQ(rc, 0);
     EXPECT_EQ(call_count.load(), 1);
 }
@@ -822,7 +822,7 @@ TEST_F(AuxProcessTest, BgWorkerTerminateRegisteredWorker) {
     w.main_fn = []() {};
 
     int id = RegisterBackgroundWorker(w);
-    EXPECT_TRUE(mytoydb::server::TerminateBackgroundWorker(id));
+    EXPECT_TRUE(pgcpp::server::TerminateBackgroundWorker(id));
     EXPECT_EQ(GetBgWorkerState(id), BgWorkerState::kStopped);
 }
 
@@ -834,18 +834,18 @@ TEST_F(AuxProcessTest, BgWorkerGetBackgroundWorker) {
 
     int id = RegisterBackgroundWorker(w);
     BackgroundWorker retrieved;
-    EXPECT_TRUE(mytoydb::server::GetBackgroundWorker(id, &retrieved));
+    EXPECT_TRUE(pgcpp::server::GetBackgroundWorker(id, &retrieved));
     EXPECT_EQ(retrieved.name, "gettable");
     EXPECT_EQ(retrieved.type, BgWorkerType::kBackend);
 }
 
 TEST_F(AuxProcessTest, BgWorkerGetBackgroundWorkerInvalidId) {
     BackgroundWorker w;
-    EXPECT_FALSE(mytoydb::server::GetBackgroundWorker(999, &w));
+    EXPECT_FALSE(pgcpp::server::GetBackgroundWorker(999, &w));
 }
 
 TEST_F(AuxProcessTest, BgWorkerLaunchInvalidIdReturnsFalse) {
-    EXPECT_FALSE(mytoydb::server::LaunchBackgroundWorker(999));
+    EXPECT_FALSE(pgcpp::server::LaunchBackgroundWorker(999));
 }
 
 // ===========================================================================
@@ -854,7 +854,7 @@ TEST_F(AuxProcessTest, BgWorkerLaunchInvalidIdReturnsFalse) {
 
 TEST_F(AuxProcessTest, AuxProcessMainBgWriter) {
     // Schedule some flush work so BgWriterMain does something.
-    mytoydb::server::BgWriterScheduleFlush(/*target_count=*/5);
+    pgcpp::server::BgWriterScheduleFlush(/*target_count=*/5);
     int rc = AuxProcessMain(AuxiliaryProcessType::kBgWriter);
     EXPECT_GE(rc, 0);
 }

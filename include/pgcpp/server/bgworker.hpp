@@ -8,7 +8,7 @@
 // parallel query, logical replication, or custom monitoring. Each worker
 // has a name, a type (auxiliary/backend/dynamic), and a main function.
 //
-// In MyToyDB (single-process), background workers are stateful records:
+// In pgcpp (single-process), background workers are stateful records:
 // RegisterBackgroundWorker adds an entry to a registry; LaunchBackgroundWorker
 // marks it running and invokes its main function (synchronously, since
 // there's no real fork). The API preserves the registry/launch/dispatch
@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // BgWorkerState — lifecycle state of a background worker.
 enum class BgWorkerState {
@@ -84,18 +84,18 @@ bool GetBackgroundWorker(int worker_id, BackgroundWorker* out);
 bool LaunchBackgroundWorker(int worker_id);
 
 // TerminateBackgroundWorker — stop a running worker.
-// Marks the worker as stopped. (In MyToyDB, since workers run synchronously,
+// Marks the worker as stopped. (In pgcpp, since workers run synchronously,
 // this only has an effect on workers that have not yet been launched.)
 // Returns true on success, false if the worker is not running.
 bool TerminateBackgroundWorker(int worker_id);
 
 // BgWorkerMain — dispatch to a background worker's main function.
 // This is the entry point that would be called in a forked child in PG;
-// in MyToyDB it just invokes the registered main function.
+// in pgcpp it just invokes the registered main function.
 // Returns 0 on success, non-zero on error.
 int BgWorkerMain(int worker_id);
 
 // GetBgWorkerState — return the state of a worker.
 BgWorkerState GetBgWorkerState(int worker_id);
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

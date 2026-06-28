@@ -6,7 +6,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // bool input/output
 Datum bool_in(const char* str);
@@ -146,4 +146,4 @@ Datum MakeTextDatum(std::string_view str);
 // Helper: extract a std::string from a text Datum.
 std::string TextDatumToString(Datum datum);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

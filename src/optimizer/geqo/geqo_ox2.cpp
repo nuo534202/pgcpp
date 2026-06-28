@@ -15,7 +15,7 @@
 
 #include "pgcpp/optimizer/geqo/geqo_random.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 bool CrossoverOX2(const Chromosome* mum, const Chromosome* dad, Chromosome* child) {
     if (mum == nullptr || dad == nullptr || child == nullptr)
@@ -65,4 +65,4 @@ bool CrossoverOX2(const Chromosome* mum, const Chromosome* dad, Chromosome* chil
     return true;
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

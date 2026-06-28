@@ -4,21 +4,21 @@
 #include "pgcpp/executor/node_exec.hpp"
 #include "pgcpp/executor/node_hash.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 class HashJoinState : public PlanState {
 public:
     HashJoinState(Plan* p, EState* s) : PlanState(p, s) {}
 
-    mytoydb::parser::JoinType hj_jointype = mytoydb::parser::JoinType::kInner;
-    std::vector<mytoydb::parser::Node*> hj_hashclauses;
+    pgcpp::parser::JoinType hj_jointype = pgcpp::parser::JoinType::kInner;
+    std::vector<pgcpp::parser::Node*> hj_hashclauses;
 
     // Extracted from hashclauses: left (outer) and right (inner) key
     // expressions. In PostgreSQL, ExecInitHashJoin splits each hash clause
     // OpExpr into its left and right args so each side can be evaluated
     // independently during the build and probe phases.
-    std::vector<mytoydb::parser::Node*> hj_outer_hashkeys;
-    std::vector<mytoydb::parser::Node*> hj_inner_hashkeys;
+    std::vector<pgcpp::parser::Node*> hj_outer_hashkeys;
+    std::vector<pgcpp::parser::Node*> hj_inner_hashkeys;
 
     // Execution phase.
     enum class Phase { kBuildHashTable, kProbeHashTable, kDone };
@@ -42,4 +42,4 @@ public:
     void ExecReScan() override;
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

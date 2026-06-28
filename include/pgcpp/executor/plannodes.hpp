@@ -8,7 +8,7 @@
 // execute it.
 //
 // In PostgreSQL, Plan is a Node subclass identified by NodeTag. In
-// MyToyDB we use a PlanType enum field for identification and C++
+// pgcpp we use a PlanType enum field for identification and C++
 // inheritance for structure sharing. The executor dispatches on
 // PlanType in ExecInitNode to create the matching PlanState.
 #pragma once
@@ -20,7 +20,7 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // PlanType — identifies the kind of plan node.
 enum class PlanType {
@@ -53,8 +53,8 @@ enum class PlanType {
 //   - righttree:  right child plan (inner)
 struct Plan {
     PlanType type;
-    std::vector<mytoydb::parser::TargetEntry*> targetlist;
-    mytoydb::parser::Node* qual = nullptr;
+    std::vector<pgcpp::parser::TargetEntry*> targetlist;
+    pgcpp::parser::Node* qual = nullptr;
     Plan* lefttree = nullptr;
     Plan* righttree = nullptr;
     int plan_rows = 0;   // estimated number of output rows
@@ -77,9 +77,9 @@ struct SeqScan : Plan {
 // IndexScan — B-tree index scan.
 struct IndexScan : Plan {
     IndexScan() { type = PlanType::kIndexScan; }
-    int scanrelid = 0;                              // 1-based range table index
-    mytoydb::catalog::Oid indexid = 0;              // index relation OID
-    std::vector<mytoydb::parser::Node*> indexqual;  // index scan qualifiers
+    int scanrelid = 0;                            // 1-based range table index
+    pgcpp::catalog::Oid indexid = 0;              // index relation OID
+    std::vector<pgcpp::parser::Node*> indexqual;  // index scan qualifiers
 };
 
 // Agg — aggregate node.
@@ -91,8 +91,8 @@ struct Agg : Plan {
     enum class Strategy { kPlain, kSorted, kHashed };
     Agg() { type = PlanType::kAgg; }
     Strategy aggstrategy = Strategy::kPlain;
-    std::vector<int> groupColIdx;                  // 1-based attr numbers of GROUP BY columns
-    mytoydb::parser::Node* having_qual = nullptr;  // HAVING filter (evaluated per group)
+    std::vector<int> groupColIdx;                // 1-based attr numbers of GROUP BY columns
+    pgcpp::parser::Node* having_qual = nullptr;  // HAVING filter (evaluated per group)
 };
 
 // Sort — sort node with optional Top-N optimization.
@@ -101,25 +101,25 @@ struct Agg : Plan {
 // When offset > 0, the first `offset` sorted rows are skipped before output.
 struct Sort : Plan {
     Sort() { type = PlanType::kSort; }
-    std::vector<int> sortColIdx;                       // 1-based attr numbers to sort by
-    std::vector<mytoydb::catalog::Oid> sortOperators;  // comparison operator OIDs
-    std::vector<bool> nullsFirst;                      // NULLS FIRST/LAST per column
-    std::vector<bool> reverse;                         // DESC per column
-    int64_t limit = -1;                                // Top-N limit (-1 = no limit)
-    int64_t offset = 0;                                // rows to skip after sort (0 = no skip)
+    std::vector<int> sortColIdx;                     // 1-based attr numbers to sort by
+    std::vector<pgcpp::catalog::Oid> sortOperators;  // comparison operator OIDs
+    std::vector<bool> nullsFirst;                    // NULLS FIRST/LAST per column
+    std::vector<bool> reverse;                       // DESC per column
+    int64_t limit = -1;                              // Top-N limit (-1 = no limit)
+    int64_t offset = 0;                              // rows to skip after sort (0 = no skip)
 };
 
 // NestLoop — nested-loop join.
 struct NestLoop : Plan {
     NestLoop() { type = PlanType::kNestLoop; }
-    mytoydb::parser::JoinType jointype = mytoydb::parser::JoinType::kInner;
+    pgcpp::parser::JoinType jointype = pgcpp::parser::JoinType::kInner;
 };
 
 // HashJoin — hash join.
 struct HashJoin : Plan {
     HashJoin() { type = PlanType::kHashJoin; }
-    mytoydb::parser::JoinType jointype = mytoydb::parser::JoinType::kInner;
-    std::vector<mytoydb::parser::Node*> hashclauses;  // hash join condition
+    pgcpp::parser::JoinType jointype = pgcpp::parser::JoinType::kInner;
+    std::vector<pgcpp::parser::Node*> hashclauses;  // hash join condition
 };
 
 // Hash — hash table build node (inner child of HashJoin).
@@ -130,7 +130,7 @@ struct Hash : Plan {
 // ModifyTable — INSERT/UPDATE/DELETE.
 struct ModifyTable : Plan {
     ModifyTable() { type = PlanType::kModifyTable; }
-    mytoydb::parser::CmdType operation = mytoydb::parser::CmdType::kInsert;
+    pgcpp::parser::CmdType operation = pgcpp::parser::CmdType::kInsert;
     int resultRelid = 0;  // 1-based range table index of target relation
 };
 
@@ -174,8 +174,8 @@ struct SubqueryScan : Plan {
 // MergeJoin — join two sorted inputs by merging.
 struct MergeJoin : Plan {
     MergeJoin() { type = PlanType::kMergeJoin; }
-    mytoydb::parser::JoinType jointype = mytoydb::parser::JoinType::kInner;
-    std::vector<mytoydb::parser::Node*> mergeclauses;  // merge join condition
+    pgcpp::parser::JoinType jointype = pgcpp::parser::JoinType::kInner;
+    std::vector<pgcpp::parser::Node*> mergeclauses;  // merge join condition
 };
 
 // CteScan — scan a CTE result.
@@ -194,4 +194,4 @@ struct WindowAgg : Plan {
     std::vector<bool> ordReverse;  // DESC per ORDER BY column
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

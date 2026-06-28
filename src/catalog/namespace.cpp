@@ -2,7 +2,7 @@
 //
 // Converted from PostgreSQL 15's src/backend/catalog/namespace.c.
 //
-// MyToyDB has no schema concept yet; all relations live in a single implicit
+// pgcpp has no schema concept yet; all relations live in a single implicit
 // "public" namespace. schemaname on RangeVar is ignored.
 #include "pgcpp/catalog/namespace.hpp"
 
@@ -15,10 +15,10 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
-using mytoydb::nodes::makePallocNode;
-using mytoydb::parser::RangeVar;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::parser::RangeVar;
 
 namespace {
 
@@ -33,9 +33,9 @@ Oid RangeVarGetRelid(RangeVar* rangevar, bool failOK) {
         if (failOK) {
             return kInvalidOid;
         }
-        ereport(mytoydb::error::LogLevel::kError, "RangeVarGetRelid: rangevar is null");
+        ereport(pgcpp::error::LogLevel::kError, "RangeVarGetRelid: rangevar is null");
     }
-    // MyToyDB ignores schemaname — single-namespace model.
+    // pgcpp ignores schemaname — single-namespace model.
     const std::string& relname = rangevar->relname;
     return RelnameGetRelid(relname, failOK);
 }
@@ -46,14 +46,14 @@ Oid RelnameGetRelid(const std::string& relname, bool failOK) {
         if (failOK) {
             return kInvalidOid;
         }
-        ereport(mytoydb::error::LogLevel::kError, "RelnameGetRelid: catalog is not initialized");
+        ereport(pgcpp::error::LogLevel::kError, "RelnameGetRelid: catalog is not initialized");
     }
     const FormData_pg_class* row = cat->GetClassByName(relname);
     if (row == nullptr) {
         if (failOK) {
             return kInvalidOid;
         }
-        ereport(mytoydb::error::LogLevel::kError, "relation \"" + relname + "\" does not exist");
+        ereport(pgcpp::error::LogLevel::kError, "relation \"" + relname + "\" does not exist");
     }
     return row->oid;
 }
@@ -64,7 +64,7 @@ RangeVar* makeRangeVarFromNameList(const std::vector<std::string>& names) {
     }
     auto* rv = makePallocNode<RangeVar>();
     // PG: last element is relname; if 2 elements, first is schemaname; if 3,
-    // first is catalogname. MyToyDB only consumes relname.
+    // first is catalogname. pgcpp only consumes relname.
     rv->relname = names.back();
     if (names.size() == 2) {
         rv->schemaname = names[0];
@@ -76,8 +76,8 @@ RangeVar* makeRangeVarFromNameList(const std::vector<std::string>& names) {
 }
 
 const char* get_namespace_name(Oid /*nspoid*/) {
-    // MyToyDB has a single implicit namespace; the OID is ignored.
+    // pgcpp has a single implicit namespace; the OID is ignored.
     return kPublicNamespaceName;
 }
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

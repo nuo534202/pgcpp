@@ -11,9 +11,9 @@
 #include "pgcpp/replication/replutil.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 PgCreateReplicationSlotResult PgCreateReplicationSlot(const std::string& name,
                                                       const std::string& plugin, bool is_logical,
@@ -54,7 +54,7 @@ PgCreateReplicationSlotResult PgCreateReplicationSlot(const std::string& name,
     if (is_logical) {
         // PG exports a snapshot for logical slots so the subscriber can clone
         // the catalog state. We synthesize a name; the actual snapshot is a
-        // no-op in MyToyDB.
+        // no-op in pgcpp.
         result.snapshot_name = "mytoydb_logical_snap_" + name;
     }
     return result;
@@ -89,4 +89,4 @@ transaction::XLogRecPtr PgReplicationSlotAdvanceToCurrent(const std::string& nam
     return PgReplicationSlotAdvance(name, transaction::GetXLogInsertRecPtr());
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

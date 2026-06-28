@@ -5,14 +5,14 @@
 //
 // A SHMQueue is a doubly-linked list whose nodes (SHMQueueElem) live in
 // shared memory. The queue links are pointers (SHMQueueElem*) — in PG they
-// would be SHM offsets, but MyToyDB uses raw pointers since the regions live
+// would be SHM offsets, but pgcpp uses raw pointers since the regions live
 // in the same address space.
 //
 // Used by PGPROC (proc list),PredicateLockTarget (predicate locks), and
 // various other subsystems.
 #pragma once
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // SHMQueueElem — one node in a doubly-linked list.
 // Embed this in your struct (PG uses intrusive lists).
@@ -55,4 +55,4 @@ void SHMQueueDelete(SHMQueueElem* elem);
 // SHMQueueLength — count the number of elements (O(n)).
 int SHMQueueLength(const SHMQueue* queue);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

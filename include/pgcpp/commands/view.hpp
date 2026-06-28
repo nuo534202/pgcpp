@@ -5,14 +5,14 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class ViewStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // DefineView — execute CREATE VIEW. Stores the view's query in pg_class
 // (relkind 'v') without materializing data. Returns "CREATE VIEW".
 std::string DefineView(parser::ViewStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

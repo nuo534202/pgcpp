@@ -4,7 +4,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // "char" — single-byte character type (PostgreSQL internal type OID 18).
@@ -98,4 +98,4 @@ Datum bytea_eq(Datum a, Datum b);
 Datum bytea_concat(Datum a, Datum b);
 Datum bytea_length(Datum value);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

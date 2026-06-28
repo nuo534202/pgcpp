@@ -10,11 +10,11 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
 
 // ---------------------------------------------------------------------------
 // Helper: contains_aggregate — check if an expression tree contains aggregates.
@@ -208,7 +208,7 @@ void parseCheckAggregates(ParseState* pstate, Query* qry) {
         auto* from_expr = static_cast<FromExpr*>(qry->jointree);
         if (from_expr->quals != nullptr) {
             if (contains_aggregate(from_expr->quals)) {
-                ereport(mytoydb::error::LogLevel::kError,
+                ereport(pgcpp::error::LogLevel::kError,
                         "aggregate functions are not allowed in WHERE clause");
             }
         }
@@ -223,4 +223,4 @@ void parseCheckAggregates(ParseState* pstate, Query* qry) {
     }
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

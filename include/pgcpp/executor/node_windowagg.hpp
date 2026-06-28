@@ -11,7 +11,7 @@
 #include "pgcpp/executor/node_agg.hpp"  // AggState for per-agg state reuse
 #include "pgcpp/executor/node_exec.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 class WindowAggState : public PlanState {
 public:
@@ -35,7 +35,7 @@ public:
     // Slot holding the current row's aggregate values, used by ExecProject.
     TupleTableSlot* wa_AggSlot = nullptr;
     // Last partition-key tuple (for detecting partition changes).
-    std::vector<mytoydb::types::Datum> wa_last_part_key;
+    std::vector<pgcpp::types::Datum> wa_last_part_key;
     std::vector<bool> wa_last_part_null;
     bool wa_has_last_part = false;
 
@@ -53,4 +53,4 @@ private:
     void StoreAggregates();
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

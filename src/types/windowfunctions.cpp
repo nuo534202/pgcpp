@@ -7,10 +7,10 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 Datum row_number_next(Datum state) {
     int64_t n = DatumGetInt64(state);
@@ -110,4 +110,4 @@ Datum nth_value(const std::vector<Datum>& frame, int64_t n) {
     return frame[static_cast<std::size_t>(n - 1)];
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

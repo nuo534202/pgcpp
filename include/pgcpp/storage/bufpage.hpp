@@ -27,7 +27,7 @@
 #include "pgcpp/storage/block.hpp"
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // LocationIndex — offset within a page (uint16_t in PostgreSQL).
 using LocationIndex = uint16_t;
@@ -67,13 +67,13 @@ constexpr uint16_t kPageLayoutVersion = 4;
 constexpr uint16_t kPageSizeVersion = static_cast<uint16_t>(kBlckSz) | kPageLayoutVersion;
 
 // PageXLogRecPtr — LSN (Log Sequence Number) of the last WAL record
-// affecting this page. In MyToyDB (no WAL yet), this is always 0.
+// affecting this page. In pgcpp (no WAL yet), this is always 0.
 using PageXLogRecPtr = uint64_t;
 
 // TransactionId — re-exported from the transaction namespace for use in
-// page headers (pd_prune_xid). PostgreSQL uses a global typedef; MyToyDB
-// keeps it in mytoydb::transaction and aliases it here for convenience.
-using TransactionId = mytoydb::transaction::TransactionId;
+// page headers (pd_prune_xid). PostgreSQL uses a global typedef; pgcpp
+// keeps it in pgcpp::transaction and aliases it here for convenience.
+using TransactionId = pgcpp::transaction::TransactionId;
 
 // PageHeaderData — the fixed-size header at the start of every page.
 struct PageHeaderData {
@@ -200,7 +200,7 @@ int PageGetHeapFreeSpace(Page page);
 //
 // These functions extend the page API to support DELETE/UPDATE/VACUUM and
 // index page manipulation. They mirror PostgreSQL's bufpage.c semantics,
-// adapted to MyToyDB's page layout (ItemIdData bitfields, no checksums).
+// adapted to pgcpp's page layout (ItemIdData bitfields, no checksums).
 
 // PageGetFreeSpace — return the number of free bytes available for a new
 // item, accounting for the new line pointer and MAXALIGN-down. Used by
@@ -259,4 +259,4 @@ Page PageGetTempPageCopySpecial(Page page, int special_size);
 // and free `temp_page`. Used to commit changes made in a scratch page.
 void PageRestoreTempPage(Page temp_page, Page page);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

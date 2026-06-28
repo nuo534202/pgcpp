@@ -9,25 +9,25 @@
 
 #include "pgcpp/transaction/lmgr.hpp"
 
-using mytoydb::catalog::Oid;
-using mytoydb::transaction::GetLockCount;
-using mytoydb::transaction::InitializeLockManager;
-using mytoydb::transaction::kLockTagRelation;
-using mytoydb::transaction::kNumLockModes;
-using mytoydb::transaction::LockAcquire;
-using mytoydb::transaction::LockConflicts;
-using mytoydb::transaction::LockHeld;
-using mytoydb::transaction::LockMode;
-using mytoydb::transaction::LockModeHeld;
-using mytoydb::transaction::LockModeStronger;
-using mytoydb::transaction::LockRelation;
-using mytoydb::transaction::LockRelationIdForSession;
-using mytoydb::transaction::LockRelease;
-using mytoydb::transaction::LockReleaseAll;
-using mytoydb::transaction::LockTag;
-using mytoydb::transaction::ResetLockManager;
-using mytoydb::transaction::UnlockRelation;
-using mytoydb::transaction::UnlockRelationIdForSession;
+using pgcpp::catalog::Oid;
+using pgcpp::transaction::GetLockCount;
+using pgcpp::transaction::InitializeLockManager;
+using pgcpp::transaction::kLockTagRelation;
+using pgcpp::transaction::kNumLockModes;
+using pgcpp::transaction::LockAcquire;
+using pgcpp::transaction::LockConflicts;
+using pgcpp::transaction::LockHeld;
+using pgcpp::transaction::LockMode;
+using pgcpp::transaction::LockModeHeld;
+using pgcpp::transaction::LockModeStronger;
+using pgcpp::transaction::LockRelation;
+using pgcpp::transaction::LockRelationIdForSession;
+using pgcpp::transaction::LockRelease;
+using pgcpp::transaction::LockReleaseAll;
+using pgcpp::transaction::LockTag;
+using pgcpp::transaction::ResetLockManager;
+using pgcpp::transaction::UnlockRelation;
+using pgcpp::transaction::UnlockRelationIdForSession;
 
 namespace {
 

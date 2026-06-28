@@ -11,7 +11,7 @@
 //   - apply_ptr:  the LSN the standby has replayed (or InvalidXLogRecPtr).
 //
 // In PostgreSQL, walsender state lives in shared memory (WalSndCtl) so
-// that other backends can query it for sync-rep waits. MyToyDB is
+// that other backends can query it for sync-rep waits. pgcpp is
 // single-process, so we hold an in-memory std::vector<WalSnd> in a
 // file-static singleton. The API surface mirrors PG: WalSndInit,
 // WalSndGetState, WalSndSetState, WalSndWakeup, WalSndWaitForWal.
@@ -24,7 +24,7 @@
 #include "pgcpp/replication/replutil.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // Maximum number of walsenders (mirrors PG's max_wal_senders default of 10).
 constexpr int kMaxWalSenders = 10;
@@ -94,7 +94,7 @@ void WalSndWakeup();
 // WalSndWakeupWaitingForWal — wake any sender waiting for the given LSN.
 void WalSndWakeupWaitingForWal(transaction::XLogRecPtr lsn);
 
-// WalSndWaitForWal — block (or poll, in the stubbed MyToyDB implementation)
+// WalSndWaitForWal — block (or poll, in the stubbed pgcpp implementation)
 // until the requested LSN has been flushed by all senders in `wait_mode`.
 // Returns true if the LSN is reachable in `max_iterations` cycles.
 //   wait_mode = -1 means "any sender", >= 0 means "specific sender index".
@@ -111,4 +111,4 @@ bool WalSndRemove(int idx);
 // GetWalSndCtl — return a pointer to the global WalSndCtlData singleton.
 WalSndCtlData* GetWalSndCtl();
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

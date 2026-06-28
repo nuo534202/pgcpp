@@ -7,14 +7,14 @@
 // and an edge from A to B means "A is waiting for B to release a lock".
 // A cycle in this graph indicates a deadlock.
 //
-// MyToyDB is single-process and so never deadlocks in practice, but the API
+// pgcpp is single-process and so never deadlocks in practice, but the API
 // is preserved (and exercised by tests) so that callers can construct a
 // wait-for graph and ask whether a cycle exists.
 #pragma once
 
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // RegisterWaitFor — record that `waiter` is waiting for `blocker`.
 // Replaces any prior edge from `waiter`.
@@ -37,4 +37,4 @@ bool FindDeadlockCycle(int start, std::vector<int>* cycle);
 // HasDeadlock — true if the wait-for graph contains any cycle.
 bool HasDeadlock();
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

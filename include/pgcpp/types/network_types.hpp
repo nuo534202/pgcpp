@@ -4,7 +4,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Network address family — inet, cidr, macaddr, macaddr8.
@@ -77,4 +77,4 @@ const MacAddr* DatumGetMacAddr(Datum value);
 Datum MakeMacAddr8Datum(const MacAddr8& mac);
 const MacAddr8* DatumGetMacAddr8(Datum value);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

@@ -17,7 +17,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // Sentinel for "attribute not found", mirroring PostgreSQL's InvalidAttrNumber.
 constexpr int16_t kInvalidAttrNumber = 0;
@@ -141,7 +141,7 @@ Oid get_rel_namespace(Oid relid);
 bool type_is_rowtype(Oid typoid);
 
 // type_is_enum — return true if the type is an enum (typtype == 'e').
-// MyToyDB does not yet model enums, so this always returns false.
+// pgcpp does not yet model enums, so this always returns false.
 bool type_is_enum(Oid typoid);
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

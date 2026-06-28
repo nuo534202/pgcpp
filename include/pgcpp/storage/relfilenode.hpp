@@ -10,9 +10,9 @@
 
 #include "pgcpp/catalog/catalog.hpp"  // Oid
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
-using mytoydb::catalog::Oid;
+using pgcpp::catalog::Oid;
 
 // ForkNumber — identifies which "fork" of a relation file to access.
 // PostgreSQL stores different data in separate forks: the main fork holds
@@ -41,7 +41,7 @@ struct RelFileNode {
 
 // RelFileNodeBackend — RelFileNode plus the backend ID.
 // Used to distinguish temporary tables belonging to different backends.
-// In MyToyDB (single-process), the backend field is always 0 for normal
+// In pgcpp (single-process), the backend field is always 0 for normal
 // relations and kTempBackendId for temp tables.
 struct RelFileNodeBackend {
     RelFileNode node;
@@ -55,4 +55,4 @@ inline bool RelFileNodeIsValid(const RelFileNode& rnode) {
     return rnode.rel_node != 0;
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

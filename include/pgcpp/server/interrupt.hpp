@@ -8,7 +8,7 @@
 // to process them. This avoids longjmp-from-signal-handler issues and keeps
 // the executor's invariants intact.
 //
-// MyToyDB preserves this model. Signal handlers set atomic flags; the main
+// pgcpp preserves this model. Signal handlers set atomic flags; the main
 // loop calls HandleInterrupts() which dispatches each pending flag to its
 // registered handler. C++ exceptions are disabled (per AGENTS.md), so a
 // query-cancel interrupt sets a flag that the executor checks via
@@ -19,7 +19,7 @@
 #include <functional>
 #include <string>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // InterruptFlags — atomic flags set by signal handlers.
 //
@@ -123,4 +123,4 @@ void UnregisterInterruptHandler(int handler_id);
 // Used by tests to simulate interrupt arrival without an actual signal.
 void SignalInterruptHandler(const std::string& name);
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

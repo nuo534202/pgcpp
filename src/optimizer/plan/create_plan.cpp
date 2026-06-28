@@ -15,29 +15,29 @@
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::catalog::GetCatalog;
-using mytoydb::executor::Agg;
-using mytoydb::executor::HashJoin;
-using mytoydb::executor::IndexScan;
-using mytoydb::executor::MergeJoin;
-using mytoydb::executor::NestLoop;
-using mytoydb::executor::Plan;
-using mytoydb::executor::Result;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::Sort;
-using mytoydb::executor::SubqueryScan;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
+namespace pgcpp::optimizer {
+using pgcpp::catalog::GetCatalog;
+using pgcpp::executor::Agg;
+using pgcpp::executor::HashJoin;
+using pgcpp::executor::IndexScan;
+using pgcpp::executor::MergeJoin;
+using pgcpp::executor::NestLoop;
+using pgcpp::executor::Plan;
+using pgcpp::executor::Result;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::Sort;
+using pgcpp::executor::SubqueryScan;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
 
 // --- Helpers (re-implemented from subplanner.cpp, which keeps its own static copies) ---
 
@@ -79,7 +79,7 @@ static void ExtractVars(Node* expr, std::vector<Var*>* vars) {
             break;
         }
         case NodeTag::kFuncExpr: {
-            auto* f = static_cast<mytoydb::parser::FuncExpr*>(expr);
+            auto* f = static_cast<pgcpp::parser::FuncExpr*>(expr);
             for (Node* arg : f->args)
                 ExtractVars(arg, vars);
             break;
@@ -93,15 +93,15 @@ static void ExtractVars(Node* expr, std::vector<Var*>* vars) {
 // the base relation (PG's "physical tlist" optimization). If the catalog has
 // no attributes, falls back to extracting Vars from the agg targetlist.
 static std::vector<TargetEntry*> BuildPhysicalTlist(
-    mytoydb::catalog::Oid relid, int varno, const std::vector<TargetEntry*>& agg_targetlist) {
+    pgcpp::catalog::Oid relid, int varno, const std::vector<TargetEntry*>& agg_targetlist) {
     std::vector<TargetEntry*> scan_tlist;
     if (relid != 0 && GetCatalog() != nullptr) {
         auto attrs = GetCatalog()->GetAttributes(relid);
-        for (const mytoydb::catalog::FormData_pg_attribute* attr : attrs) {
+        for (const pgcpp::catalog::FormData_pg_attribute* attr : attrs) {
             if (attr->attnum < 1)
                 continue;  // skip system columns
-            auto* var = mytoydb::parser::makeVar(varno, attr->attnum, attr->atttypid,
-                                                 attr->atttypmod, attr->attcollation, 0, -1);
+            auto* var = pgcpp::parser::makeVar(varno, attr->attnum, attr->atttypid, attr->atttypmod,
+                                               attr->attcollation, 0, -1);
             auto* te = makePallocNode<TargetEntry>();
             te->expr = var;
             te->resno = attr->attnum;
@@ -157,8 +157,8 @@ static Node* CombineQuals(const std::vector<Node*>& clauses) {
         return nullptr;
     if (clauses.size() == 1)
         return clauses[0];
-    auto* boolexpr = makePallocNode<mytoydb::parser::BoolExpr>();
-    boolexpr->boolop = mytoydb::parser::BoolExprType::kAnd;
+    auto* boolexpr = makePallocNode<pgcpp::parser::BoolExpr>();
+    boolexpr->boolop = pgcpp::parser::BoolExprType::kAnd;
     boolexpr->args = clauses;
     return boolexpr;
 }
@@ -253,7 +253,7 @@ static Plan* create_scan_plan(PlannerInfo* root, Path* best_path) {
 NestLoop* create_nestloop_plan(PlannerInfo* root, NestLoopPath* path) {
     (void)root;
     auto* nl = makePallocNode<NestLoop>();
-    nl->jointype = mytoydb::parser::JoinType::kInner;
+    nl->jointype = pgcpp::parser::JoinType::kInner;
     if (path->outer != nullptr)
         nl->lefttree = create_plan(root, path->outer);
     if (path->inner != nullptr)
@@ -271,13 +271,13 @@ NestLoop* create_nestloop_plan(PlannerInfo* root, NestLoopPath* path) {
 HashJoin* create_hashjoin_plan(PlannerInfo* root, HashJoinPath* path) {
     (void)root;
     auto* hj = makePallocNode<HashJoin>();
-    hj->jointype = mytoydb::parser::JoinType::kInner;
+    hj->jointype = pgcpp::parser::JoinType::kInner;
     hj->hashclauses = path->hashclauses;
     if (path->outer != nullptr)
         hj->lefttree = create_plan(root, path->outer);
     if (path->inner != nullptr) {
         // Build a Hash node as the right child.
-        auto* hash = makePallocNode<mytoydb::executor::Hash>();
+        auto* hash = makePallocNode<pgcpp::executor::Hash>();
         hash->lefttree = create_plan(root, path->inner);
         hj->righttree = hash;
     }
@@ -417,4 +417,4 @@ Plan* create_plan(PlannerInfo* root, Path* best_path) {
     }
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

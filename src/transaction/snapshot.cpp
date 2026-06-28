@@ -4,7 +4,7 @@
 // src/backend/storage/ipc/procarray.cpp (GetSnapshotData).
 //
 // In PostgreSQL, GetSnapshotData scans the ProcArray (the array of all
-// backend processes) to find in-progress transactions. In MyToyDB
+// backend processes) to find in-progress transactions. In pgcpp
 // (single-process), there is only one transaction active at a time, so
 // the snapshot is simpler:
 //   - xmin = oldest XID that might still be in progress (typically the
@@ -24,8 +24,8 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-namespace mytoydb::transaction {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::transaction {
+using pgcpp::nodes::makePallocNode;
 
 namespace {
 
@@ -157,11 +157,11 @@ Snapshot GetNonHistoricCatalogSnapshot() {
 }
 
 void RegisterSnapshot(Snapshot /*snapshot*/) {
-    // No-op in MyToyDB (snapshots are managed by the caller).
+    // No-op in pgcpp (snapshots are managed by the caller).
 }
 
 void UnregisterSnapshot(Snapshot /*snapshot*/) {
-    // No-op in MyToyDB.
+    // No-op in pgcpp.
 }
 
 void InitializeSnapshotManager() {
@@ -182,4 +182,4 @@ SnapshotData MakeSnapshot(TransactionId xmin, TransactionId xmax,
     return snap;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

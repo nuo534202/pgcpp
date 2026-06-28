@@ -16,8 +16,8 @@
 
 #include "pgcpp/regex/regex_internal.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 std::size_t pg_regerror(int errcode, const regex_t* re, char* errbuf, std::size_t errbuf_size);
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

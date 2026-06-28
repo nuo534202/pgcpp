@@ -19,24 +19,24 @@
 #include "pgcpp/types/builtins.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::access::heap_form_tuple;
-using mytoydb::access::heap_freetuple;
-using mytoydb::access::heap_insert;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationData;
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::Oid;
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::types::Datum;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kVarcharOid;
+using pgcpp::access::heap_form_tuple;
+using pgcpp::access::heap_freetuple;
+using pgcpp::access::heap_insert;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationData;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::palloc;
+using pgcpp::memory::pfree;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::types::Datum;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kVarcharOid;
 
 namespace {
 
@@ -45,14 +45,14 @@ Datum TextToDatum(const std::string& text, Oid type_oid) {
     switch (type_oid) {
         case kInt2Oid:
         case kInt4Oid:
-            return mytoydb::types::int4_in(text.c_str());
+            return pgcpp::types::int4_in(text.c_str());
         case kInt8Oid:
-            return mytoydb::types::int8_in(text.c_str());
+            return pgcpp::types::int8_in(text.c_str());
         case kTextOid:
         case kVarcharOid:
-            return mytoydb::types::text_in(text.c_str());
+            return pgcpp::types::text_in(text.c_str());
         default:
-            return mytoydb::types::int4_in(text.c_str());
+            return pgcpp::types::int4_in(text.c_str());
     }
 }
 
@@ -69,7 +69,7 @@ int64_t CopyFromText(RelationData* rel, const std::string& filename) {
     if (!in.is_open()) {
         pfree(isnull);
         pfree(values);
-        ereport(mytoydb::error::LogLevel::kError, "could not open file \"" + filename + "\"");
+        ereport(pgcpp::error::LogLevel::kError, "could not open file \"" + filename + "\"");
     }
 
     int64_t row_count = 0;
@@ -106,4 +106,4 @@ int64_t CopyFromText(RelationData* rel, const std::string& filename) {
     return row_count;
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

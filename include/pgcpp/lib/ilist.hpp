@@ -31,7 +31,7 @@
 #include <cstddef>
 #include <iterator>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 // ---------------------------------------------------------------------------
 // Doubly-linked circular list (PostgreSQL: dlist_head / dlist_node).
@@ -206,4 +206,4 @@ private:
     SListHead head_;
 };
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

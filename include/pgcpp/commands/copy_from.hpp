@@ -7,14 +7,14 @@
 #include <cstdint>
 #include <string>
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 struct RelationData;
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // CopyFromText — read tab-delimited text rows from `filename` and insert
 // into the opened relation `rel`. Returns the number of rows inserted.
 int64_t CopyFromText(access::RelationData* rel, const std::string& filename);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

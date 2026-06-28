@@ -16,11 +16,11 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::MemoryContext;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::MemoryContext;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -323,7 +323,7 @@ Datum path_in(const char* str) {
     ++it;
     auto* path = static_cast<Path*>(palloc(sizeof(Path)));
     new (path) Path();
-    MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(path, [](void* o) { static_cast<Path*>(o)->~Path(); });
     }
@@ -448,4 +448,4 @@ Datum circle_radius(Datum value) {
     return Float8GetDatum(c->radius);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

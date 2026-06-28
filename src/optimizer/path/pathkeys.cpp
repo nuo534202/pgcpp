@@ -7,7 +7,7 @@
 // the join planner to detect when a child's sort order satisfies a parent's
 // required ordering.
 //
-// For MyToyDB's Task 15.15, the pathkey machinery is simplified:
+// For pgcpp's Task 15.15, the pathkey machinery is simplified:
 //   - PathKey equality is by (eclass pointer, opno, descending, nulls_first).
 //   - No EC constancy tracking (we trust the EC pointer identity).
 //   - No subquery pathkey pushdown (subqueries are planned independently).
@@ -19,11 +19,11 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
-using mytoydb::parser::Var;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
+using pgcpp::parser::Var;
 
-PathKey* make_canonical_pathkey(PlannerInfo* root, EquivalenceClass* ec, mytoydb::catalog::Oid opno,
+PathKey* make_canonical_pathkey(PlannerInfo* root, EquivalenceClass* ec, pgcpp::catalog::Oid opno,
                                 bool descending, bool nulls_first) {
     if (root == nullptr || ec == nullptr)
         return nullptr;
@@ -43,7 +43,7 @@ PathKey* make_canonical_pathkey(PlannerInfo* root, EquivalenceClass* ec, mytoydb
     return pk;
 }
 
-PathKey* make_pathkey_from_var(PlannerInfo* root, const Var* var, mytoydb::catalog::Oid opno,
+PathKey* make_pathkey_from_var(PlannerInfo* root, const Var* var, pgcpp::catalog::Oid opno,
                                bool descending, bool nulls_first) {
     if (root == nullptr || var == nullptr)
         return nullptr;
@@ -53,9 +53,9 @@ PathKey* make_pathkey_from_var(PlannerInfo* root, const Var* var, mytoydb::catal
         // No existing EC contains this Var. Create a single-member EC for it
         // by synthesizing a trivial self-equality qual "var = var" and running
         // it through process_equivalence. This keeps EC creation uniform.
-        auto* self_op = makePallocNode<mytoydb::parser::OpExpr>();
+        auto* self_op = makePallocNode<pgcpp::parser::OpExpr>();
         self_op->opno = opno;
-        self_op->opresulttype = mytoydb::types::kBoolOid;
+        self_op->opresulttype = pgcpp::types::kBoolOid;
         auto* var_copy1 = makePallocNode<Var>();
         *var_copy1 = *var;
         auto* var_copy2 = makePallocNode<Var>();
@@ -121,4 +121,4 @@ int compare_pathkeys(const std::vector<PathKey*>& a, const std::vector<PathKey*>
     return 2;  // incomparable
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

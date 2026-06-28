@@ -15,9 +15,9 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
+using pgcpp::nodes::Node;
 
 // transformCreateStmt — transform a CREATE TABLE statement.
 // Resolves column types, processes DEFAULT/CHECK constraints, validates
@@ -35,4 +35,4 @@ Query* transformAlterTableStmt(ParseState* pstate, AlterTableStmt* stmt);
 // to execution time.)
 Query* transformIndexStmt(ParseState* pstate, IndexStmt* stmt);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

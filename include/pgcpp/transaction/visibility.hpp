@@ -26,7 +26,7 @@
 #include "pgcpp/transaction/snapshot.hpp"
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // HeapTupleSatisfiesMVCC — return true if the tuple is visible to the
 // given snapshot.
@@ -61,4 +61,4 @@ bool HeapTupleIsSurelyDead(const HeapTupleHeaderData* tup, const SnapshotData& s
 // Sets *hint_committed if the XID is committed (for hint flag setting).
 bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot, bool* hint_committed);
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

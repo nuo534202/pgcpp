@@ -27,25 +27,25 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::parser::JoinType;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Var;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetFloat8;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::VARDATA;
-using mytoydb::types::VARSIZE_DATA;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::parser::JoinType;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Var;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetFloat8;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::VARDATA;
+using pgcpp::types::VARSIZE_DATA;
 
 namespace {
 
@@ -83,7 +83,7 @@ uint64_t HashDatum(Datum val, Oid typid) {
 Oid GetExprType(Node* expr, TupleTableSlot* ref_slot) {
     if (expr == nullptr || ref_slot == nullptr)
         return kInt4Oid;
-    if (expr->GetTag() == mytoydb::nodes::NodeTag::kVar) {
+    if (expr->GetTag() == pgcpp::nodes::NodeTag::kVar) {
         auto* var = static_cast<Var*>(expr);
         // vartype always carries the type OID, even for join Vars.
         return var->vartype;
@@ -103,7 +103,7 @@ void HashJoinState::ExecInit() {
     // splits each clause into separate key expressions for the build and
     // probe phases.
     for (Node* clause : hj_hashclauses) {
-        if (clause != nullptr && clause->GetTag() == mytoydb::nodes::NodeTag::kOpExpr) {
+        if (clause != nullptr && clause->GetTag() == pgcpp::nodes::NodeTag::kOpExpr) {
             auto* op = static_cast<OpExpr*>(clause);
             if (op->args.size() >= 2) {
                 hj_outer_hashkeys.push_back(op->args[0]);
@@ -325,4 +325,4 @@ void HashJoinState::ExecReScan() {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

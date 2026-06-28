@@ -29,7 +29,7 @@
 #include "pgcpp/storage/bufpage.hpp"
 #include "pgcpp/transaction/heap_tuple.hpp"
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 
 // B-tree page flags.
 constexpr uint32_t kBtpLeaf = 0x01;     // leaf page
@@ -42,10 +42,10 @@ constexpr int kBTPageOpaqueSize = 16;
 
 // BTPageOpaqueData — B-tree page metadata stored in the page's special area.
 struct BTPageOpaqueData {
-    mytoydb::storage::BlockNumber btpo_prev = 0;  // previous leaf (backward scan)
-    mytoydb::storage::BlockNumber btpo_next = 0;  // next leaf (forward scan)
-    uint32_t btpo_flags = 0;                      // page flags (kBtpLeaf, etc.)
-    uint32_t btpo_level = 0;                      // 0 = leaf, 1+ = internal
+    pgcpp::storage::BlockNumber btpo_prev = 0;  // previous leaf (backward scan)
+    pgcpp::storage::BlockNumber btpo_next = 0;  // next leaf (forward scan)
+    uint32_t btpo_flags = 0;                    // page flags (kBtpLeaf, etc.)
+    uint32_t btpo_level = 0;                    // 0 = leaf, 1+ = internal
 };
 
 using BTPageOpaque = BTPageOpaqueData*;
@@ -53,7 +53,7 @@ using BTPageOpaque = BTPageOpaqueData*;
 // BTItemData — a B-tree index entry on a leaf page.
 // The key data follows immediately after the tid.
 struct BTItemData {
-    mytoydb::transaction::ItemPointerData tid;  // heap tuple ID (6 bytes)
+    pgcpp::transaction::ItemPointerData tid;  // heap tuple ID (6 bytes)
     // key data follows (variable length)
 };
 
@@ -63,16 +63,16 @@ using BTItem = BTItemData*;
 struct BTMetaPageData {
     uint32_t magic = 0;  // magic number for sanity check
     uint32_t version = 0;
-    mytoydb::storage::BlockNumber root = 0;      // root block number
-    uint32_t level = 0;                          // root level
-    mytoydb::storage::BlockNumber fastroot = 0;  // fast path root
+    pgcpp::storage::BlockNumber root = 0;      // root block number
+    uint32_t level = 0;                        // root level
+    pgcpp::storage::BlockNumber fastroot = 0;  // fast path root
 };
 
 constexpr uint32_t kBtreeMagic = 0x0530;
 
 // --- Key type identifiers ---
 //
-// MyToyDB supports int4, int8, and text keys for B-tree indexes.
+// pgcpp supports int4, int8, and text keys for B-tree indexes.
 // The key type is stored in the index relation's pg_class entry (relam)
 // and passed to comparison functions.
 
@@ -86,22 +86,22 @@ enum class BTKeyKind : uint32_t {
 
 // _bt_page_getopaque — return the opaque data pointer for a B-tree page.
 // The opaque data is stored at the beginning of the page's special area.
-inline BTPageOpaque _bt_page_getopaque(mytoydb::storage::Page page) {
-    auto* phdr = reinterpret_cast<mytoydb::storage::PageHeader>(page);
+inline BTPageOpaque _bt_page_getopaque(pgcpp::storage::Page page) {
+    auto* phdr = reinterpret_cast<pgcpp::storage::PageHeader>(page);
     return reinterpret_cast<BTPageOpaque>(page + phdr->pd_special);
 }
 
 // _bt_init_page — initialize a B-tree page with the given flags.
 // Sets up the page header, line pointer array, and opaque data.
-void _bt_init_page(mytoydb::storage::Page page, uint32_t flags, uint32_t level);
+void _bt_init_page(pgcpp::storage::Page page, uint32_t flags, uint32_t level);
 
 // _bt_is_leaf_page — true if the page is a leaf.
-inline bool _bt_is_leaf_page(mytoydb::storage::Page page) {
+inline bool _bt_is_leaf_page(pgcpp::storage::Page page) {
     return (_bt_page_getopaque(page)->btpo_flags & kBtpLeaf) != 0;
 }
 
 // _bt_is_root_page — true if the page is the root.
-inline bool _bt_is_root_page(mytoydb::storage::Page page) {
+inline bool _bt_is_root_page(pgcpp::storage::Page page) {
     return (_bt_page_getopaque(page)->btpo_flags & kBtpRoot) != 0;
 }
 
@@ -151,17 +151,17 @@ uint16_t _bt_item_size(BTKeyKind kind, const void* key, uint16_t key_len);
 // Build an index entry in the provided buffer.
 // Returns the total entry size.
 uint16_t _bt_build_item(BTItem item, BTKeyKind kind, const void* key, uint16_t key_len,
-                        const mytoydb::transaction::ItemPointerData& tid);
+                        const pgcpp::transaction::ItemPointerData& tid);
 
 // --- Meta page operations ---
 
 // _bt_init_meta_page — initialize the meta page (block 0).
-void _bt_init_meta_page(mytoydb::storage::Page page, mytoydb::storage::BlockNumber root_block);
+void _bt_init_meta_page(pgcpp::storage::Page page, pgcpp::storage::BlockNumber root_block);
 
 // _bt_get_meta — read the meta page data.
-BTMetaPageData _bt_get_meta(mytoydb::storage::Page page);
+BTMetaPageData _bt_get_meta(pgcpp::storage::Page page);
 
 // _bt_update_meta — update the root block in the meta page.
-void _bt_update_meta(mytoydb::storage::Page page, mytoydb::storage::BlockNumber root_block);
+void _bt_update_meta(pgcpp::storage::Page page, pgcpp::storage::BlockNumber root_block);
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

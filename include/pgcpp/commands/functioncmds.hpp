@@ -5,13 +5,13 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class CreateFunctionStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // CreateFunction — execute CREATE FUNCTION. Stub.
 std::string CreateFunction(parser::CreateFunctionStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

@@ -16,17 +16,17 @@
 #include "pgcpp/parser/parse_relation.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::nodes::Value;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt8Oid;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::nodes::Value;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt8Oid;
 
 // ---------------------------------------------------------------------------
 // transformFromClauseItem — transform one item in the FROM clause.
@@ -176,7 +176,7 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n, RangeTblEntry** top_r
             quals = transformExpr(pstate, j->quals, ParseExprKind::kJoinOn);
         }
 
-        // Build the JoinExpr result. MyToyDB does not create a separate join
+        // Build the JoinExpr result. pgcpp does not create a separate join
         // RTE; the left/right RTEs expose their columns directly.
         auto* result = makeNode<JoinExpr>();
         result->jointype = j->jointype;
@@ -201,7 +201,7 @@ Node* transformFromClauseItem(ParseState* pstate, Node* n, RangeTblEntry** top_r
         return result;
     }
 
-    ereport(mytoydb::error::LogLevel::kError, "unrecognized node type in FROM clause");
+    ereport(pgcpp::error::LogLevel::kError, "unrecognized node type in FROM clause");
     return nullptr;
 }
 
@@ -284,4 +284,4 @@ Node* transformLimitClause(ParseState* pstate, Node* clause, ParseExprKind exprK
     return qual;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

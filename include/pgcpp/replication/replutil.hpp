@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // LogicalRepMsgType — message-type byte that prefixes every logical
 // replication message on the wire. Values match PostgreSQL's
@@ -98,4 +98,4 @@ void SetWalLevel(WalLevel level);
 // is specified explicitly (matches PG's "pgoutput" default).
 const char* DefaultOutputPluginName();
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

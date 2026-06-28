@@ -6,7 +6,7 @@
 
 #include "pgcpp/regex/regexport.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 int pg_regexport(const regex_t* re) {
     if (re == nullptr || re->re_magic != kRegexMagic) {
@@ -15,4 +15,4 @@ int pg_regexport(const regex_t* re) {
     return 0;
 }
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

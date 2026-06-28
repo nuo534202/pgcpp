@@ -1,6 +1,6 @@
 // integerset.cpp — Integer set implementation.
 //
-// Backs mytoydb/lib/integerset.hpp with a std::set<uint64_t> store. The
+// Backs pgcpp/lib/integerset.hpp with a std::set<uint64_t> store. The
 // implementation matches PostgreSQL's IntegerSet public API
 // (intset_add_member / intset_is_member / intset_num_members /
 // intset_begin_iterate / intset_iterate_next) but trades the original's
@@ -10,7 +10,7 @@
 
 #include <utility>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 bool IntegerSet::Add(uint64_t x) {
     auto [it, inserted] = members_.insert(x);
@@ -42,4 +42,4 @@ std::vector<uint64_t> IntegerSet::ToSortedVector() const {
     return std::vector<uint64_t>(members_.begin(), members_.end());
 }
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

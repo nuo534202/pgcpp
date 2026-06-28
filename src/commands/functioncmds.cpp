@@ -1,7 +1,7 @@
 // functioncmds.cpp — CREATE FUNCTION implementation.
 //
 // Converted from PostgreSQL 15's src/backend/commands/functioncmds.c.
-// MyToyDB doesn't yet support user-defined functions; this stub
+// pgcpp doesn't yet support user-defined functions; this stub
 // acknowledges the request without persisting a pg_proc row.
 #include "pgcpp/commands/functioncmds.hpp"
 
@@ -9,9 +9,9 @@
 
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::parser::CreateFunctionStmt;
+using pgcpp::parser::CreateFunctionStmt;
 
 std::string CreateFunction(CreateFunctionStmt* stmt) {
     if (stmt == nullptr)
@@ -21,4 +21,4 @@ std::string CreateFunction(CreateFunctionStmt* stmt) {
     return stmt->is_procedure ? "CREATE PROCEDURE" : "CREATE FUNCTION";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

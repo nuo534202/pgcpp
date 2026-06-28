@@ -1,7 +1,7 @@
-// options.cpp — Command-line argument parsing for the MyToyDB server.
+// options.cpp — Command-line argument parsing for the pgcpp server.
 //
 // Extracted from main.cpp so that the parsing logic is available to both
-// the server executable and the test suite (via mytoydb_core).
+// the server executable and the test suite (via pgcpp_core).
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -10,7 +10,7 @@
 #include "pgcpp/server/guc.hpp"
 #include "pgcpp/server/main.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 void PrintUsage(const char* prog_name) {
     std::fprintf(stderr, "MyToyDB — a C++20 conversion of PostgreSQL\n\n");
@@ -96,4 +96,4 @@ bool LoadGucFromDataDir(const std::string& data_dir, GucConfig* guc) {
     return guc->LoadFile(path);
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

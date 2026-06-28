@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // Dictionary interface (PostgreSQL src/backend/tsearch/dict.c).
@@ -37,4 +37,4 @@ public:
     Lexeme Lexicalize(std::string_view word) const override;
 };
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

@@ -17,10 +17,10 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/builtins.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -363,4 +363,4 @@ Datum text_reverse(Datum str_datum) {
     return MakeTextDatum(reversed);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

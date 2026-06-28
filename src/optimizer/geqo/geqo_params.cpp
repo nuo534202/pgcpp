@@ -10,7 +10,7 @@
 
 #include <algorithm>
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 GeqoParams ComputeGeqoParams(int num_rels) {
     GeqoParams p;
@@ -37,4 +37,4 @@ GeqoParams ComputeGeqoParams(int num_rels) {
     return p;
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

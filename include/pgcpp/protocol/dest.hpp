@@ -21,17 +21,17 @@
 #include "pgcpp/protocol/pqformat.hpp"  // OutputSink, Message
 #include "pgcpp/types/datum.hpp"        // Datum
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 struct TupleDescData;
 using TupleDesc = TupleDescData*;
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 struct QueryDesc;
 struct TupleTableSlot;
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor
 
-namespace mytoydb::protocol {
+namespace pgcpp::protocol {
 
 // CommandDest — identifies the destination for query results.
 enum class CommandDest {
@@ -53,15 +53,15 @@ public:
 
     // Called once before the first tuple (setup).
     // `operation` is the query's command type (CmdType as int).
-    virtual void rStartup(mytoydb::executor::QueryDesc* /*query_desc*/, int /*operation*/,
-                          mytoydb::access::TupleDesc /*tupdesc*/) {}
+    virtual void rStartup(pgcpp::executor::QueryDesc* /*query_desc*/, int /*operation*/,
+                          pgcpp::access::TupleDesc /*tupdesc*/) {}
     // Called for each result tuple. Returns true to continue, false to stop.
-    virtual bool receiveSlot(mytoydb::executor::TupleTableSlot* /*slot*/,
-                             mytoydb::executor::QueryDesc* /*query_desc*/) {
+    virtual bool receiveSlot(pgcpp::executor::TupleTableSlot* /*slot*/,
+                             pgcpp::executor::QueryDesc* /*query_desc*/) {
         return true;
     }
     // Called once after the last tuple (teardown).
-    virtual void rShutdown(mytoydb::executor::QueryDesc* /*query_desc*/) {}
+    virtual void rShutdown(pgcpp::executor::QueryDesc* /*query_desc*/) {}
     // Destroy the receiver (release resources).
     virtual void rDestroy() {}
 
@@ -95,17 +95,17 @@ DestReceiver* CreateTuplestoreReceiver();
 // IntoRelReceiver — inserts each tuple into a new relation.
 // `relid` is the OID of the target relation (already created).
 // Used by CREATE TABLE AS SELECT.
-DestReceiver* CreateIntoRelReceiver(mytoydb::catalog::Oid relid);
+DestReceiver* CreateIntoRelReceiver(pgcpp::catalog::Oid relid);
 
 // --- Helpers for accessing tuplestore receiver results ---
 
 // Returns the collected slots from a TuplestoreReceiver (empty otherwise).
 // The slots are owned by the receiver and freed on rDestroy.
-std::vector<mytoydb::executor::TupleTableSlot*> GetTuplestoreSlots(DestReceiver* receiver);
+std::vector<pgcpp::executor::TupleTableSlot*> GetTuplestoreSlots(DestReceiver* receiver);
 
 // --- Datum encoding helper ---
 // Encode a Datum to its text representation based on the type OID.
 // Shared between RemoteReceiver and other callers that need text output.
-std::string EncodeDatumAsText(mytoydb::types::Datum value, mytoydb::catalog::Oid type_oid);
+std::string EncodeDatumAsText(pgcpp::types::Datum value, pgcpp::catalog::Oid type_oid);
 
-}  // namespace mytoydb::protocol
+}  // namespace pgcpp::protocol

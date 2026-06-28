@@ -2,7 +2,7 @@
 //
 // Converted from PostgreSQL 15's src/backend/access/transam/xlog.c (simplified).
 //
-// MyToyDB keeps the WAL in an in-memory std::vector<uint8_t>; LSNs are byte
+// pgcpp keeps the WAL in an in-memory std::vector<uint8_t>; LSNs are byte
 // offsets into it. The first kSizeofXlogRecord bytes are a reserved "page
 // header area" so that LSN 0 (kInvalidXLogRecPtr) is never a valid record
 // start; the first record begins at LSN kSizeofXlogRecord (24). All inserted
@@ -14,7 +14,7 @@
 #include <cstring>
 #include <vector>
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -30,7 +30,7 @@ XLogRecPtr& InsertPtr() {
     return ptr;
 }
 
-// The flush position. In MyToyDB's in-memory model, this always equals the
+// The flush position. In pgcpp's in-memory model, this always equals the
 // insert position (writes are immediately durable).
 XLogRecPtr& WritePtr() {
     static XLogRecPtr ptr = kSizeofXlogRecord;
@@ -95,4 +95,4 @@ void XLogFlush(XLogRecPtr /*upto*/) {
     WritePtr() = InsertPtr();
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

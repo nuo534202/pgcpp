@@ -5,7 +5,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // FormData_pg_collation — C++ equivalent of PostgreSQL's catalog/pg_collation.h.
 //
@@ -50,4 +50,4 @@ constexpr Oid kDefaultCollationOid = 100;  // "default" collation
 constexpr Oid kC_COLLATION_OID = 950;      // "C" collation
 constexpr Oid kPOSIX_COLLATION_OID = 951;  // "POSIX" collation
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

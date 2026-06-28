@@ -18,67 +18,67 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::parser::AConst;
-using mytoydb::parser::AExpr;
-using mytoydb::parser::Alias;
-using mytoydb::parser::AlterDatabaseStmt;
-using mytoydb::parser::AlterSeqStmt;
-using mytoydb::parser::AlterTableCmd;
-using mytoydb::parser::AlterTableStmt;
-using mytoydb::parser::AlterTableType;
-using mytoydb::parser::CallStmt;
-using mytoydb::parser::CheckPointStmt;
-using mytoydb::parser::ClusterStmt;
-using mytoydb::parser::ColumnDef;
-using mytoydb::parser::ColumnRef;
-using mytoydb::parser::CopyStmt;
-using mytoydb::parser::CreateAsStmt;
-using mytoydb::parser::CreatedbStmt;
-using mytoydb::parser::CreateFunctionStmt;
-using mytoydb::parser::CreateRoleStmt;
-using mytoydb::parser::CreateSeqStmt;
-using mytoydb::parser::CreateStmt;
-using mytoydb::parser::CreateTableSpaceStmt;
-using mytoydb::parser::CreateTrigStmt;
-using mytoydb::parser::DeallocateStmt;
-using mytoydb::parser::DeleteStmt;
-using mytoydb::parser::DiscardStmt;
-using mytoydb::parser::DropBehavior;
-using mytoydb::parser::DropdbStmt;
-using mytoydb::parser::DropRoleStmt;
-using mytoydb::parser::DropStmt;
-using mytoydb::parser::DropTableSpaceStmt;
-using mytoydb::parser::ExecuteStmt;
-using mytoydb::parser::ExplainStmt;
-using mytoydb::parser::FuncCall;
-using mytoydb::parser::GrantStmt;
-using mytoydb::parser::IndexStmt;
-using mytoydb::parser::InsertStmt;
-using mytoydb::parser::ListenStmt;
-using mytoydb::parser::LoadStmt;
-using mytoydb::parser::LockStmt;
-using mytoydb::parser::NotifyStmt;
-using mytoydb::parser::PrepareStmt;
-using mytoydb::parser::RangeVar;
-using mytoydb::parser::raw_parser;
-using mytoydb::parser::RawStmt;
-using mytoydb::parser::RefreshMatViewStmt;
-using mytoydb::parser::ReindexStmt;
-using mytoydb::parser::RenameStmt;
-using mytoydb::parser::ResTarget;
-using mytoydb::parser::SelectStmt;
-using mytoydb::parser::TransactionStmt;
-using mytoydb::parser::TruncateStmt;
-using mytoydb::parser::TypeName;
-using mytoydb::parser::UnlistenStmt;
-using mytoydb::parser::UpdateStmt;
-using mytoydb::parser::VacuumStmt;
-using mytoydb::parser::VariableSetStmt;
-using mytoydb::parser::ViewStmt;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::parser::AConst;
+using pgcpp::parser::AExpr;
+using pgcpp::parser::Alias;
+using pgcpp::parser::AlterDatabaseStmt;
+using pgcpp::parser::AlterSeqStmt;
+using pgcpp::parser::AlterTableCmd;
+using pgcpp::parser::AlterTableStmt;
+using pgcpp::parser::AlterTableType;
+using pgcpp::parser::CallStmt;
+using pgcpp::parser::CheckPointStmt;
+using pgcpp::parser::ClusterStmt;
+using pgcpp::parser::ColumnDef;
+using pgcpp::parser::ColumnRef;
+using pgcpp::parser::CopyStmt;
+using pgcpp::parser::CreateAsStmt;
+using pgcpp::parser::CreatedbStmt;
+using pgcpp::parser::CreateFunctionStmt;
+using pgcpp::parser::CreateRoleStmt;
+using pgcpp::parser::CreateSeqStmt;
+using pgcpp::parser::CreateStmt;
+using pgcpp::parser::CreateTableSpaceStmt;
+using pgcpp::parser::CreateTrigStmt;
+using pgcpp::parser::DeallocateStmt;
+using pgcpp::parser::DeleteStmt;
+using pgcpp::parser::DiscardStmt;
+using pgcpp::parser::DropBehavior;
+using pgcpp::parser::DropdbStmt;
+using pgcpp::parser::DropRoleStmt;
+using pgcpp::parser::DropStmt;
+using pgcpp::parser::DropTableSpaceStmt;
+using pgcpp::parser::ExecuteStmt;
+using pgcpp::parser::ExplainStmt;
+using pgcpp::parser::FuncCall;
+using pgcpp::parser::GrantStmt;
+using pgcpp::parser::IndexStmt;
+using pgcpp::parser::InsertStmt;
+using pgcpp::parser::ListenStmt;
+using pgcpp::parser::LoadStmt;
+using pgcpp::parser::LockStmt;
+using pgcpp::parser::NotifyStmt;
+using pgcpp::parser::PrepareStmt;
+using pgcpp::parser::RangeVar;
+using pgcpp::parser::raw_parser;
+using pgcpp::parser::RawStmt;
+using pgcpp::parser::RefreshMatViewStmt;
+using pgcpp::parser::ReindexStmt;
+using pgcpp::parser::RenameStmt;
+using pgcpp::parser::ResTarget;
+using pgcpp::parser::SelectStmt;
+using pgcpp::parser::TransactionStmt;
+using pgcpp::parser::TruncateStmt;
+using pgcpp::parser::TypeName;
+using pgcpp::parser::UnlistenStmt;
+using pgcpp::parser::UpdateStmt;
+using pgcpp::parser::VacuumStmt;
+using pgcpp::parser::VariableSetStmt;
+using pgcpp::parser::ViewStmt;
 
 namespace {
 
@@ -86,13 +86,13 @@ namespace {
 class ParserTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("parser_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

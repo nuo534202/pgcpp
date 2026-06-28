@@ -3,13 +3,13 @@
 
 #include "pgcpp/executor/node_exec.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 class NestLoopState : public PlanState {
 public:
     NestLoopState(Plan* p, EState* s) : PlanState(p, s) {}
 
-    mytoydb::parser::JoinType nl_jointype = mytoydb::parser::JoinType::kInner;
+    pgcpp::parser::JoinType nl_jointype = pgcpp::parser::JoinType::kInner;
     TupleTableSlot* nl_OuterTupleSlot = nullptr;
     TupleTableSlot* nl_InnerTupleSlot = nullptr;
     bool nl_NeedNewOuter = true;
@@ -21,4 +21,4 @@ public:
     void ExecReScan() override;
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

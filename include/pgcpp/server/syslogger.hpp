@@ -7,7 +7,7 @@
 // that log lines from concurrent backends are interleaved into a single
 // file (or syslog) rather than scattered across the terminal.
 //
-// In MyToyDB (single-process), the syslogger is a stateful API that collects
+// In pgcpp (single-process), the syslogger is a stateful API that collects
 // log messages into an in-memory buffer. SysLoggerWrite queues a message;
 // SysLoggerMain processes the queue.
 #pragma once
@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // SysLoggerState — state of the system logger.
 enum class SysLoggerState {
@@ -93,4 +93,4 @@ SysLoggerState GetSysLoggerState();
 // GetSysLoggerStats — return the current logger statistics.
 SysLoggerStats GetSysLoggerStats();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

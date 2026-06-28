@@ -20,17 +20,17 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::JoinType;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Var;
-using mytoydb::types::kInt4Oid;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::JoinType;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Var;
+using pgcpp::types::kInt4Oid;
 
 void MergeJoinState::ExecInit() {
     auto* mjplan = static_cast<MergeJoin*>(plan);
@@ -235,4 +235,4 @@ void MergeJoinState::ExecReScan() {
         rightps->ExecReScan();
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

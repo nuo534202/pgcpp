@@ -7,7 +7,7 @@
 #include <chrono>
 #include <cstdint>
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 namespace {
 
@@ -71,4 +71,4 @@ LogicalRepLauncherState* GetLogicalRepLauncherState() {
     return &State();
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

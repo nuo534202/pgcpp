@@ -15,48 +15,48 @@
 #include "pgcpp/common/memory/alloc_set.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-using mytoydb::memory::AllocSetContext;
-using mytoydb::storage::BlockNumber;
-using mytoydb::storage::ItemIdData;
-using mytoydb::storage::ItemIdGetFlags;
-using mytoydb::storage::ItemIdGetLength;
-using mytoydb::storage::ItemIdGetOffset;
-using mytoydb::storage::ItemIdIsNormal;
-using mytoydb::storage::ItemIdIsUsed;
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kInvalidOffsetNumber;
-using mytoydb::storage::kLPNormal;
-using mytoydb::storage::kLPUnused;
-using mytoydb::storage::kPageHeaderSize;
-using mytoydb::storage::kPageSizeVersion;
-using mytoydb::storage::OffsetNumber;
-using mytoydb::storage::Page;
-using mytoydb::storage::PageAddItem;
-using mytoydb::storage::PageGetContents;
-using mytoydb::storage::PageGetHeapFreeSpace;
-using mytoydb::storage::PageGetItem;
-using mytoydb::storage::PageGetItemId;
-using mytoydb::storage::PageGetMaxOffsetNumber;
-using mytoydb::storage::PageGetSpecialPointer;
-using mytoydb::storage::PageHeader;
-using mytoydb::storage::PageHeaderData;
-using mytoydb::storage::PageInit;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::storage::BlockNumber;
+using pgcpp::storage::ItemIdData;
+using pgcpp::storage::ItemIdGetFlags;
+using pgcpp::storage::ItemIdGetLength;
+using pgcpp::storage::ItemIdGetOffset;
+using pgcpp::storage::ItemIdIsNormal;
+using pgcpp::storage::ItemIdIsUsed;
+using pgcpp::storage::kBlckSz;
+using pgcpp::storage::kInvalidOffsetNumber;
+using pgcpp::storage::kLPNormal;
+using pgcpp::storage::kLPUnused;
+using pgcpp::storage::kPageHeaderSize;
+using pgcpp::storage::kPageSizeVersion;
+using pgcpp::storage::OffsetNumber;
+using pgcpp::storage::Page;
+using pgcpp::storage::PageAddItem;
+using pgcpp::storage::PageGetContents;
+using pgcpp::storage::PageGetHeapFreeSpace;
+using pgcpp::storage::PageGetItem;
+using pgcpp::storage::PageGetItemId;
+using pgcpp::storage::PageGetMaxOffsetNumber;
+using pgcpp::storage::PageGetSpecialPointer;
+using pgcpp::storage::PageHeader;
+using pgcpp::storage::PageHeaderData;
+using pgcpp::storage::PageInit;
 
 namespace {
 
 class BufPageTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("bufpage_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         // Allocate a page.
-        page_ = static_cast<char*>(mytoydb::memory::palloc(kBlckSz));
+        page_ = static_cast<char*>(pgcpp::memory::palloc(kBlckSz));
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

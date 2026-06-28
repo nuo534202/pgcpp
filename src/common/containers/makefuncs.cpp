@@ -11,9 +11,9 @@
 
 #include "pgcpp/catalog/catalog.hpp"  // kInvalidOid
 
-namespace mytoydb::nodes {
+namespace pgcpp::nodes {
 
-constexpr Oid kInvalidOid = mytoydb::catalog::kInvalidOid;
+constexpr Oid kInvalidOid = pgcpp::catalog::kInvalidOid;
 
 // --- Var -------------------------------------------------------------------
 
@@ -140,4 +140,4 @@ BoolExpr* makeBoolExpr(BoolExprType boolop, std::vector<Node*> args, int locatio
     return b;
 }
 
-}  // namespace mytoydb::nodes
+}  // namespace pgcpp::nodes

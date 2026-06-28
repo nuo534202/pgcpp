@@ -17,31 +17,31 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::add_join_rel;
-using mytoydb::optimizer::build_join_rel;
-using mytoydb::optimizer::build_simple_rel;
-using mytoydb::optimizer::find_base_rel;
-using mytoydb::optimizer::find_join_rel;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::Relids;
-using mytoydb::optimizer::RelOptInfo;
-using mytoydb::optimizer::SpecialJoinInfo;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RTEKind;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::add_join_rel;
+using pgcpp::optimizer::build_join_rel;
+using pgcpp::optimizer::build_simple_rel;
+using pgcpp::optimizer::find_base_rel;
+using pgcpp::optimizer::find_join_rel;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::Relids;
+using pgcpp::optimizer::RelOptInfo;
+using pgcpp::optimizer::SpecialJoinInfo;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RTEKind;
 
 namespace {
 
 class RelNodeTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("relnode_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("relnode_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -77,7 +77,7 @@ protected:
         return root;
     }
 
-    mytoydb::memory::AllocSetContext* context_ = nullptr;
+    pgcpp::memory::AllocSetContext* context_ = nullptr;
 };
 
 // build_simple_rel creates a RelOptInfo with correct relid and relindex.
@@ -147,7 +147,7 @@ TEST_F(RelNodeTest, BuildJoinRel_AddsToJoinRelList) {
 
     Relids joinrelids = {1, 2};
     auto* sjinfo = makePallocNode<SpecialJoinInfo>();
-    std::vector<mytoydb::optimizer::RestrictInfo*> restrictlist;
+    std::vector<pgcpp::optimizer::RestrictInfo*> restrictlist;
 
     RelOptInfo* joinrel = build_join_rel(root, joinrelids, outer, inner, sjinfo, restrictlist);
 

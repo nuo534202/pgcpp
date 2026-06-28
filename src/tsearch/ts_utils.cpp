@@ -13,13 +13,13 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
-using mytoydb::types::TsQueryData;
-using mytoydb::types::TsQueryNode;
-using mytoydb::types::TsQueryNodeType;
-using mytoydb::types::TsVectorData;
-using mytoydb::types::TsWordEntry;
+using pgcpp::types::TsQueryData;
+using pgcpp::types::TsQueryNode;
+using pgcpp::types::TsQueryNodeType;
+using pgcpp::types::TsVectorData;
+using pgcpp::types::TsWordEntry;
 
 namespace {
 
@@ -236,4 +236,4 @@ TsQueryNode ts_rewrite(const TsQueryNode& query, const std::vector<RewriteRule>&
     return out;
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

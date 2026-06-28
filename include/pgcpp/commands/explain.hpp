@@ -5,14 +5,14 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class ExplainStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // ExplainQuery — execute EXPLAIN. Currently a stub that prints a
 // placeholder plan description to stdout. Returns "EXPLAIN".
 std::string ExplainQuery(parser::ExplainStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

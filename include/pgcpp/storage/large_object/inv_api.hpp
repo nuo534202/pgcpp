@@ -8,7 +8,7 @@
 // up-to-LOBLKSIZE-byte pages. inv_api provides a file-like API:
 // inv_create / inv_open / inv_read / inv_write / inv_seek / inv_truncate.
 //
-// MyToyDB keeps large objects in an in-memory std::map<oid, LargeObject>
+// pgcpp keeps large objects in an in-memory std::map<oid, LargeObject>
 // to avoid the catalog machinery. The API is preserved so callers can
 // exercise the LO semantics (read/write/seek/truncate).
 #pragma once
@@ -18,7 +18,7 @@
 #include <map>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // Oid — large object identifier (uint32_t in PG).
 using LargeObjectOid = uint32_t;
@@ -88,4 +88,4 @@ int NumLargeObjects();
 // inv_tell — return the current offset (PG's inv_tell).
 int64_t inv_tell(LargeObjectDesc* desc);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

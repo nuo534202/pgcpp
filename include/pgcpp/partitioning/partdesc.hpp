@@ -4,7 +4,7 @@
 // API of src/backend/partitioning/partdesc.c to C++20.
 //
 // PostgreSQL caches PartitionDescData in the relcache so that subsequent
-// accesses to a partitioned table skip the catalog scan. The MyToyDB layer
+// accesses to a partitioned table skip the catalog scan. The pgcpp layer
 // keeps the same lookup API but uses a std::map<oid, PartitionDesc> cache,
 // populated lazily by CreatePartitionDesc. The cache is process-local; it
 // is the caller's responsibility to invalidate it when partition metadata
@@ -19,7 +19,7 @@
 
 #include "pgcpp/partitioning/partbounds.hpp"
 
-namespace mytoydb::partitioning {
+namespace pgcpp::partitioning {
 
 // PartitionDescData — descriptor for a partitioned table's children.
 // Mirrors PostgreSQL's struct PartitionDescData.
@@ -84,7 +84,7 @@ private:
 // --- Global accessor (PostgreSQL-style) ---
 //
 // PostgreSQL reaches the PartitionDesc via the relcache
-// (RelationGetPartitionDesc). MyToyDB exposes a process-wide
+// (RelationGetPartitionDesc). pgcpp exposes a process-wide
 // PartitionDescriptorCache through these accessors until the relcache is
 // wired up; tests typically replace the global with a fresh instance.
 
@@ -110,4 +110,4 @@ PartitionDesc RelationGetPartitionDesc(Oid parent_oid);
 // or kInvalidOid (0) if there is no default partition.
 Oid get_default_oid_from_partdesc(PartitionDesc partdesc);
 
-}  // namespace mytoydb::partitioning
+}  // namespace pgcpp::partitioning

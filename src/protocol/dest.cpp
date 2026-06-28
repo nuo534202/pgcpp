@@ -25,35 +25,35 @@
 #include "pgcpp/types/datetime.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::protocol {
+namespace pgcpp::protocol {
 
-using mytoydb::access::heap_form_tuple;
-using mytoydb::access::heap_freetuple;
-using mytoydb::access::heap_insert;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::Oid;
-using mytoydb::executor::QueryDesc;
-using mytoydb::executor::TupleTableSlot;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetFloat4;
-using mytoydb::types::DatumGetFloat8;
-using mytoydb::types::DatumGetInt16;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
-using mytoydb::types::kVarcharOid;
-using mytoydb::types::TextDatumToString;
+using pgcpp::access::heap_form_tuple;
+using pgcpp::access::heap_freetuple;
+using pgcpp::access::heap_insert;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationOpen;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::Oid;
+using pgcpp::executor::QueryDesc;
+using pgcpp::executor::TupleTableSlot;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetFloat4;
+using pgcpp::types::DatumGetFloat8;
+using pgcpp::types::DatumGetInt16;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kDateOid;
+using pgcpp::types::kFloat4Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
+using pgcpp::types::kVarcharOid;
+using pgcpp::types::TextDatumToString;
 
 // Encode a Datum value to its text representation based on the type OID.
 // This mirrors Backend's EncodeValue in postgres.cpp; kept separate to avoid
@@ -61,34 +61,34 @@ using mytoydb::types::TextDatumToString;
 std::string EncodeDatumAsText(Datum value, Oid type_oid) {
     switch (type_oid) {
         case kBoolOid: {
-            char* s = mytoydb::types::bool_out(value);
+            char* s = pgcpp::types::bool_out(value);
             return std::string(s);
         }
         case kInt2Oid:
             return std::to_string(DatumGetInt16(value));
         case kInt4Oid: {
-            char* s = mytoydb::types::int4_out(value);
+            char* s = pgcpp::types::int4_out(value);
             return std::string(s);
         }
         case kInt8Oid: {
-            char* s = mytoydb::types::int8_out(value);
+            char* s = pgcpp::types::int8_out(value);
             return std::string(s);
         }
         case kFloat4Oid:
             return std::to_string(DatumGetFloat4(value));
         case kFloat8Oid: {
-            char* s = mytoydb::types::float8_out(value);
+            char* s = pgcpp::types::float8_out(value);
             return std::string(s);
         }
         case kTextOid:
         case kVarcharOid:
             return TextDatumToString(value);
         case kDateOid: {
-            char* s = mytoydb::types::date_out(value);
+            char* s = pgcpp::types::date_out(value);
             return std::string(s);
         }
         case kTimestampOid: {
-            char* s = mytoydb::types::timestamp_out(value);
+            char* s = pgcpp::types::timestamp_out(value);
             return std::string(s);
         }
         default:
@@ -264,7 +264,7 @@ public:
         tupdesc_ = tupdesc;
         rel_ = RelationOpen(relid_);
         if (rel_ == nullptr) {
-            ereport(mytoydb::error::LogLevel::kError,
+            ereport(pgcpp::error::LogLevel::kError,
                     "IntoRelReceiver: relation " + std::to_string(relid_) + " not found");
         }
     }
@@ -351,4 +351,4 @@ std::vector<TupleTableSlot*> GetTuplestoreSlots(DestReceiver* receiver) {
     return ts->slots();
 }
 
-}  // namespace mytoydb::protocol
+}  // namespace pgcpp::protocol

@@ -17,7 +17,7 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 bool XidVisibleInSnapshot(TransactionId xid, const SnapshotData& snapshot, bool* hint_committed) {
     if (hint_committed != nullptr)
@@ -301,4 +301,4 @@ bool HeapTupleIsSurelyDead(const HeapTupleHeaderData* tup, const SnapshotData& s
     return true;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

@@ -18,31 +18,31 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::estimate_rel_size;
-using mytoydb::optimizer::get_relation_info;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::RelOptInfo;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::estimate_rel_size;
+using pgcpp::optimizer::get_relation_info;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::RelOptInfo;
 
 namespace {
 
 class PlanCatTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("plancat_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("plancat_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
     }
 
-    mytoydb::memory::AllocSetContext* context_ = nullptr;
+    pgcpp::memory::AllocSetContext* context_ = nullptr;
 };
 
 // estimate_rel_size returns defaults for OID 0 (invalid).
@@ -85,7 +85,7 @@ TEST_F(PlanCatTest, GetRelationInfo_PopulatesRelOptInfo) {
     EXPECT_GT(rel->pages, 0);
     EXPECT_GT(rel->tuples, 0);
     EXPECT_GT(rel->width, 0);
-    EXPECT_EQ(rel->rows, static_cast<mytoydb::optimizer::Cardinality>(rel->tuples));
+    EXPECT_EQ(rel->rows, static_cast<pgcpp::optimizer::Cardinality>(rel->tuples));
 }
 
 // get_relation_info with a valid (but unknown) OID still returns defaults.

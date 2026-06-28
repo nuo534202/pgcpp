@@ -7,7 +7,7 @@
 // request (with flags), CheckpointerMain processes pending requests,
 // and CreateCheckPoint performs an immediate checkpoint.
 //
-// In MyToyDB, the checkpoint flushes dirty buffers by calling
+// In pgcpp, the checkpoint flushes dirty buffers by calling
 // BgWriterFlushBuffers (with a large max to drain everything), then
 // calls XLogFlush to push WAL up to the current insert LSN. The new
 // checkpoint LSN is recorded for crash-recovery restart.
@@ -20,7 +20,7 @@
 #include "pgcpp/server/interrupt.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -66,7 +66,7 @@ bool CreateCheckPoint(uint32_t flags) {
     }
 
     // Flush all dirty buffers to disk via the bgwriter's flush path.
-    // PG's checkpointer calls SyncOneBuffer / BufferSync; MyToyDB reuses
+    // PG's checkpointer calls SyncOneBuffer / BufferSync; pgcpp reuses
     // BgWriterFlushBuffers with a large max to drain the pending target.
     BgWriterScheduleFlush(/*target_count=*/1000000);
     int flushed = BgWriterFlushBuffers(/*max_buffers=*/1000000);
@@ -122,4 +122,4 @@ CheckpointStats GetCheckpointStats() {
     return Stats();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

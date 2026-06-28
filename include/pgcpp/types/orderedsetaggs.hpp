@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Ordered-set aggregates (PostgreSQL utils/adt/orderedsetaggs.c).
@@ -38,4 +38,4 @@ std::vector<Datum> ordered_set_percentile_disc_array(const std::vector<Datum>& s
                                                      const std::vector<Datum>& fractions,
                                                      int (*cmp)(Datum, Datum));
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

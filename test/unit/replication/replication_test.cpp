@@ -1,4 +1,4 @@
-// replication_test.cpp — Unit tests for the MyToyDB replication subsystem
+// replication_test.cpp — Unit tests for the pgcpp replication subsystem
 // (Task 15.20.4). Covers both physical (streaming) and logical replication:
 //
 //   - WalSnd:        init, set/get state, multiple senders, alloc/remove
@@ -42,134 +42,134 @@
 #include "pgcpp/replication/worker.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-using mytoydb::replication::AllocateNextSubscriptionId;
-using mytoydb::replication::ApplyLauncherInit;
-using mytoydb::replication::ApplyLauncherIsRunning;
-using mytoydb::replication::ApplyLauncherMain;
-using mytoydb::replication::ApplyLauncherReset;
-using mytoydb::replication::ApplyLauncherShutdown;
-using mytoydb::replication::ApplyLauncherWakeup;
-using mytoydb::replication::ApplyStandbyReply;
-using mytoydb::replication::ApplyWorkerMain;
-using mytoydb::replication::ApplyWorkerWakeup;
-using mytoydb::replication::BackupHandle;
-using mytoydb::replication::BackupState;
-using mytoydb::replication::BackupStateName;
-using mytoydb::replication::CommitOrigin;
-using mytoydb::replication::CreateDecodingContext;
-using mytoydb::replication::CreateInitDecodingContext;
-using mytoydb::replication::DecodingEmitMessage;
-using mytoydb::replication::DefaultOutputPluginName;
-using mytoydb::replication::DoBackup;
-using mytoydb::replication::GetCurrentBackup;
-using mytoydb::replication::GetLogicalDecodingContext;
-using mytoydb::replication::GetLogicalRepLauncherState;
-using mytoydb::replication::GetLogicalRepWorkerPool;
-using mytoydb::replication::GetReplicationSlotCtl;
-using mytoydb::replication::GetWalLevel;
-using mytoydb::replication::GetWalRcvData;
-using mytoydb::replication::GetWalSndCtl;
-using mytoydb::replication::GetWalSndStats;
-using mytoydb::replication::InitializeBackup;
-using mytoydb::replication::kFirstUserRepOriginId;
-using mytoydb::replication::kInvalidRepOriginId;
-using mytoydb::replication::kMaxWalSenders;
-using mytoydb::replication::LogicalDecodingContext;
-using mytoydb::replication::LogicalDecodingOptions;
-using mytoydb::replication::LogicalDecodingReset;
-using mytoydb::replication::LogicalRepMsgType;
-using mytoydb::replication::LogicalRepMsgTypeName;
-using mytoydb::replication::LogicalRepWorker;
-using mytoydb::replication::LogicalRepWorkerAdd;
-using mytoydb::replication::LogicalRepWorkerCount;
-using mytoydb::replication::LogicalRepWorkerFindBySub;
-using mytoydb::replication::LogicalRepWorkerGetByIndex;
-using mytoydb::replication::LogicalRepWorkerInit;
-using mytoydb::replication::LogicalRepWorkerRemove;
-using mytoydb::replication::LogicalRepWorkerReset;
-using mytoydb::replication::LogicalRepWorkerType;
-using mytoydb::replication::LogicalShippingMain;
-using mytoydb::replication::PgCreateReplicationSlot;
-using mytoydb::replication::PgCreateReplicationSlotResult;
-using mytoydb::replication::PgDropReplicationSlot;
-using mytoydb::replication::PgReplicationSlotAdvance;
-using mytoydb::replication::PgReplicationSlotAdvanceToCurrent;
-using mytoydb::replication::ReplicationSlot;
-using mytoydb::replication::ReplicationSlotAcquire;
-using mytoydb::replication::ReplicationSlotAdvance;
-using mytoydb::replication::ReplicationSlotCount;
-using mytoydb::replication::ReplicationSlotCreate;
-using mytoydb::replication::ReplicationSlotDrop;
-using mytoydb::replication::ReplicationSlotInit;
-using mytoydb::replication::ReplicationSlotLookup;
-using mytoydb::replication::ReplicationSlotPersist;
-using mytoydb::replication::ReplicationSlotRelease;
-using mytoydb::replication::ReploriginAdvance;
-using mytoydb::replication::ReploriginCount;
-using mytoydb::replication::ReploriginCreate;
-using mytoydb::replication::ReploriginDrop;
-using mytoydb::replication::ReploriginDropByName;
-using mytoydb::replication::ReploriginGet;
-using mytoydb::replication::ReploriginGetByName;
-using mytoydb::replication::ReplOriginInit;
-using mytoydb::replication::ReplOriginReset;
-using mytoydb::replication::ReploriginSessionGet;
-using mytoydb::replication::ReploriginSessionLsn;
-using mytoydb::replication::ReploriginSessionReset;
-using mytoydb::replication::ReploriginSessionSet;
-using mytoydb::replication::RepOriginId;
-using mytoydb::replication::SlotPersistence;
-using mytoydb::replication::SlotPersistenceName;
-using mytoydb::replication::SlotType;
-using mytoydb::replication::SlotTypeName;
-using mytoydb::replication::StartBackup;
-using mytoydb::replication::StopBackup;
-using mytoydb::replication::SyncRepConfig;
-using mytoydb::replication::SyncRepConfigGet;
-using mytoydb::replication::SyncRepConfigInit;
-using mytoydb::replication::SyncRepConfigParse;
-using mytoydb::replication::SyncRepConfigReset;
-using mytoydb::replication::SyncRepConfigUpdate;
-using mytoydb::replication::SyncRepGetWaiters;
-using mytoydb::replication::SyncRepIsSyncStandby;
-using mytoydb::replication::SyncRepSyncMethod;
-using mytoydb::replication::SyncRepWaitForLSN;
-using mytoydb::replication::WalLevel;
-using mytoydb::replication::WalRcvData;
-using mytoydb::replication::WalRcvGetState;
-using mytoydb::replication::WalRcvGetStreamState;
-using mytoydb::replication::WalRcvInit;
-using mytoydb::replication::WalRcvLsnKind;
-using mytoydb::replication::WalRcvReportLsn;
-using mytoydb::replication::WalRcvSetPid;
-using mytoydb::replication::WalRcvStart;
-using mytoydb::replication::WalRcvState;
-using mytoydb::replication::WalRcvStateName;
-using mytoydb::replication::WalRcvStop;
-using mytoydb::replication::WalSnd;
-using mytoydb::replication::WalSndAlloc;
-using mytoydb::replication::WalSndCount;
-using mytoydb::replication::WalSndCtlData;
-using mytoydb::replication::WalSndGetByIndex;
-using mytoydb::replication::WalSndGetByPid;
-using mytoydb::replication::WalSndGetState;
-using mytoydb::replication::WalSndInit;
-using mytoydb::replication::WalSndKeepalive;
-using mytoydb::replication::WalSndLsnKind;
-using mytoydb::replication::WalSndMessageResult;
-using mytoydb::replication::WalSndRemove;
-using mytoydb::replication::WalSndReplyMessage;
-using mytoydb::replication::WalSndSetState;
-using mytoydb::replication::WalSndState;
-using mytoydb::replication::WalSndStats;
-using mytoydb::replication::WalSndUpdateLsn;
-using mytoydb::replication::WalSndWaitForWal;
-using mytoydb::replication::WalSndWakeup;
-using mytoydb::replication::WalSndWriteData;
-using mytoydb::transaction::GetXLogInsertRecPtr;
-using mytoydb::transaction::InitializeWal;
-using mytoydb::transaction::ResetWal;
-using mytoydb::transaction::XLogRecPtr;
+using pgcpp::replication::AllocateNextSubscriptionId;
+using pgcpp::replication::ApplyLauncherInit;
+using pgcpp::replication::ApplyLauncherIsRunning;
+using pgcpp::replication::ApplyLauncherMain;
+using pgcpp::replication::ApplyLauncherReset;
+using pgcpp::replication::ApplyLauncherShutdown;
+using pgcpp::replication::ApplyLauncherWakeup;
+using pgcpp::replication::ApplyStandbyReply;
+using pgcpp::replication::ApplyWorkerMain;
+using pgcpp::replication::ApplyWorkerWakeup;
+using pgcpp::replication::BackupHandle;
+using pgcpp::replication::BackupState;
+using pgcpp::replication::BackupStateName;
+using pgcpp::replication::CommitOrigin;
+using pgcpp::replication::CreateDecodingContext;
+using pgcpp::replication::CreateInitDecodingContext;
+using pgcpp::replication::DecodingEmitMessage;
+using pgcpp::replication::DefaultOutputPluginName;
+using pgcpp::replication::DoBackup;
+using pgcpp::replication::GetCurrentBackup;
+using pgcpp::replication::GetLogicalDecodingContext;
+using pgcpp::replication::GetLogicalRepLauncherState;
+using pgcpp::replication::GetLogicalRepWorkerPool;
+using pgcpp::replication::GetReplicationSlotCtl;
+using pgcpp::replication::GetWalLevel;
+using pgcpp::replication::GetWalRcvData;
+using pgcpp::replication::GetWalSndCtl;
+using pgcpp::replication::GetWalSndStats;
+using pgcpp::replication::InitializeBackup;
+using pgcpp::replication::kFirstUserRepOriginId;
+using pgcpp::replication::kInvalidRepOriginId;
+using pgcpp::replication::kMaxWalSenders;
+using pgcpp::replication::LogicalDecodingContext;
+using pgcpp::replication::LogicalDecodingOptions;
+using pgcpp::replication::LogicalDecodingReset;
+using pgcpp::replication::LogicalRepMsgType;
+using pgcpp::replication::LogicalRepMsgTypeName;
+using pgcpp::replication::LogicalRepWorker;
+using pgcpp::replication::LogicalRepWorkerAdd;
+using pgcpp::replication::LogicalRepWorkerCount;
+using pgcpp::replication::LogicalRepWorkerFindBySub;
+using pgcpp::replication::LogicalRepWorkerGetByIndex;
+using pgcpp::replication::LogicalRepWorkerInit;
+using pgcpp::replication::LogicalRepWorkerRemove;
+using pgcpp::replication::LogicalRepWorkerReset;
+using pgcpp::replication::LogicalRepWorkerType;
+using pgcpp::replication::LogicalShippingMain;
+using pgcpp::replication::PgCreateReplicationSlot;
+using pgcpp::replication::PgCreateReplicationSlotResult;
+using pgcpp::replication::PgDropReplicationSlot;
+using pgcpp::replication::PgReplicationSlotAdvance;
+using pgcpp::replication::PgReplicationSlotAdvanceToCurrent;
+using pgcpp::replication::ReplicationSlot;
+using pgcpp::replication::ReplicationSlotAcquire;
+using pgcpp::replication::ReplicationSlotAdvance;
+using pgcpp::replication::ReplicationSlotCount;
+using pgcpp::replication::ReplicationSlotCreate;
+using pgcpp::replication::ReplicationSlotDrop;
+using pgcpp::replication::ReplicationSlotInit;
+using pgcpp::replication::ReplicationSlotLookup;
+using pgcpp::replication::ReplicationSlotPersist;
+using pgcpp::replication::ReplicationSlotRelease;
+using pgcpp::replication::ReploriginAdvance;
+using pgcpp::replication::ReploriginCount;
+using pgcpp::replication::ReploriginCreate;
+using pgcpp::replication::ReploriginDrop;
+using pgcpp::replication::ReploriginDropByName;
+using pgcpp::replication::ReploriginGet;
+using pgcpp::replication::ReploriginGetByName;
+using pgcpp::replication::ReplOriginInit;
+using pgcpp::replication::ReplOriginReset;
+using pgcpp::replication::ReploriginSessionGet;
+using pgcpp::replication::ReploriginSessionLsn;
+using pgcpp::replication::ReploriginSessionReset;
+using pgcpp::replication::ReploriginSessionSet;
+using pgcpp::replication::RepOriginId;
+using pgcpp::replication::SlotPersistence;
+using pgcpp::replication::SlotPersistenceName;
+using pgcpp::replication::SlotType;
+using pgcpp::replication::SlotTypeName;
+using pgcpp::replication::StartBackup;
+using pgcpp::replication::StopBackup;
+using pgcpp::replication::SyncRepConfig;
+using pgcpp::replication::SyncRepConfigGet;
+using pgcpp::replication::SyncRepConfigInit;
+using pgcpp::replication::SyncRepConfigParse;
+using pgcpp::replication::SyncRepConfigReset;
+using pgcpp::replication::SyncRepConfigUpdate;
+using pgcpp::replication::SyncRepGetWaiters;
+using pgcpp::replication::SyncRepIsSyncStandby;
+using pgcpp::replication::SyncRepSyncMethod;
+using pgcpp::replication::SyncRepWaitForLSN;
+using pgcpp::replication::WalLevel;
+using pgcpp::replication::WalRcvData;
+using pgcpp::replication::WalRcvGetState;
+using pgcpp::replication::WalRcvGetStreamState;
+using pgcpp::replication::WalRcvInit;
+using pgcpp::replication::WalRcvLsnKind;
+using pgcpp::replication::WalRcvReportLsn;
+using pgcpp::replication::WalRcvSetPid;
+using pgcpp::replication::WalRcvStart;
+using pgcpp::replication::WalRcvState;
+using pgcpp::replication::WalRcvStateName;
+using pgcpp::replication::WalRcvStop;
+using pgcpp::replication::WalSnd;
+using pgcpp::replication::WalSndAlloc;
+using pgcpp::replication::WalSndCount;
+using pgcpp::replication::WalSndCtlData;
+using pgcpp::replication::WalSndGetByIndex;
+using pgcpp::replication::WalSndGetByPid;
+using pgcpp::replication::WalSndGetState;
+using pgcpp::replication::WalSndInit;
+using pgcpp::replication::WalSndKeepalive;
+using pgcpp::replication::WalSndLsnKind;
+using pgcpp::replication::WalSndMessageResult;
+using pgcpp::replication::WalSndRemove;
+using pgcpp::replication::WalSndReplyMessage;
+using pgcpp::replication::WalSndSetState;
+using pgcpp::replication::WalSndState;
+using pgcpp::replication::WalSndStats;
+using pgcpp::replication::WalSndUpdateLsn;
+using pgcpp::replication::WalSndWaitForWal;
+using pgcpp::replication::WalSndWakeup;
+using pgcpp::replication::WalSndWriteData;
+using pgcpp::transaction::GetXLogInsertRecPtr;
+using pgcpp::transaction::InitializeWal;
+using pgcpp::transaction::ResetWal;
+using pgcpp::transaction::XLogRecPtr;
 
 namespace {
 
@@ -182,9 +182,9 @@ namespace {
 class ReplicationTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("repl_test_ctx");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("repl_test_ctx");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         ResetWal();
         InitializeWal();
@@ -201,13 +201,13 @@ protected:
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
     }
 
-    mytoydb::memory::MemoryContext* context_ = nullptr;
+    pgcpp::memory::MemoryContext* context_ = nullptr;
 };
 
 // Helper that runs `body` inside PG_TRY and returns true if no error
@@ -250,9 +250,9 @@ TEST_F(ReplicationTest, LogicalRepMsgTypeNameCoversAllValues) {
 
 TEST_F(ReplicationTest, WalLevelDefaultsToReplica) {
     EXPECT_EQ(GetWalLevel(), WalLevel::kReplica);
-    mytoydb::replication::SetWalLevel(WalLevel::kLogical);
+    pgcpp::replication::SetWalLevel(WalLevel::kLogical);
     EXPECT_EQ(GetWalLevel(), WalLevel::kLogical);
-    mytoydb::replication::SetWalLevel(WalLevel::kReplica);
+    pgcpp::replication::SetWalLevel(WalLevel::kReplica);
     EXPECT_EQ(GetWalLevel(), WalLevel::kReplica);
 }
 
@@ -453,7 +453,7 @@ TEST_F(ReplicationTest, GetWalSndStatsCountsActiveAndStreaming) {
 
 TEST_F(ReplicationTest, WalRcvInitialStateStopped) {
     EXPECT_EQ(WalRcvGetState(), WalRcvState::kStopped);
-    EXPECT_EQ(WalRcvGetStreamState(), mytoydb::replication::WalRcvStreamState::kNone);
+    EXPECT_EQ(WalRcvGetStreamState(), pgcpp::replication::WalRcvStreamState::kNone);
     EXPECT_STREQ(WalRcvStateName(WalRcvState::kStopped), "stopped");
     EXPECT_STREQ(WalRcvStateName(WalRcvState::kStreaming), "streaming");
 }

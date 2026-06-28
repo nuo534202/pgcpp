@@ -35,88 +35,88 @@
 #include "pgcpp/transaction/xact.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::access::att_align;
-using mytoydb::access::att_align_max;
-using mytoydb::access::CreateTupleDesc;
-using mytoydb::access::heap_beginscan;
-using mytoydb::access::heap_compute_data_size;
-using mytoydb::access::heap_deform_tuple;
-using mytoydb::access::heap_delete;
-using mytoydb::access::heap_endscan;
-using mytoydb::access::heap_form_tuple;
-using mytoydb::access::heap_freetuple;
-using mytoydb::access::heap_getattr;
-using mytoydb::access::heap_getnext;
-using mytoydb::access::heap_insert;
-using mytoydb::access::heap_rescan;
-using mytoydb::access::heap_update;
-using mytoydb::access::HeapScanDesc;
-using mytoydb::access::HeapScanDescData;
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::ResetRelcache;
-using mytoydb::access::TupleDesc;
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::AttStorage;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kFirstNormalObjectId;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::transaction::AllocateNextTransactionId;
-using mytoydb::transaction::BeginTransactionBlock;
-using mytoydb::transaction::EndTransactionBlock;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::transaction::HeapTupleData;
-using mytoydb::transaction::HeapTupleHeaderData;
-using mytoydb::transaction::HeapTupleHeaderGetXmax;
-using mytoydb::transaction::HeapTupleHeaderGetXmin;
-using mytoydb::transaction::HeapTupleHeaderSetXminCommitted;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::ItemPointerData;
-using mytoydb::transaction::kFirstNormalTransactionId;
-using mytoydb::transaction::MakeSnapshot;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::transaction::SnapshotData;
-using mytoydb::transaction::TransactionId;
-using mytoydb::transaction::TransactionIdCommit;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::VARDATA;
-using mytoydb::types::VARSIZE;
+using pgcpp::access::att_align;
+using pgcpp::access::att_align_max;
+using pgcpp::access::CreateTupleDesc;
+using pgcpp::access::heap_beginscan;
+using pgcpp::access::heap_compute_data_size;
+using pgcpp::access::heap_deform_tuple;
+using pgcpp::access::heap_delete;
+using pgcpp::access::heap_endscan;
+using pgcpp::access::heap_form_tuple;
+using pgcpp::access::heap_freetuple;
+using pgcpp::access::heap_getattr;
+using pgcpp::access::heap_getnext;
+using pgcpp::access::heap_insert;
+using pgcpp::access::heap_rescan;
+using pgcpp::access::heap_update;
+using pgcpp::access::HeapScanDesc;
+using pgcpp::access::HeapScanDescData;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationCreateStorage;
+using pgcpp::access::RelationOpen;
+using pgcpp::access::ResetRelcache;
+using pgcpp::access::TupleDesc;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::AttStorage;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kFirstNormalObjectId;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::AllocateNextTransactionId;
+using pgcpp::transaction::BeginTransactionBlock;
+using pgcpp::transaction::EndTransactionBlock;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::transaction::HeapTupleData;
+using pgcpp::transaction::HeapTupleHeaderData;
+using pgcpp::transaction::HeapTupleHeaderGetXmax;
+using pgcpp::transaction::HeapTupleHeaderGetXmin;
+using pgcpp::transaction::HeapTupleHeaderSetXminCommitted;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ItemPointerData;
+using pgcpp::transaction::kFirstNormalTransactionId;
+using pgcpp::transaction::MakeSnapshot;
+using pgcpp::transaction::ResetTransactionState;
+using pgcpp::transaction::SnapshotData;
+using pgcpp::transaction::TransactionId;
+using pgcpp::transaction::TransactionIdCommit;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::VARDATA;
+using pgcpp::types::VARSIZE;
 
 namespace {
 
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::makePallocNode;
 
 class HeapamTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("heapam_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -150,7 +150,7 @@ protected:
         ResetTransactionState();
         InitializeTransactionSystem();
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -262,7 +262,7 @@ protected:
     // Format: 4-byte length prefix (total including header) + data (no null).
     Datum MakeTextDatum(const std::string& s) {
         int32_t total = static_cast<int32_t>(sizeof(int32_t) + s.size());
-        char* buf = static_cast<char*>(mytoydb::memory::palloc(total));
+        char* buf = static_cast<char*>(pgcpp::memory::palloc(total));
         std::memcpy(buf, &total, sizeof(int32_t));
         std::memcpy(buf + sizeof(int32_t), s.data(), s.size());
         return Datum(buf);
@@ -420,7 +420,7 @@ TEST_F(HeapamTest, FormDeformWithNulls) {
     HeapTuple tup = heap_form_tuple(desc, values, isnull);
 
     // The HASNULL flag should be set.
-    EXPECT_NE(tup->t_data->t_infomask & mytoydb::transaction::kHeapHasNull, 0);
+    EXPECT_NE(tup->t_data->t_infomask & pgcpp::transaction::kHeapHasNull, 0);
 
     Datum out_values[3];
     bool out_isnull[3];
@@ -519,8 +519,8 @@ TEST_F(HeapamTest, InsertSingleTupleAndScan) {
     CommitAndStartNew();
 
     // Scan and verify.
-    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
-                                     mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(pgcpp::transaction::GetNextTransactionId(),
+                                     pgcpp::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
     HeapTuple out = heap_getnext(scan);
     ASSERT_NE(out, nullptr);
@@ -555,8 +555,8 @@ TEST_F(HeapamTest, InsertMultipleTuplesAndScanAll) {
 
     CommitAndStartNew();
 
-    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
-                                     mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(pgcpp::transaction::GetNextTransactionId(),
+                                     pgcpp::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
 
     int count = 0;
@@ -588,8 +588,8 @@ TEST_F(HeapamTest, InsertExtendsToMultiplePages) {
 
     CommitAndStartNew();
 
-    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
-                                     mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(pgcpp::transaction::GetNextTransactionId(),
+                                     pgcpp::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
 
     int count = 0;
@@ -626,8 +626,8 @@ TEST_F(HeapamTest, DeleteMakesTupleInvisible) {
     CommitAndStartNew();
 
     // Verify it's visible.
-    SnapshotData snap1 = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
-                                      mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap1 = MakeSnapshot(pgcpp::transaction::GetNextTransactionId(),
+                                      pgcpp::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan1 = heap_beginscan(rel, &snap1);
     EXPECT_NE(heap_getnext(scan1), nullptr);
     EXPECT_EQ(heap_getnext(scan1), nullptr);
@@ -638,8 +638,8 @@ TEST_F(HeapamTest, DeleteMakesTupleInvisible) {
     CommitAndStartNew();
 
     // Now it should be invisible.
-    SnapshotData snap2 = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
-                                      mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap2 = MakeSnapshot(pgcpp::transaction::GetNextTransactionId(),
+                                      pgcpp::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan2 = heap_beginscan(rel, &snap2);
     EXPECT_EQ(heap_getnext(scan2), nullptr);
     heap_endscan(scan2);
@@ -672,8 +672,8 @@ TEST_F(HeapamTest, UpdateReplacesTuple) {
     CommitAndStartNew();
 
     // Scan: only the new version should be visible.
-    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
-                                     mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(pgcpp::transaction::GetNextTransactionId(),
+                                     pgcpp::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
     HeapTuple out = heap_getnext(scan);
     ASSERT_NE(out, nullptr);
@@ -704,8 +704,8 @@ TEST_F(HeapamTest, RescanRestartsFromBeginning) {
     }
     CommitAndStartNew();
 
-    SnapshotData snap = MakeSnapshot(mytoydb::transaction::GetNextTransactionId(),
-                                     mytoydb::transaction::GetNextTransactionId() + 1);
+    SnapshotData snap = MakeSnapshot(pgcpp::transaction::GetNextTransactionId(),
+                                     pgcpp::transaction::GetNextTransactionId() + 1);
     HeapScanDesc scan = heap_beginscan(rel, &snap);
 
     // Read 2 tuples.
@@ -761,7 +761,7 @@ TEST_F(HeapamTest, InsertSetsXminAndCid) {
 
     // t_xmin should be set to the current transaction ID.
     TransactionId xmin = HeapTupleHeaderGetXmin(tup->t_data);
-    EXPECT_NE(xmin, mytoydb::transaction::kInvalidTransactionId);
+    EXPECT_NE(xmin, pgcpp::transaction::kInvalidTransactionId);
 
     heap_freetuple(tup);
     RelationClose(rel);

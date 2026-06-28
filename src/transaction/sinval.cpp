@@ -9,7 +9,7 @@
 // catcache entry, an smgr entry, etc.).
 //
 // In PostgreSQL, messages are queued per-backend and dispatched to all
-// backends via the shared invalidation queue (sinvaladt). MyToyDB is
+// backends via the shared invalidation queue (sinvaladt). pgcpp is
 // single-process, so we keep a local queue and dispatch to locally
 // registered handlers at AcceptInvalidationMessages time. This preserves
 // the API and the invalidation-driven cache-refresh pattern.
@@ -23,7 +23,7 @@
 #include "pgcpp/catalog/catalog.hpp"
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -68,7 +68,7 @@ void ResetSinval() {
     NextHandlerId() = 1;
 }
 
-void CacheInvalidateRelcache(mytoydb::catalog::Oid db_id, mytoydb::catalog::Oid rel_id) {
+void CacheInvalidateRelcache(pgcpp::catalog::Oid db_id, pgcpp::catalog::Oid rel_id) {
     SharedInvalidationMessage msg;
     msg.kind = SharedInvalCmdType::kRelcache;
     msg.db_id = db_id;
@@ -76,14 +76,14 @@ void CacheInvalidateRelcache(mytoydb::catalog::Oid db_id, mytoydb::catalog::Oid 
     PendingQueue().push_back(msg);
 }
 
-void CacheInvalidateSnapshot(mytoydb::catalog::Oid db_id) {
+void CacheInvalidateSnapshot(pgcpp::catalog::Oid db_id) {
     SharedInvalidationMessage msg;
     msg.kind = SharedInvalCmdType::kSnapshot;
     msg.db_id = db_id;
     PendingQueue().push_back(msg);
 }
 
-void CacheInvalidateCatcache(mytoydb::catalog::Oid db_id, int cat_id, int hash_value) {
+void CacheInvalidateCatcache(pgcpp::catalog::Oid db_id, int cat_id, int hash_value) {
     SharedInvalidationMessage msg;
     msg.kind = SharedInvalCmdType::kCatcache;
     msg.db_id = db_id;
@@ -92,7 +92,7 @@ void CacheInvalidateCatcache(mytoydb::catalog::Oid db_id, int cat_id, int hash_v
     PendingQueue().push_back(msg);
 }
 
-void CacheInvalidateSmgr(mytoydb::catalog::Oid db_id, mytoydb::catalog::Oid rel_id) {
+void CacheInvalidateSmgr(pgcpp::catalog::Oid db_id, pgcpp::catalog::Oid rel_id) {
     SharedInvalidationMessage msg;
     msg.kind = SharedInvalCmdType::kSmgr;
     msg.db_id = db_id;
@@ -140,4 +140,4 @@ std::size_t GetPendingInvalidationCount() {
     return PendingQueue().size();
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

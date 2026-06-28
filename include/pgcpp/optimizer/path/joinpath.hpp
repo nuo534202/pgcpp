@@ -8,7 +8,7 @@
 //   - HashJoinPath: hash the inner side once, probe with outer rows. O(N+M).
 //   - MergeJoinPath: sort both sides on the join key, then merge. O(N log N + M log M).
 //
-// For MyToyDB's Task 15.15, the join path generation is simplified:
+// For pgcpp's Task 15.15, the join path generation is simplified:
 //   - Only INNER joins (no LEFT/RIGHT/FULL/SEMI join handling).
 //   - No parallel-aware join paths.
 //   - No parameterized inner paths (no LATERAL).
@@ -23,9 +23,9 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
-// Forward declaration — defined in mytoydb/optimizer/planner.hpp.
+// Forward declaration — defined in pgcpp/optimizer/planner.hpp.
 struct PlannerInfo;
 
 // SpecialJoinInfo — describes a join's structural constraints (which rels
@@ -45,4 +45,4 @@ void add_paths_to_joinrel(PlannerInfo* root, RelOptInfo* joinrel, RelOptInfo* ou
                           RelOptInfo* inner_rel, SpecialJoinInfo* sjinfo,
                           std::vector<RestrictInfo*> restrictlist);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

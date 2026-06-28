@@ -14,7 +14,7 @@
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 // CrossoverERX — produce `child` from `mum` and `dad` using edge
 // recombination. Returns true on success. The child is a valid permutation
@@ -22,4 +22,4 @@ namespace mytoydb::optimizer::geqo {
 // same set).
 bool CrossoverERX(const Chromosome* mum, const Chromosome* dad, Chromosome* child);
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

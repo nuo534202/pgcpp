@@ -8,7 +8,7 @@
 // optimizer to derive implied quals and detect mergejoinable clauses across
 // query subtrees.
 //
-// For MyToyDB's Task 15.15, the EC machinery is simplified:
+// For pgcpp's Task 15.15, the EC machinery is simplified:
 //   - No constant propagation (a Const member does not collapse the EC).
 //   - No outer-join barrier tracking (treat all ECs as below-inner-join).
 //   - No volatile-expression rejection (callers must guard).
@@ -22,13 +22,13 @@
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::Var;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::Var;
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -177,10 +177,10 @@ bool classify_restrictinfo(RestrictInfo* ri) {
         return false;
 
     // Look up the operator in the catalog to check merge/hash eligibility.
-    auto* catalog = mytoydb::catalog::GetCatalog();
+    auto* catalog = pgcpp::catalog::GetCatalog();
     if (catalog == nullptr)
         return false;
-    const mytoydb::catalog::FormData_pg_operator* oprow = catalog->GetOperatorByOid(op->opno);
+    const pgcpp::catalog::FormData_pg_operator* oprow = catalog->GetOperatorByOid(op->opno);
     if (oprow == nullptr)
         return false;
 
@@ -339,7 +339,7 @@ std::vector<RestrictInfo*> generate_join_implied_equalities(PlannerInfo* root,
         // Synthesize an OpExpr "outer_em.expr = inner_em.expr".
         auto* op = makePallocNode<OpExpr>();
         op->opno = ec->ec_min_op;
-        op->opresulttype = mytoydb::types::kBoolOid;
+        op->opresulttype = pgcpp::types::kBoolOid;
         op->args.push_back(outer_em->expr);
         op->args.push_back(inner_em->expr);
 
@@ -354,4 +354,4 @@ std::vector<RestrictInfo*> generate_join_implied_equalities(PlannerInfo* root,
     return result;
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

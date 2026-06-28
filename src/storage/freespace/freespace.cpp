@@ -5,7 +5,7 @@
 
 #include <map>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -124,4 +124,4 @@ int NumFSMRelations() {
     return static_cast<int>(FsmMap().size());
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

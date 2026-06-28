@@ -2,7 +2,7 @@
 //
 // Converted from PostgreSQL 15's src/include/nodes/primnodes.h.
 // These node types are produced by parse analysis (transformExpr) and represent
-// the executable expression tree. All inherit from mytoydb::nodes::Node.
+// the executable expression tree. All inherit from pgcpp::nodes::Node.
 // String fields use std::string, List* fields use std::vector<Node*>,
 // and Oid/int32 fields use int.
 #pragma once
@@ -17,10 +17,10 @@
 #include "pgcpp/parser/parsenodes.hpp"  // CoercionForm, JoinType, CmdType
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
 
 // ---------------------------------------------------------------------------
 // Enums for transformed expression nodes (from primnodes.h / nodes.h)
@@ -91,7 +91,7 @@ public:
 
 protected:
     Expr() = delete;
-    explicit Expr(mytoydb::nodes::NodeTag tag) : Node(tag) {}
+    explicit Expr(pgcpp::nodes::NodeTag tag) : Node(tag) {}
 };
 
 // ---------------------------------------------------------------------------
@@ -100,7 +100,7 @@ protected:
 
 class Var : public Expr {
 public:
-    Var() : Expr(mytoydb::nodes::NodeTag::kVar) {}
+    Var() : Expr(pgcpp::nodes::NodeTag::kVar) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -122,19 +122,19 @@ public:
 
 class Const : public Expr {
 public:
-    Const() : Expr(mytoydb::nodes::NodeTag::kConst) {}
+    Const() : Expr(pgcpp::nodes::NodeTag::kConst) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
 
-    Oid consttype = 0;                     // pg_type OID of the constant's datatype
-    int consttypmod = -1;                  // typmod value, if any
-    Oid constcollid = 0;                   // OID of collation, or InvalidOid if none
-    int constlen = 0;                      // typlen of the constant's datatype
-    mytoydb::types::Datum constvalue = 0;  // the constant's value
-    bool constisnull = false;              // whether the constant is null
-    bool constbyval = false;               // whether this datatype is passed by value
-    int location = -1;                     // token location, or -1 if unknown
+    Oid consttype = 0;                   // pg_type OID of the constant's datatype
+    int consttypmod = -1;                // typmod value, if any
+    Oid constcollid = 0;                 // OID of collation, or InvalidOid if none
+    int constlen = 0;                    // typlen of the constant's datatype
+    pgcpp::types::Datum constvalue = 0;  // the constant's value
+    bool constisnull = false;            // whether the constant is null
+    bool constbyval = false;             // whether this datatype is passed by value
+    int location = -1;                   // token location, or -1 if unknown
 };
 
 // ---------------------------------------------------------------------------
@@ -143,7 +143,7 @@ public:
 
 class Param : public Expr {
 public:
-    Param() : Expr(mytoydb::nodes::NodeTag::kParam) {}
+    Param() : Expr(pgcpp::nodes::NodeTag::kParam) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -162,7 +162,7 @@ public:
 
 class OpExpr : public Expr {
 public:
-    OpExpr() : Expr(mytoydb::nodes::NodeTag::kOpExpr) {}
+    OpExpr() : Expr(pgcpp::nodes::NodeTag::kOpExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -183,7 +183,7 @@ public:
 
 class FuncExpr : public Expr {
 public:
-    FuncExpr() : Expr(mytoydb::nodes::NodeTag::kFuncExpr) {}
+    FuncExpr() : Expr(pgcpp::nodes::NodeTag::kFuncExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -205,7 +205,7 @@ public:
 
 class Aggref : public Expr {
 public:
-    Aggref() : Expr(mytoydb::nodes::NodeTag::kAggref) {}
+    Aggref() : Expr(pgcpp::nodes::NodeTag::kAggref) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -237,7 +237,7 @@ public:
 
 class BoolExpr : public Expr {
 public:
-    BoolExpr() : Expr(mytoydb::nodes::NodeTag::kBoolExpr) {}
+    BoolExpr() : Expr(pgcpp::nodes::NodeTag::kBoolExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -253,7 +253,7 @@ public:
 
 class NullTest : public Expr {
 public:
-    NullTest() : Expr(mytoydb::nodes::NodeTag::kNullTest) {}
+    NullTest() : Expr(pgcpp::nodes::NodeTag::kNullTest) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -270,7 +270,7 @@ public:
 
 class BooleanTest : public Expr {
 public:
-    BooleanTest() : Expr(mytoydb::nodes::NodeTag::kBooleanTest) {}
+    BooleanTest() : Expr(pgcpp::nodes::NodeTag::kBooleanTest) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -286,7 +286,7 @@ public:
 
 class CaseExpr : public Expr {
 public:
-    CaseExpr() : Expr(mytoydb::nodes::NodeTag::kCaseExpr) {}
+    CaseExpr() : Expr(pgcpp::nodes::NodeTag::kCaseExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -305,7 +305,7 @@ public:
 
 class CaseWhen : public Expr {
 public:
-    CaseWhen() : Expr(mytoydb::nodes::NodeTag::kCaseWhen) {}
+    CaseWhen() : Expr(pgcpp::nodes::NodeTag::kCaseWhen) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -321,7 +321,7 @@ public:
 
 class SubLink : public Expr {
 public:
-    SubLink() : Expr(mytoydb::nodes::NodeTag::kSubLink) {}
+    SubLink() : Expr(pgcpp::nodes::NodeTag::kSubLink) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -340,7 +340,7 @@ public:
 
 class RelabelType : public Expr {
 public:
-    RelabelType() : Expr(mytoydb::nodes::NodeTag::kRelabelType) {}
+    RelabelType() : Expr(pgcpp::nodes::NodeTag::kRelabelType) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -359,7 +359,7 @@ public:
 
 class CoerceViaIO : public Expr {
 public:
-    CoerceViaIO() : Expr(mytoydb::nodes::NodeTag::kCoerceViaIO) {}
+    CoerceViaIO() : Expr(pgcpp::nodes::NodeTag::kCoerceViaIO) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -377,7 +377,7 @@ public:
 
 class ScalarArrayOpExpr : public Expr {
 public:
-    ScalarArrayOpExpr() : Expr(mytoydb::nodes::NodeTag::kScalarArrayOpExpr) {}
+    ScalarArrayOpExpr() : Expr(pgcpp::nodes::NodeTag::kScalarArrayOpExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -398,7 +398,7 @@ public:
 
 class CoerceToDomain : public Expr {
 public:
-    CoerceToDomain() : Expr(mytoydb::nodes::NodeTag::kCoerceToDomain) {}
+    CoerceToDomain() : Expr(pgcpp::nodes::NodeTag::kCoerceToDomain) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -417,7 +417,7 @@ public:
 
 class TargetEntry : public Expr {
 public:
-    TargetEntry() : Expr(mytoydb::nodes::NodeTag::kTargetEntry) {}
+    TargetEntry() : Expr(pgcpp::nodes::NodeTag::kTargetEntry) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -437,7 +437,7 @@ public:
 
 class RangeTblRef : public Node {
 public:
-    RangeTblRef() : Node(mytoydb::nodes::NodeTag::kRangeTblRef) {}
+    RangeTblRef() : Node(pgcpp::nodes::NodeTag::kRangeTblRef) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -451,7 +451,7 @@ public:
 
 class JoinExpr : public Node {
 public:
-    JoinExpr() : Node(mytoydb::nodes::NodeTag::kJoinExpr) {}
+    JoinExpr() : Node(pgcpp::nodes::NodeTag::kJoinExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -473,7 +473,7 @@ public:
 
 class FromExpr : public Node {
 public:
-    FromExpr() : Node(mytoydb::nodes::NodeTag::kFromExpr) {}
+    FromExpr() : Node(pgcpp::nodes::NodeTag::kFromExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -489,7 +489,7 @@ public:
 
 template<typename T>
 T* makeNode() {
-    return mytoydb::nodes::makePallocNode<T>();
+    return pgcpp::nodes::makePallocNode<T>();
 }
 
 // ---------------------------------------------------------------------------
@@ -500,8 +500,8 @@ Var* makeVar(int varno, int varattno, Oid vartype, int vartypmod, Oid varcollid,
              int location);
 
 Const* makeConst(Oid consttype, int consttypmod, Oid constcollid, int constlen,
-                 mytoydb::types::Datum constvalue, bool constisnull, bool constbyval, int location);
+                 pgcpp::types::Datum constvalue, bool constisnull, bool constbyval, int location);
 
 Const* makeNullConst(Oid consttype, int consttypmod, Oid constcollid);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

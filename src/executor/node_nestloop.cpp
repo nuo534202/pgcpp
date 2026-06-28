@@ -20,9 +20,9 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::parser::JoinType;
+using pgcpp::parser::JoinType;
 
 void NestLoopState::ExecInit() {
     auto* nlplan = static_cast<NestLoop*>(plan);
@@ -130,4 +130,4 @@ void NestLoopState::ExecReScan() {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

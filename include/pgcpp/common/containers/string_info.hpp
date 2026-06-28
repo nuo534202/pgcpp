@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace mytoydb::containers {
+namespace pgcpp::containers {
 
 // StringInfo — a dynamic string buffer.
 // Faithful conversion of PostgreSQL's StringInfoData.
@@ -61,4 +61,4 @@ void resetStringInfo(StringInfo* si);
 const char* Data(const StringInfo* si);
 int Length(const StringInfo* si);
 
-}  // namespace mytoydb::containers
+}  // namespace pgcpp::containers

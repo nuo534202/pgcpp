@@ -12,41 +12,41 @@
 
 namespace {
 
-using mytoydb::catalog::Oid;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makeBoolExpr;
-using mytoydb::nodes::makeConst;
-using mytoydb::nodes::makeFuncExpr;
-using mytoydb::nodes::makeNullConst;
-using mytoydb::nodes::makeOpExpr;
-using mytoydb::nodes::makeRelabelType;
-using mytoydb::nodes::makeTargetEntry;
-using mytoydb::nodes::makeVar;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::CoercionForm;
-using mytoydb::parser::Const;
-using mytoydb::parser::FuncExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::Datum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInvalidOid;
-using mytoydb::types::kTextOid;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makeBoolExpr;
+using pgcpp::nodes::makeConst;
+using pgcpp::nodes::makeFuncExpr;
+using pgcpp::nodes::makeNullConst;
+using pgcpp::nodes::makeOpExpr;
+using pgcpp::nodes::makeRelabelType;
+using pgcpp::nodes::makeTargetEntry;
+using pgcpp::nodes::makeVar;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::CoercionForm;
+using pgcpp::parser::Const;
+using pgcpp::parser::FuncExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::Datum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInvalidOid;
+using pgcpp::types::kTextOid;
 
 class MakefuncsTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("makefuncs_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -90,7 +90,7 @@ TEST_F(MakefuncsTest, MakeVarFullSetsAllFields) {
 // --- makeConst / makeNullConst ---------------------------------------------
 
 TEST_F(MakefuncsTest, MakeConstSetsFields) {
-    Datum val = mytoydb::types::Int32GetDatum(123);
+    Datum val = pgcpp::types::Int32GetDatum(123);
     Const* con = makeConst(/*consttype=*/kInt4Oid, /*consttypmod=*/-1, /*constcollid=*/kInvalidOid,
                            /*constlen=*/4, /*constvalue=*/val, /*constisnull=*/false,
                            /*constbyval=*/true, /*location=*/7);
@@ -151,7 +151,7 @@ TEST_F(MakefuncsTest, MakeTargetEntryJunk) {
 TEST_F(MakefuncsTest, MakeOpExprBinary) {
     Var* left = makeVar(1, 1, kInt4Oid);
     Const* right =
-        makeConst(kInt4Oid, -1, kInvalidOid, 4, mytoydb::types::Int32GetDatum(10), false, true, -1);
+        makeConst(kInt4Oid, -1, kInvalidOid, 4, pgcpp::types::Int32GetDatum(10), false, true, -1);
     OpExpr* op = makeOpExpr(/*opno=*/415, /*opresulttype=*/kBoolOid, left, right);
     ASSERT_NE(op, nullptr);
     EXPECT_EQ(op->opno, Oid{415});

@@ -17,7 +17,7 @@
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
 struct PlannerInfo;  // forward declaration
 
@@ -45,4 +45,4 @@ bool IsValidPermutation(const Chromosome& chrom, const std::vector<Gene>& expect
 Chromosome* FindBestChromosome(std::vector<Chromosome*>& pool);
 
 }  // namespace geqo
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

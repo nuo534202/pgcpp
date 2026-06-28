@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Window functions (PostgreSQL utils/adt/windowfuncs.c).
@@ -50,4 +50,4 @@ Datum first_value(const std::vector<Datum>& frame);
 Datum last_value(const std::vector<Datum>& frame);
 Datum nth_value(const std::vector<Datum>& frame, int64_t n);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

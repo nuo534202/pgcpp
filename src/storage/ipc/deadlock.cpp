@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -94,4 +94,4 @@ bool HasDeadlock() {
     return false;
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

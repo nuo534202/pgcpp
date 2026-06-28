@@ -5,7 +5,7 @@
 // Implements btinsert, btbeginscan, btgettuple, btrescan, and btbuild.
 // The B-tree uses pages for storage with sorted entries on leaf pages.
 //
-// MyToyDB simplifications:
+// pgcpp simplifications:
 //   - Root starts as a leaf; splits into two leaves + new internal root
 //   - No further splitting of internal pages (limited index size)
 //   - No VACUUM, no deduplication, no page deletion
@@ -27,46 +27,46 @@
 #include "pgcpp/storage/smgr.hpp"
 #include "pgcpp/transaction/heap_tuple.hpp"
 
-namespace mytoydb::access {
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::access {
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
 namespace {
 
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
-using mytoydb::storage::BlockNumber;
-using mytoydb::storage::Buffer;
-using mytoydb::storage::BufferGetPage;
-using mytoydb::storage::ForkNumber;
-using mytoydb::storage::Item;
-using mytoydb::storage::ItemIdData;
-using mytoydb::storage::ItemIdGetLength;
-using mytoydb::storage::ItemIdIsNormal;
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kInvalidBuffer;
-using mytoydb::storage::kInvalidOffsetNumber;
-using mytoydb::storage::kPageHeaderSize;
-using mytoydb::storage::MarkBufferDirty;
-using mytoydb::storage::OffsetNumber;
-using mytoydb::storage::Page;
-using mytoydb::storage::PageAddItem;
-using mytoydb::storage::PageGetHeapFreeSpace;
-using mytoydb::storage::PageGetItem;
-using mytoydb::storage::PageGetItemId;
-using mytoydb::storage::PageGetMaxOffsetNumber;
-using mytoydb::storage::PageInit;
-using mytoydb::storage::ReadBuffer;
-using mytoydb::storage::ReadBufferMode;
-using mytoydb::storage::ReleaseBuffer;
-using mytoydb::transaction::ItemPointerData;
+using pgcpp::memory::palloc;
+using pgcpp::memory::pfree;
+using pgcpp::storage::BlockNumber;
+using pgcpp::storage::Buffer;
+using pgcpp::storage::BufferGetPage;
+using pgcpp::storage::ForkNumber;
+using pgcpp::storage::Item;
+using pgcpp::storage::ItemIdData;
+using pgcpp::storage::ItemIdGetLength;
+using pgcpp::storage::ItemIdIsNormal;
+using pgcpp::storage::kBlckSz;
+using pgcpp::storage::kInvalidBuffer;
+using pgcpp::storage::kInvalidOffsetNumber;
+using pgcpp::storage::kPageHeaderSize;
+using pgcpp::storage::MarkBufferDirty;
+using pgcpp::storage::OffsetNumber;
+using pgcpp::storage::Page;
+using pgcpp::storage::PageAddItem;
+using pgcpp::storage::PageGetHeapFreeSpace;
+using pgcpp::storage::PageGetItem;
+using pgcpp::storage::PageGetItemId;
+using pgcpp::storage::PageGetMaxOffsetNumber;
+using pgcpp::storage::PageInit;
+using pgcpp::storage::ReadBuffer;
+using pgcpp::storage::ReadBufferMode;
+using pgcpp::storage::ReleaseBuffer;
+using pgcpp::transaction::ItemPointerData;
 
 // Initialize a new B-tree page and extend the relation.
 Buffer _bt_create_page(Relation index, BlockNumber block_num, uint32_t flags, uint32_t level) {
     char pagebuf[kBlckSz];
     _bt_init_page(pagebuf, flags, level);
     index->rd_smgr = RelationGetSmgr(index);
-    mytoydb::storage::smgrextend(index->rd_smgr, ForkNumber::kMain, block_num, pagebuf, false);
+    pgcpp::storage::smgrextend(index->rd_smgr, ForkNumber::kMain, block_num, pagebuf, false);
     return ReadBuffer(index->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
 }
 
@@ -75,7 +75,7 @@ Buffer _bt_create_page(Relation index, BlockNumber block_num, uint32_t flags, ui
 // if the page is full.
 OffsetNumber _bt_page_insert_item(Page page, const void* item_data, uint16_t item_size,
                                   OffsetNumber insert_offset) {
-    auto* phdr = reinterpret_cast<mytoydb::storage::PageHeader>(page);
+    auto* phdr = reinterpret_cast<pgcpp::storage::PageHeader>(page);
     OffsetNumber max_offset = PageGetMaxOffsetNumber(page);
 
     // Check if there's enough free space.
@@ -100,12 +100,12 @@ OffsetNumber _bt_page_insert_item(Page page, const void* item_data, uint16_t ite
     // Set the line pointer for the new item.
     auto* new_lp = reinterpret_cast<ItemIdData*>(page + kPageHeaderSize) + (insert_offset - 1);
     new_lp->li_off = static_cast<uint32_t>(item_offset);
-    new_lp->li_flags = mytoydb::storage::kLPNormal;
+    new_lp->li_flags = pgcpp::storage::kLPNormal;
     new_lp->li_len = item_size;
 
     // Update header.
     phdr->pd_lower += sizeof(ItemIdData);
-    phdr->pd_upper = static_cast<mytoydb::storage::LocationIndex>(item_offset);
+    phdr->pd_upper = static_cast<pgcpp::storage::LocationIndex>(item_offset);
 
     return insert_offset;
 }
@@ -183,12 +183,12 @@ void btbuild(Relation index, BTKeyKind key_kind) {
     // Block 0: meta page.
     char metabuf[kBlckSz];
     _bt_init_meta_page(metabuf, 1);  // root = block 1
-    mytoydb::storage::smgrextend(index->rd_smgr, ForkNumber::kMain, 0, metabuf, false);
+    pgcpp::storage::smgrextend(index->rd_smgr, ForkNumber::kMain, 0, metabuf, false);
 
     // Block 1: root leaf page.
     char rootbuf[kBlckSz];
     _bt_init_page(rootbuf, kBtpLeaf | kBtpRoot, 0);
-    mytoydb::storage::smgrextend(index->rd_smgr, ForkNumber::kMain, 1, rootbuf, false);
+    pgcpp::storage::smgrextend(index->rd_smgr, ForkNumber::kMain, 1, rootbuf, false);
 }
 
 // --- Insertion ---
@@ -483,7 +483,7 @@ bool btinsert(Relation index, BTKeyKind kind, const void* key, uint16_t key_len,
         _bt_page_insert_item(root_page, int_entry.data(), int_entry_size, root_insert_pos);
     if (root_result == kInvalidOffsetNumber) {
         // Internal root is full — simplification: no internal page splitting.
-        ereport(mytoydb::error::LogLevel::kWarning,
+        ereport(pgcpp::error::LogLevel::kWarning,
                 "btinsert: internal root is full, splitting not implemented");
     }
     MarkBufferDirty(root_buf);
@@ -655,7 +655,7 @@ bool btgettuple(BTScanDesc scan) {
             Page page = BufferGetPage(scan->curr_buf);
             scan->curr_block = 0;  // Will be set from the buffer's tag
             // Get the block number from the buffer descriptor.
-            auto* pool = mytoydb::storage::GetBufferPool();
+            auto* pool = pgcpp::storage::GetBufferPool();
             auto* desc = pool->GetBufferDesc(scan->curr_buf);
             scan->curr_block = desc->tag.block_num;
             scan->curr_offset = start_offset;
@@ -780,7 +780,7 @@ OffsetNumber _bt_binsrch(Page page, BTKeyKind kind, const void* key, uint16_t ke
         auto* item_id = PageGetItemId(page, mid);
         if (!ItemIdIsNormal(item_id)) {
             // Non-normal (dead) line pointers should not appear on compacted
-            // B-tree pages in MyToyDB. Treat as "search left" to terminate
+            // B-tree pages in pgcpp. Treat as "search left" to terminate
             // safely; the linear _bt_find_*_pos helpers remain available for
             // pages that may contain dead entries.
             high = mid - 1;
@@ -828,4 +828,4 @@ void _bt_relbuf(Relation index, Buffer buf) {
     }
 }
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

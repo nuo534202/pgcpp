@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Range types (PostgreSQL utils/adt/rangetypes.c).
@@ -64,4 +64,4 @@ inline RangeDatum* DatumGetRange(Datum x) {
 }
 Datum MakeRangeDatum(const RangeDatum& r);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

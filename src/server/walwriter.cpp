@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/postmaster/walwriter.c.
 //
 // The WAL writer runs in a loop, periodically calling XLogFlush() to push
-// WAL buffer contents to disk. In MyToyDB (in-memory WAL buffer, always
+// WAL buffer contents to disk. In pgcpp (in-memory WAL buffer, always
 // "durable"), XLogFlush is a no-op; the WAL writer tracks the current
 // insert position and counts any new bytes as "flushed".
 #include "pgcpp/server/walwriter.hpp"
@@ -14,7 +14,7 @@
 #include "pgcpp/server/interrupt.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -116,4 +116,4 @@ WalWriterStats GetWalWriterStats() {
     return Stats();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

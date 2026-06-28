@@ -8,7 +8,7 @@
 #include <deque>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -82,4 +82,4 @@ std::vector<PGPROC*> AllProcs() {
     return result;
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

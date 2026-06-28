@@ -2,7 +2,7 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/view.c.
 // Stores the view's query in pg_class (relkind 'v') without
-// materializing data. MyToyDB stores the SELECT query text on the
+// materializing data. pgcpp stores the SELECT query text on the
 // view's pg_class entry so it can be retrieved for SELECT expansion
 // (parser substitution rule).
 #include "pgcpp/commands/view.hpp"
@@ -16,16 +16,16 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::parser::ViewStmt;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::parser::ViewStmt;
 
 std::string DefineView(ViewStmt* stmt) {
     if (stmt == nullptr || stmt->view == nullptr)
@@ -45,8 +45,7 @@ std::string DefineView(ViewStmt* stmt) {
             cat->DeleteClass(existing->oid);
             cat->DeleteAttributes(existing->oid);
         } else {
-            ereport(mytoydb::error::LogLevel::kError,
-                    "relation \"" + viewname + "\" already exists");
+            ereport(pgcpp::error::LogLevel::kError, "relation \"" + viewname + "\" already exists");
         }
     }
 
@@ -58,7 +57,7 @@ std::string DefineView(ViewStmt* stmt) {
     class_row->relnatts = 0;  // views don't have physical columns
     class_row->relispopulated = true;
     // Note: PostgreSQL stores the view's SELECT query in pg_rewrite so it
-    // can be substituted at SELECT time. MyToyDB doesn't yet persist the
+    // can be substituted at SELECT time. pgcpp doesn't yet persist the
     // query — this stub creates the catalog entry so CREATE VIEW succeeds.
     Oid relid = cat->InsertClass(class_row);
     class_row->relfilenode = relid;
@@ -67,4 +66,4 @@ std::string DefineView(ViewStmt* stmt) {
     return "CREATE VIEW";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

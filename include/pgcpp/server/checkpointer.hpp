@@ -8,7 +8,7 @@
 // crash-recovery restart points: on startup, only WAL records after the
 // last checkpoint need to be replayed.
 //
-// In PostgreSQL, the checkpointer is a separate process. MyToyDB represents
+// In PostgreSQL, the checkpointer is a separate process. pgcpp represents
 // it as a stateful API: RequestCheckpoint queues a request, CheckpointerMain
 // processes pending requests, and CreateCheckPoint performs an immediate
 // checkpoint.
@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // CheckpointFlags — flags controlling checkpoint behavior.
 // Matches PostgreSQL's CHECKPOINT_* constants.
@@ -86,4 +86,4 @@ uint64_t LastCheckpointLSN();
 // GetCheckpointStats — return the current checkpointer statistics.
 CheckpointStats GetCheckpointStats();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

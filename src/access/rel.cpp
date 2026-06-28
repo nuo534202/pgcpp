@@ -6,7 +6,7 @@
 // are opened by looking up pg_class and pg_attribute from the catalog,
 // building a tuple descriptor, and opening the storage manager handle.
 //
-// MyToyDB simplifications:
+// pgcpp simplifications:
 //   - No shared cache invalidation (single-process)
 //   - No catalog index lookups (direct catalog scan)
 //   - Reference counting is manual (no automatic eviction)
@@ -23,23 +23,23 @@
 #include "pgcpp/storage/bufmgr.hpp"
 #include "pgcpp/storage/smgr.hpp"
 
-namespace mytoydb::access {
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::access {
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
 namespace {
 
 // Relcache: OID → RelationData. Uses palloc'd RelationData pointers.
 // The relcache owns the RelationData memory.
-std::unordered_map<mytoydb::catalog::Oid, Relation>& Relcache() {
-    static std::unordered_map<mytoydb::catalog::Oid, Relation> cache;
+std::unordered_map<pgcpp::catalog::Oid, Relation>& Relcache() {
+    static std::unordered_map<pgcpp::catalog::Oid, Relation> cache;
     return cache;
 }
 
 // Build a RelFileNodeBackend from a relfilenode OID.
-// Uses default tablespace (0) and database (16384) for MyToyDB.
-mytoydb::storage::RelFileNodeBackend MakeRelFileNodeBackend(mytoydb::catalog::Oid relfilenode) {
-    mytoydb::storage::RelFileNodeBackend rnode;
+// Uses default tablespace (0) and database (16384) for pgcpp.
+pgcpp::storage::RelFileNodeBackend MakeRelFileNodeBackend(pgcpp::catalog::Oid relfilenode) {
+    pgcpp::storage::RelFileNodeBackend rnode;
     rnode.node.spc_node = 0;     // default tablespace
     rnode.node.db_node = 16384;  // default database OID
     rnode.node.rel_node = relfilenode;
@@ -65,7 +65,7 @@ RelationData::~RelationData() {
 
 // --- Tuple descriptor construction ---
 
-TupleDesc CreateTupleDesc(const std::vector<mytoydb::catalog::FormData_pg_attribute>& attrs) {
+TupleDesc CreateTupleDesc(const std::vector<pgcpp::catalog::FormData_pg_attribute>& attrs) {
     TupleDesc desc = makePallocNode<TupleDescData>();
     desc->natts = static_cast<int>(attrs.size());
     desc->attrs = attrs;
@@ -77,20 +77,19 @@ TupleDesc CreateTupleDesc(const std::vector<mytoydb::catalog::FormData_pg_attrib
 // RelationBuildDesc — build a fresh RelationData from the catalog (cache-miss
 // path). Extracted from RelationOpen so it can be tested independently and
 // reused by invalidation/refresh paths.
-Relation RelationBuildDesc(mytoydb::catalog::Oid relid) {
-    mytoydb::catalog::Catalog* cat = mytoydb::catalog::GetCatalog();
+Relation RelationBuildDesc(pgcpp::catalog::Oid relid) {
+    pgcpp::catalog::Catalog* cat = pgcpp::catalog::GetCatalog();
     if (cat == nullptr) {
         return nullptr;
     }
-    const mytoydb::catalog::FormData_pg_class* pg_class = cat->GetClassByOid(relid);
+    const pgcpp::catalog::FormData_pg_class* pg_class = cat->GetClassByOid(relid);
     if (pg_class == nullptr) {
         return nullptr;
     }
 
     // Build the tuple descriptor from pg_attribute rows.
-    std::vector<const mytoydb::catalog::FormData_pg_attribute*> attr_ptrs =
-        cat->GetAttributes(relid);
-    std::vector<mytoydb::catalog::FormData_pg_attribute> attrs;
+    std::vector<const pgcpp::catalog::FormData_pg_attribute*> attr_ptrs = cat->GetAttributes(relid);
+    std::vector<pgcpp::catalog::FormData_pg_attribute> attrs;
     attrs.reserve(attr_ptrs.size());
     for (const auto* attr : attr_ptrs) {
         attrs.push_back(*attr);
@@ -106,14 +105,14 @@ Relation RelationBuildDesc(mytoydb::catalog::Oid relid) {
     rel->rd_isvalid = true;
 
     // Open the storage manager handle (lazy: file is not created here).
-    mytoydb::catalog::Oid relfilenode = pg_class->relfilenode;
-    if (relfilenode != mytoydb::catalog::kInvalidOid) {
-        rel->rd_smgr = mytoydb::storage::smgropen(MakeRelFileNodeBackend(relfilenode));
+    pgcpp::catalog::Oid relfilenode = pg_class->relfilenode;
+    if (relfilenode != pgcpp::catalog::kInvalidOid) {
+        rel->rd_smgr = pgcpp::storage::smgropen(MakeRelFileNodeBackend(relfilenode));
     }
     return rel;
 }
 
-Relation RelationOpen(mytoydb::catalog::Oid relid) {
+Relation RelationOpen(pgcpp::catalog::Oid relid) {
     // Check the relcache first.
     auto& cache = Relcache();
     auto it = cache.find(relid);
@@ -139,11 +138,11 @@ void RelationClose(Relation relation) {
     // The relcache is cleared explicitly by ResetRelcache().
 }
 
-Relation RelationIdGetRelation(mytoydb::catalog::Oid relid) {
+Relation RelationIdGetRelation(pgcpp::catalog::Oid relid) {
     return RelationOpen(relid);
 }
 
-void RelationCloseByOid(mytoydb::catalog::Oid relid) {
+void RelationCloseByOid(pgcpp::catalog::Oid relid) {
     auto& cache = Relcache();
     auto it = cache.find(relid);
     if (it == cache.end()) {
@@ -152,7 +151,7 @@ void RelationCloseByOid(mytoydb::catalog::Oid relid) {
     RelationClose(it->second);
 }
 
-void RelationCacheInvalidate(mytoydb::catalog::Oid relid) {
+void RelationCacheInvalidate(pgcpp::catalog::Oid relid) {
     auto& cache = Relcache();
     auto it = cache.find(relid);
     if (it == cache.end()) {
@@ -167,7 +166,7 @@ void RelationCacheInvalidate(mytoydb::catalog::Oid relid) {
     }
     // Close the storage handle if one was opened.
     if (rel->rd_smgr != nullptr) {
-        mytoydb::storage::smgrclose(rel->rd_smgr);
+        pgcpp::storage::smgrclose(rel->rd_smgr);
         rel->rd_smgr = nullptr;
     }
     cache.erase(it);
@@ -184,7 +183,7 @@ void RelationClearRelation(Relation rel) {
             rel->rd_refcnt--;
         }
         if (rel->rd_smgr != nullptr) {
-            mytoydb::storage::smgrclose(rel->rd_smgr);
+            pgcpp::storage::smgrclose(rel->rd_smgr);
             rel->rd_smgr = nullptr;
         }
         cache.erase(it);
@@ -203,49 +202,49 @@ int RelationGetNumberOfAttributes(Relation rel) {
     return rel->rd_att->natts;
 }
 
-mytoydb::storage::SmgrRelation RelationGetSmgr(Relation relation) {
+pgcpp::storage::SmgrRelation RelationGetSmgr(Relation relation) {
     if (relation->rd_smgr == nullptr) {
-        mytoydb::catalog::Oid relfilenode = relation->rd_rel->relfilenode;
-        if (relfilenode == mytoydb::catalog::kInvalidOid) {
-            ereport(mytoydb::error::LogLevel::kError,
+        pgcpp::catalog::Oid relfilenode = relation->rd_rel->relfilenode;
+        if (relfilenode == pgcpp::catalog::kInvalidOid) {
+            ereport(pgcpp::error::LogLevel::kError,
                     "relation " + std::to_string(relation->rd_id) + " has no relfilenode");
         }
-        relation->rd_smgr = mytoydb::storage::smgropen(MakeRelFileNodeBackend(relfilenode));
+        relation->rd_smgr = pgcpp::storage::smgropen(MakeRelFileNodeBackend(relfilenode));
     }
     return relation->rd_smgr;
 }
 
 // --- Storage creation / destruction ---
 
-void RelationCreateStorage(mytoydb::catalog::Oid relfilenode, bool is_temp) {
-    mytoydb::storage::RelFileNodeBackend rnode = MakeRelFileNodeBackend(relfilenode);
+void RelationCreateStorage(pgcpp::catalog::Oid relfilenode, bool is_temp) {
+    pgcpp::storage::RelFileNodeBackend rnode = MakeRelFileNodeBackend(relfilenode);
     if (is_temp) {
         rnode.backend = 1;  // MyBackendId
     }
-    mytoydb::storage::SmgrRelation srel = mytoydb::storage::smgropen(rnode);
-    mytoydb::storage::smgrcreate(srel, mytoydb::storage::ForkNumber::kMain, false);
+    pgcpp::storage::SmgrRelation srel = pgcpp::storage::smgropen(rnode);
+    pgcpp::storage::smgrcreate(srel, pgcpp::storage::ForkNumber::kMain, false);
 }
 
 void RelationDropStorage(Relation relation) {
     if (relation->rd_smgr != nullptr) {
         // Flush and close all buffers for this relation.
-        mytoydb::storage::RelFileNode rnode = relation->rd_smgr->smgr_rnode.node;
-        mytoydb::storage::DropRelationBuffers(rnode);
-        mytoydb::storage::smgrclose(relation->rd_smgr);
+        pgcpp::storage::RelFileNode rnode = relation->rd_smgr->smgr_rnode.node;
+        pgcpp::storage::DropRelationBuffers(rnode);
+        pgcpp::storage::smgrclose(relation->rd_smgr);
         relation->rd_smgr = nullptr;
     }
 }
 
-void RelationExtendStorage(Relation relation, mytoydb::storage::BlockNumber block_num,
+void RelationExtendStorage(Relation relation, pgcpp::storage::BlockNumber block_num,
                            const char* page_data) {
-    mytoydb::storage::SmgrRelation srel = RelationGetSmgr(relation);
-    mytoydb::storage::smgrextend(srel, mytoydb::storage::ForkNumber::kMain, block_num, page_data,
-                                 false);
+    pgcpp::storage::SmgrRelation srel = RelationGetSmgr(relation);
+    pgcpp::storage::smgrextend(srel, pgcpp::storage::ForkNumber::kMain, block_num, page_data,
+                               false);
 }
 
-mytoydb::storage::BlockNumber RelationGetNumberOfBlocks(Relation relation) {
-    mytoydb::storage::SmgrRelation srel = RelationGetSmgr(relation);
-    return mytoydb::storage::smgrnblocks(srel, mytoydb::storage::ForkNumber::kMain);
+pgcpp::storage::BlockNumber RelationGetNumberOfBlocks(Relation relation) {
+    pgcpp::storage::SmgrRelation srel = RelationGetSmgr(relation);
+    return pgcpp::storage::smgrnblocks(srel, pgcpp::storage::ForkNumber::kMain);
 }
 
 // --- Relcache management ---
@@ -262,4 +261,4 @@ void ResetRelcache() {
     cache.clear();
 }
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

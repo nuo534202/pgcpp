@@ -18,10 +18,10 @@
 #include "pgcpp/tsearch/wparser.hpp"
 #include "pgcpp/types/ts_types.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
-using mytoydb::types::TsVectorData;
-using mytoydb::types::TsWordEntry;
+using pgcpp::types::TsVectorData;
+using pgcpp::types::TsWordEntry;
 
 namespace {
 
@@ -65,4 +65,4 @@ TsVectorData ToTsVector(std::string_view text, std::string_view config) {
     return out;
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

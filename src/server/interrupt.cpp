@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // --- Static atomic flag definitions ---
 std::atomic<bool> InterruptFlags::InterruptPending{false};
@@ -212,4 +212,4 @@ bool WaitForInterrupt(int timeout_ms) {
     return InterruptFlags::InterruptPending.load();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

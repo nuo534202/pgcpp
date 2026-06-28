@@ -1,6 +1,6 @@
 // bloom.cpp — Bloom filter implementation.
 //
-// See mytoydb/lib/bloom.hpp for design notes. Storage is a packed bit array
+// See pgcpp/lib/bloom.hpp for design notes. Storage is a packed bit array
 // of 64-bit words; each Add/Test invocation computes (h1, h2) via two
 // salted FNV-1a passes and derives k bit positions via double hashing.
 
@@ -8,7 +8,7 @@
 
 #include <cstring>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 namespace {
 
@@ -83,4 +83,4 @@ std::pair<uint64_t, uint64_t> BloomFilter::Hash(const void* data, std::size_t le
     return {h1, h2};
 }
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

@@ -10,27 +10,27 @@
 
 namespace {
 
-using mytoydb::containers::lappend;
-using mytoydb::containers::lcons;
-using mytoydb::containers::linitial;
-using mytoydb::containers::List;
-using mytoydb::containers::list_concat;
-using mytoydb::containers::list_delete_nth_cell;
-using mytoydb::containers::list_length;
-using mytoydb::containers::list_member_ptr;
-using mytoydb::containers::list_nth;
-using mytoydb::containers::list_reverse;
-using mytoydb::containers::llast;
-using mytoydb::containers::newList;
-using mytoydb::containers::TypedList;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::memory::ContextSwitchGuard;
+using pgcpp::containers::lappend;
+using pgcpp::containers::lcons;
+using pgcpp::containers::linitial;
+using pgcpp::containers::List;
+using pgcpp::containers::list_concat;
+using pgcpp::containers::list_delete_nth_cell;
+using pgcpp::containers::list_length;
+using pgcpp::containers::list_member_ptr;
+using pgcpp::containers::list_nth;
+using pgcpp::containers::list_reverse;
+using pgcpp::containers::llast;
+using pgcpp::containers::newList;
+using pgcpp::containers::TypedList;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::memory::ContextSwitchGuard;
 
 // Helper to properly destroy a palloc'd List (unregister destructor, then
 // call destructor and pfree).
 void DestroyList(List* list) {
     if (list != nullptr) {
-        mytoydb::nodes::destroyPallocNode(list);
+        pgcpp::nodes::destroyPallocNode(list);
     }
 }
 
@@ -38,11 +38,11 @@ class ListTest : public ::testing::Test {
 protected:
     void SetUp() override {
         context_ = AllocSetContext::Create("list_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

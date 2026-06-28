@@ -9,12 +9,12 @@
 #include "pgcpp/catalog/catalog.hpp"
 #include "pgcpp/catalog/pg_type.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
 class ParseState;
 class TypeName;
 
-using mytoydb::catalog::Oid;
+using pgcpp::catalog::Oid;
 
 // typenameTypeId — resolve a type name string to its OID.
 // Returns InvalidOid if the type is not found.
@@ -41,13 +41,13 @@ Oid LookupTypeName(ParseState* pstate, TypeName* tn, int32_t* typmod);
 Oid typenameTypeId(ParseState* pstate, TypeName* tn, int32_t* typmod);
 
 // typeTypeId — get the OID from a pg_type row.
-Oid typeTypeId(const mytoydb::catalog::FormData_pg_type* type_tuple);
+Oid typeTypeId(const pgcpp::catalog::FormData_pg_type* type_tuple);
 
 // typeLen — get the typlen from a pg_type row.
-int16_t typeLen(const mytoydb::catalog::FormData_pg_type* type_tuple);
+int16_t typeLen(const pgcpp::catalog::FormData_pg_type* type_tuple);
 
 // typeByVal — get the typbyval from a pg_type row.
-bool typeByVal(const mytoydb::catalog::FormData_pg_type* type_tuple);
+bool typeByVal(const pgcpp::catalog::FormData_pg_type* type_tuple);
 
 // get_typname — look up a type name by OID.
 std::string get_typname(Oid type_oid);
@@ -63,4 +63,4 @@ bool type_is_numeric(Oid type_oid);
 bool type_is_string(Oid type_oid);
 bool type_is_datetime(Oid type_oid);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

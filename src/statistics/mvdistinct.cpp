@@ -19,7 +19,7 @@
 
 #include "pgcpp/statistics/mvdistinct_sample.hpp"
 
-namespace mytoydb::statistics {
+namespace pgcpp::statistics {
 
 namespace {
 
@@ -140,4 +140,4 @@ MVNDistinct DeserializeMVNDistinct(std::string_view data) {
     return result;
 }
 
-}  // namespace mytoydb::statistics
+}  // namespace pgcpp::statistics

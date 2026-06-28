@@ -4,15 +4,15 @@
 // src/include/storage/parallel.h.
 //
 // PostgreSQL supports parallel query via worker processes that share memory
-// and cooperate on query execution. MyToyDB is single-process and does not
+// and cooperate on query execution. pgcpp is single-process and does not
 // implement parallel workers, but we provide the API surface so that
 // higher-level modules (executor, planner) can compile against it.
 #include "pgcpp/transaction/parallel.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 void InitializeParallelInfrastructure() {
-    // No-op in MyToyDB (no parallel workers).
+    // No-op in pgcpp (no parallel workers).
 }
 
 ParallelContext* CreateParallelContext(int nworkers) {
@@ -32,4 +32,4 @@ int LaunchParallelWorkers(ParallelContext* ctx) {
     return 0;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

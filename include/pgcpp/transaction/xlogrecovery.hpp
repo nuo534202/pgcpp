@@ -7,7 +7,7 @@
 // redo function re-applies the logged change to the data page or in-memory
 // state, reconstructing the database to a consistent state.
 //
-// In MyToyDB, the "redo" functions are registered per-RMGR and called in
+// In pgcpp, the "redo" functions are registered per-RMGR and called in
 // record order. This provides a testable crash-recovery loop.
 #pragma once
 
@@ -18,7 +18,7 @@
 #include "pgcpp/transaction/xlog.hpp"
 #include "pgcpp/transaction/xlogreader.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // RecoveryStats — statistics from a recovery pass.
 struct RecoveryStats {
@@ -54,4 +54,4 @@ RecoveryStats PerformCrashRecoveryFrom(XLogRecPtr start_lsn);
 // Get the redo function registered for a RMGR (returns nullptr if none).
 RedoFn GetRmgrRedo(RmgrId rmid);
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

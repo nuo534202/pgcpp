@@ -9,9 +9,9 @@
 #include "pgcpp/parser/parse_node.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
+using pgcpp::nodes::Node;
 
 // transformFromClause — transform the FROM clause into a join tree.
 // Returns a FromExpr node (the root of the join tree).
@@ -32,4 +32,4 @@ Node* transformWhereClause(ParseState* pstate, Node* clause, ParseExprKind exprK
 Node* transformLimitClause(ParseState* pstate, Node* clause, ParseExprKind exprKind,
                            const char* constructName);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

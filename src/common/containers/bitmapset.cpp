@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <cstdio>
 
-namespace mytoydb::nodes {
+namespace pgcpp::nodes {
 
 namespace {
 
@@ -399,4 +399,4 @@ int bms_minimum_member(const Bitmapset* a) {
     return a->MinMember();
 }
 
-}  // namespace mytoydb::nodes
+}  // namespace pgcpp::nodes

@@ -14,10 +14,10 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -235,4 +235,4 @@ Datum bit_not(Datum a) {
     return reinterpret_cast<Datum>(v);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

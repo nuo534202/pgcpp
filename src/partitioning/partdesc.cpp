@@ -2,7 +2,7 @@
 //
 // Converts the public API of PostgreSQL's src/backend/partitioning/partdesc.c
 // to C++20. PostgreSQL caches PartitionDescData inside the relcache so that
-// subsequent accesses to a partitioned table skip the catalog scan. MyToyDB
+// subsequent accesses to a partitioned table skip the catalog scan. pgcpp
 // keeps the same lookup API but uses an explicit std::map<oid, PartitionDesc>
 // cache until the relcache layer is wired up.
 //
@@ -16,7 +16,7 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::partitioning {
+namespace pgcpp::partitioning {
 
 namespace {
 
@@ -133,4 +133,4 @@ Oid get_default_oid_from_partdesc(PartitionDesc partdesc) {
     return partdesc->oids[static_cast<std::size_t>(idx)];
 }
 
-}  // namespace mytoydb::partitioning
+}  // namespace pgcpp::partitioning

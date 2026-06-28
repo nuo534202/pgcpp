@@ -10,7 +10,7 @@
 #include "pgcpp/common/memory/alloc_set.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::nodes {
+namespace pgcpp::nodes {
 
 // NodeTag — enumeration of all node types. Kept for PostgreSQL API
 // compatibility (nodeTag() macro). In C++ we also use virtual functions
@@ -208,9 +208,9 @@ inline bool isA(const Node* node, NodeTag tag) {
 // (longjmp-based ereport and bulk context reset both bypass C++ destructors).
 template<typename T, typename... Args>
 T* makePallocNode(Args&&... args) {
-    void* mem = mytoydb::memory::palloc(sizeof(T));
+    void* mem = pgcpp::memory::palloc(sizeof(T));
     T* obj = new (mem) T(std::forward<Args>(args)...);
-    mytoydb::memory::MemoryContext* ctx = mytoydb::memory::GetCurrentMemoryContext();
+    pgcpp::memory::MemoryContext* ctx = pgcpp::memory::GetCurrentMemoryContext();
     if (ctx != nullptr) {
         ctx->RegisterDestructor(obj, [](void* p) { static_cast<T*>(p)->~T(); });
     }
@@ -228,12 +228,12 @@ void destroyPallocNode(T* obj) {
         return;
     // Use the owning context from the chunk header, not CurrentMemoryContext,
     // so this works even when the current context is null or different.
-    mytoydb::memory::MemoryContext* ctx = mytoydb::memory::AllocSetContext::GetPointerContext(obj);
+    pgcpp::memory::MemoryContext* ctx = pgcpp::memory::AllocSetContext::GetPointerContext(obj);
     if (ctx != nullptr) {
         ctx->UnregisterDestructor(obj);
     }
     obj->~T();
-    mytoydb::memory::pfree(obj);
+    pgcpp::memory::pfree(obj);
 }
 
 // copyObject() — PostgreSQL-compatible deep copy. Returns a new Node*.
@@ -274,4 +274,4 @@ Value* makeFloat(std::string fval);
 Value* makeString(std::string sval);
 Value* makeNull();
 
-}  // namespace mytoydb::nodes
+}  // namespace pgcpp::nodes

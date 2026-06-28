@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // Thesaurus (PostgreSQL src/backend/tsearch/thesaurus.c).
@@ -34,4 +34,4 @@ private:
     std::vector<std::vector<std::string>> groups_;
 };
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

@@ -31,60 +31,60 @@
 #include "pgcpp/transaction/xact.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::access {
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::access {
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
 namespace {
 
-using mytoydb::catalog::AttAlign;
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
-using mytoydb::storage::BlockNumber;
-using mytoydb::storage::Buffer;
-using mytoydb::storage::BufferGetPage;
-using mytoydb::storage::ForkNumber;
-using mytoydb::storage::Item;
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kInvalidBuffer;
-using mytoydb::storage::kInvalidOffsetNumber;
-using mytoydb::storage::kPageHeaderSize;
-using mytoydb::storage::MarkBufferDirty;
-using mytoydb::storage::OffsetNumber;
-using mytoydb::storage::Page;
-using mytoydb::storage::PageAddItem;
-using mytoydb::storage::PageGetHeapFreeSpace;
-using mytoydb::storage::PageGetItem;
-using mytoydb::storage::PageGetItemId;
-using mytoydb::storage::PageGetMaxOffsetNumber;
-using mytoydb::storage::PageInit;
-using mytoydb::storage::ReadBuffer;
-using mytoydb::storage::ReadBufferMode;
-using mytoydb::storage::ReleaseBuffer;
-using mytoydb::transaction::CommandCounterIncrement;
-using mytoydb::transaction::CommandId;
-using mytoydb::transaction::GetCurrentCommandId;
-using mytoydb::transaction::GetCurrentTransactionId;
-using mytoydb::transaction::HeapTuple;
-using mytoydb::transaction::HeapTupleData;
-using mytoydb::transaction::HeapTupleHeaderData;
-using mytoydb::transaction::HeapTupleHeaderSetCid;
-using mytoydb::transaction::HeapTupleHeaderSetNatts;
-using mytoydb::transaction::HeapTupleHeaderSetTid;
-using mytoydb::transaction::HeapTupleHeaderSetXmax;
-using mytoydb::transaction::HeapTupleHeaderSetXmin;
-using mytoydb::transaction::HeapTupleSatisfiesMVCC;
-using mytoydb::transaction::ItemPointerData;
-using mytoydb::transaction::kHeapHasNull;
-using mytoydb::transaction::kHeapHasVarWidth;
-using mytoydb::transaction::kHeapTupleHeaderSize;
-using mytoydb::transaction::kInvalidTransactionId;
-using mytoydb::transaction::Snapshot;
-using mytoydb::transaction::SnapshotData;
-using mytoydb::transaction::TransactionId;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::VARSIZE;
+using pgcpp::catalog::AttAlign;
+using pgcpp::memory::palloc;
+using pgcpp::memory::pfree;
+using pgcpp::storage::BlockNumber;
+using pgcpp::storage::Buffer;
+using pgcpp::storage::BufferGetPage;
+using pgcpp::storage::ForkNumber;
+using pgcpp::storage::Item;
+using pgcpp::storage::kBlckSz;
+using pgcpp::storage::kInvalidBuffer;
+using pgcpp::storage::kInvalidOffsetNumber;
+using pgcpp::storage::kPageHeaderSize;
+using pgcpp::storage::MarkBufferDirty;
+using pgcpp::storage::OffsetNumber;
+using pgcpp::storage::Page;
+using pgcpp::storage::PageAddItem;
+using pgcpp::storage::PageGetHeapFreeSpace;
+using pgcpp::storage::PageGetItem;
+using pgcpp::storage::PageGetItemId;
+using pgcpp::storage::PageGetMaxOffsetNumber;
+using pgcpp::storage::PageInit;
+using pgcpp::storage::ReadBuffer;
+using pgcpp::storage::ReadBufferMode;
+using pgcpp::storage::ReleaseBuffer;
+using pgcpp::transaction::CommandCounterIncrement;
+using pgcpp::transaction::CommandId;
+using pgcpp::transaction::GetCurrentCommandId;
+using pgcpp::transaction::GetCurrentTransactionId;
+using pgcpp::transaction::HeapTuple;
+using pgcpp::transaction::HeapTupleData;
+using pgcpp::transaction::HeapTupleHeaderData;
+using pgcpp::transaction::HeapTupleHeaderSetCid;
+using pgcpp::transaction::HeapTupleHeaderSetNatts;
+using pgcpp::transaction::HeapTupleHeaderSetTid;
+using pgcpp::transaction::HeapTupleHeaderSetXmax;
+using pgcpp::transaction::HeapTupleHeaderSetXmin;
+using pgcpp::transaction::HeapTupleSatisfiesMVCC;
+using pgcpp::transaction::ItemPointerData;
+using pgcpp::transaction::kHeapHasNull;
+using pgcpp::transaction::kHeapHasVarWidth;
+using pgcpp::transaction::kHeapTupleHeaderSize;
+using pgcpp::transaction::kInvalidTransactionId;
+using pgcpp::transaction::Snapshot;
+using pgcpp::transaction::SnapshotData;
+using pgcpp::transaction::TransactionId;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::VARSIZE;
 
 // Initialize a new page and extend the relation by one block.
 Buffer CreateAndReadNewPage(Relation relation, BlockNumber block_num) {
@@ -92,7 +92,7 @@ Buffer CreateAndReadNewPage(Relation relation, BlockNumber block_num) {
     std::memset(pagebuf, 0, kBlckSz);
     PageInit(pagebuf, kBlckSz, 0);
     relation->rd_smgr = RelationGetSmgr(relation);
-    mytoydb::storage::smgrextend(relation->rd_smgr, ForkNumber::kMain, block_num, pagebuf, false);
+    pgcpp::storage::smgrextend(relation->rd_smgr, ForkNumber::kMain, block_num, pagebuf, false);
     return ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
 }
 
@@ -372,7 +372,7 @@ static ItemPointerData heap_insert_internal(Relation relation, HeapTuple tup) {
         PageAddItem(page, reinterpret_cast<Item>(header), tuple_len, kInvalidOffsetNumber, true);
     if (offset == kInvalidOffsetNumber) {
         ReleaseBuffer(buffer);
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "heap_insert: failed to add item to page " + std::to_string(target_block));
     }
 
@@ -453,7 +453,7 @@ ItemPointerData heap_update(Relation relation, const ItemPointerData& otid, Heap
 
 HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot) {
     if (snapshot == nullptr) {
-        snapshot = mytoydb::transaction::GetTransactionSnapshot();
+        snapshot = pgcpp::transaction::GetTransactionSnapshot();
     }
     HeapScanDesc scan = makePallocNode<HeapScanDescData>();
 
@@ -494,7 +494,7 @@ static void heap_scan_page(HeapScanDesc scan, BlockNumber block_num) {
 
     for (OffsetNumber offset = 1; offset <= max_offset; offset++) {
         auto* item_id = PageGetItemId(page, offset);
-        if (!mytoydb::storage::ItemIdIsNormal(item_id))
+        if (!pgcpp::storage::ItemIdIsNormal(item_id))
             continue;
 
         HeapTupleHeaderData* header =
@@ -542,7 +542,7 @@ HeapTuple heap_getnext(HeapScanDesc scan) {
         reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
 
     // Fill in the scan's tuple descriptor.
-    scan->rs_ctup.t_len = mytoydb::storage::ItemIdGetLength(item_id);
+    scan->rs_ctup.t_len = pgcpp::storage::ItemIdGetLength(item_id);
     scan->rs_ctup.t_self.ip_blkid = scan->rs_cblock;
     scan->rs_ctup.t_self.ip_posid = offset;
     scan->rs_ctup.t_data = header;
@@ -700,7 +700,7 @@ void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest) {
 bool heap_attisnull(HeapTuple tuple, int attnum, TupleDesc tupdesc) {
     (void)tupdesc;
     if (attnum < 0) {
-        // System columns are never NULL in MyToyDB.
+        // System columns are never NULL in pgcpp.
         return false;
     }
     HeapTupleHeaderData* header = tuple->t_data;
@@ -714,12 +714,12 @@ bool heap_attisnull(HeapTuple tuple, int attnum, TupleDesc tupdesc) {
 }
 
 HeapTuple minimal_tuple_from_heap_tuple(HeapTuple tuple) {
-    // MyToyDB simplification: minimal tuple layout == heap tuple layout.
+    // pgcpp simplification: minimal tuple layout == heap tuple layout.
     return heap_copytuple(tuple);
 }
 
 HeapTuple heap_tuple_from_minimal_tuple(HeapTuple mtup) {
-    // MyToyDB simplification: minimal tuple layout == heap tuple layout.
+    // pgcpp simplification: minimal tuple layout == heap tuple layout.
     return heap_copytuple(mtup);
 }
 
@@ -731,7 +731,7 @@ Datum heap_tuple_buffer_getsysattr(HeapTuple tuple, int attnum, TupleDesc tupdes
     switch (attnum) {
         case kSelfItemPointerAttributeNumber: {  // ctid
             // Return a pointer to a static buffer (PG semantics: caller must
-            // copy before the next call). MyToyDB is single-process so a
+            // copy before the next call). pgcpp is single-process so a
             // function-local static is safe.
             static ItemPointerData ctid_buf;
             ctid_buf = header->t_ctid;
@@ -742,17 +742,17 @@ Datum heap_tuple_buffer_getsysattr(HeapTuple tuple, int attnum, TupleDesc tupdes
         case kMaxTransactionIdAttributeNumber:  // xmax
             return Datum(header->t_xmax);
         case kMinCommandIdAttributeNumber:  // cmin
-        case kMaxCommandIdAttributeNumber:  // cmax (MyToyDB stores cmin==cmax in t_cid)
+        case kMaxCommandIdAttributeNumber:  // cmax (pgcpp stores cmin==cmax in t_cid)
             return Datum(header->t_cid);
         case kTableOidAttributeNumber:  // tableoid
-            // MyToyDB HeapTupleData does not carry the table OID; return 0.
+            // pgcpp HeapTupleData does not carry the table OID; return 0.
             return Datum(0);
         default:
-            ereport(mytoydb::error::LogLevel::kError,
+            ereport(pgcpp::error::LogLevel::kError,
                     "heap_tuple_buffer_getsysattr: unsupported system column " +
                         std::to_string(attnum));
             return 0;
     }
 }
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

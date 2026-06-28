@@ -20,38 +20,38 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-using mytoydb::transaction::AllocateNextTransactionId;
-using mytoydb::transaction::CommandId;
-using mytoydb::transaction::GetNextTransactionId;
-using mytoydb::transaction::HeapTupleHeaderData;
-using mytoydb::transaction::HeapTupleHeaderGetXmaxStatus;
-using mytoydb::transaction::HeapTupleHeaderGetXminStatus;
-using mytoydb::transaction::HeapTupleHeaderSetCid;
-using mytoydb::transaction::HeapTupleHeaderSetXmax;
-using mytoydb::transaction::HeapTupleHeaderSetXmin;
-using mytoydb::transaction::HeapTupleHeaderSetXminCommitted;
-using mytoydb::transaction::HeapTupleHeaderSetXminInvalid;
-using mytoydb::transaction::HeapTupleIsSurelyDead;
-using mytoydb::transaction::HeapTupleSatisfiesMVCC;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::kFirstCommandId;
-using mytoydb::transaction::kFirstNormalTransactionId;
-using mytoydb::transaction::kHeapXmaxCommitted;
-using mytoydb::transaction::kHeapXmaxInvalid;
-using mytoydb::transaction::kHeapXminCommitted;
-using mytoydb::transaction::kHeapXminFrozen;
-using mytoydb::transaction::kHeapXminInvalid;
-using mytoydb::transaction::kInvalidTransactionId;
-using mytoydb::transaction::MakeSnapshot;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::transaction::SnapshotData;
-using mytoydb::transaction::SnapshotType;
-using mytoydb::transaction::TransactionId;
-using mytoydb::transaction::TransactionIdAbort;
-using mytoydb::transaction::TransactionIdCommit;
-using mytoydb::transaction::TransactionIdGetStatus;
-using mytoydb::transaction::XidStatus;
-using mytoydb::transaction::XidVisibleInSnapshot;
+using pgcpp::transaction::AllocateNextTransactionId;
+using pgcpp::transaction::CommandId;
+using pgcpp::transaction::GetNextTransactionId;
+using pgcpp::transaction::HeapTupleHeaderData;
+using pgcpp::transaction::HeapTupleHeaderGetXmaxStatus;
+using pgcpp::transaction::HeapTupleHeaderGetXminStatus;
+using pgcpp::transaction::HeapTupleHeaderSetCid;
+using pgcpp::transaction::HeapTupleHeaderSetXmax;
+using pgcpp::transaction::HeapTupleHeaderSetXmin;
+using pgcpp::transaction::HeapTupleHeaderSetXminCommitted;
+using pgcpp::transaction::HeapTupleHeaderSetXminInvalid;
+using pgcpp::transaction::HeapTupleIsSurelyDead;
+using pgcpp::transaction::HeapTupleSatisfiesMVCC;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::kFirstCommandId;
+using pgcpp::transaction::kFirstNormalTransactionId;
+using pgcpp::transaction::kHeapXmaxCommitted;
+using pgcpp::transaction::kHeapXmaxInvalid;
+using pgcpp::transaction::kHeapXminCommitted;
+using pgcpp::transaction::kHeapXminFrozen;
+using pgcpp::transaction::kHeapXminInvalid;
+using pgcpp::transaction::kInvalidTransactionId;
+using pgcpp::transaction::MakeSnapshot;
+using pgcpp::transaction::ResetTransactionState;
+using pgcpp::transaction::SnapshotData;
+using pgcpp::transaction::SnapshotType;
+using pgcpp::transaction::TransactionId;
+using pgcpp::transaction::TransactionIdAbort;
+using pgcpp::transaction::TransactionIdCommit;
+using pgcpp::transaction::TransactionIdGetStatus;
+using pgcpp::transaction::XidStatus;
+using pgcpp::transaction::XidVisibleInSnapshot;
 
 namespace {
 
@@ -180,13 +180,13 @@ TEST_F(VisibilityTest, HintFlagsSetForCommittedXmin) {
     auto tup = MakeTuple(xmin, kInvalidTransactionId);
 
     // Initially no hint flags.
-    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), mytoydb::transaction::XactStatus::kInProgress);
+    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), pgcpp::transaction::XactStatus::kInProgress);
 
     SnapshotData snap = MakeSnapshot(xmin + 1, xmin + 2);
     HeapTupleSatisfiesMVCC(&tup, snap);
 
     // After visibility check, the committed hint should be set.
-    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), mytoydb::transaction::XactStatus::kCommitted);
+    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), pgcpp::transaction::XactStatus::kCommitted);
 }
 
 TEST_F(VisibilityTest, HintFlagsSetForAbortedXmin) {
@@ -197,7 +197,7 @@ TEST_F(VisibilityTest, HintFlagsSetForAbortedXmin) {
     HeapTupleSatisfiesMVCC(&tup, snap);
 
     // After visibility check, the invalid (aborted) hint should be set.
-    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), mytoydb::transaction::XactStatus::kAborted);
+    EXPECT_EQ(HeapTupleHeaderGetXminStatus(&tup), pgcpp::transaction::XactStatus::kAborted);
 }
 
 TEST_F(VisibilityTest, PreSetCommittedHintMakesVisible) {
@@ -228,7 +228,7 @@ TEST_F(VisibilityTest, PreSetInvalidHintMakesInvisible) {
 // --- Frozen XID ---
 
 TEST_F(VisibilityTest, FrozenTupleIsAlwaysVisible) {
-    auto tup = MakeTuple(mytoydb::transaction::kFrozenTransactionId, kInvalidTransactionId);
+    auto tup = MakeTuple(pgcpp::transaction::kFrozenTransactionId, kInvalidTransactionId);
     tup.t_infomask |= kHeapXminFrozen;
 
     SnapshotData snap = MakeSnapshot(kFirstNormalTransactionId, kFirstNormalTransactionId + 1);

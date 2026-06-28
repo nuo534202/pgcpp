@@ -20,7 +20,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::statistics {
+namespace pgcpp::statistics {
 
 // AttrNumber — PostgreSQL attribute number (1-based). Redeclared here so
 // this header is self-contained; identical to the alias in extended_stats.hpp.
@@ -77,4 +77,4 @@ std::string SerializeMVNDistinct(const MVNDistinct& nd);
 // MVNDistinct when the input is malformed or carries the wrong magic byte.
 MVNDistinct DeserializeMVNDistinct(std::string_view data);
 
-}  // namespace mytoydb::statistics
+}  // namespace pgcpp::statistics

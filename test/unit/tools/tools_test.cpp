@@ -28,13 +28,13 @@
 #include "pgcpp/server/postmaster.hpp"
 #include "pgcpp/tools/psql_client.hpp"
 
-using mytoydb::server::BootstrapCluster;
-using mytoydb::server::BootstrapResult;
-using mytoydb::server::Postmaster;
-using mytoydb::server::ServerConfig;
-using mytoydb::tools::FormatQueryResult;
-using mytoydb::tools::PsqlClient;
-using mytoydb::tools::QueryResult;
+using pgcpp::server::BootstrapCluster;
+using pgcpp::server::BootstrapResult;
+using pgcpp::server::Postmaster;
+using pgcpp::server::ServerConfig;
+using pgcpp::tools::FormatQueryResult;
+using pgcpp::tools::PsqlClient;
+using pgcpp::tools::QueryResult;
 
 namespace {
 

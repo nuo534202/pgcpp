@@ -20,55 +20,55 @@
 #include "pgcpp/storage/bufpage.hpp"
 #include "pgcpp/storage/smgr.hpp"
 
-using mytoydb::memory::AllocSetContext;
-using mytoydb::storage::BlockNumber;
-using mytoydb::storage::Buffer;
-using mytoydb::storage::BufferAccessStrategy;
-using mytoydb::storage::BufferDesc;
-using mytoydb::storage::BufferGetPage;
-using mytoydb::storage::BufferGetTag;
-using mytoydb::storage::BufferPool;
-using mytoydb::storage::BufferTag;
-using mytoydb::storage::DropRelFileNodeBuffers;
-using mytoydb::storage::FlushBuffer;
-using mytoydb::storage::FlushRelationBuffers;
-using mytoydb::storage::ForkNumber;
-using mytoydb::storage::GetBufferPool;
-using mytoydb::storage::IncrBufferRefCount;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kInvalidBuffer;
-using mytoydb::storage::kPageHeaderSize;
-using mytoydb::storage::MarkBufferDirty;
-using mytoydb::storage::MarkBufferDirtyHint;
-using mytoydb::storage::Page;
-using mytoydb::storage::PageHeader;
-using mytoydb::storage::PageInit;
-using mytoydb::storage::ReadBuffer;
-using mytoydb::storage::ReadBufferMode;
-using mytoydb::storage::ReleaseAndReadBuffer;
-using mytoydb::storage::ReleaseBuffer;
-using mytoydb::storage::RelFileNode;
-using mytoydb::storage::RelFileNodeBackend;
-using mytoydb::storage::SetBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrclose;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::storage::smgrcreate;
-using mytoydb::storage::smgrextend;
-using mytoydb::storage::smgrnblocks;
-using mytoydb::storage::smgropen;
-using mytoydb::storage::SmgrRelation;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::storage::BlockNumber;
+using pgcpp::storage::Buffer;
+using pgcpp::storage::BufferAccessStrategy;
+using pgcpp::storage::BufferDesc;
+using pgcpp::storage::BufferGetPage;
+using pgcpp::storage::BufferGetTag;
+using pgcpp::storage::BufferPool;
+using pgcpp::storage::BufferTag;
+using pgcpp::storage::DropRelFileNodeBuffers;
+using pgcpp::storage::FlushBuffer;
+using pgcpp::storage::FlushRelationBuffers;
+using pgcpp::storage::ForkNumber;
+using pgcpp::storage::GetBufferPool;
+using pgcpp::storage::IncrBufferRefCount;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::kBlckSz;
+using pgcpp::storage::kInvalidBuffer;
+using pgcpp::storage::kPageHeaderSize;
+using pgcpp::storage::MarkBufferDirty;
+using pgcpp::storage::MarkBufferDirtyHint;
+using pgcpp::storage::Page;
+using pgcpp::storage::PageHeader;
+using pgcpp::storage::PageInit;
+using pgcpp::storage::ReadBuffer;
+using pgcpp::storage::ReadBufferMode;
+using pgcpp::storage::ReleaseAndReadBuffer;
+using pgcpp::storage::ReleaseBuffer;
+using pgcpp::storage::RelFileNode;
+using pgcpp::storage::RelFileNodeBackend;
+using pgcpp::storage::SetBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrclose;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::storage::smgrcreate;
+using pgcpp::storage::smgrextend;
+using pgcpp::storage::smgrnblocks;
+using pgcpp::storage::smgropen;
+using pgcpp::storage::SmgrRelation;
 
 namespace {
 
 class BufMgrTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("bufmgr_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         // Set up temp storage directory.
         test_dir_ = "/tmp/mytoydb_bufmgr_test_" + std::to_string(getpid());
@@ -99,7 +99,7 @@ protected:
         smgrcloseall();
         std::system(("rm -rf " + test_dir_).c_str());
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

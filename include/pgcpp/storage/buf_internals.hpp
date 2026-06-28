@@ -8,7 +8,7 @@
 //   - BufferPool: the array of descriptors + page data + lookup hash table
 //
 // In PostgreSQL, these structures are shared across processes in shared
-// memory and protected by spinlocks. MyToyDB is single-process, so:
+// memory and protected by spinlocks. pgcpp is single-process, so:
 //   - No spinlocks or atomics needed (plain int fields suffice)
 //   - No shared memory (the buffer pool lives in a regular heap allocation)
 //   - Refcount still matters (can't evict a pinned buffer)
@@ -23,7 +23,7 @@
 #include "pgcpp/storage/bufpage.hpp"
 #include "pgcpp/storage/relfilenode.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // Buffer — an integer handle identifying a buffer slot (1-based, matching
 // PostgreSQL's convention where 0 = InvalidBuffer).
@@ -69,7 +69,7 @@ struct BufferTagHash {
 // BufferDesc — per-buffer metadata.
 //
 // In PostgreSQL this is a shared-memory struct with atomic fields. In
-// MyToyDB (single-process), plain fields suffice. The structure preserves
+// pgcpp (single-process), plain fields suffice. The structure preserves
 // PostgreSQL's fields for architectural fidelity.
 struct BufferDesc {
     BufferTag tag;        // page identifier (valid if state & kBMTagged)
@@ -105,7 +105,7 @@ struct BufferDesc {
 //   - Page read/write through the storage manager
 //
 // In PostgreSQL, the buffer pool is allocated in shared memory at server
-// startup. In MyToyDB, it's a heap-allocated object owned by the storage
+// startup. In pgcpp, it's a heap-allocated object owned by the storage
 // layer, created at initialization time.
 class BufferPool {
 public:
@@ -207,4 +207,4 @@ BufferPool* GetBufferPool();
 // Set the global BufferPool instance (takes ownership).
 void SetBufferPool(BufferPool* pool);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

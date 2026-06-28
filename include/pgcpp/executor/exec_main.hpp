@@ -12,7 +12,7 @@
 #include "pgcpp/executor/estate.hpp"
 #include "pgcpp/executor/node_exec.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // ExecutorStart — initialize the executor for a query.
 // Creates the EState, sets up the snapshot, and calls ExecInitNode.
@@ -30,4 +30,4 @@ void ExecutorFinish(QueryDesc* queryDesc);
 // Calls ExecEndNode and frees the EState.
 void ExecutorEnd(QueryDesc* queryDesc);
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

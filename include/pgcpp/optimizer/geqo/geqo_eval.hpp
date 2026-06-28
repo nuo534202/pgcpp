@@ -7,7 +7,7 @@
 //
 // PostgreSQL's geqo_eval.c actually constructs RelOptInfo/Path objects for
 // each candidate, using a per-evaluation memory context that is reset
-// between evaluations to bound memory growth. MyToyDB uses a two-phase
+// between evaluations to bound memory growth. pgcpp uses a two-phase
 // approach for simplicity and speed:
 //   - GeqoEvalFitness: a fast, allocation-free heuristic cost estimate used
 //     during the GA loop (one call per candidate chromosome).
@@ -21,15 +21,15 @@
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
 // Forward declaration — defined in pgcpp/optimizer/planner.hpp.
 struct PlannerInfo;
 class Path;
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 // GeqoEvalFitness — compute a heuristic cost (lower is better) for the
 // left-deep join order specified by `chromosome`. Does not allocate Path
@@ -43,4 +43,4 @@ Cost GeqoEvalFitness(PlannerInfo* root, const std::vector<Gene>& chromosome);
 // on failure. The caller wraps this Path with Agg/Sort/etc.
 Path* GeqoBuildBestPath(PlannerInfo* root, const std::vector<Gene>& chromosome);
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

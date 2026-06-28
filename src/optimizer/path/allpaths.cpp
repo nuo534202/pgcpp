@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/optimizer/path/allpaths.c.
 //
 // Creates candidate access paths for each base relation in the query.
-// For MyToyDB, this generates SeqScan paths (and optionally IndexPath when
+// For pgcpp, this generates SeqScan paths (and optionally IndexPath when
 // suitable indexes exist). The cheapest path is selected for each relation.
 #include "pgcpp/catalog/catalog.hpp"
 #include "pgcpp/common/containers/node.hpp"
@@ -15,15 +15,15 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::catalog::GetCatalog;
-using mytoydb::memory::palloc;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Node;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RTEKind;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::memory::palloc;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Node;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RTEKind;
 
 // Create a SeqScan path for a base relation.
 // Estimates cost based on relation size (pages, tuples).
@@ -69,7 +69,7 @@ void BuildBaseRelInfos(PlannerInfo* root) {
     for (Node* node : root->parse->rtable) {
         if (node == nullptr)
             continue;
-        if (node->GetTag() != mytoydb::nodes::NodeTag::kRangeTblEntry) {
+        if (node->GetTag() != pgcpp::nodes::NodeTag::kRangeTblEntry) {
             root->simple_rel_array.push_back(nullptr);
             rtindex++;
             continue;
@@ -92,4 +92,4 @@ void BuildBaseRelInfos(PlannerInfo* root) {
     }
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

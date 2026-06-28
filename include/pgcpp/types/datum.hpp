@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <cstring>
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // Datum — the fundamental PostgreSQL value type.
 // On 64-bit systems, it is 8 bytes and can hold any by-value type up to 8 bytes.
@@ -112,4 +112,4 @@ inline int VARSIZE_DATA(const char* text) {
     return VARSIZE(text) - sizeof(int32_t);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

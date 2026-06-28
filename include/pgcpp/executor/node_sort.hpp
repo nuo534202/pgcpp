@@ -5,7 +5,7 @@
 
 #include "pgcpp/executor/node_exec.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 class SortState : public PlanState {
 public:
@@ -24,4 +24,4 @@ private:
     void SortTuples();
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

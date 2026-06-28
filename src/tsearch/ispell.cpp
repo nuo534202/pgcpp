@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <cctype>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 namespace {
 
@@ -64,4 +64,4 @@ Lexeme IspellDict::Lexicalize(std::string_view word) const {
     return lex;
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

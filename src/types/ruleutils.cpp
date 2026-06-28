@@ -10,7 +10,7 @@
 #include "pgcpp/types/builtins.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 namespace {
 
@@ -113,4 +113,4 @@ std::string FormatOperatorName(const std::string& schema, const std::string& opn
     return QuoteIdentifier(schema) + "." + opname;
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

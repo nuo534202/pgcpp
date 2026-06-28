@@ -4,7 +4,7 @@
 //
 // Implements LookupAmRoutine (resolves an AM OID to its IndexAmRoutine table)
 // and the generic index_* entry points that dispatch to the AM's routines.
-// MyToyDB only implements the B-tree AM (kBTreeAmOid = 403); other AM OIDs
+// pgcpp only implements the B-tree AM (kBTreeAmOid = 403); other AM OIDs
 // return nullptr from LookupAmRoutine and the generic entry points ereport.
 
 #include "pgcpp/access/indexam.hpp"
@@ -16,11 +16,11 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/storage/bufmgr.hpp"
 
-namespace mytoydb::access {
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::storage::Buffer;
-using mytoydb::transaction::ItemPointerData;
+namespace pgcpp::access {
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::storage::Buffer;
+using pgcpp::transaction::ItemPointerData;
 
 namespace {
 
@@ -56,26 +56,26 @@ void index_close(Relation rel) {
 bool index_insert(Relation index, BTKeyKind kind, const void* key, uint16_t key_len,
                   const ItemPointerData& tid) {
     if (index == nullptr || index->rd_rel == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "index_insert: index relation is not open");
+        ereport(pgcpp::error::LogLevel::kError, "index_insert: index relation is not open");
     }
     const IndexAmRoutine* routine = LookupAmRoutine(index->rd_rel->relam);
     if (routine == nullptr || routine->aminsert == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "index_insert: AM OID " +
-                                                      std::to_string(index->rd_rel->relam) +
-                                                      " does not support insert");
+        ereport(pgcpp::error::LogLevel::kError, "index_insert: AM OID " +
+                                                    std::to_string(index->rd_rel->relam) +
+                                                    " does not support insert");
     }
     return routine->aminsert(index, kind, key, key_len, tid);
 }
 
 BTScanDesc index_beginscan(Relation index, BTKeyKind kind, const BTScanKeyData* scan_key) {
     if (index == nullptr || index->rd_rel == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "index_beginscan: index relation is not open");
+        ereport(pgcpp::error::LogLevel::kError, "index_beginscan: index relation is not open");
     }
     const IndexAmRoutine* routine = LookupAmRoutine(index->rd_rel->relam);
     if (routine == nullptr || routine->ambeginscan == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "index_beginscan: AM OID " +
-                                                      std::to_string(index->rd_rel->relam) +
-                                                      " does not support scan");
+        ereport(pgcpp::error::LogLevel::kError, "index_beginscan: AM OID " +
+                                                    std::to_string(index->rd_rel->relam) +
+                                                    " does not support scan");
     }
     return routine->ambeginscan(index, kind, scan_key);
 }
@@ -115,13 +115,13 @@ void index_endscan(BTScanDesc scan) {
 
 void index_build(Relation index, BTKeyKind key_kind) {
     if (index == nullptr || index->rd_rel == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "index_build: index relation is not open");
+        ereport(pgcpp::error::LogLevel::kError, "index_build: index relation is not open");
     }
     const IndexAmRoutine* routine = LookupAmRoutine(index->rd_rel->relam);
     if (routine == nullptr || routine->ambuild == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError, "index_build: AM OID " +
-                                                      std::to_string(index->rd_rel->relam) +
-                                                      " does not support build");
+        ereport(pgcpp::error::LogLevel::kError, "index_build: AM OID " +
+                                                    std::to_string(index->rd_rel->relam) +
+                                                    " does not support build");
     }
     routine->ambuild(index, key_kind);
 }
@@ -148,4 +148,4 @@ int64_t index_getbitmap(BTScanDesc scan, std::vector<ItemPointerData>* tids) {
     return routine->amgetbitmap(scan, tids);
 }
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

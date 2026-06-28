@@ -20,55 +20,55 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::executor::Agg;
-using mytoydb::executor::Plan;
-using mytoydb::executor::PlanType;
-using mytoydb::executor::Result;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::Sort;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::add_path;
-using mytoydb::optimizer::AggPath;
-using mytoydb::optimizer::cheapest_path;
-using mytoydb::optimizer::create_agg_path;
-using mytoydb::optimizer::create_plan;
-using mytoydb::optimizer::create_result_path;
-using mytoydb::optimizer::create_seqscan_path;
-using mytoydb::optimizer::create_sort_path;
-using mytoydb::optimizer::Path;
-using mytoydb::optimizer::PathType;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::RelOptInfo;
-using mytoydb::optimizer::ResultPath;
-using mytoydb::optimizer::SeqScanPath;
-using mytoydb::optimizer::SortPath;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::Const;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
+using pgcpp::executor::Agg;
+using pgcpp::executor::Plan;
+using pgcpp::executor::PlanType;
+using pgcpp::executor::Result;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::Sort;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::add_path;
+using pgcpp::optimizer::AggPath;
+using pgcpp::optimizer::cheapest_path;
+using pgcpp::optimizer::create_agg_path;
+using pgcpp::optimizer::create_plan;
+using pgcpp::optimizer::create_result_path;
+using pgcpp::optimizer::create_seqscan_path;
+using pgcpp::optimizer::create_sort_path;
+using pgcpp::optimizer::Path;
+using pgcpp::optimizer::PathType;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::RelOptInfo;
+using pgcpp::optimizer::ResultPath;
+using pgcpp::optimizer::SeqScanPath;
+using pgcpp::optimizer::SortPath;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::Const;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
 
 namespace {
 
 class CreatePlanTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("create_plan_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("create_plan_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -158,7 +158,7 @@ protected:
         return root;
     }
 
-    mytoydb::memory::AllocSetContext* context_ = nullptr;
+    pgcpp::memory::AllocSetContext* context_ = nullptr;
 };
 
 // create_plan(SeqScanPath) → SeqScan plan.
@@ -208,7 +208,7 @@ TEST_F(CreatePlanTest, AggPath_ProducesAggOnSeqScan) {
     query->has_aggs = true;
 
     // COUNT(*) target.
-    auto* aggref = makePallocNode<mytoydb::parser::Aggref>();
+    auto* aggref = makePallocNode<pgcpp::parser::Aggref>();
     aggref->aggfnoid = 2147;
     aggref->aggtype = kInt8Oid;
     aggref->aggstar = true;
@@ -288,7 +288,7 @@ TEST_F(CreatePlanTest, CreateAggPlan_HashedSetsGroupColIdx) {
 
     // Target list: a (ressortgroupref=1), COUNT(*)
     query->target_list.push_back(MakeTargetEntry(MakeVar(1, 1), 1, "a", 1));
-    auto* aggref = makePallocNode<mytoydb::parser::Aggref>();
+    auto* aggref = makePallocNode<pgcpp::parser::Aggref>();
     aggref->aggfnoid = 2147;
     aggref->aggtype = kInt8Oid;
     aggref->aggstar = true;

@@ -1,7 +1,7 @@
 // parsenodes.h — C++ versions of PostgreSQL's parse tree node types.
 //
 // Converted from PostgreSQL 15's src/include/nodes/parsenodes.h.
-// All node types inherit from mytoydb::nodes::Node and provide Clone() /
+// All node types inherit from pgcpp::nodes::Node and provide Clone() /
 // Equals() overrides. String fields use std::string, List* fields use
 // std::vector<Node*>, and Oid/int32 fields use int.
 //
@@ -24,9 +24,9 @@
 
 #include "pgcpp/common/containers/node.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::nodes::Node;
+using pgcpp::nodes::Node;
 
 // ---------------------------------------------------------------------------
 // Enums from other PostgreSQL headers (defined here until those modules are
@@ -481,7 +481,7 @@ class AlterDatabaseStmt;
 // TypeName — specifies a type in definitions.
 class TypeName : public Node {
 public:
-    TypeName() : Node(mytoydb::nodes::NodeTag::kTypeName) {}
+    TypeName() : Node(pgcpp::nodes::NodeTag::kTypeName) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -499,7 +499,7 @@ public:
 // ColumnRef — reference to a column, or possibly a whole tuple.
 class ColumnRef : public Node {
 public:
-    ColumnRef() : Node(mytoydb::nodes::NodeTag::kColumnRef) {}
+    ColumnRef() : Node(pgcpp::nodes::NodeTag::kColumnRef) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -511,7 +511,7 @@ public:
 // ParamRef — specifies a $n parameter reference.
 class ParamRef : public Node {
 public:
-    ParamRef() : Node(mytoydb::nodes::NodeTag::kParamRef) {}
+    ParamRef() : Node(pgcpp::nodes::NodeTag::kParamRef) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -527,7 +527,7 @@ public:
 // A_Expr — infix, prefix, and postfix expressions.
 class AExpr : public Node {
 public:
-    AExpr() : Node(mytoydb::nodes::NodeTag::kAExpr) {}
+    AExpr() : Node(pgcpp::nodes::NodeTag::kAExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -542,7 +542,7 @@ public:
 // A_Const — a literal constant.
 class AConst : public Node {
 public:
-    AConst() : Node(mytoydb::nodes::NodeTag::kAConst) {}
+    AConst() : Node(pgcpp::nodes::NodeTag::kAConst) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -557,7 +557,7 @@ public:
 // TypeCast — a CAST expression.
 class TypeCast : public Node {
 public:
-    TypeCast() : Node(mytoydb::nodes::NodeTag::kTypeCast) {}
+    TypeCast() : Node(pgcpp::nodes::NodeTag::kTypeCast) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -570,7 +570,7 @@ public:
 // CollateClause — a COLLATE expression.
 class CollateClause : public Node {
 public:
-    CollateClause() : Node(mytoydb::nodes::NodeTag::kCollateClause) {}
+    CollateClause() : Node(pgcpp::nodes::NodeTag::kCollateClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -583,7 +583,7 @@ public:
 // RoleSpec — a role name or one of a few special values.
 class RoleSpec : public Node {
 public:
-    RoleSpec() : Node(mytoydb::nodes::NodeTag::kRoleSpec) {}
+    RoleSpec() : Node(pgcpp::nodes::NodeTag::kRoleSpec) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -596,7 +596,7 @@ public:
 // FuncCall — a function or aggregate invocation.
 class FuncCall : public Node {
 public:
-    FuncCall() : Node(mytoydb::nodes::NodeTag::kFuncCall) {}
+    FuncCall() : Node(pgcpp::nodes::NodeTag::kFuncCall) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -617,7 +617,7 @@ public:
 // A_Star — '*' representing all columns of a table or compound field.
 class AStar : public Node {
 public:
-    AStar() : Node(mytoydb::nodes::NodeTag::kAStar) {}
+    AStar() : Node(pgcpp::nodes::NodeTag::kAStar) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -626,7 +626,7 @@ public:
 // A_Indices — array subscript or slice bounds.
 class AIndices : public Node {
 public:
-    AIndices() : Node(mytoydb::nodes::NodeTag::kAIndices) {}
+    AIndices() : Node(pgcpp::nodes::NodeTag::kAIndices) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -639,7 +639,7 @@ public:
 // A_Indirection — select a field and/or array element from an expression.
 class AIndirection : public Node {
 public:
-    AIndirection() : Node(mytoydb::nodes::NodeTag::kAIndirection) {}
+    AIndirection() : Node(pgcpp::nodes::NodeTag::kAIndirection) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -651,7 +651,7 @@ public:
 // A_ArrayExpr — an ARRAY[] construct.
 class AArrayExpr : public Node {
 public:
-    AArrayExpr() : Node(mytoydb::nodes::NodeTag::kAArrayExpr) {}
+    AArrayExpr() : Node(pgcpp::nodes::NodeTag::kAArrayExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -663,7 +663,7 @@ public:
 // ResTarget — result target (used in target list of pre-transformed trees).
 class ResTarget : public Node {
 public:
-    ResTarget() : Node(mytoydb::nodes::NodeTag::kResTarget) {}
+    ResTarget() : Node(pgcpp::nodes::NodeTag::kResTarget) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -677,7 +677,7 @@ public:
 // MultiAssignRef — element of a row source expression for UPDATE.
 class MultiAssignRef : public Node {
 public:
-    MultiAssignRef() : Node(mytoydb::nodes::NodeTag::kMultiAssignRef) {}
+    MultiAssignRef() : Node(pgcpp::nodes::NodeTag::kMultiAssignRef) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -690,7 +690,7 @@ public:
 // SortBy — for ORDER BY clause.
 class SortBy : public Node {
 public:
-    SortBy() : Node(mytoydb::nodes::NodeTag::kSortBy) {}
+    SortBy() : Node(pgcpp::nodes::NodeTag::kSortBy) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -705,7 +705,7 @@ public:
 // WindowDef — raw representation of WINDOW and OVER clauses.
 class WindowDef : public Node {
 public:
-    WindowDef() : Node(mytoydb::nodes::NodeTag::kWindowDef) {}
+    WindowDef() : Node(pgcpp::nodes::NodeTag::kWindowDef) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -727,7 +727,7 @@ public:
 // RangeSubselect — subquery appearing in a FROM clause.
 class RangeSubselect : public Node {
 public:
-    RangeSubselect() : Node(mytoydb::nodes::NodeTag::kRangeSubselect) {}
+    RangeSubselect() : Node(pgcpp::nodes::NodeTag::kRangeSubselect) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -740,7 +740,7 @@ public:
 // RangeFunction — function call appearing in a FROM clause.
 class RangeFunction : public Node {
 public:
-    RangeFunction() : Node(mytoydb::nodes::NodeTag::kRangeFunction) {}
+    RangeFunction() : Node(pgcpp::nodes::NodeTag::kRangeFunction) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -756,7 +756,7 @@ public:
 // ColumnDef — column definition (used in various creates).
 class ColumnDef : public Node {
 public:
-    ColumnDef() : Node(mytoydb::nodes::NodeTag::kColumnDef) {}
+    ColumnDef() : Node(pgcpp::nodes::NodeTag::kColumnDef) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -784,7 +784,7 @@ public:
 // IndexElem — index parameters (used in CREATE INDEX, and in ON CONFLICT).
 class IndexElem : public Node {
 public:
-    IndexElem() : Node(mytoydb::nodes::NodeTag::kIndexElem) {}
+    IndexElem() : Node(pgcpp::nodes::NodeTag::kIndexElem) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -802,7 +802,7 @@ public:
 // DefElem — a generic "name = value" option definition.
 class DefElem : public Node {
 public:
-    DefElem() : Node(mytoydb::nodes::NodeTag::kDefElem) {}
+    DefElem() : Node(pgcpp::nodes::NodeTag::kDefElem) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -817,7 +817,7 @@ public:
 // LockingClause — raw representation of FOR [NO KEY] UPDATE/[KEY] SHARE.
 class LockingClause : public Node {
 public:
-    LockingClause() : Node(mytoydb::nodes::NodeTag::kLockingClause) {}
+    LockingClause() : Node(pgcpp::nodes::NodeTag::kLockingClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -830,7 +830,7 @@ public:
 // XmlSerialize — XMLSERIALIZE (in raw parse tree only).
 class XmlSerialize : public Node {
 public:
-    XmlSerialize() : Node(mytoydb::nodes::NodeTag::kXmlSerialize) {}
+    XmlSerialize() : Node(pgcpp::nodes::NodeTag::kXmlSerialize) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -848,7 +848,7 @@ public:
 // PartitionElem — parse-time representation of a single partition key.
 class PartitionElem : public Node {
 public:
-    PartitionElem() : Node(mytoydb::nodes::NodeTag::kPartitionElem) {}
+    PartitionElem() : Node(pgcpp::nodes::NodeTag::kPartitionElem) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -863,7 +863,7 @@ public:
 // PartitionSpec — parse-time representation of a partition key specification.
 class PartitionSpec : public Node {
 public:
-    PartitionSpec() : Node(mytoydb::nodes::NodeTag::kPartitionSpec) {}
+    PartitionSpec() : Node(pgcpp::nodes::NodeTag::kPartitionSpec) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -876,7 +876,7 @@ public:
 // PartitionBoundSpec — a partition bound specification.
 class PartitionBoundSpec : public Node {
 public:
-    PartitionBoundSpec() : Node(mytoydb::nodes::NodeTag::kPartitionBoundSpec) {}
+    PartitionBoundSpec() : Node(pgcpp::nodes::NodeTag::kPartitionBoundSpec) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -894,7 +894,7 @@ public:
 // PartitionRangeDatum — one of the values in a range partition bound.
 class PartitionRangeDatum : public Node {
 public:
-    PartitionRangeDatum() : Node(mytoydb::nodes::NodeTag::kPartitionRangeDatum) {}
+    PartitionRangeDatum() : Node(pgcpp::nodes::NodeTag::kPartitionRangeDatum) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -907,7 +907,7 @@ public:
 // PartitionCmd — info for ALTER TABLE/INDEX ATTACH/DETACH PARTITION commands.
 class PartitionCmd : public Node {
 public:
-    PartitionCmd() : Node(mytoydb::nodes::NodeTag::kPartitionCmd) {}
+    PartitionCmd() : Node(pgcpp::nodes::NodeTag::kPartitionCmd) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -924,7 +924,7 @@ public:
 // RangeTblEntry — a range table is a list of RangeTblEntry nodes.
 class RangeTblEntry : public Node {
 public:
-    RangeTblEntry() : Node(mytoydb::nodes::NodeTag::kRangeTblEntry) {}
+    RangeTblEntry() : Node(pgcpp::nodes::NodeTag::kRangeTblEntry) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -991,7 +991,7 @@ public:
 // RangeTblFunction — subsidiary data for one function in a FUNCTION RTE.
 class RangeTblFunction : public Node {
 public:
-    RangeTblFunction() : Node(mytoydb::nodes::NodeTag::kRangeTblFunction) {}
+    RangeTblFunction() : Node(pgcpp::nodes::NodeTag::kRangeTblFunction) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1008,7 +1008,7 @@ public:
 // TableSampleClause — TABLESAMPLE appearing in a transformed FROM clause.
 class TableSampleClause : public Node {
 public:
-    TableSampleClause() : Node(mytoydb::nodes::NodeTag::kTableSampleClause) {}
+    TableSampleClause() : Node(pgcpp::nodes::NodeTag::kTableSampleClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1021,7 +1021,7 @@ public:
 // WithCheckOption — WITH CHECK OPTION checks.
 class WithCheckOption : public Node {
 public:
-    WithCheckOption() : Node(mytoydb::nodes::NodeTag::kWithCheckOption) {}
+    WithCheckOption() : Node(pgcpp::nodes::NodeTag::kWithCheckOption) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1040,7 +1040,7 @@ public:
 // SortGroupClause — representation of ORDER BY, GROUP BY, etc. items.
 class SortGroupClause : public Node {
 public:
-    SortGroupClause() : Node(mytoydb::nodes::NodeTag::kSortGroupClause) {}
+    SortGroupClause() : Node(pgcpp::nodes::NodeTag::kSortGroupClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1055,7 +1055,7 @@ public:
 // GroupingSet — representation of CUBE, ROLLUP and GROUPING SETS clauses.
 class GroupingSet : public Node {
 public:
-    GroupingSet() : Node(mytoydb::nodes::NodeTag::kGroupingSet) {}
+    GroupingSet() : Node(pgcpp::nodes::NodeTag::kGroupingSet) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1068,7 +1068,7 @@ public:
 // WindowClause — transformed representation of WINDOW and OVER clauses.
 class WindowClause : public Node {
 public:
-    WindowClause() : Node(mytoydb::nodes::NodeTag::kWindowClause) {}
+    WindowClause() : Node(pgcpp::nodes::NodeTag::kWindowClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1093,7 +1093,7 @@ public:
 // RowMarkClause — parser output representation of FOR [KEY] UPDATE/SHARE.
 class RowMarkClause : public Node {
 public:
-    RowMarkClause() : Node(mytoydb::nodes::NodeTag::kRowMarkClause) {}
+    RowMarkClause() : Node(pgcpp::nodes::NodeTag::kRowMarkClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1111,7 +1111,7 @@ public:
 // WithClause — representation of WITH clause.
 class WithClause : public Node {
 public:
-    WithClause() : Node(mytoydb::nodes::NodeTag::kWithClause) {}
+    WithClause() : Node(pgcpp::nodes::NodeTag::kWithClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1124,7 +1124,7 @@ public:
 // InferClause — ON CONFLICT unique index inference clause.
 class InferClause : public Node {
 public:
-    InferClause() : Node(mytoydb::nodes::NodeTag::kInferClause) {}
+    InferClause() : Node(pgcpp::nodes::NodeTag::kInferClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1138,7 +1138,7 @@ public:
 // OnConflictClause — representation of ON CONFLICT clause.
 class OnConflictClause : public Node {
 public:
-    OnConflictClause() : Node(mytoydb::nodes::NodeTag::kOnConflictClause) {}
+    OnConflictClause() : Node(pgcpp::nodes::NodeTag::kOnConflictClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1153,7 +1153,7 @@ public:
 // CommonTableExpr — representation of WITH list element.
 class CommonTableExpr : public Node {
 public:
-    CommonTableExpr() : Node(mytoydb::nodes::NodeTag::kCommonTableExpr) {}
+    CommonTableExpr() : Node(pgcpp::nodes::NodeTag::kCommonTableExpr) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1181,7 +1181,7 @@ public:
 // MergeWhenClause — raw parser representation of a WHEN clause in MERGE.
 class MergeWhenClause : public Node {
 public:
-    MergeWhenClause() : Node(mytoydb::nodes::NodeTag::kMergeWhenClause) {}
+    MergeWhenClause() : Node(pgcpp::nodes::NodeTag::kMergeWhenClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1197,7 +1197,7 @@ public:
 // MergeAction — transformed representation of a WHEN clause in MERGE.
 class MergeAction : public Node {
 public:
-    MergeAction() : Node(mytoydb::nodes::NodeTag::kMergeAction) {}
+    MergeAction() : Node(pgcpp::nodes::NodeTag::kMergeAction) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1213,7 +1213,7 @@ public:
 // TriggerTransition — representation of transition row or table naming clause.
 class TriggerTransition : public Node {
 public:
-    TriggerTransition() : Node(mytoydb::nodes::NodeTag::kTriggerTransition) {}
+    TriggerTransition() : Node(pgcpp::nodes::NodeTag::kTriggerTransition) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1230,7 +1230,7 @@ public:
 // AccessPriv — an access privilege, with optional list of column names.
 class AccessPriv : public Node {
 public:
-    AccessPriv() : Node(mytoydb::nodes::NodeTag::kAccessPriv) {}
+    AccessPriv() : Node(pgcpp::nodes::NodeTag::kAccessPriv) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1246,7 +1246,7 @@ public:
 // Alias — specifies an alias for a range variable.
 class Alias : public Node {
 public:
-    Alias() : Node(mytoydb::nodes::NodeTag::kAlias) {}
+    Alias() : Node(pgcpp::nodes::NodeTag::kAlias) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1258,7 +1258,7 @@ public:
 // RangeVar — range variable, used in FROM clauses.
 class RangeVar : public Node {
 public:
-    RangeVar() : Node(mytoydb::nodes::NodeTag::kRangeVar) {}
+    RangeVar() : Node(pgcpp::nodes::NodeTag::kRangeVar) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1275,7 +1275,7 @@ public:
 // IntoClause — target information for SELECT INTO, CREATE TABLE AS, etc.
 class IntoClause : public Node {
 public:
-    IntoClause() : Node(mytoydb::nodes::NodeTag::kIntoClause) {}
+    IntoClause() : Node(pgcpp::nodes::NodeTag::kIntoClause) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1297,7 +1297,7 @@ public:
 // RawStmt — container for any one statement's raw parse tree.
 class RawStmt : public Node {
 public:
-    RawStmt() : Node(mytoydb::nodes::NodeTag::kRawStmt) {}
+    RawStmt() : Node(pgcpp::nodes::NodeTag::kRawStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1310,7 +1310,7 @@ public:
 // InsertStmt — INSERT statement.
 class InsertStmt : public Node {
 public:
-    InsertStmt() : Node(mytoydb::nodes::NodeTag::kInsertStmt) {}
+    InsertStmt() : Node(pgcpp::nodes::NodeTag::kInsertStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1327,7 +1327,7 @@ public:
 // DeleteStmt — DELETE statement.
 class DeleteStmt : public Node {
 public:
-    DeleteStmt() : Node(mytoydb::nodes::NodeTag::kDeleteStmt) {}
+    DeleteStmt() : Node(pgcpp::nodes::NodeTag::kDeleteStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1342,7 +1342,7 @@ public:
 // UpdateStmt — UPDATE statement.
 class UpdateStmt : public Node {
 public:
-    UpdateStmt() : Node(mytoydb::nodes::NodeTag::kUpdateStmt) {}
+    UpdateStmt() : Node(pgcpp::nodes::NodeTag::kUpdateStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1358,7 +1358,7 @@ public:
 // SelectStmt — SELECT statement (also used for VALUES and set operations).
 class SelectStmt : public Node {
 public:
-    SelectStmt() : Node(mytoydb::nodes::NodeTag::kSelectStmt) {}
+    SelectStmt() : Node(pgcpp::nodes::NodeTag::kSelectStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1395,7 +1395,7 @@ public:
 // CreateStmt — CREATE TABLE statement.
 class CreateStmt : public Node {
 public:
-    CreateStmt() : Node(mytoydb::nodes::NodeTag::kCreateStmt) {}
+    CreateStmt() : Node(pgcpp::nodes::NodeTag::kCreateStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1417,7 +1417,7 @@ public:
 // CreateSchemaStmt — CREATE SCHEMA statement.
 class CreateSchemaStmt : public Node {
 public:
-    CreateSchemaStmt() : Node(mytoydb::nodes::NodeTag::kCreateSchemaStmt) {}
+    CreateSchemaStmt() : Node(pgcpp::nodes::NodeTag::kCreateSchemaStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1431,7 +1431,7 @@ public:
 // AlterTableStmt — ALTER TABLE statement.
 class AlterTableStmt : public Node {
 public:
-    AlterTableStmt() : Node(mytoydb::nodes::NodeTag::kAlterTableStmt) {}
+    AlterTableStmt() : Node(pgcpp::nodes::NodeTag::kAlterTableStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1445,7 +1445,7 @@ public:
 // AlterTableCmd — one subcommand of an ALTER TABLE.
 class AlterTableCmd : public Node {
 public:
-    AlterTableCmd() : Node(mytoydb::nodes::NodeTag::kAlterTableCmd) {}
+    AlterTableCmd() : Node(pgcpp::nodes::NodeTag::kAlterTableCmd) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1464,7 +1464,7 @@ public:
 // DropStmt — DROP statement (Table|Sequence|View|Index|Type|Domain|...).
 class DropStmt : public Node {
 public:
-    DropStmt() : Node(mytoydb::nodes::NodeTag::kDropStmt) {}
+    DropStmt() : Node(pgcpp::nodes::NodeTag::kDropStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1483,7 +1483,7 @@ public:
 // TransactionStmt — BEGIN / COMMIT / ROLLBACK / SAVEPOINT / etc.
 class TransactionStmt : public Node {
 public:
-    TransactionStmt() : Node(mytoydb::nodes::NodeTag::kTransactionStmt) {}
+    TransactionStmt() : Node(pgcpp::nodes::NodeTag::kTransactionStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1510,7 +1510,7 @@ public:
 // TruncateStmt — TRUNCATE TABLE
 class TruncateStmt : public Node {
 public:
-    TruncateStmt() : Node(mytoydb::nodes::NodeTag::kTruncateStmt) {}
+    TruncateStmt() : Node(pgcpp::nodes::NodeTag::kTruncateStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1523,7 +1523,7 @@ public:
 // ExplainStmt — EXPLAIN
 class ExplainStmt : public Node {
 public:
-    ExplainStmt() : Node(mytoydb::nodes::NodeTag::kExplainStmt) {}
+    ExplainStmt() : Node(pgcpp::nodes::NodeTag::kExplainStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1535,7 +1535,7 @@ public:
 // CommentStmt — COMMENT ON
 class CommentStmt : public Node {
 public:
-    CommentStmt() : Node(mytoydb::nodes::NodeTag::kCommentStmt) {}
+    CommentStmt() : Node(pgcpp::nodes::NodeTag::kCommentStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1548,7 +1548,7 @@ public:
 // IndexStmt — CREATE INDEX
 class IndexStmt : public Node {
 public:
-    IndexStmt() : Node(mytoydb::nodes::NodeTag::kIndexStmt) {}
+    IndexStmt() : Node(pgcpp::nodes::NodeTag::kIndexStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1570,7 +1570,7 @@ public:
 // ViewStmt — CREATE VIEW
 class ViewStmt : public Node {
 public:
-    ViewStmt() : Node(mytoydb::nodes::NodeTag::kViewStmt) {}
+    ViewStmt() : Node(pgcpp::nodes::NodeTag::kViewStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1586,7 +1586,7 @@ public:
 // CreateAsStmt — CREATE TABLE AS SELECT / CREATE MATERIALIZED VIEW
 class CreateAsStmt : public Node {
 public:
-    CreateAsStmt() : Node(mytoydb::nodes::NodeTag::kCreateAsStmt) {}
+    CreateAsStmt() : Node(pgcpp::nodes::NodeTag::kCreateAsStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1600,7 +1600,7 @@ public:
 // VacuumStmt — VACUUM / ANALYZE
 class VacuumStmt : public Node {
 public:
-    VacuumStmt() : Node(mytoydb::nodes::NodeTag::kVacuumStmt) {}
+    VacuumStmt() : Node(pgcpp::nodes::NodeTag::kVacuumStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1613,7 +1613,7 @@ public:
 // VariableSetStmt — SET / RESET
 class VariableSetStmt : public Node {
 public:
-    VariableSetStmt() : Node(mytoydb::nodes::NodeTag::kVariableSetStmt) {}
+    VariableSetStmt() : Node(pgcpp::nodes::NodeTag::kVariableSetStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1636,7 +1636,7 @@ public:
 // ClusterStmt — CLUSTER
 class ClusterStmt : public Node {
 public:
-    ClusterStmt() : Node(mytoydb::nodes::NodeTag::kClusterStmt) {}
+    ClusterStmt() : Node(pgcpp::nodes::NodeTag::kClusterStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1649,7 +1649,7 @@ public:
 // LockStmt — LOCK TABLE
 class LockStmt : public Node {
 public:
-    LockStmt() : Node(mytoydb::nodes::NodeTag::kLockStmt) {}
+    LockStmt() : Node(pgcpp::nodes::NodeTag::kLockStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1662,7 +1662,7 @@ public:
 // DiscardStmt — DISCARD
 class DiscardStmt : public Node {
 public:
-    DiscardStmt() : Node(mytoydb::nodes::NodeTag::kDiscardStmt) {}
+    DiscardStmt() : Node(pgcpp::nodes::NodeTag::kDiscardStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1674,7 +1674,7 @@ public:
 // NotifyStmt / ListenStmt / UnlistenStmt — LISTEN / NOTIFY / UNLISTEN
 class NotifyStmt : public Node {
 public:
-    NotifyStmt() : Node(mytoydb::nodes::NodeTag::kNotifyStmt) {}
+    NotifyStmt() : Node(pgcpp::nodes::NodeTag::kNotifyStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1685,7 +1685,7 @@ public:
 
 class ListenStmt : public Node {
 public:
-    ListenStmt() : Node(mytoydb::nodes::NodeTag::kListenStmt) {}
+    ListenStmt() : Node(pgcpp::nodes::NodeTag::kListenStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1695,7 +1695,7 @@ public:
 
 class UnlistenStmt : public Node {
 public:
-    UnlistenStmt() : Node(mytoydb::nodes::NodeTag::kUnlistenStmt) {}
+    UnlistenStmt() : Node(pgcpp::nodes::NodeTag::kUnlistenStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1706,7 +1706,7 @@ public:
 // CheckPointStmt — CHECKPOINT
 class CheckPointStmt : public Node {
 public:
-    CheckPointStmt() : Node(mytoydb::nodes::NodeTag::kCheckPointStmt) {}
+    CheckPointStmt() : Node(pgcpp::nodes::NodeTag::kCheckPointStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1715,7 +1715,7 @@ public:
 // ReindexStmt — REINDEX
 class ReindexStmt : public Node {
 public:
-    ReindexStmt() : Node(mytoydb::nodes::NodeTag::kReindexStmt) {}
+    ReindexStmt() : Node(pgcpp::nodes::NodeTag::kReindexStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1730,7 +1730,7 @@ public:
 // DeallocateStmt — DEALLOCATE
 class DeallocateStmt : public Node {
 public:
-    DeallocateStmt() : Node(mytoydb::nodes::NodeTag::kDeallocateStmt) {}
+    DeallocateStmt() : Node(pgcpp::nodes::NodeTag::kDeallocateStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1741,7 +1741,7 @@ public:
 // PrepareStmt — PREPARE
 class PrepareStmt : public Node {
 public:
-    PrepareStmt() : Node(mytoydb::nodes::NodeTag::kPrepareStmt) {}
+    PrepareStmt() : Node(pgcpp::nodes::NodeTag::kPrepareStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1754,7 +1754,7 @@ public:
 // ExecuteStmt — EXECUTE
 class ExecuteStmt : public Node {
 public:
-    ExecuteStmt() : Node(mytoydb::nodes::NodeTag::kExecuteStmt) {}
+    ExecuteStmt() : Node(pgcpp::nodes::NodeTag::kExecuteStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1766,7 +1766,7 @@ public:
 // LoadStmt — LOAD
 class LoadStmt : public Node {
 public:
-    LoadStmt() : Node(mytoydb::nodes::NodeTag::kLoadStmt) {}
+    LoadStmt() : Node(pgcpp::nodes::NodeTag::kLoadStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1777,7 +1777,7 @@ public:
 // CallStmt — CALL (procedure call)
 class CallStmt : public Node {
 public:
-    CallStmt() : Node(mytoydb::nodes::NodeTag::kCallStmt) {}
+    CallStmt() : Node(pgcpp::nodes::NodeTag::kCallStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1788,7 +1788,7 @@ public:
 // RenameStmt — ALTER ... RENAME TO
 class RenameStmt : public Node {
 public:
-    RenameStmt() : Node(mytoydb::nodes::NodeTag::kRenameStmt) {}
+    RenameStmt() : Node(pgcpp::nodes::NodeTag::kRenameStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1806,7 +1806,7 @@ public:
 // AlterOwnerStmt — ALTER ... OWNER TO
 class AlterOwnerStmt : public Node {
 public:
-    AlterOwnerStmt() : Node(mytoydb::nodes::NodeTag::kAlterOwnerStmt) {}
+    AlterOwnerStmt() : Node(pgcpp::nodes::NodeTag::kAlterOwnerStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1819,7 +1819,7 @@ public:
 // CreateSeqStmt — CREATE SEQUENCE
 class CreateSeqStmt : public Node {
 public:
-    CreateSeqStmt() : Node(mytoydb::nodes::NodeTag::kCreateSeqStmt) {}
+    CreateSeqStmt() : Node(pgcpp::nodes::NodeTag::kCreateSeqStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1833,7 +1833,7 @@ public:
 // AlterSeqStmt — ALTER SEQUENCE
 class AlterSeqStmt : public Node {
 public:
-    AlterSeqStmt() : Node(mytoydb::nodes::NodeTag::kAlterSeqStmt) {}
+    AlterSeqStmt() : Node(pgcpp::nodes::NodeTag::kAlterSeqStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1847,7 +1847,7 @@ public:
 // CreateFunctionStmt — CREATE FUNCTION
 class CreateFunctionStmt : public Node {
 public:
-    CreateFunctionStmt() : Node(mytoydb::nodes::NodeTag::kCreateFunctionStmt) {}
+    CreateFunctionStmt() : Node(pgcpp::nodes::NodeTag::kCreateFunctionStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1863,7 +1863,7 @@ public:
 // AlterFunctionStmt — ALTER FUNCTION
 class AlterFunctionStmt : public Node {
 public:
-    AlterFunctionStmt() : Node(mytoydb::nodes::NodeTag::kAlterFunctionStmt) {}
+    AlterFunctionStmt() : Node(pgcpp::nodes::NodeTag::kAlterFunctionStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1879,7 +1879,7 @@ public:
 // CreateTrigStmt — CREATE TRIGGER
 class CreateTrigStmt : public Node {
 public:
-    CreateTrigStmt() : Node(mytoydb::nodes::NodeTag::kCreateTrigStmt) {}
+    CreateTrigStmt() : Node(pgcpp::nodes::NodeTag::kCreateTrigStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1904,7 +1904,7 @@ public:
 // CreateRoleStmt — CREATE ROLE / USER / GROUP
 class CreateRoleStmt : public Node {
 public:
-    CreateRoleStmt() : Node(mytoydb::nodes::NodeTag::kCreateRoleStmt) {}
+    CreateRoleStmt() : Node(pgcpp::nodes::NodeTag::kCreateRoleStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1918,7 +1918,7 @@ public:
 // AlterRoleStmt — ALTER ROLE
 class AlterRoleStmt : public Node {
 public:
-    AlterRoleStmt() : Node(mytoydb::nodes::NodeTag::kAlterRoleStmt) {}
+    AlterRoleStmt() : Node(pgcpp::nodes::NodeTag::kAlterRoleStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1931,7 +1931,7 @@ public:
 // DropRoleStmt — DROP ROLE
 class DropRoleStmt : public Node {
 public:
-    DropRoleStmt() : Node(mytoydb::nodes::NodeTag::kDropRoleStmt) {}
+    DropRoleStmt() : Node(pgcpp::nodes::NodeTag::kDropRoleStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1943,7 +1943,7 @@ public:
 // GrantStmt — GRANT / REVOKE
 class GrantStmt : public Node {
 public:
-    GrantStmt() : Node(mytoydb::nodes::NodeTag::kGrantStmt) {}
+    GrantStmt() : Node(pgcpp::nodes::NodeTag::kGrantStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1961,7 +1961,7 @@ public:
 // GrantRoleStmt — GRANT ROLE
 class GrantRoleStmt : public Node {
 public:
-    GrantRoleStmt() : Node(mytoydb::nodes::NodeTag::kGrantRoleStmt) {}
+    GrantRoleStmt() : Node(pgcpp::nodes::NodeTag::kGrantRoleStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1977,7 +1977,7 @@ public:
 // CopyStmt — COPY
 class CopyStmt : public Node {
 public:
-    CopyStmt() : Node(mytoydb::nodes::NodeTag::kCopyStmt) {}
+    CopyStmt() : Node(pgcpp::nodes::NodeTag::kCopyStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -1994,7 +1994,7 @@ public:
 // RefreshMatViewStmt — REFRESH MATERIALIZED VIEW
 class RefreshMatViewStmt : public Node {
 public:
-    RefreshMatViewStmt() : Node(mytoydb::nodes::NodeTag::kRefreshMatViewStmt) {}
+    RefreshMatViewStmt() : Node(pgcpp::nodes::NodeTag::kRefreshMatViewStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -2007,7 +2007,7 @@ public:
 // CreateTableSpaceStmt — CREATE TABLESPACE
 class CreateTableSpaceStmt : public Node {
 public:
-    CreateTableSpaceStmt() : Node(mytoydb::nodes::NodeTag::kCreateTableSpaceStmt) {}
+    CreateTableSpaceStmt() : Node(pgcpp::nodes::NodeTag::kCreateTableSpaceStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -2021,7 +2021,7 @@ public:
 // DropTableSpaceStmt — DROP TABLESPACE
 class DropTableSpaceStmt : public Node {
 public:
-    DropTableSpaceStmt() : Node(mytoydb::nodes::NodeTag::kDropTableSpaceStmt) {}
+    DropTableSpaceStmt() : Node(pgcpp::nodes::NodeTag::kDropTableSpaceStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -2033,7 +2033,7 @@ public:
 // CreatedbStmt — CREATE DATABASE
 class CreatedbStmt : public Node {
 public:
-    CreatedbStmt() : Node(mytoydb::nodes::NodeTag::kCreatedbStmt) {}
+    CreatedbStmt() : Node(pgcpp::nodes::NodeTag::kCreatedbStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -2045,7 +2045,7 @@ public:
 // DropdbStmt — DROP DATABASE
 class DropdbStmt : public Node {
 public:
-    DropdbStmt() : Node(mytoydb::nodes::NodeTag::kDropdbStmt) {}
+    DropdbStmt() : Node(pgcpp::nodes::NodeTag::kDropdbStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -2058,7 +2058,7 @@ public:
 // AlterDatabaseStmt — ALTER DATABASE
 class AlterDatabaseStmt : public Node {
 public:
-    AlterDatabaseStmt() : Node(mytoydb::nodes::NodeTag::kAlterDatabaseStmt) {}
+    AlterDatabaseStmt() : Node(pgcpp::nodes::NodeTag::kAlterDatabaseStmt) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -2074,7 +2074,7 @@ public:
 // Query — parse analysis turns all statements into a Query tree.
 class Query : public Node {
 public:
-    Query() : Node(mytoydb::nodes::NodeTag::kQuery) {}
+    Query() : Node(pgcpp::nodes::NodeTag::kQuery) {}
 
     Node* Clone() const override;
     bool Equals(const Node& other) const override;
@@ -2139,4 +2139,4 @@ struct GroupClause {
     bool group_distinct = false;
 };
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

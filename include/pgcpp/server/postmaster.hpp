@@ -21,7 +21,7 @@
 
 #include "pgcpp/protocol/pqformat.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // ServerConfig — configuration for the postmaster.
 struct ServerConfig {
@@ -83,7 +83,7 @@ StartupPacketResult ProcessStartupPacket(int client_fd);
 //
 // Each SendMessage call writes the full wire-format message (type byte +
 // 4-byte length + payload) to the socket. Writes are blocking.
-class SocketSink : public mytoydb::protocol::OutputSink {
+class SocketSink : public pgcpp::protocol::OutputSink {
 public:
     explicit SocketSink(int fd);
     ~SocketSink() override;
@@ -91,7 +91,7 @@ public:
     SocketSink(const SocketSink&) = delete;
     SocketSink& operator=(const SocketSink&) = delete;
 
-    void SendMessage(const mytoydb::protocol::Message& msg) override;
+    void SendMessage(const pgcpp::protocol::Message& msg) override;
 
     int fd() const { return fd_; }
 
@@ -146,7 +146,7 @@ private:
 // BackendMain — the per-connection backend loop.
 //
 // Reads protocol messages from the client socket and dispatches them to
-// the protocol handler (mytoydb::protocol::Backend). Runs until the client
+// the protocol handler (pgcpp::protocol::Backend). Runs until the client
 // sends a Terminate message or disconnects.
 //
 // This is the entry point for a forked child process.
@@ -160,4 +160,4 @@ void InitializeServerSubsystems(const std::string& data_dir);
 // ShutdownServerSubsystems — clean up global subsystems.
 void ShutdownServerSubsystems();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

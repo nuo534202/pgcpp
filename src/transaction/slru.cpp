@@ -4,7 +4,7 @@
 //
 // SLRU (Simple LRU) is a fixed-size page cache used for transaction-status
 // data that must be shared but doesn't go through the main buffer manager.
-// MyToyDB keeps the API but uses an in-memory std::vector<Page> for simplicity;
+// pgcpp keeps the API but uses an in-memory std::vector<Page> for simplicity;
 // the in-memory store IS the backing store, so flush is a no-op that just
 // clears dirty flags. Eviction is FIFO (the page at index 0), not true LRU.
 #include "pgcpp/transaction/slru.hpp"
@@ -12,7 +12,7 @@
 #include <cstring>
 #include <vector>
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -85,4 +85,4 @@ void SimpleLruFree(SlruCtl* ctl) {
     delete ctl;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

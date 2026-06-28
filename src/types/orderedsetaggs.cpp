@@ -11,9 +11,9 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/builtins.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 Datum ordered_set_mode(const std::vector<Datum>& values, int (*cmp)(Datum, Datum)) {
     if (values.empty()) {
@@ -110,4 +110,4 @@ std::vector<Datum> ordered_set_percentile_disc_array(const std::vector<Datum>& s
     return out;
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

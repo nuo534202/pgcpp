@@ -8,7 +8,7 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // XLByteLT — lsn1 < lsn2
 inline bool XLByteLT(XLogRecPtr lsn1, XLogRecPtr lsn2) {
@@ -35,4 +35,4 @@ inline bool XLByteGE(XLogRecPtr lsn1, XLogRecPtr lsn2) {
     return lsn1 >= lsn2;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

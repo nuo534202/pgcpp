@@ -10,7 +10,7 @@
 //   btrescan    — restart the scan from the beginning
 //   btendscan   — release scan resources
 //
-// MyToyDB implements a simplified B-tree:
+// pgcpp implements a simplified B-tree:
 //   - Supports int32, int64, and text keys
 //   - Root starts as a leaf; splits into two leaves with a new internal
 //     root when full
@@ -28,7 +28,7 @@
 #include "pgcpp/storage/bufmgr.hpp"
 #include "pgcpp/transaction/heap_tuple.hpp"
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 
 // B-tree scan strategy (maps to PostgreSQL's StrategyNumber).
 enum class BTStrategy {
@@ -55,13 +55,13 @@ struct BTScanDescData {
     BTScanKeyData scan_key;                  // search key (strategy + value)
 
     // Current scan position.
-    mytoydb::storage::BlockNumber curr_block = 0;  // current leaf block
-    mytoydb::storage::Buffer curr_buf = mytoydb::storage::kInvalidBuffer;
-    mytoydb::storage::OffsetNumber curr_offset = 0;  // next offset to check
-    bool inited = false;                             // true if scan has been positioned
+    pgcpp::storage::BlockNumber curr_block = 0;  // current leaf block
+    pgcpp::storage::Buffer curr_buf = pgcpp::storage::kInvalidBuffer;
+    pgcpp::storage::OffsetNumber curr_offset = 0;  // next offset to check
+    bool inited = false;                           // true if scan has been positioned
 
     // The current tuple being returned (tid of the matching heap tuple).
-    mytoydb::transaction::ItemPointerData curr_tid;
+    pgcpp::transaction::ItemPointerData curr_tid;
 };
 
 // BTScanDesc — pointer to a BTScanDescData.
@@ -80,7 +80,7 @@ using BTScanDesc = BTScanDescData*;
 //
 // Returns true on success.
 bool btinsert(Relation index, BTKeyKind kind, const void* key, uint16_t key_len,
-              const mytoydb::transaction::ItemPointerData& tid);
+              const pgcpp::transaction::ItemPointerData& tid);
 
 // btbeginscan — start a B-tree scan.
 //
@@ -113,7 +113,7 @@ bool btcanreturn(Relation index);
 // matching tid to `tids`. Returns the number of tids collected.
 // The scan must have been started with btbeginscan; this function does not
 // reset the scan position, so callers typically begin a fresh scan first.
-int64_t btgetbitmap(BTScanDesc scan, std::vector<mytoydb::transaction::ItemPointerData>* tids);
+int64_t btgetbitmap(BTScanDesc scan, std::vector<pgcpp::transaction::ItemPointerData>* tids);
 
 // --- Index creation ---
 
@@ -127,18 +127,18 @@ void btbuild(Relation index, BTKeyKind key_kind);
 // _bt_search_leaf — find the leaf page and offset for a given key.
 // Returns the leaf buffer (pinned) and sets *offset to the first entry
 // >= key (or one past the last entry if all entries are < key).
-mytoydb::storage::Buffer _bt_search_leaf(Relation index, BTKeyKind kind, const void* key,
-                                         uint16_t key_len, mytoydb::storage::OffsetNumber* offset);
+pgcpp::storage::Buffer _bt_search_leaf(Relation index, BTKeyKind kind, const void* key,
+                                       uint16_t key_len, pgcpp::storage::OffsetNumber* offset);
 
 // _bt_find_insert_pos — find the position to insert a key in a leaf page.
 // Returns the offset number (1-based) where the key should be inserted.
-mytoydb::storage::OffsetNumber _bt_find_insert_pos(mytoydb::storage::Page page, BTKeyKind kind,
-                                                   const void* key, uint16_t key_len);
+pgcpp::storage::OffsetNumber _bt_find_insert_pos(pgcpp::storage::Page page, BTKeyKind kind,
+                                                 const void* key, uint16_t key_len);
 
 // _bt_find_scan_pos — find the first entry >= key in a leaf page.
 // Returns the offset number, or one past the last entry if not found.
-mytoydb::storage::OffsetNumber _bt_find_scan_pos(mytoydb::storage::Page page, BTKeyKind kind,
-                                                 const void* key, uint16_t key_len);
+pgcpp::storage::OffsetNumber _bt_find_scan_pos(pgcpp::storage::Page page, BTKeyKind kind,
+                                               const void* key, uint16_t key_len);
 
 // --- P0 helper extensions (Task 15.8.5 / FN15/FN23/FN28) ---
 
@@ -151,20 +151,20 @@ mytoydb::storage::OffsetNumber _bt_find_scan_pos(mytoydb::storage::Page page, BT
 // [1, max_offset+1]; max_offset+1 means the key belongs past the last item.
 //
 // Assumes all line pointers on the page are normal (true for compacted
-// B-tree pages in MyToyDB; the linear _bt_find_insert_pos / _bt_find_scan_pos
+// B-tree pages in pgcpp; the linear _bt_find_insert_pos / _bt_find_scan_pos
 // helpers remain available for pages that may contain dead entries).
-mytoydb::storage::OffsetNumber _bt_binsrch(mytoydb::storage::Page page, BTKeyKind kind,
-                                           const void* key, uint16_t key_len, bool for_insert);
+pgcpp::storage::OffsetNumber _bt_binsrch(pgcpp::storage::Page page, BTKeyKind kind, const void* key,
+                                         uint16_t key_len, bool for_insert);
 
 // _bt_getbuf — read and pin a B-tree page by block number.
-mytoydb::storage::Buffer _bt_getbuf(Relation index, mytoydb::storage::BlockNumber blkno);
+pgcpp::storage::Buffer _bt_getbuf(Relation index, pgcpp::storage::BlockNumber blkno);
 
 // _bt_relandgetbuf — release the current buffer and read a new one.
 // Equivalent to ReleaseBuffer(buf); _bt_getbuf(index, blkno).
-mytoydb::storage::Buffer _bt_relandgetbuf(Relation index, mytoydb::storage::Buffer buf,
-                                          mytoydb::storage::BlockNumber blkno);
+pgcpp::storage::Buffer _bt_relandgetbuf(Relation index, pgcpp::storage::Buffer buf,
+                                        pgcpp::storage::BlockNumber blkno);
 
 // _bt_relbuf — release a pinned B-tree buffer.
-void _bt_relbuf(Relation index, mytoydb::storage::Buffer buf);
+void _bt_relbuf(Relation index, pgcpp::storage::Buffer buf);
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

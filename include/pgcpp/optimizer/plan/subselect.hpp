@@ -8,10 +8,10 @@
 //     choose NestLoop/HashJoin/MergeJoin instead of evaluating the subquery
 //     once per outer row.
 //   - EXISTS (SubLinkType::kExists): "EXISTS (SELECT ...)" → unfold into a
-//     semi-join (skeleton in MyToyDB).
+//     semi-join (skeleton in pgcpp).
 //   - ALL (SubLinkType::kAll): skeleton; not yet unfolded.
 //
-// For MyToyDB's Task 15.15, the unfolding is simplified:
+// For pgcpp's Task 15.15, the unfolding is simplified:
 //   - IN-sublinks are converted to a join clause "outer = inner_subquery_var"
 //     and the subquery's plan is wrapped in a SubqueryScanPath / SubqueryScan
 //     Plan node. The subquery is planned independently (no shared ECs).
@@ -21,9 +21,9 @@
 #include "pgcpp/optimizer/path.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
-// Forward declaration — defined in mytoydb/optimizer/planner.hpp.
+// Forward declaration — defined in pgcpp/optimizer/planner.hpp.
 struct PlannerInfo;
 
 // pull_up_sublinks — walk the query's jointree and quals looking for
@@ -44,7 +44,7 @@ int pull_up_sublinks(PlannerInfo* root);
 //   - Appends a RangeTblEntry with rtekind=kSubquery to query->rtable.
 //   - Updates root->simple_rte_array accordingly (caller's responsibility
 //     to call build_base_rel_infos afterward to refresh RelOptInfo).
-mytoydb::parser::Node* convert_any_sublink_to_join(PlannerInfo* root,
-                                                   mytoydb::parser::SubLink* sublink);
+pgcpp::parser::Node* convert_any_sublink_to_join(PlannerInfo* root,
+                                                 pgcpp::parser::SubLink* sublink);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

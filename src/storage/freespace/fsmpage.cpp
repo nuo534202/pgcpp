@@ -5,7 +5,7 @@
 
 #include <algorithm>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -85,7 +85,7 @@ int FSMPageSearchFreeSpace(FSMPageData* page, uint8_t min_value) {
     // We also implement PG's round-robin search hint (fp_next_slot): try
     // starting the search from a hint slot first, then from the root.
     //
-    // For simplicity MyToyDB uses the root-walk variant; fp_next_slot is
+    // For simplicity pgcpp uses the root-walk variant; fp_next_slot is
     // updated to the found slot to mirror PG's behavior.
     if (page->nodes[0] < min_value) {
         return -1;
@@ -132,4 +132,4 @@ int FSMSlotToNodeIndex(int slot) {
     return NodeIndexFromSlot(slot);
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

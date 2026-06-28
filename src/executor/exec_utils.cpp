@@ -8,36 +8,36 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::executor {
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::catalog::AttAlign;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::Oid;
-using mytoydb::memory::palloc;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::Const;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::DatumGetBool;
-using mytoydb::types::DatumGetFloat8;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
-using mytoydb::types::kVarcharOid;
-using mytoydb::types::VARDATA;
-using mytoydb::types::VARSIZE_DATA;
+using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::palloc;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::Const;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::DatumGetBool;
+using pgcpp::types::DatumGetFloat8;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kDateOid;
+using pgcpp::types::kFloat4Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
+using pgcpp::types::kVarcharOid;
+using pgcpp::types::VARDATA;
+using pgcpp::types::VARSIZE_DATA;
 
 void FillTypeAttrs(Oid typid, int16_t* attlen, bool* attbyval, AttAlign* attalign) {
     switch (typid) {
@@ -78,9 +78,8 @@ void FillTypeAttrs(Oid typid, int16_t* attlen, bool* attbyval, AttAlign* attalig
     }
 }
 
-mytoydb::access::TupleDesc BuildTupleDescFromTargetList(
-    const std::vector<TargetEntry*>& targetlist) {
-    auto* tupdesc = makePallocNode<mytoydb::access::TupleDescData>();
+pgcpp::access::TupleDesc BuildTupleDescFromTargetList(const std::vector<TargetEntry*>& targetlist) {
+    auto* tupdesc = makePallocNode<pgcpp::access::TupleDescData>();
     tupdesc->natts = static_cast<int>(targetlist.size());
 
     int attno = 1;
@@ -119,7 +118,7 @@ mytoydb::access::TupleDesc BuildTupleDescFromTargetList(
     return tupdesc;
 }
 
-int CompareDatumValues(mytoydb::types::Datum a, bool a_null, mytoydb::types::Datum b, bool b_null,
+int CompareDatumValues(pgcpp::types::Datum a, bool a_null, pgcpp::types::Datum b, bool b_null,
                        Oid typid) {
     // NULLs sort before non-NULLs.
     if (a_null && b_null)
@@ -207,4 +206,4 @@ int CompareTuplesOnAttrs(const TupleTableSlot* a, const TupleTableSlot* b,
     return 0;
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

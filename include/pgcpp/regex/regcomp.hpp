@@ -15,7 +15,7 @@
 
 #include "pgcpp/regex/regex_internal.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 // Compile `pattern` (a null-terminated C string) with the given `flags`
 // (REG_EXTENDED | REG_ICASE | REG_NOSUB | REG_NEWLINE). Returns a regex_t*
@@ -23,4 +23,4 @@ namespace mytoydb::regex {
 // re_errno != 0.
 regex_t* pg_regcomp(const char* pattern, int flags);
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

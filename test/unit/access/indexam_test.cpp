@@ -33,68 +33,68 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-using mytoydb::access::btbeginscan;
-using mytoydb::access::btbuild;
-using mytoydb::access::BTKeyKind;
-using mytoydb::access::BTScanDesc;
-using mytoydb::access::BTScanKeyData;
-using mytoydb::access::BTStrategy;
-using mytoydb::access::index_beginscan;
-using mytoydb::access::index_build;
-using mytoydb::access::index_can_return;
-using mytoydb::access::index_close;
-using mytoydb::access::index_endscan;
-using mytoydb::access::index_getbitmap;
-using mytoydb::access::index_getnext_tid;
-using mytoydb::access::index_insert;
-using mytoydb::access::index_open;
-using mytoydb::access::index_rescan;
-using mytoydb::access::IndexAmRoutine;
-using mytoydb::access::InitializeRelcache;
-using mytoydb::access::kBTEqualStrategyNumber;
-using mytoydb::access::kBTGreaterStrategyNumber;
-using mytoydb::access::kBTreeAmOid;
-using mytoydb::access::LookupAmRoutine;
-using mytoydb::access::Relation;
-using mytoydb::access::RelationClose;
-using mytoydb::access::RelationCreateStorage;
-using mytoydb::access::RelationOpen;
-using mytoydb::access::ResetRelcache;
-using mytoydb::access::ScanKeyData;
-using mytoydb::access::ScanKeyEntryInitialize;
-using mytoydb::access::ScanKeyInit;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::RelKind;
-using mytoydb::catalog::RelPersistence;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::storage::BlockNumber;
-using mytoydb::storage::InitBufferPool;
-using mytoydb::storage::SetStorageBaseDir;
-using mytoydb::storage::ShutdownBufferPool;
-using mytoydb::storage::smgrcloseall;
-using mytoydb::transaction::InitializeTransactionSystem;
-using mytoydb::transaction::ItemPointerData;
-using mytoydb::transaction::ResetTransactionState;
-using mytoydb::types::Datum;
-using mytoydb::types::Int32GetDatum;
+using pgcpp::access::btbeginscan;
+using pgcpp::access::btbuild;
+using pgcpp::access::BTKeyKind;
+using pgcpp::access::BTScanDesc;
+using pgcpp::access::BTScanKeyData;
+using pgcpp::access::BTStrategy;
+using pgcpp::access::index_beginscan;
+using pgcpp::access::index_build;
+using pgcpp::access::index_can_return;
+using pgcpp::access::index_close;
+using pgcpp::access::index_endscan;
+using pgcpp::access::index_getbitmap;
+using pgcpp::access::index_getnext_tid;
+using pgcpp::access::index_insert;
+using pgcpp::access::index_open;
+using pgcpp::access::index_rescan;
+using pgcpp::access::IndexAmRoutine;
+using pgcpp::access::InitializeRelcache;
+using pgcpp::access::kBTEqualStrategyNumber;
+using pgcpp::access::kBTGreaterStrategyNumber;
+using pgcpp::access::kBTreeAmOid;
+using pgcpp::access::LookupAmRoutine;
+using pgcpp::access::Relation;
+using pgcpp::access::RelationClose;
+using pgcpp::access::RelationCreateStorage;
+using pgcpp::access::RelationOpen;
+using pgcpp::access::ResetRelcache;
+using pgcpp::access::ScanKeyData;
+using pgcpp::access::ScanKeyEntryInitialize;
+using pgcpp::access::ScanKeyInit;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::RelKind;
+using pgcpp::catalog::RelPersistence;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::storage::BlockNumber;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ItemPointerData;
+using pgcpp::transaction::ResetTransactionState;
+using pgcpp::types::Datum;
+using pgcpp::types::Int32GetDatum;
 
 namespace {
 
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::makePallocNode;
 
 class IndexamTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("indexam_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -126,7 +126,7 @@ protected:
         ResetTransactionState();
         InitializeTransactionSystem();
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

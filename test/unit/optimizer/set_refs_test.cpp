@@ -1,6 +1,6 @@
 // set_refs_test.cpp — Unit tests for plan-reference finalization (M10 15.3).
 //
-// Tests set_plan_references. For MyToyDB's single-table workload with
+// Tests set_plan_references. For pgcpp's single-table workload with
 // rtoffset=0, the fixup is mostly a no-op: Var.varno is already correct.
 // These tests verify that set_plan_references does not corrupt the plan tree.
 
@@ -19,46 +19,46 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::executor::Agg;
-using mytoydb::executor::Plan;
-using mytoydb::executor::PlanType;
-using mytoydb::executor::Result;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::Sort;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::set_plan_references;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::Const;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
+using pgcpp::executor::Agg;
+using pgcpp::executor::Plan;
+using pgcpp::executor::PlanType;
+using pgcpp::executor::Result;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::Sort;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::set_plan_references;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::Const;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
 
 namespace {
 
-constexpr mytoydb::catalog::Oid kInt4GtOp = 521;  // int4 > int4
+constexpr pgcpp::catalog::Oid kInt4GtOp = 521;  // int4 > int4
 
 class SetRefsTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("set_refs_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("set_refs_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -82,7 +82,7 @@ protected:
         return con;
     }
 
-    OpExpr* MakeOpExpr(mytoydb::catalog::Oid opno, Node* left, Node* right) {
+    OpExpr* MakeOpExpr(pgcpp::catalog::Oid opno, Node* left, Node* right) {
         auto* op = makePallocNode<OpExpr>();
         op->opno = opno;
         op->opresulttype = kBoolOid;
@@ -127,7 +127,7 @@ protected:
         return query;
     }
 
-    mytoydb::memory::AllocSetContext* context_ = nullptr;
+    pgcpp::memory::AllocSetContext* context_ = nullptr;
 };
 
 // set_plan_references on a simple SeqScan does not corrupt the plan.
@@ -173,7 +173,7 @@ TEST_F(SetRefsTest, SeqScanWithQual_PreservesQual) {
     set_plan_references(root, scan);
 
     EXPECT_NE(scan->qual, nullptr);
-    EXPECT_EQ(scan->qual->GetTag(), mytoydb::nodes::NodeTag::kOpExpr);
+    EXPECT_EQ(scan->qual->GetTag(), pgcpp::nodes::NodeTag::kOpExpr);
 }
 
 // set_plan_references on an Agg plan preserves the child plan.
@@ -183,7 +183,7 @@ TEST_F(SetRefsTest, AggPlan_PreservesChildPlan) {
     query->rtable.push_back(MakeRTE(16384));
     query->jointree = MakeFromExpr(1);
     query->has_aggs = true;
-    auto* aggref = makePallocNode<mytoydb::parser::Aggref>();
+    auto* aggref = makePallocNode<pgcpp::parser::Aggref>();
     aggref->aggfnoid = 2147;
     aggref->aggtype = kInt8Oid;
     aggref->aggstar = true;

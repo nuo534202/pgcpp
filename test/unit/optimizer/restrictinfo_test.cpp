@@ -18,38 +18,38 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::make_restrictinfo;
-using mytoydb::optimizer::make_restrictinfos_from_quals;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::Relids;
-using mytoydb::optimizer::RestrictInfo;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::Const;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Var;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::make_restrictinfo;
+using pgcpp::optimizer::make_restrictinfos_from_quals;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::Relids;
+using pgcpp::optimizer::RestrictInfo;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::Const;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Var;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
 
 namespace {
 
 // Operator OIDs (from bootstrap_catalog.cpp).
-constexpr mytoydb::catalog::Oid kInt4EqOp = 96;   // int4 = int4
-constexpr mytoydb::catalog::Oid kInt4GtOp = 521;  // int4 > int4
+constexpr pgcpp::catalog::Oid kInt4EqOp = 96;   // int4 = int4
+constexpr pgcpp::catalog::Oid kInt4GtOp = 521;  // int4 > int4
 
 class RestrictInfoTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("restrictinfo_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("restrictinfo_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -73,7 +73,7 @@ protected:
         return con;
     }
 
-    OpExpr* MakeOpExpr(mytoydb::catalog::Oid opno, Node* left, Node* right) {
+    OpExpr* MakeOpExpr(pgcpp::catalog::Oid opno, Node* left, Node* right) {
         auto* op = makePallocNode<OpExpr>();
         op->opno = opno;
         op->opresulttype = kBoolOid;
@@ -82,7 +82,7 @@ protected:
         return op;
     }
 
-    mytoydb::memory::AllocSetContext* context_ = nullptr;
+    pgcpp::memory::AllocSetContext* context_ = nullptr;
 };
 
 // make_restrictinfo wraps a clause with default metadata.

@@ -19,44 +19,44 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::optimizer::build_base_rel_infos;
-using mytoydb::optimizer::deconstruct_jointree;
-using mytoydb::optimizer::distribute_quals_to_rels;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::query_planner_init;
-using mytoydb::optimizer::RelOptInfo;
-using mytoydb::optimizer::RestrictInfo;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::Const;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::optimizer::build_base_rel_infos;
+using pgcpp::optimizer::deconstruct_jointree;
+using pgcpp::optimizer::distribute_quals_to_rels;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::query_planner_init;
+using pgcpp::optimizer::RelOptInfo;
+using pgcpp::optimizer::RestrictInfo;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::Const;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
 
 namespace {
 
-constexpr mytoydb::catalog::Oid kInt4GtOp = 521;  // int4 > int4
+constexpr pgcpp::catalog::Oid kInt4GtOp = 521;  // int4 > int4
 
 class InitSplanTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("init_splan_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("init_splan_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -80,7 +80,7 @@ protected:
         return con;
     }
 
-    OpExpr* MakeOpExpr(mytoydb::catalog::Oid opno, Node* left, Node* right) {
+    OpExpr* MakeOpExpr(pgcpp::catalog::Oid opno, Node* left, Node* right) {
         auto* op = makePallocNode<OpExpr>();
         op->opno = opno;
         op->opresulttype = kBoolOid;
@@ -115,7 +115,7 @@ protected:
         return query;
     }
 
-    mytoydb::memory::AllocSetContext* context_ = nullptr;
+    pgcpp::memory::AllocSetContext* context_ = nullptr;
 };
 
 // build_base_rel_infos populates simple_rte_array and simple_rel_array.
@@ -218,8 +218,8 @@ TEST_F(InitSplanTest, DistributeQuals_SplitsAndClauses) {
     // a > 5 AND a < 10
     Node* c1 = MakeOpExpr(kInt4GtOp, MakeVar(1, 1), MakeInt4Const(5));
     Node* c2 = MakeOpExpr(kInt4GtOp, MakeVar(1, 1), MakeInt4Const(10));
-    auto* and_expr = makePallocNode<mytoydb::parser::BoolExpr>();
-    and_expr->boolop = mytoydb::parser::BoolExprType::kAnd;
+    auto* and_expr = makePallocNode<pgcpp::parser::BoolExpr>();
+    and_expr->boolop = pgcpp::parser::BoolExprType::kAnd;
     and_expr->args.push_back(c1);
     and_expr->args.push_back(c2);
 

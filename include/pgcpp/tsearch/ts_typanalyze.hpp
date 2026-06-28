@@ -7,7 +7,7 @@
 
 #include "pgcpp/types/ts_types.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 // ---------------------------------------------------------------------------
 // ts_typanalyze (PostgreSQL src/backend/tsearch/ts_typanalyze.c).
@@ -29,6 +29,6 @@ struct TsVectorStats {
 };
 
 // Analyze a list of tsvector samples. Returns the computed statistics.
-TsVectorStats TsVectorAnalyze(const std::vector<const mytoydb::types::TsVectorData*>& samples);
+TsVectorStats TsVectorAnalyze(const std::vector<const pgcpp::types::TsVectorData*>& samples);
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

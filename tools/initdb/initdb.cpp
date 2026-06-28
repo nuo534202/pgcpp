@@ -1,8 +1,8 @@
-// initdb.cpp — MyToyDB cluster initialization tool (initdb equivalent).
+// initdb.cpp — pgcpp cluster initialization tool (initdb equivalent).
 //
 // Converted from PostgreSQL 15's src/bin/initdb/.
 //
-// Creates a new MyToyDB data directory and initializes the system catalog.
+// Creates a new pgcpp data directory and initializes the system catalog.
 // This is a thin wrapper around BootstrapCluster from the server module.
 //
 // Usage:
@@ -14,9 +14,9 @@
 
 #include "pgcpp/server/bootstrap.hpp"
 
-using mytoydb::server::BootstrapCluster;
-using mytoydb::server::BootstrapResult;
-using mytoydb::server::BootstrapResultToString;
+using pgcpp::server::BootstrapCluster;
+using pgcpp::server::BootstrapResult;
+using pgcpp::server::BootstrapResultToString;
 
 namespace {
 

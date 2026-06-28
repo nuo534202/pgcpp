@@ -2,7 +2,7 @@
 //
 // Converted from PostgreSQL 15's src/backend/replication/slot.c.
 //
-// PG stores slots in shared memory; MyToyDB keeps an in-process
+// PG stores slots in shared memory; pgcpp keeps an in-process
 // std::map<std::string, ReplicationSlot> keyed by slot name.
 #include "pgcpp/replication/slot.hpp"
 
@@ -11,9 +11,9 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -168,4 +168,4 @@ const char* SlotPersistenceName(SlotPersistence p) {
     return (p == SlotPersistence::kPersistent) ? "persistent" : "temporary";
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

@@ -18,29 +18,29 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::executor::Agg;
-using mytoydb::executor::Plan;
-using mytoydb::executor::Result;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::Sort;
-using mytoydb::memory::palloc;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::Const;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::makeVar;
-using mytoydb::parser::Node;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::DatumGetInt64;
+using pgcpp::executor::Agg;
+using pgcpp::executor::Plan;
+using pgcpp::executor::Result;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::Sort;
+using pgcpp::memory::palloc;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::Const;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::makeVar;
+using pgcpp::parser::Node;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::DatumGetInt64;
 
 // Forward declaration — implemented in allpaths.cpp.
 void BuildBaseRelInfos(PlannerInfo* root);
@@ -106,13 +106,13 @@ static void ExtractVars(Node* expr, std::vector<Var*>* vars) {
             break;
         }
         case NodeTag::kOpExpr: {
-            auto* op = static_cast<mytoydb::parser::OpExpr*>(expr);
+            auto* op = static_cast<pgcpp::parser::OpExpr*>(expr);
             for (Node* arg : op->args)
                 ExtractVars(arg, vars);
             break;
         }
         case NodeTag::kFuncExpr: {
-            auto* f = static_cast<mytoydb::parser::FuncExpr*>(expr);
+            auto* f = static_cast<pgcpp::parser::FuncExpr*>(expr);
             for (Node* arg : f->args)
                 ExtractVars(arg, vars);
             break;
@@ -135,18 +135,18 @@ static void ExtractVars(Node* expr, std::vector<Var*>* vars) {
 // that use synthetic OIDs), fall back to extracting Vars from the Agg's
 // target list.
 static std::vector<TargetEntry*> BuildScanTargetList(
-    mytoydb::catalog::Oid relid, int varno, const std::vector<TargetEntry*>& agg_targetlist) {
+    pgcpp::catalog::Oid relid, int varno, const std::vector<TargetEntry*>& agg_targetlist) {
     std::vector<TargetEntry*> scan_tlist;
-    if (relid != 0 && mytoydb::catalog::GetCatalog() != nullptr) {
+    if (relid != 0 && pgcpp::catalog::GetCatalog() != nullptr) {
         // Get all attributes for the relation (ordered by attnum).
-        auto attrs = mytoydb::catalog::GetCatalog()->GetAttributes(relid);
-        for (const mytoydb::catalog::FormData_pg_attribute* attr : attrs) {
+        auto attrs = pgcpp::catalog::GetCatalog()->GetAttributes(relid);
+        for (const pgcpp::catalog::FormData_pg_attribute* attr : attrs) {
             if (attr->attnum < 1) {
                 continue;  // Skip system columns (attnum < 1).
             }
             auto* var = makeVar(varno, attr->attnum, attr->atttypid, attr->atttypmod,
                                 attr->attcollation, 0, -1);
-            auto* te = mytoydb::parser::makeNode<TargetEntry>();
+            auto* te = pgcpp::parser::makeNode<TargetEntry>();
             te->expr = var;
             te->resno = attr->attnum;
             te->resname = attr->attname;
@@ -172,9 +172,9 @@ static std::vector<TargetEntry*> BuildScanTargetList(
             if (seen[attno])
                 continue;
             seen[attno] = true;
-            auto* new_var = mytoydb::parser::makeNode<Var>();
+            auto* new_var = pgcpp::parser::makeNode<Var>();
             *new_var = *var;
-            auto* new_te = mytoydb::parser::makeNode<TargetEntry>();
+            auto* new_te = pgcpp::parser::makeNode<TargetEntry>();
             new_te->expr = new_var;
             new_te->resno = attno;
             scan_tlist.push_back(new_te);
@@ -325,11 +325,11 @@ Plan* subplanner(PlannerInfo* root) {
         if (has_aggs) {
             // Look up the relation OID from the range table entry.
             int rte_idx = base_rel - 1;  // 1-based to 0-based
-            mytoydb::catalog::Oid relid = 0;
+            pgcpp::catalog::Oid relid = 0;
             if (rte_idx >= 0 && rte_idx < static_cast<int>(query->rtable.size())) {
                 Node* rte_node = query->rtable[rte_idx];
                 if (rte_node != nullptr && rte_node->GetTag() == NodeTag::kRangeTblEntry) {
-                    relid = static_cast<mytoydb::catalog::Oid>(
+                    relid = static_cast<pgcpp::catalog::Oid>(
                         static_cast<RangeTblEntry*>(rte_node)->relid);
                 }
             }
@@ -371,4 +371,4 @@ Plan* subplanner(PlannerInfo* root) {
     return plan;
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

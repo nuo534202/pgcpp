@@ -7,7 +7,7 @@
 
 #include "pgcpp/statistics/mvdistinct_sample.hpp"
 
-namespace mytoydb::statistics {
+namespace pgcpp::statistics {
 
 // EstimateNDistinct — the D1 estimator from Haas & Stokes (1998).
 //   D1 = d + f1 * n / (n - f1)
@@ -46,4 +46,4 @@ StatsBuildData SampleRows(const std::vector<AttrNumber>& attnums,
     return data;
 }
 
-}  // namespace mytoydb::statistics
+}  // namespace pgcpp::statistics

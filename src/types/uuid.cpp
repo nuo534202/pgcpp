@@ -11,10 +11,10 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
-using mytoydb::error::LogLevel;
-using mytoydb::memory::palloc;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::palloc;
 
 namespace {
 
@@ -128,4 +128,4 @@ Datum uuid_ge(Datum a, Datum b) {
     return BoolGetDatum(uuid_cmp(a, b) >= 0);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

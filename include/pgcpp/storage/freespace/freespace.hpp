@@ -8,7 +8,7 @@
 // page. PG stores the FSM on disk in the rel_fsm fork, organized as a
 // multi-level binary tree of FSM pages.
 //
-// MyToyDB keeps the FSM in memory as a per-relation std::map<BlockNumber,
+// pgcpp keeps the FSM in memory as a per-relation std::map<BlockNumber,
 // uint8_t> of free-space values. The API mirrors PG's GetPageWithFreeSpace
 // / RecordPageWithFreeSpace surface.
 #pragma once
@@ -20,14 +20,14 @@
 #include "pgcpp/storage/block.hpp"
 #include "pgcpp/storage/relfilenode.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // FSM_FREE_SPACE_MAX — the maximum free-space value tracked by the FSM
 // (matches PG's BLCKSZ - 1 in bytes, rounded to FSM's 256-step resolution).
 constexpr int kFsmFreeSpaceMax = 255;
 
 // FSMAddress — logical address inside a relation's FSM (leaf page + slot).
-// In MyToyDB this is just a bookkeeping struct; the leaf/slot split mirrors
+// In pgcpp this is just a bookkeeping struct; the leaf/slot split mirrors
 // PG's on-disk layout for fidelity.
 struct FSMAddress {
     int leaf = 0;  // leaf page number (within the relation's FSM)
@@ -79,4 +79,4 @@ int BytesForFreeSpaceCategory(uint8_t cat);
 // NumFSMRelations — count of relations with FSM entries.
 int NumFSMRelations();
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

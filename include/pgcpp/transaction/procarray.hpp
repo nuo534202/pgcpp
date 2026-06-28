@@ -7,7 +7,7 @@
 // determine the oldest running XID (for VACUUM), and build the snapshot of
 // running XIDs for standby.
 //
-// In MyToyDB (single-process), ProcArray tracks the current transaction
+// In pgcpp (single-process), ProcArray tracks the current transaction
 // plus any concurrent "virtual" backends for testing.
 #pragma once
 
@@ -16,7 +16,7 @@
 
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // InitializeProcArray — set up the process array (clear it).
 void InitializeProcArray();
@@ -45,4 +45,4 @@ int CountRunningXacts();
 // ProcArrayContains — true if `xid` is currently in the array (running).
 bool ProcArrayContains(TransactionId xid);
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

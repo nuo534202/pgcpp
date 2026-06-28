@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 class BloomFilter {
 public:
@@ -45,4 +45,4 @@ private:
     std::size_t k_;
 };
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

@@ -7,7 +7,7 @@
 // identifies what to invalidate (a relation cache entry, a snapshot, a
 // catcache entry, a relcache entry, etc.).
 //
-// MyToyDB (single-process) accumulates messages locally and processes them
+// pgcpp (single-process) accumulates messages locally and processes them
 // immediately at the end of each transaction (AcceptInvalidationMessages).
 // This preserves the API and the invalidation-driven cache-refresh pattern.
 #pragma once
@@ -19,7 +19,7 @@
 #include "pgcpp/catalog/catalog.hpp"
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // SharedInvalCmdType — kind of invalidation message (PG's enum).
 enum class SharedInvalCmdType : uint8_t {
@@ -36,10 +36,10 @@ struct SharedInvalidationMessage {
     SharedInvalCmdType kind = SharedInvalCmdType::kResetSync;
 
     // Union-like fields (PG uses a C union; we keep separate fields).
-    mytoydb::catalog::Oid db_id = 0;   // database OID (0 = all databases)
-    mytoydb::catalog::Oid rel_id = 0;  // relation OID (for Relcache/Smgr)
-    int cat_id = 0;                    // hash value (for Catcache)
-    int hash_value = 0;                // hash value (for Catcache)
+    pgcpp::catalog::Oid db_id = 0;   // database OID (0 = all databases)
+    pgcpp::catalog::Oid rel_id = 0;  // relation OID (for Relcache/Smgr)
+    int cat_id = 0;                  // hash value (for Catcache)
+    int hash_value = 0;              // hash value (for Catcache)
 
     SharedInvalidationMessage() = default;
 };
@@ -55,16 +55,16 @@ void InitializeSinval();
 void ResetSinval();
 
 // CacheInvalidateRelcache — enqueue a "invalidate relation cache" message.
-void CacheInvalidateRelcache(mytoydb::catalog::Oid db_id, mytoydb::catalog::Oid rel_id);
+void CacheInvalidateRelcache(pgcpp::catalog::Oid db_id, pgcpp::catalog::Oid rel_id);
 
 // CacheInvalidateSnapshot — enqueue a "invalidate snapshots" message.
-void CacheInvalidateSnapshot(mytoydb::catalog::Oid db_id);
+void CacheInvalidateSnapshot(pgcpp::catalog::Oid db_id);
 
 // CacheInvalidateCatcache — enqueue a "invalidate catcache entry" message.
-void CacheInvalidateCatcache(mytoydb::catalog::Oid db_id, int cat_id, int hash_value);
+void CacheInvalidateCatcache(pgcpp::catalog::Oid db_id, int cat_id, int hash_value);
 
 // CacheInvalidateSmgr — enqueue a "invalidate smgr" message (drop rel files).
-void CacheInvalidateSmgr(mytoydb::catalog::Oid db_id, mytoydb::catalog::Oid rel_id);
+void CacheInvalidateSmgr(pgcpp::catalog::Oid db_id, pgcpp::catalog::Oid rel_id);
 
 // RecordInvalidationMessage — enqueue a pre-built message.
 void RecordInvalidationMessage(const SharedInvalidationMessage& msg);
@@ -89,4 +89,4 @@ void UnregisterInvalidationHandler(int handler_id);
 // GetPendingInvalidationCount — number of messages currently queued.
 std::size_t GetPendingInvalidationCount();
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

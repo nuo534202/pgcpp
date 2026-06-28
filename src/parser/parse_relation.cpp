@@ -19,20 +19,20 @@
 #include "pgcpp/parser/parse_type.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_attribute;
-using mytoydb::catalog::FormData_pg_class;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::GetSysCache;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::nodes::Value;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_attribute;
+using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::GetSysCache;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::nodes::Value;
 
 static constexpr Oid kUnknownOid = 705;
 
@@ -81,7 +81,7 @@ RangeTblEntry* buildRangeTblEntry(RangeVar* relation, Alias* alias, bool inh, bo
         auto attrs = GetCatalog()->GetAttributes(relid);
         for (const auto* attr : attrs) {
             if (attr->attnum > 0) {  // skip system columns
-                auto* colname_val = mytoydb::nodes::makeString(attr->attname);
+                auto* colname_val = pgcpp::nodes::makeString(attr->attname);
                 eref->colnames.push_back(colname_val);
             }
         }
@@ -128,7 +128,7 @@ RangeTblEntry* addRangeTableEntryForSubquery(ParseState* pstate, Query* subquery
         if (nodeTag(tle_node) == NodeTag::kTargetEntry) {
             auto* tle = static_cast<TargetEntry*>(tle_node);
             if (!tle->resname.empty()) {
-                eref->colnames.push_back(mytoydb::nodes::makeString(tle->resname));
+                eref->colnames.push_back(pgcpp::nodes::makeString(tle->resname));
             }
         }
     }
@@ -355,7 +355,7 @@ Node* scanNameSpaceForColumn(ParseState* pstate, const std::string& colname, int
     }
 
     if (count > 1) {
-        ereport(mytoydb::error::LogLevel::kError, "column reference is ambiguous");
+        ereport(pgcpp::error::LogLevel::kError, "column reference is ambiguous");
     }
 
     return result;
@@ -437,4 +437,4 @@ void addRTEToQuery(ParseState* pstate, RangeTblEntry* rte, bool addToJoinList, b
     }
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

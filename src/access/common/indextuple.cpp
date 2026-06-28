@@ -16,12 +16,12 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::access {
-using mytoydb::memory::palloc;
-using mytoydb::transaction::ItemPointerData;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::VARSIZE;
+namespace pgcpp::access {
+using pgcpp::memory::palloc;
+using pgcpp::transaction::ItemPointerData;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::VARSIZE;
 
 uint32_t index_compute_data_size(TupleDesc tupdesc, const Datum* values, const bool* isnull) {
     uint32_t data_size = 0;
@@ -65,9 +65,9 @@ IndexTuple index_form_tuple(TupleDesc tupdesc, const Datum* values, const bool* 
 
     uint32_t tuple_size = hoff + data_size;
     if (tuple_size > kIndexSizeMask) {
-        ereport(mytoydb::error::LogLevel::kError, "index_form_tuple: index tuple size " +
-                                                      std::to_string(tuple_size) + " exceeds max " +
-                                                      std::to_string(kIndexSizeMask));
+        ereport(pgcpp::error::LogLevel::kError, "index_form_tuple: index tuple size " +
+                                                    std::to_string(tuple_size) + " exceeds max " +
+                                                    std::to_string(kIndexSizeMask));
     }
 
     // Allocate the tuple data (header + user data).
@@ -186,4 +186,4 @@ IndexTuple CopyIndexTuple(IndexTuple source) {
     return reinterpret_cast<IndexTuple>(data);
 }
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

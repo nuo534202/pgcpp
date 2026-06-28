@@ -17,50 +17,50 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/storage/bufpage.hpp"
 
-using mytoydb::memory::AllocSetContext;
-using mytoydb::storage::ItemIdData;
-using mytoydb::storage::ItemIdGetLength;
-using mytoydb::storage::ItemIdGetOffset;
-using mytoydb::storage::ItemIdIsNormal;
-using mytoydb::storage::ItemIdIsUsed;
-using mytoydb::storage::kBlckSz;
-using mytoydb::storage::kInvalidOffsetNumber;
-using mytoydb::storage::kPageHasFreeLines;
-using mytoydb::storage::kPageHeaderSize;
-using mytoydb::storage::LocationIndex;
-using mytoydb::storage::OffsetNumber;
-using mytoydb::storage::Page;
-using mytoydb::storage::PageAddItem;
-using mytoydb::storage::PageGetExactFreeSpace;
-using mytoydb::storage::PageGetFreeSpace;
-using mytoydb::storage::PageGetFreeSpaceForMultipleTuples;
-using mytoydb::storage::PageGetItem;
-using mytoydb::storage::PageGetItemId;
-using mytoydb::storage::PageGetMaxOffsetNumber;
-using mytoydb::storage::PageGetTempPageCopy;
-using mytoydb::storage::PageHeader;
-using mytoydb::storage::PageIndexMultiDelete;
-using mytoydb::storage::PageIndexTupleDelete;
-using mytoydb::storage::PageIndexTupleDeleteNoCompact;
-using mytoydb::storage::PageIndexTupleOverwrite;
-using mytoydb::storage::PageInit;
-using mytoydb::storage::PageRepairFragmentation;
-using mytoydb::storage::PageRestoreTempPage;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::storage::ItemIdData;
+using pgcpp::storage::ItemIdGetLength;
+using pgcpp::storage::ItemIdGetOffset;
+using pgcpp::storage::ItemIdIsNormal;
+using pgcpp::storage::ItemIdIsUsed;
+using pgcpp::storage::kBlckSz;
+using pgcpp::storage::kInvalidOffsetNumber;
+using pgcpp::storage::kPageHasFreeLines;
+using pgcpp::storage::kPageHeaderSize;
+using pgcpp::storage::LocationIndex;
+using pgcpp::storage::OffsetNumber;
+using pgcpp::storage::Page;
+using pgcpp::storage::PageAddItem;
+using pgcpp::storage::PageGetExactFreeSpace;
+using pgcpp::storage::PageGetFreeSpace;
+using pgcpp::storage::PageGetFreeSpaceForMultipleTuples;
+using pgcpp::storage::PageGetItem;
+using pgcpp::storage::PageGetItemId;
+using pgcpp::storage::PageGetMaxOffsetNumber;
+using pgcpp::storage::PageGetTempPageCopy;
+using pgcpp::storage::PageHeader;
+using pgcpp::storage::PageIndexMultiDelete;
+using pgcpp::storage::PageIndexTupleDelete;
+using pgcpp::storage::PageIndexTupleDeleteNoCompact;
+using pgcpp::storage::PageIndexTupleOverwrite;
+using pgcpp::storage::PageInit;
+using pgcpp::storage::PageRepairFragmentation;
+using pgcpp::storage::PageRestoreTempPage;
 
 namespace {
 
 class BufPageDeleteTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("bufpage_delete_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
-        page_ = static_cast<char*>(mytoydb::memory::palloc(kBlckSz));
+        page_ = static_cast<char*>(pgcpp::memory::palloc(kBlckSz));
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

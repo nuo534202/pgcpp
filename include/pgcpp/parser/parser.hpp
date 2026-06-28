@@ -5,7 +5,7 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
 // Public parser API — equivalent to PostgreSQL's parser/parser.h
 
@@ -14,4 +14,4 @@ namespace mytoydb::parser {
 // On error, calls ereport(ERROR) which longjmps out.
 std::vector<RawStmt*> raw_parser(const std::string& str);
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

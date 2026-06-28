@@ -5,7 +5,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Geometric types (PostgreSQL utils/adt/geo_ops.c).
@@ -108,4 +108,4 @@ inline Circle* DatumGetCircle(Datum x) {
     return reinterpret_cast<Circle*>(x);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

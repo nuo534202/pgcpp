@@ -14,9 +14,9 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -90,4 +90,4 @@ std::vector<WordEntry> TsVectorParse(std::string_view str) {
     return result;
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

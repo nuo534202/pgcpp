@@ -12,7 +12,7 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
 // ParserDriver — glue object passed to the Bison parser via %param.
 // It holds:
@@ -37,4 +37,4 @@ public:
     size_t scanpos = 0;
 };
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

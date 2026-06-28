@@ -12,7 +12,7 @@
 
 #include "pgcpp/optimizer/geqo/geqo_random.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 bool MutateChromosome(Chromosome* chrom, double prob) {
     if (chrom == nullptr || chrom->genes.size() < 2)
@@ -30,4 +30,4 @@ bool MutateChromosome(Chromosome* chrom, double prob) {
     return true;
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

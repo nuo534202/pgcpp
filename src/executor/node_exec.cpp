@@ -32,12 +32,12 @@
 #include "pgcpp/executor/node_windowagg.hpp"
 #include "pgcpp/executor/tupletable.hpp"
 
-namespace mytoydb::executor {
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::executor {
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::memory::palloc;
-using mytoydb::memory::pfree;
+using pgcpp::memory::palloc;
+using pgcpp::memory::pfree;
 
 // PlanState destructor — defined here (declared pure-virtual-body in header).
 // The base destructor does nothing; subclass destructors handle cleanup.
@@ -171,4 +171,4 @@ void ResultState::ExecEnd() {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

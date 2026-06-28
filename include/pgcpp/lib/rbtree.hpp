@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 template<typename T, typename Compare = std::less<T>>
 class RBTree {
@@ -507,4 +507,4 @@ void RBTree<T, Compare>::Clear() {
     size_ = 0;
 }
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

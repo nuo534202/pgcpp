@@ -13,7 +13,7 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // XLogReaderState — iterator over WAL records.
 //
@@ -51,4 +51,4 @@ bool XLogReadRecord(XLogReaderState* reader, XLogRecPtr* start_lsn);
 // reader->main_data. Does not advance next_lsn (caller decides iteration).
 bool XLogReadRecordAt(XLogReaderState* reader, XLogRecPtr lsn);
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

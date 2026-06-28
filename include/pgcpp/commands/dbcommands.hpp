@@ -5,18 +5,18 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class CreatedbStmt;
 class DropdbStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-// createdb — execute CREATE DATABASE. MyToyDB is a single-database
+// createdb — execute CREATE DATABASE. pgcpp is a single-database
 // instance; this is a stub that acknowledges the request.
 std::string createdb(parser::CreatedbStmt* stmt);
 
 // dropdb — execute DROP DATABASE. Stub.
 std::string dropdb(parser::DropdbStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

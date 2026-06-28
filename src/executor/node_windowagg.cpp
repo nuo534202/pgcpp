@@ -35,32 +35,32 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::memory::palloc;
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::TargetEntry;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetFloat4;
-using mytoydb::types::DatumGetFloat8;
-using mytoydb::types::DatumGetInt16;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::Float8GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::kFloat4Oid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt2Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::TextPGetDatum;
-using mytoydb::types::VARDATA;
-using mytoydb::types::VARSIZE_DATA;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::palloc;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::TargetEntry;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetFloat4;
+using pgcpp::types::DatumGetFloat8;
+using pgcpp::types::DatumGetInt16;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::Float8GetDatum;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::kFloat4Oid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt2Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::TextPGetDatum;
+using pgcpp::types::VARDATA;
+using pgcpp::types::VARSIZE_DATA;
 
 namespace {
 
@@ -117,7 +117,7 @@ void WindowAggState::CollectAggrefs() {
         info.aggno = agg->aggno;
         info.isstar = agg->aggstar;
         if (!agg->aggstar && !agg->args.empty()) {
-            mytoydb::parser::Node* arg = agg->args[0];
+            pgcpp::parser::Node* arg = agg->args[0];
             if (arg != nullptr && arg->GetTag() == NodeTag::kTargetEntry) {
                 info.arg = static_cast<TargetEntry*>(arg)->expr;
             } else {
@@ -125,7 +125,7 @@ void WindowAggState::CollectAggrefs() {
             }
         }
         if (info.arg != nullptr) {
-            info.argtype = mytoydb::parser::exprType(info.arg);
+            info.argtype = pgcpp::parser::exprType(info.arg);
         }
         wa_agg_infos.push_back(info);
     }
@@ -359,22 +359,22 @@ void WindowAggState::ExecInit() {
 
     // Aggregates slot (one column per Aggref in target list).
     if (!wa_agg_infos.empty()) {
-        std::vector<mytoydb::catalog::FormData_pg_attribute> agg_attrs;
+        std::vector<pgcpp::catalog::FormData_pg_attribute> agg_attrs;
         for (const auto& info : wa_agg_infos) {
-            mytoydb::catalog::FormData_pg_attribute attr;
+            pgcpp::catalog::FormData_pg_attribute attr;
             attr.attnum = info.aggno + 1;
             attr.attname = "wagg" + std::to_string(info.aggno);
             attr.atttypid = info.restype;
             int16_t len;
             bool byval;
-            mytoydb::catalog::AttAlign align;
+            pgcpp::catalog::AttAlign align;
             FillTypeAttrs(info.restype, &len, &byval, &align);
             attr.attlen = len;
             attr.attbyval = byval;
             attr.attalign = align;
             agg_attrs.push_back(attr);
         }
-        auto* agg_desc = mytoydb::access::CreateTupleDesc(agg_attrs);
+        auto* agg_desc = pgcpp::access::CreateTupleDesc(agg_attrs);
         wa_AggSlot = TupleTableSlot::Make(agg_desc);
         state->es_tupleTable.push_back(wa_AggSlot);
         ps_ExprContext->ecxt_aggregates = wa_AggSlot;
@@ -467,4 +467,4 @@ void WindowAggState::ExecReScan() {
         leftps->ExecReScan();
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

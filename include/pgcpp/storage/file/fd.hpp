@@ -7,7 +7,7 @@
 // LRU pool of VFDs (virtual file descriptors). When a real fd is needed,
 // the LRU VFD is closed (with its position saved) and the fd is reused.
 //
-// MyToyDB is single-process and typically under the OS fd limit, so VFDs
+// pgcpp is single-process and typically under the OS fd limit, so VFDs
 // are mostly a thin wrapper around real fds. The API preserves PG's
 // AllocateFile/PathNameOpenFile/etc. surface.
 #pragma once
@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <string>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // File — opaque VFD handle (1-based; 0 = invalid).
 using File = int;
@@ -83,4 +83,4 @@ void ResetVfdCache();
 // NumOpenFiles — number of currently-open VFDs.
 int NumOpenFiles();
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

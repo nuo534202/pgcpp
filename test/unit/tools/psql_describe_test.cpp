@@ -11,11 +11,11 @@
 
 #include <string>
 
-using mytoydb::tools::BuildDescribeRelationSql;
-using mytoydb::tools::BuildListDatabasesSql;
-using mytoydb::tools::BuildListRolesSql;
-using mytoydb::tools::BuildListTablesSql;
-using mytoydb::tools::BuildListViewsSql;
+using pgcpp::tools::BuildDescribeRelationSql;
+using pgcpp::tools::BuildListDatabasesSql;
+using pgcpp::tools::BuildListRolesSql;
+using pgcpp::tools::BuildListTablesSql;
+using pgcpp::tools::BuildListViewsSql;
 
 namespace {
 

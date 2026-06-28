@@ -5,7 +5,7 @@
 
 #include "pgcpp/storage/ipc/shmem.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -55,4 +55,4 @@ std::vector<std::string> RegisteredIPCInitFns() {
     return names;
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

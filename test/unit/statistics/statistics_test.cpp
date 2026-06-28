@@ -23,44 +23,44 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::statistics::AlterStatistics;
-using mytoydb::statistics::AlterStatisticsStmt;
-using mytoydb::statistics::AttrNumber;
-using mytoydb::statistics::BuildMVDependencies;
-using mytoydb::statistics::BuildMVNDistinct;
-using mytoydb::statistics::CreateStatistics;
-using mytoydb::statistics::CreateStatisticsStmt;
-using mytoydb::statistics::DeserializeMVDependencies;
-using mytoydb::statistics::DeserializeMVNDistinct;
-using mytoydb::statistics::DropStatisticsStmt;
-using mytoydb::statistics::EstimateMVDependencies;
-using mytoydb::statistics::EstimateMVNDistinct;
-using mytoydb::statistics::EstimateNDistinct;
-using mytoydb::statistics::MVDependencies;
-using mytoydb::statistics::MVNDistinct;
-using mytoydb::statistics::Oid;
-using mytoydb::statistics::RemoveStatistics;
-using mytoydb::statistics::SampleRows;
-using mytoydb::statistics::SerializeMVDependencies;
-using mytoydb::statistics::SerializeMVNDistinct;
-using mytoydb::statistics::StatisticsCatalog;
-using mytoydb::statistics::StatisticsProvider;
-using mytoydb::statistics::StatsBuildData;
-using mytoydb::statistics::StatsExtData;
-using mytoydb::statistics::StatsExtKind;
-using mytoydb::types::Datum;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::statistics::AlterStatistics;
+using pgcpp::statistics::AlterStatisticsStmt;
+using pgcpp::statistics::AttrNumber;
+using pgcpp::statistics::BuildMVDependencies;
+using pgcpp::statistics::BuildMVNDistinct;
+using pgcpp::statistics::CreateStatistics;
+using pgcpp::statistics::CreateStatisticsStmt;
+using pgcpp::statistics::DeserializeMVDependencies;
+using pgcpp::statistics::DeserializeMVNDistinct;
+using pgcpp::statistics::DropStatisticsStmt;
+using pgcpp::statistics::EstimateMVDependencies;
+using pgcpp::statistics::EstimateMVNDistinct;
+using pgcpp::statistics::EstimateNDistinct;
+using pgcpp::statistics::MVDependencies;
+using pgcpp::statistics::MVNDistinct;
+using pgcpp::statistics::Oid;
+using pgcpp::statistics::RemoveStatistics;
+using pgcpp::statistics::SampleRows;
+using pgcpp::statistics::SerializeMVDependencies;
+using pgcpp::statistics::SerializeMVNDistinct;
+using pgcpp::statistics::StatisticsCatalog;
+using pgcpp::statistics::StatisticsProvider;
+using pgcpp::statistics::StatsBuildData;
+using pgcpp::statistics::StatsExtData;
+using pgcpp::statistics::StatsExtKind;
+using pgcpp::types::Datum;
 
 namespace {
 
 class StatisticsTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("statistics_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
         StatisticsCatalog::Instance().Clear();
         StatisticsProvider::ClearRegistry();
     }
@@ -68,7 +68,7 @@ protected:
     void TearDown() override {
         StatisticsCatalog::Instance().Clear();
         StatisticsProvider::ClearRegistry();
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -83,7 +83,7 @@ protected:
         }
         PG_CATCH() {
             caught = true;
-            ErrorData* err = mytoydb::error::GetErrorData();
+            ErrorData* err = pgcpp::error::GetErrorData();
             EXPECT_EQ(err->elevel, LogLevel::kError);
         }
         PG_END_TRY();

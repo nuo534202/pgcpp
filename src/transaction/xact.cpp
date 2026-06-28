@@ -10,7 +10,7 @@
 // XID assignment is deferred until the first write (GetCurrentTransactionId
 // allocates a new XID on first call within a transaction).
 //
-// MyToyDB simplifications:
+// pgcpp simplifications:
 //   - Single-process (no distributed commit)
 //   - No resource owners (memory contexts handle cleanup)
 //   - No GUC nesting
@@ -25,7 +25,7 @@
 #include "pgcpp/transaction/snapshot.hpp"
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -134,7 +134,7 @@ void AbortTransaction() {
 void StartSubTransaction() {
     TransactionState parent = CurrentState();
     if (parent == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "cannot start subtransaction without a parent transaction");
     }
 
@@ -325,14 +325,14 @@ bool BeginTransactionBlock() {
     }
 
     // Already in an explicit block — warn and ignore.
-    ereport(mytoydb::error::LogLevel::kWarning, "there is already a transaction in progress");
+    ereport(pgcpp::error::LogLevel::kWarning, "there is already a transaction in progress");
     return false;
 }
 
 bool EndTransactionBlock() {
     TransactionState s = CurrentState();
     if (s == nullptr) {
-        ereport(mytoydb::error::LogLevel::kWarning, "there is no transaction in progress");
+        ereport(pgcpp::error::LogLevel::kWarning, "there is no transaction in progress");
         return false;
     }
 
@@ -359,12 +359,12 @@ bool EndTransactionBlock() {
         case TBlockState::kSubAbort:
             // COMMIT inside a subtransaction — commit the subxact, then the
             // top-level. PostgreSQL treats this as an error.
-            ereport(mytoydb::error::LogLevel::kWarning,
+            ereport(pgcpp::error::LogLevel::kWarning,
                     "cannot commit a transaction block while a subtransaction is active");
             return false;
 
         default:
-            ereport(mytoydb::error::LogLevel::kWarning,
+            ereport(pgcpp::error::LogLevel::kWarning,
                     std::string("unexpected state in EndTransactionBlock: ") +
                         TransactionBlockStateAsString());
             return false;
@@ -374,7 +374,7 @@ bool EndTransactionBlock() {
 void AbortTransactionBlock() {
     TransactionState s = CurrentState();
     if (s == nullptr) {
-        ereport(mytoydb::error::LogLevel::kWarning, "there is no transaction in progress");
+        ereport(pgcpp::error::LogLevel::kWarning, "there is no transaction in progress");
         return;
     }
 
@@ -408,9 +408,8 @@ void AbortTransactionBlock() {
 }
 
 bool PrepareTransactionBlock(const std::string& /*gid*/) {
-    // 2PC not implemented in MyToyDB.
-    ereport(mytoydb::error::LogLevel::kWarning,
-            "prepared transactions are not supported in MyToyDB");
+    // 2PC not implemented in pgcpp.
+    ereport(pgcpp::error::LogLevel::kWarning, "prepared transactions are not supported in MyToyDB");
     return false;
 }
 
@@ -490,8 +489,7 @@ void AbortCurrentTransaction() {
 void BeginSavepoint(const std::string& name) {
     TransactionState s = CurrentState();
     if (s == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "SAVEPOINT can only be used in transaction blocks");
+        ereport(pgcpp::error::LogLevel::kError, "SAVEPOINT can only be used in transaction blocks");
     }
 
     StartSubTransaction();
@@ -503,7 +501,7 @@ void BeginSavepoint(const std::string& name) {
 void ReleaseSavepoint(const std::string& name) {
     TransactionState s = CurrentState();
     if (s == nullptr || s->parent == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "RELEASE SAVEPOINT can only be used in transaction blocks");
     }
 
@@ -516,7 +514,7 @@ void ReleaseSavepoint(const std::string& name) {
     if (target == nullptr || target->parent == nullptr) {
         char errbuf[256];
         std::snprintf(errbuf, sizeof(errbuf), "savepoint \"%s\" does not exist", name.c_str());
-        ereport(mytoydb::error::LogLevel::kError, errbuf);
+        ereport(pgcpp::error::LogLevel::kError, errbuf);
     }
 
     // Commit all subtransactions up to and including the target.
@@ -529,7 +527,7 @@ void ReleaseSavepoint(const std::string& name) {
 void RollbackToSavepoint(const std::string& name) {
     TransactionState s = CurrentState();
     if (s == nullptr || s->parent == nullptr) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "ROLLBACK TO SAVEPOINT can only be used in transaction blocks");
     }
 
@@ -542,7 +540,7 @@ void RollbackToSavepoint(const std::string& name) {
     if (target == nullptr || target->parent == nullptr) {
         char errbuf[256];
         std::snprintf(errbuf, sizeof(errbuf), "savepoint \"%s\" does not exist", name.c_str());
-        ereport(mytoydb::error::LogLevel::kError, errbuf);
+        ereport(pgcpp::error::LogLevel::kError, errbuf);
     }
 
     // Abort all subtransactions down to AND INCLUDING the target.
@@ -616,4 +614,4 @@ bool TransactionIdIsCurrentTransactionId(TransactionId xid) {
     return false;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

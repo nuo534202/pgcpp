@@ -4,7 +4,7 @@
 //
 // Initializes planner state for a query: builds the RTE array, constructs
 // RelOptInfo for each base relation, and distributes WHERE quals. For
-// MyToyDB's single-table workload, the jointree handling is simplified.
+// pgcpp's single-table workload, the jointree handling is simplified.
 #include "pgcpp/optimizer/plan/init_splan.hpp"
 
 #include "pgcpp/catalog/catalog.hpp"
@@ -17,19 +17,19 @@
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::catalog::GetCatalog;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::JoinExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::Var;
+namespace pgcpp::optimizer {
+using pgcpp::catalog::GetCatalog;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::JoinExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::Var;
 
 void build_base_rel_infos(PlannerInfo* root) {
     // Build simple_rte_array (1-based → 0-based vector slots).
@@ -101,7 +101,7 @@ static int ExtractFirstRelid(Node* expr) {
         case NodeTag::kVar:
             return static_cast<Var*>(expr)->varno;
         case NodeTag::kOpExpr: {
-            auto* op = static_cast<mytoydb::parser::OpExpr*>(expr);
+            auto* op = static_cast<pgcpp::parser::OpExpr*>(expr);
             for (Node* arg : op->args) {
                 int r = ExtractFirstRelid(arg);
                 if (r > 0)
@@ -145,7 +145,7 @@ static void CollectRelids(Node* expr, Relids* relids) {
             break;
         }
         case NodeTag::kOpExpr: {
-            auto* op = static_cast<mytoydb::parser::OpExpr*>(expr);
+            auto* op = static_cast<pgcpp::parser::OpExpr*>(expr);
             for (Node* arg : op->args)
                 CollectRelids(arg, relids);
             break;
@@ -230,4 +230,4 @@ void query_planner_init(PlannerInfo* root, Query* parse) {
     }
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

@@ -5,7 +5,7 @@
 //
 // PostgreSQL's lock manager supports both regular locks (table-level,
 // acquired by name) and lightweight locks (spinlock-based, for internal
-// synchronization). MyToyDB is single-process, so:
+// synchronization). pgcpp is single-process, so:
 //   - No actual blocking (a lock request always succeeds immediately)
 //   - Locks are tracked for release at transaction end
 //   - The compatibility matrix is preserved for correctness checks
@@ -28,7 +28,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"  // Oid
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // LockMode — the strength of a lock.
 // Values match PostgreSQL's LockMode enum for compatibility.
@@ -49,10 +49,10 @@ constexpr int kNumLockModes = 8;
 
 // LockTag — identifies the object being locked.
 // In PostgreSQL, this is a 16-byte struct with locktag_type and fields.
-// MyToyDB uses a simpler struct for relation locks only.
+// pgcpp uses a simpler struct for relation locks only.
 struct LockTag {
-    mytoydb::catalog::Oid relid = 0;  // relation OID
-    int locktag_type = 0;             // LOCKTAG_RELATION
+    pgcpp::catalog::Oid relid = 0;  // relation OID
+    int locktag_type = 0;           // LOCKTAG_RELATION
 
     bool operator==(const LockTag&) const = default;
 };
@@ -87,7 +87,7 @@ bool LockConflicts(LockMode mode1, LockMode mode2);
 
 // LockAcquire — acquire a lock on the given object.
 //
-// In MyToyDB (single-process), this always succeeds immediately (no
+// In pgcpp (single-process), this always succeeds immediately (no
 // blocking). The lock is recorded for release at transaction end.
 //
 // Parameters:
@@ -129,4 +129,4 @@ void ResetLockManager();
 // GetLockCount — return the number of locks currently held.
 int GetLockCount();
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

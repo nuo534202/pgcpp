@@ -16,7 +16,7 @@
 
 #include "pgcpp/server/postmaster.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -163,4 +163,4 @@ void GucConfig::ApplyTo(ServerConfig* config) const {
     }
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

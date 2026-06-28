@@ -2,20 +2,20 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/analyze.c.
 // Updates pg_statistic for the planner. Currently a no-op stub since
-// MyToyDB's planner uses fixed cardinality estimates.
+// pgcpp's planner uses fixed cardinality estimates.
 #include "pgcpp/commands/analyze.hpp"
 
 #include <string>
 
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::parser::VacuumStmt;
+using pgcpp::parser::VacuumStmt;
 
 std::string AnalyzeCommand(VacuumStmt* stmt) {
     (void)stmt;  // No-op; planner uses fixed estimates.
     return "ANALYZE";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

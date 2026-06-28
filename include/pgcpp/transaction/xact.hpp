@@ -11,7 +11,7 @@
 //   TransState  — low-level state (START, INPROGRESS, COMMIT, ABORT)
 //   TBlockState — high-level block state (DEFAULT, BEGIN, INPROGRESS, END, ...)
 //
-// MyToyDB preserves this structure for fidelity. Subtransactions are
+// pgcpp preserves this structure for fidelity. Subtransactions are
 // supported at the API level but the implementation is simplified
 // (no resource owners, no GUC nesting).
 #pragma once
@@ -22,7 +22,7 @@
 
 #include "pgcpp/transaction/transam.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // SubTransactionId — identifier for a subtransaction (savepoint).
 // 0 = InvalidSubTransactionId, 1 = TopSubTransactionId.
@@ -46,7 +46,7 @@ enum class TransState {
     kInProgress,  // transaction in progress
     kCommit,      // commit in progress
     kAbort,       // abort in progress
-    kPrepare,     // prepare in progress (2PC; unused in MyToyDB)
+    kPrepare,     // prepare in progress (2PC; unused in pgcpp)
 };
 
 // TBlockState — high-level transaction block state.
@@ -146,7 +146,7 @@ bool EndTransactionBlock();
 // AbortTransactionBlock — called when a ROLLBACK is received.
 void AbortTransactionBlock();
 
-// PrepareTransactionBlock — 2PC prepare (not implemented in MyToyDB).
+// PrepareTransactionBlock — 2PC prepare (not implemented in pgcpp).
 // Returns false.
 bool PrepareTransactionBlock(const std::string& gid);
 
@@ -195,4 +195,4 @@ TransactionId GetTopLevelTransactionId();
 // InvalidTransactionId if none.
 TransactionId GetTopLevelTransactionIdIfAny();
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

@@ -7,7 +7,7 @@
 // this node. PG stores origins in pg_replication_origin catalog and
 // keeps a session-local "current origin" used to stamp incoming records.
 //
-// MyToyDB keeps an in-process std::map<uint16, CommitOrigin> and tracks
+// pgcpp keeps an in-process std::map<uint16, CommitOrigin> and tracks
 // the current session's origin id and LSN.
 #pragma once
 
@@ -16,7 +16,7 @@
 
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // RepOriginId — small integer identifying an origin (PG: RepOriginId).
 using RepOriginId = uint16_t;
@@ -81,4 +81,4 @@ int ReploriginCount();
 // ReploriginSessionLsn — return the current session's local LSN stamp.
 transaction::XLogRecPtr ReploriginSessionLsn();
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

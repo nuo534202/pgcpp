@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <cctype>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 namespace {
 
@@ -53,4 +53,4 @@ std::vector<std::string> Thesaurus::Lookup(std::string_view word) const {
     return groups_[it->second];
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

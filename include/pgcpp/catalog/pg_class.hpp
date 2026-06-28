@@ -5,7 +5,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // FormData_pg_class — C++ equivalent of PostgreSQL's catalog/pg_class.h.
 //
@@ -72,4 +72,4 @@ struct FormData_pg_class {
 // type and use raw pointers / references where PostgreSQL used Form_pg_class.
 using Form_pg_class = FormData_pg_class*;
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

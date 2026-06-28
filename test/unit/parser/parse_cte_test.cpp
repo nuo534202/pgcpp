@@ -30,39 +30,39 @@
 #include "pgcpp/parser/parser.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-using mytoydb::catalog::BootstrapCatalog;
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::GetSysCache;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::catalog::SetSysCache;
-using mytoydb::catalog::SysCache;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::parser::CommonTableExpr;
-using mytoydb::parser::make_parsestate;
-using mytoydb::parser::parse_analyze;
-using mytoydb::parser::ParseState;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeVar;
-using mytoydb::parser::raw_parser;
-using mytoydb::parser::RawStmt;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::SelectStmt;
-using mytoydb::parser::transformWithClause;
-using mytoydb::parser::WithClause;
+using pgcpp::catalog::BootstrapCatalog;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::GetSysCache;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::catalog::SetSysCache;
+using pgcpp::catalog::SysCache;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::parser::CommonTableExpr;
+using pgcpp::parser::make_parsestate;
+using pgcpp::parser::parse_analyze;
+using pgcpp::parser::ParseState;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeVar;
+using pgcpp::parser::raw_parser;
+using pgcpp::parser::RawStmt;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::SelectStmt;
+using pgcpp::parser::transformWithClause;
+using pgcpp::parser::WithClause;
 
 namespace {
 
 class ParseCteTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("parse_cte_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         catalog_ = new Catalog();
         SetCatalog(catalog_);
@@ -78,7 +78,7 @@ protected:
         delete syscache_;
         delete catalog_;
 
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -148,7 +148,7 @@ TEST_F(ParseCteTest, TransformWithClauseAnalyzesCteQuery) {
     EXPECT_EQ(cte->ctequery->GetTag(), NodeTag::kQuery);
 
     auto* q = static_cast<Query*>(cte->ctequery);
-    EXPECT_EQ(q->command_type, mytoydb::parser::CmdType::kSelect);
+    EXPECT_EQ(q->command_type, pgcpp::parser::CmdType::kSelect);
 
     free_parsestate(pstate);
 }
@@ -208,7 +208,7 @@ TEST_F(ParseCteTest, EndToEndWithClauseSelectFromCte) {
     ASSERT_EQ(queries.size(), 1u);
     Query* q = queries[0];
     ASSERT_NE(q, nullptr);
-    EXPECT_EQ(q->command_type, mytoydb::parser::CmdType::kSelect);
+    EXPECT_EQ(q->command_type, pgcpp::parser::CmdType::kSelect);
 
     // The FROM clause should have produced a subquery RTE for cte.
     EXPECT_GE(CountSubqueryRtes(q->rtable), 1)
@@ -216,7 +216,7 @@ TEST_F(ParseCteTest, EndToEndWithClauseSelectFromCte) {
 
     // Target list should have one entry with resname "x".
     ASSERT_EQ(q->target_list.size(), 1u);
-    auto* te = static_cast<mytoydb::parser::TargetEntry*>(q->target_list[0]);
+    auto* te = static_cast<pgcpp::parser::TargetEntry*>(q->target_list[0]);
     EXPECT_EQ(te->resname, "x");
 }
 
@@ -229,7 +229,7 @@ TEST_F(ParseCteTest, EndToEndMultipleCtesCanReferenceEachOther) {
     ASSERT_EQ(queries.size(), 1u);
     Query* q = queries[0];
     ASSERT_NE(q, nullptr);
-    EXPECT_EQ(q->command_type, mytoydb::parser::CmdType::kSelect);
+    EXPECT_EQ(q->command_type, pgcpp::parser::CmdType::kSelect);
     // b is referenced by the outer query; a is referenced by b. The outer
     // range table should contain at least one subquery RTE (for b).
     EXPECT_GE(CountSubqueryRtes(q->rtable), 1);

@@ -13,9 +13,9 @@
 #include "pgcpp/executor/node_exec.hpp"
 #include "pgcpp/executor/tupletable.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::nodes::destroyPallocNode;
+using pgcpp::nodes::destroyPallocNode;
 
 EState::~EState() {
     // Free tuple table slots.
@@ -27,9 +27,9 @@ EState::~EState() {
     es_tupleTable.clear();
 
     // Close any opened relations.
-    for (mytoydb::access::Relation rel : es_open_relations) {
+    for (pgcpp::access::Relation rel : es_open_relations) {
         if (rel != nullptr) {
-            mytoydb::access::RelationClose(rel);
+            pgcpp::access::RelationClose(rel);
         }
     }
     es_open_relations.clear();
@@ -43,4 +43,4 @@ QueryDesc::~QueryDesc() {
     // the destructor does not own them.
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

@@ -7,7 +7,7 @@
 // In PostgreSQL, CLOG, commit timestamps, multixact offsets/members, and
 // replication slot data all use SLRU.
 //
-// MyToyDB keeps the API but uses an in-memory std::vector<Page> for simplicity.
+// pgcpp keeps the API but uses an in-memory std::vector<Page> for simplicity.
 #pragma once
 
 #include <cstddef>
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // SLRU_PAGE_SIZE — matches PostgreSQL's BLCKSZ (8 KB).
 constexpr int kSlruPageSize = 8192;
@@ -52,7 +52,7 @@ struct SlruCtl {
 SlruCtl* SimpleLruInit(const std::string& name, std::size_t capacity = 16);
 
 // SimpleLruRead — read `len` bytes at the given page offset. If the page
-// is not in cache, it is "loaded" (in MyToyDB, initialized to zeros since
+// is not in cache, it is "loaded" (in pgcpp, initialized to zeros since
 // there is no on-disk backing store). Copies data into `dst`.
 void SimpleLruRead(SlruCtl* ctl, int pageno, int offset, void* dst, std::size_t len);
 
@@ -60,7 +60,7 @@ void SimpleLruRead(SlruCtl* ctl, int pageno, int offset, void* dst, std::size_t 
 // marked dirty. If the page is not in cache, it is loaded first.
 void SimpleLruWrite(SlruCtl* ctl, int pageno, int offset, const void* src, std::size_t len);
 
-// SimpleLruFlush — write all dirty pages back to "disk" (no-op in MyToyDB:
+// SimpleLruFlush — write all dirty pages back to "disk" (no-op in pgcpp:
 // the in-memory cache is the store). Marks pages as valid.
 void SimpleLruFlush(SlruCtl* ctl);
 
@@ -70,4 +70,4 @@ void SimpleLruReset(SlruCtl* ctl);
 // SimpleLruFree — destroy an SLRU instance.
 void SimpleLruFree(SlruCtl* ctl);
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

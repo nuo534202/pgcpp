@@ -9,11 +9,11 @@
 #include <algorithm>
 #include <map>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
-using mytoydb::types::TsVectorData;
+using pgcpp::types::TsVectorData;
 
-TsVectorStats TsVectorAnalyze(const std::vector<const mytoydb::types::TsVectorData*>& samples) {
+TsVectorStats TsVectorAnalyze(const std::vector<const pgcpp::types::TsVectorData*>& samples) {
     TsVectorStats stats;
     stats.sample_count = samples.size();
     if (samples.empty()) {
@@ -52,4 +52,4 @@ TsVectorStats TsVectorAnalyze(const std::vector<const mytoydb::types::TsVectorDa
     return stats;
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

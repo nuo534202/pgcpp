@@ -28,40 +28,40 @@
 
 namespace {
 
-using mytoydb::error::ErrorData;
-using mytoydb::error::LogLevel;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::tsearch::IDictionary;
-using mytoydb::tsearch::IspellDict;
-using mytoydb::tsearch::Lexeme;
-using mytoydb::tsearch::RewriteRule;
-using mytoydb::tsearch::SimpleDict;
-using mytoydb::tsearch::StopWordsDict;
-using mytoydb::tsearch::Thesaurus;
-using mytoydb::tsearch::Token;
-using mytoydb::tsearch::TokenizeText;
-using mytoydb::tsearch::ToTsQuery;
-using mytoydb::tsearch::ToTsVector;
-using mytoydb::tsearch::TsQueryParse;
-using mytoydb::tsearch::TsVectorAnalyze;
-using mytoydb::tsearch::TsVectorParse;
-using mytoydb::tsearch::TsVectorStats;
-using mytoydb::tsearch::WordEntry;
-using mytoydb::types::TsQueryData;
-using mytoydb::types::TsQueryNode;
-using mytoydb::types::TsQueryNodeType;
-using mytoydb::types::TsVectorData;
+using pgcpp::error::ErrorData;
+using pgcpp::error::LogLevel;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::tsearch::IDictionary;
+using pgcpp::tsearch::IspellDict;
+using pgcpp::tsearch::Lexeme;
+using pgcpp::tsearch::RewriteRule;
+using pgcpp::tsearch::SimpleDict;
+using pgcpp::tsearch::StopWordsDict;
+using pgcpp::tsearch::Thesaurus;
+using pgcpp::tsearch::Token;
+using pgcpp::tsearch::TokenizeText;
+using pgcpp::tsearch::ToTsQuery;
+using pgcpp::tsearch::ToTsVector;
+using pgcpp::tsearch::TsQueryParse;
+using pgcpp::tsearch::TsVectorAnalyze;
+using pgcpp::tsearch::TsVectorParse;
+using pgcpp::tsearch::TsVectorStats;
+using pgcpp::tsearch::WordEntry;
+using pgcpp::types::TsQueryData;
+using pgcpp::types::TsQueryNode;
+using pgcpp::types::TsQueryNodeType;
+using pgcpp::types::TsVectorData;
 
 class TsearchTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("tsearch_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -78,7 +78,7 @@ bool RaisesError(F&& fn) {
     }
     PG_CATCH() {
         caught = true;
-        ErrorData* err = mytoydb::error::GetErrorData();
+        ErrorData* err = pgcpp::error::GetErrorData();
         EXPECT_EQ(err->elevel, LogLevel::kError);
     }
     PG_END_TRY();
@@ -443,8 +443,8 @@ TEST_F(TsearchTest, TsRankMatchingBeatsNonMatching) {
     auto vec_match = ToTsVector("hello world", "simple");
     auto vec_miss = ToTsVector("alpha beta", "simple");
     auto q = ToTsQuery("hello", "simple");
-    float rank_match = mytoydb::tsearch::ts_rank(vec_match, q);
-    float rank_miss = mytoydb::tsearch::ts_rank(vec_miss, q);
+    float rank_match = pgcpp::tsearch::ts_rank(vec_match, q);
+    float rank_miss = pgcpp::tsearch::ts_rank(vec_miss, q);
     EXPECT_GT(rank_match, 0.0f);
     EXPECT_EQ(rank_miss, 0.0f);
     EXPECT_GT(rank_match, rank_miss);
@@ -467,8 +467,8 @@ TEST_F(TsearchTest, TsRankCDDenserBeatsSparser) {
     b.lexeme = "beta";
     q.root.children.push_back(a);
     q.root.children.push_back(b);
-    float dense_score = mytoydb::tsearch::ts_rank_cd(dense, q);
-    float sparse_score = mytoydb::tsearch::ts_rank_cd(sparse, q);
+    float dense_score = pgcpp::tsearch::ts_rank_cd(dense, q);
+    float sparse_score = pgcpp::tsearch::ts_rank_cd(sparse, q);
     EXPECT_GT(dense_score, sparse_score);
 }
 
@@ -477,7 +477,7 @@ TEST_F(TsearchTest, TsRankEmptyQueryIsZero) {
     TsQueryData q;
     q.root.type = TsQueryNodeType::kTerm;
     q.root.lexeme = "nomatch";
-    EXPECT_EQ(mytoydb::tsearch::ts_rank(vec, q), 0.0f);
+    EXPECT_EQ(pgcpp::tsearch::ts_rank(vec, q), 0.0f);
 }
 
 // ===========================================================================
@@ -489,7 +489,7 @@ TEST_F(TsearchTest, TsHeadlineWrapsMatch) {
     TsQueryData q;
     q.root.type = TsQueryNodeType::kTerm;
     q.root.lexeme = "fox";
-    std::string hl = mytoydb::tsearch::ts_headline(text, q, 5, "<b>", "</b>");
+    std::string hl = pgcpp::tsearch::ts_headline(text, q, 5, "<b>", "</b>");
     EXPECT_NE(hl.find("<b>fox</b>"), std::string::npos);
 }
 
@@ -498,7 +498,7 @@ TEST_F(TsearchTest, TsHeadlineNoMatchReturnsPrefix) {
     TsQueryData q;
     q.root.type = TsQueryNodeType::kTerm;
     q.root.lexeme = "zzz";
-    std::string hl = mytoydb::tsearch::ts_headline(text, q, 10, "<b>", "</b>");
+    std::string hl = pgcpp::tsearch::ts_headline(text, q, 10, "<b>", "</b>");
     // No match: should not contain highlight markers.
     EXPECT_EQ(hl.find("<b>"), std::string::npos);
 }
@@ -508,7 +508,7 @@ TEST_F(TsearchTest, TsHeadlineCaseInsensitiveMatch) {
     TsQueryData q;
     q.root.type = TsQueryNodeType::kTerm;
     q.root.lexeme = "fox";
-    std::string hl = mytoydb::tsearch::ts_headline(text, q, 5, "<b>", "</b>");
+    std::string hl = pgcpp::tsearch::ts_headline(text, q, 5, "<b>", "</b>");
     EXPECT_NE(hl.find("<b>Fox</b>"), std::string::npos);
 }
 
@@ -522,7 +522,7 @@ TEST_F(TsearchTest, TsRewriteSubstitutesLeaf) {
     rule.target_lexeme = "a";
     rule.replacement.type = TsQueryNodeType::kTerm;
     rule.replacement.lexeme = "alpha";
-    auto rewritten = mytoydb::tsearch::ts_rewrite(root, {rule});
+    auto rewritten = pgcpp::tsearch::ts_rewrite(root, {rule});
     EXPECT_EQ(rewritten.type, TsQueryNodeType::kAnd);
     ASSERT_EQ(rewritten.children.size(), 2u);
     EXPECT_EQ(rewritten.children[0].lexeme, "alpha");
@@ -535,7 +535,7 @@ TEST_F(TsearchTest, TsRewritePreservesNonMatching) {
     rule.target_lexeme = "z";  // not present
     rule.replacement.type = TsQueryNodeType::kTerm;
     rule.replacement.lexeme = "zeta";
-    auto rewritten = mytoydb::tsearch::ts_rewrite(root, {rule});
+    auto rewritten = pgcpp::tsearch::ts_rewrite(root, {rule});
     EXPECT_EQ(rewritten.children[0].lexeme, "a");
     EXPECT_EQ(rewritten.children[1].lexeme, "b");
 }
@@ -552,7 +552,7 @@ TEST_F(TsearchTest, TsRewriteReplacesWithSubtree) {
     r.lexeme = "aleph";
     rule.replacement.children.push_back(l);
     rule.replacement.children.push_back(r);
-    auto rewritten = mytoydb::tsearch::ts_rewrite(root, {rule});
+    auto rewritten = pgcpp::tsearch::ts_rewrite(root, {rule});
     EXPECT_EQ(rewritten.type, TsQueryNodeType::kOr);
     ASSERT_EQ(rewritten.children.size(), 2u);
 }

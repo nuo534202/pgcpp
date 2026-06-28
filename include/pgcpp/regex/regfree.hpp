@@ -11,8 +11,8 @@
 
 #include "pgcpp/regex/regex_internal.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 void pg_regfree(regex_t* re);
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

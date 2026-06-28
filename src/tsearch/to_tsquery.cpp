@@ -16,11 +16,11 @@
 #include "pgcpp/tsearch/wparser.hpp"
 #include "pgcpp/types/ts_types.hpp"
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
-using mytoydb::types::TsQueryData;
-using mytoydb::types::TsQueryNode;
-using mytoydb::types::TsQueryNodeType;
+using pgcpp::types::TsQueryData;
+using pgcpp::types::TsQueryNode;
+using pgcpp::types::TsQueryNodeType;
 
 namespace {
 
@@ -70,4 +70,4 @@ TsQueryData ToTsQuery(std::string_view text, std::string_view config) {
     return out;
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

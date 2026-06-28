@@ -19,18 +19,18 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_type;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::GetSysCache;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::nodes::Value;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_type;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::GetSysCache;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::nodes::Value;
 
 // UNKNOWNOID — PostgreSQL's OID for the "unknown" type (705).
 static constexpr Oid kUnknownOid = 705;
@@ -51,26 +51,26 @@ struct BuiltinType {
 
 // Common built-in types needed for ClickBench.
 const BuiltinType kBuiltinTypes[] = {
-    {"bool", mytoydb::types::kBoolOid, 1, true},
-    {"boolean", mytoydb::types::kBoolOid, 1, true},
-    {"int2", mytoydb::types::kInt2Oid, 2, true},
-    {"smallint", mytoydb::types::kInt2Oid, 2, true},
-    {"int4", mytoydb::types::kInt4Oid, 4, true},
-    {"integer", mytoydb::types::kInt4Oid, 4, true},
-    {"int", mytoydb::types::kInt4Oid, 4, true},
-    {"int8", mytoydb::types::kInt8Oid, 8, true},
-    {"bigint", mytoydb::types::kInt8Oid, 8, true},
-    {"float4", mytoydb::types::kFloat4Oid, 4, true},
-    {"real", mytoydb::types::kFloat4Oid, 4, true},
-    {"float8", mytoydb::types::kFloat8Oid, 8, true},
-    {"double", mytoydb::types::kFloat8Oid, 8, true},
-    {"double precision", mytoydb::types::kFloat8Oid, 8, true},
-    {"text", mytoydb::types::kTextOid, -1, false},
-    {"varchar", mytoydb::types::kVarcharOid, -1, false},
-    {"char", mytoydb::types::kTextOid, -1, false},
-    {"bpchar", mytoydb::types::kTextOid, -1, false},
-    {"date", mytoydb::types::kDateOid, 4, true},
-    {"timestamp", mytoydb::types::kTimestampOid, 8, true},
+    {"bool", pgcpp::types::kBoolOid, 1, true},
+    {"boolean", pgcpp::types::kBoolOid, 1, true},
+    {"int2", pgcpp::types::kInt2Oid, 2, true},
+    {"smallint", pgcpp::types::kInt2Oid, 2, true},
+    {"int4", pgcpp::types::kInt4Oid, 4, true},
+    {"integer", pgcpp::types::kInt4Oid, 4, true},
+    {"int", pgcpp::types::kInt4Oid, 4, true},
+    {"int8", pgcpp::types::kInt8Oid, 8, true},
+    {"bigint", pgcpp::types::kInt8Oid, 8, true},
+    {"float4", pgcpp::types::kFloat4Oid, 4, true},
+    {"real", pgcpp::types::kFloat4Oid, 4, true},
+    {"float8", pgcpp::types::kFloat8Oid, 8, true},
+    {"double", pgcpp::types::kFloat8Oid, 8, true},
+    {"double precision", pgcpp::types::kFloat8Oid, 8, true},
+    {"text", pgcpp::types::kTextOid, -1, false},
+    {"varchar", pgcpp::types::kVarcharOid, -1, false},
+    {"char", pgcpp::types::kTextOid, -1, false},
+    {"bpchar", pgcpp::types::kTextOid, -1, false},
+    {"date", pgcpp::types::kDateOid, 4, true},
+    {"timestamp", pgcpp::types::kTimestampOid, 8, true},
     {"unknown", kUnknownOid, -2, false},
 };
 
@@ -199,20 +199,20 @@ bool get_typbyval(Oid type_oid) {
 
 // type_is_numeric — is this a numeric type (int, float)?
 bool type_is_numeric(Oid type_oid) {
-    return type_oid == mytoydb::types::kInt2Oid || type_oid == mytoydb::types::kInt4Oid ||
-           type_oid == mytoydb::types::kInt8Oid || type_oid == mytoydb::types::kFloat4Oid ||
-           type_oid == mytoydb::types::kFloat8Oid;
+    return type_oid == pgcpp::types::kInt2Oid || type_oid == pgcpp::types::kInt4Oid ||
+           type_oid == pgcpp::types::kInt8Oid || type_oid == pgcpp::types::kFloat4Oid ||
+           type_oid == pgcpp::types::kFloat8Oid;
 }
 
 // type_is_string — is this a string type (text, varchar, unknown)?
 bool type_is_string(Oid type_oid) {
-    return type_oid == mytoydb::types::kTextOid || type_oid == mytoydb::types::kVarcharOid ||
+    return type_oid == pgcpp::types::kTextOid || type_oid == pgcpp::types::kVarcharOid ||
            type_oid == kUnknownOid;
 }
 
 // type_is_datetime — is this a date/time type?
 bool type_is_datetime(Oid type_oid) {
-    return type_oid == mytoydb::types::kDateOid || type_oid == mytoydb::types::kTimestampOid;
+    return type_oid == pgcpp::types::kDateOid || type_oid == pgcpp::types::kTimestampOid;
 }
 
 // ---------------------------------------------------------------------------
@@ -235,17 +235,17 @@ struct ArrayTypeEntry {
 };
 
 const ArrayTypeEntry kArrayTypes[] = {
-    {mytoydb::types::kBoolOid, 1000},       // _bool
-    {mytoydb::types::kInt2Oid, 1005},       // _int2
-    {mytoydb::types::kInt4Oid, 1007},       // _int4
-    {mytoydb::types::kInt8Oid, 1016},       // _int8
-    {mytoydb::types::kFloat4Oid, 1021},     // _float4
-    {mytoydb::types::kFloat8Oid, 1022},     // _float8
-    {mytoydb::types::kTextOid, 1009},       // _text
-    {mytoydb::types::kVarcharOid, 1015},    // _varchar
-    {mytoydb::types::kDateOid, 1182},       // _date
-    {mytoydb::types::kTimestampOid, 1115},  // _timestamp
-    {kUnknownOid, 705},                     // _unknown (same OID)
+    {pgcpp::types::kBoolOid, 1000},       // _bool
+    {pgcpp::types::kInt2Oid, 1005},       // _int2
+    {pgcpp::types::kInt4Oid, 1007},       // _int4
+    {pgcpp::types::kInt8Oid, 1016},       // _int8
+    {pgcpp::types::kFloat4Oid, 1021},     // _float4
+    {pgcpp::types::kFloat8Oid, 1022},     // _float8
+    {pgcpp::types::kTextOid, 1009},       // _text
+    {pgcpp::types::kVarcharOid, 1015},    // _varchar
+    {pgcpp::types::kDateOid, 1182},       // _date
+    {pgcpp::types::kTimestampOid, 1115},  // _timestamp
+    {kUnknownOid, 705},                   // _unknown (same OID)
 };
 constexpr int kArrayTypesCount = sizeof(kArrayTypes) / sizeof(kArrayTypes[0]);
 
@@ -292,7 +292,7 @@ int32_t ComputeTypmod(const TypeName* tn, Oid base_oid) {
 
         // Varchar/bpchar/char encode the typmod as VARHDRSZ + max_length
         // to match PostgreSQL's varchar_typmod_in().
-        if (base_oid == mytoydb::types::kVarcharOid || base_oid == mytoydb::types::kTextOid) {
+        if (base_oid == pgcpp::types::kVarcharOid || base_oid == pgcpp::types::kTextOid) {
             return static_cast<int32_t>(ival + kVarHdrSz);
         }
         // Other types: pass the typmod through verbatim.
@@ -351,9 +351,9 @@ Oid typenameTypeId(ParseState* pstate, TypeName* tn, int32_t* typmod) {
     Oid oid = LookupTypeName(pstate, tn, typmod);
     if (oid == kInvalidOid) {
         std::string name = ExtractLastTypeName(tn);
-        ereport(mytoydb::error::LogLevel::kError, "type \"" + name + "\" does not exist");
+        ereport(pgcpp::error::LogLevel::kError, "type \"" + name + "\" does not exist");
     }
     return oid;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

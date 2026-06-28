@@ -16,20 +16,20 @@
 #include "pgcpp/common/memory/memory_context.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::parser {
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::parser {
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::nodes::Node;
-using mytoydb::nodes::NodeTag;
-using mytoydb::nodes::nodeTag;
-using mytoydb::nodes::Value;
-using mytoydb::types::BoolGetDatum;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::Float8GetDatum;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
+using pgcpp::nodes::Node;
+using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeTag;
+using pgcpp::nodes::Value;
+using pgcpp::types::BoolGetDatum;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::Float8GetDatum;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::Int64GetDatum;
 
 // UNKNOWNOID — PostgreSQL's OID for the "unknown" type (705).
 // Used for string literals before type coercion resolves them.
@@ -69,8 +69,8 @@ Const* make_const(ParseState* pstate, AConst* aconst) {
     if (aconst->isbool) {
         auto* v = static_cast<Value*>(aconst->val);
         bool bval = (v->GetInteger() != 0);
-        auto* con = makeConst(mytoydb::types::kBoolOid, -1, 0, 1,
-                              mytoydb::types::BoolGetDatum(bval), false, true, aconst->location);
+        auto* con = makeConst(pgcpp::types::kBoolOid, -1, 0, 1, pgcpp::types::BoolGetDatum(bval),
+                              false, true, aconst->location);
         return con;
     }
 
@@ -94,12 +94,12 @@ Const* make_const(ParseState* pstate, AConst* aconst) {
             int32_t val32 = static_cast<int32_t>(ival);
             if (ival == static_cast<int64_t>(val32)) {
                 datum = Int32GetDatum(val32);
-                typeid_ = mytoydb::types::kInt4Oid;
+                typeid_ = pgcpp::types::kInt4Oid;
                 typelen = sizeof(int32_t);
                 typebyval = true;
             } else {
                 datum = Int64GetDatum(ival);
-                typeid_ = mytoydb::types::kInt8Oid;
+                typeid_ = pgcpp::types::kInt8Oid;
                 typelen = sizeof(int64_t);
                 typebyval = true;
             }
@@ -117,12 +117,12 @@ Const* make_const(ParseState* pstate, AConst* aconst) {
                 int32_t val32 = static_cast<int32_t>(val64);
                 if (val64 == static_cast<long long>(val32)) {
                     datum = Int32GetDatum(val32);
-                    typeid_ = mytoydb::types::kInt4Oid;
+                    typeid_ = pgcpp::types::kInt4Oid;
                     typelen = sizeof(int32_t);
                     typebyval = true;
                 } else {
                     datum = Int64GetDatum(static_cast<int64_t>(val64));
-                    typeid_ = mytoydb::types::kInt8Oid;
+                    typeid_ = pgcpp::types::kInt8Oid;
                     typelen = sizeof(int64_t);
                     typebyval = true;
                 }
@@ -130,7 +130,7 @@ Const* make_const(ParseState* pstate, AConst* aconst) {
                 // It's a float
                 double dval = std::strtod(fval.c_str(), &endptr);
                 datum = Float8GetDatum(dval);
-                typeid_ = mytoydb::types::kFloat8Oid;
+                typeid_ = pgcpp::types::kFloat8Oid;
                 typelen = sizeof(double);
                 typebyval = true;
             }
@@ -147,14 +147,14 @@ Const* make_const(ParseState* pstate, AConst* aconst) {
             typebyval = false;
             // Store the string in a palloc'd buffer so it survives
             const std::string& sval = v->GetString();
-            char* buf = static_cast<char*>(mytoydb::memory::palloc(sval.size() + 1));
+            char* buf = static_cast<char*>(pgcpp::memory::palloc(sval.size() + 1));
             std::memcpy(buf, sval.data(), sval.size());
             buf[sval.size()] = '\0';
             datum = reinterpret_cast<Datum>(buf);
             break;
         }
         default:
-            ereport(mytoydb::error::LogLevel::kError, "unrecognized constant type in make_const");
+            ereport(pgcpp::error::LogLevel::kError, "unrecognized constant type in make_const");
             return nullptr;  // keep compiler quiet
     }
 
@@ -168,7 +168,7 @@ Const* make_const(ParseState* pstate, AConst* aconst) {
 
 Node* makeBoolConst(bool value, bool isnull) {
     auto* con = makeNode<Const>();
-    con->consttype = mytoydb::types::kBoolOid;
+    con->consttype = pgcpp::types::kBoolOid;
     con->consttypmod = -1;
     con->constcollid = 0;
     con->constlen = 1;
@@ -211,4 +211,4 @@ Node* make_ands_implicit(std::vector<Node*> andclauses) {
     return make_andclause(std::move(andclauses));
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

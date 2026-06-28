@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 namespace {
 
@@ -78,4 +78,4 @@ int NumShmemRegions() {
 // CreateSharedMemoryAndSemaphores is implemented in ipci.cpp (the dispatcher
 // iterates the registry of init functions, including shmem's InitShmemIndex).
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

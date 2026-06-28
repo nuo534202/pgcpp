@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/include/access/xloginsert.h.
 //
 // PostgreSQL assembles each WAL record from multiple registered buffers and
-// data chunks, then writes it atomically into the WAL buffer. MyToyDB
+// data chunks, then writes it atomically into the WAL buffer. pgcpp
 // preserves the BeginInsert/RegisterData/Insert API but simplifies the
 // internal assembly (no full-page images, no backup blocks).
 #pragma once
@@ -15,7 +15,7 @@
 #include "pgcpp/transaction/transam.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 // XLogRegisterFlags — flag bits for the current record (PG's XLR flags).
 constexpr uint8_t kXlrRelMgrInfo = 0x01;  // RMGR-specific info present
@@ -54,4 +54,4 @@ void ResetXlogInsertState();
 // no record is being assembled.
 const std::vector<uint8_t>& GetRegisteredData();
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

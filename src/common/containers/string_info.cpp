@@ -8,8 +8,8 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::containers {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::containers {
+using pgcpp::nodes::makePallocNode;
 
 // ---------------------------------------------------------------------------
 // StringInfo method implementations
@@ -128,4 +128,4 @@ int Length(const StringInfo* si) {
     return static_cast<int>(si->Length());
 }
 
-}  // namespace mytoydb::containers
+}  // namespace pgcpp::containers

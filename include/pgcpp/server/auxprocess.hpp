@@ -5,7 +5,7 @@
 // PostgreSQL runs several "auxiliary" background processes alongside the
 // postmaster: bgwriter, checkpointer, startup, autovacuum launcher/worker,
 // walwriter, pgarch, syslogger. Each is forked by the postmaster and runs
-// a fixed main loop. In MyToyDB (single-process), auxiliary processes are
+// a fixed main loop. In pgcpp (single-process), auxiliary processes are
 // represented by an enum and dispatched via function calls rather than
 // actual forked processes.
 #pragma once
@@ -14,7 +14,7 @@
 #include <string>
 #include <string_view>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // AuxiliaryProcessType — identifies which auxiliary process is running.
 // Matches PostgreSQL's AuxiliaryProcessType enum order.
@@ -45,4 +45,4 @@ const char* AuxProcessMainName(AuxiliaryProcessType type);
 // Returns 0 on clean exit, non-zero on error.
 int AuxProcessMain(AuxiliaryProcessType type);
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

@@ -6,7 +6,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // Row / composite types (PostgreSQL utils/adt/rowtypes.c).
@@ -42,4 +42,4 @@ inline RowData* DatumGetRow(Datum x) {
     return reinterpret_cast<RowData*>(x);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

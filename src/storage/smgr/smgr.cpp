@@ -8,7 +8,7 @@
 // methods in this C++ conversion).
 //
 // In PostgreSQL, smgr.c uses a switch table to support multiple storage
-// managers (md, etc.). MyToyDB only implements md, so the switch is
+// managers (md, etc.). pgcpp only implements md, so the switch is
 // eliminated and md operations are called directly.
 
 #include "pgcpp/storage/smgr.hpp"
@@ -21,15 +21,15 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::storage {
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::storage {
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
 namespace {
 
 // The smgr hash table: maps RelFileNodeBackend → SmgrRelation.
 // Uses a simple linear search over a linked list (PostgreSQL uses a hash
-// table; for MyToyDB's scale this is sufficient and simpler).
+// table; for pgcpp's scale this is sufficient and simpler).
 //
 // All SmgrRelation entries are allocated in a dedicated long-lived context.
 struct SmgrHashEntry {
@@ -71,7 +71,7 @@ std::string relpathbackend(RelFileNodeBackend rnode, ForkNumber fork_num) {
     std::string path = "base/";
     // For shared relations (spc_node == 0), use "global/" instead.
     // PostgreSQL uses pg_tblspc/<spc>/<db>/ for non-default tablespaces.
-    // MyToyDB only supports the default tablespace for now.
+    // pgcpp only supports the default tablespace for now.
     path += std::to_string(rnode.node.db_node);
     path += '/';
     path += std::to_string(rnode.node.rel_node);
@@ -90,7 +90,7 @@ std::string relpathbackend(RelFileNodeBackend rnode, ForkNumber fork_num) {
             path += "_init";
             break;
         default:
-            ereport(mytoydb::error::LogLevel::kError, "invalid fork number");
+            ereport(pgcpp::error::LogLevel::kError, "invalid fork number");
             break;
     }
     return path;
@@ -224,9 +224,9 @@ void smgrclosenode(RelFileNodeBackend rnode) {
 }
 
 void smgrdosyncall() {
-    // MyToyDB simplification: fsync every open segment FD across all
+    // pgcpp simplification: fsync every open segment FD across all
     // SmgrRelations. PostgreSQL batches this via sync.c for checkpoint
-    // efficiency; single-process MyToyDB does it directly.
+    // efficiency; single-process pgcpp does it directly.
     for (SmgrRelation s = g_smgr_hash.head; s != nullptr; s = s->smgr_next) {
         for (int f = 0; f < kNumForks; ++f) {
             for (const auto& entry : s->md_fd[f]) {
@@ -239,11 +239,11 @@ void smgrdosyncall() {
 }
 
 void smgrsync() {
-    // Same as smgrdosyncall in MyToyDB's single-process model: iterate all
+    // Same as smgrdosyncall in pgcpp's single-process model: iterate all
     // open FDs and fsync them. PostgreSQL distinguishes smgrsync (called at
     // checkpoint) from smgrdosyncall (called by CREATE INDEX); the
     // distinction is moot without sync.c.
     smgrdosyncall();
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

@@ -4,7 +4,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // NumericData — a simplified arbitrary-precision decimal type.
 //
@@ -65,4 +65,4 @@ inline NumericData* DatumGetNumeric(Datum x) {
     return reinterpret_cast<NumericData*>(x);
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

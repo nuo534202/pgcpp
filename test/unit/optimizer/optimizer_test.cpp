@@ -30,51 +30,51 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::catalog::Oid;
-using mytoydb::executor::Agg;
-using mytoydb::executor::ModifyTable;
-using mytoydb::executor::Plan;
-using mytoydb::executor::PlanType;
-using mytoydb::executor::Result;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::Sort;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::memory::palloc;
-using mytoydb::optimizer::Cardinality;
-using mytoydb::optimizer::ClampRowEst;
-using mytoydb::optimizer::Cost;
-using mytoydb::optimizer::CostAgg;
-using mytoydb::optimizer::CostIndexScan;
-using mytoydb::optimizer::CostSeqScan;
-using mytoydb::optimizer::CostSort;
-using mytoydb::optimizer::EstimateSelectivity;
-using mytoydb::optimizer::IndexPath;
-using mytoydb::optimizer::planner;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::RelOptInfo;
-using mytoydb::optimizer::Selectivity;
-using mytoydb::optimizer::SeqScanPath;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::Const;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::JoinType;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
+using pgcpp::catalog::Oid;
+using pgcpp::executor::Agg;
+using pgcpp::executor::ModifyTable;
+using pgcpp::executor::Plan;
+using pgcpp::executor::PlanType;
+using pgcpp::executor::Result;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::Sort;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::memory::palloc;
+using pgcpp::optimizer::Cardinality;
+using pgcpp::optimizer::ClampRowEst;
+using pgcpp::optimizer::Cost;
+using pgcpp::optimizer::CostAgg;
+using pgcpp::optimizer::CostIndexScan;
+using pgcpp::optimizer::CostSeqScan;
+using pgcpp::optimizer::CostSort;
+using pgcpp::optimizer::EstimateSelectivity;
+using pgcpp::optimizer::IndexPath;
+using pgcpp::optimizer::planner;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::RelOptInfo;
+using pgcpp::optimizer::Selectivity;
+using pgcpp::optimizer::SeqScanPath;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::Const;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::JoinType;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
 
 namespace {
 
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::makePallocNode;
 
 // Operator OIDs (from bootstrap_catalog.cpp).
 constexpr Oid kInt4EqOp = 96;   // int4 = int4
@@ -84,13 +84,13 @@ constexpr Oid kInt4GtOp = 521;  // int4 > int4
 class OptimizerTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("optimizer_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -226,7 +226,7 @@ TEST_F(OptimizerTest, SelectFromTable_ProducesSeqScanPlan) {
 // SELECT a FROM t WHERE a > 5 → SeqScan with qual.
 TEST_F(OptimizerTest, SelectWithWhere_ProducesSeqScanWithQual) {
     Node* qual =
-        MakeOpExpr(kInt4GtOp, mytoydb::types::kBoolOid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(5));
+        MakeOpExpr(kInt4GtOp, pgcpp::types::kBoolOid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(5));
 
     Query* query = MakeSelectQuery();
     query->rtable.push_back(MakeRTE(16384));
@@ -249,7 +249,7 @@ TEST_F(OptimizerTest, SelectCount_ProducesAggOnSeqScan) {
     query->has_aggs = true;
 
     // COUNT(*) is an Aggref with aggstar=true.
-    auto* agg = makePallocNode<mytoydb::parser::Aggref>();
+    auto* agg = makePallocNode<pgcpp::parser::Aggref>();
     agg->aggfnoid = 2147;  // count(int4)
     agg->aggtype = kInt8Oid;
     agg->aggstar = true;
@@ -276,7 +276,7 @@ TEST_F(OptimizerTest, SelectGroupBy_ProducesHashedAggOnSeqScan) {
     // Target list: a (ressortgroupref=1), COUNT(*)
     query->target_list.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a", 1));
 
-    auto* aggref = makePallocNode<mytoydb::parser::Aggref>();
+    auto* aggref = makePallocNode<pgcpp::parser::Aggref>();
     aggref->aggfnoid = 2147;
     aggref->aggtype = kInt8Oid;
     aggref->aggstar = true;
@@ -478,7 +478,7 @@ TEST_F(OptimizerTest, ClampRowEst_FloorsToOne) {
 // EstimateSelectivity: equality qual → 0.1.
 TEST_F(OptimizerTest, EstimateSelectivity_EqualityQual) {
     Node* qual =
-        MakeOpExpr(kInt4EqOp, mytoydb::types::kBoolOid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(5));
+        MakeOpExpr(kInt4EqOp, pgcpp::types::kBoolOid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(5));
     Selectivity sel = EstimateSelectivity(qual, 1000);
     EXPECT_NEAR(sel, 0.1, 0.01);
 }
@@ -486,7 +486,7 @@ TEST_F(OptimizerTest, EstimateSelectivity_EqualityQual) {
 // EstimateSelectivity: range qual → 0.33.
 TEST_F(OptimizerTest, EstimateSelectivity_RangeQual) {
     Node* qual =
-        MakeOpExpr(kInt4GtOp, mytoydb::types::kBoolOid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(5));
+        MakeOpExpr(kInt4GtOp, pgcpp::types::kBoolOid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(5));
     Selectivity sel = EstimateSelectivity(qual, 1000);
     EXPECT_NEAR(sel, 0.33, 0.01);
 }

@@ -10,7 +10,7 @@
 
 #include <cstdint>
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 namespace {
 // LCG step constants (Knuth's MMIX). These give a full-period generator over
@@ -49,4 +49,4 @@ void SetGeqoSeed(uint64_t seed) {
     GeqoRng().Seed(seed);
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

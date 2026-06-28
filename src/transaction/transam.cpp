@@ -5,7 +5,7 @@
 //
 // The commit log (CLOG) records the status (in-progress / committed /
 // aborted) of every normal transaction ID. In PostgreSQL this is a set of
-// shared-memory pages persisted to pg_xact/. MyToyDB keeps an in-memory
+// shared-memory pages persisted to pg_xact/. pgcpp keeps an in-memory
 // vector indexed by XID, which is sufficient for single-process operation.
 #include "pgcpp/transaction/transam.hpp"
 
@@ -13,7 +13,7 @@
 
 #include "pgcpp/common/error/elog.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -97,7 +97,7 @@ bool TransactionIdDidAbort(TransactionId xid) {
 
 void TransactionIdCommit(TransactionId xid) {
     if (!TransactionIdIsNormal(xid)) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "cannot commit special transaction id " + std::to_string(xid));
     }
 
@@ -114,7 +114,7 @@ void TransactionIdCommit(TransactionId xid) {
 
 void TransactionIdAbort(TransactionId xid) {
     if (!TransactionIdIsNormal(xid)) {
-        ereport(mytoydb::error::LogLevel::kError,
+        ereport(pgcpp::error::LogLevel::kError,
                 "cannot abort special transaction id " + std::to_string(xid));
     }
 
@@ -162,4 +162,4 @@ void ResetTransactionState() {
     InitializeCommitLog();
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

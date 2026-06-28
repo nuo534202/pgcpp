@@ -8,7 +8,7 @@
 
 #include <cctype>
 
-namespace mytoydb::tsearch {
+namespace pgcpp::tsearch {
 
 namespace {
 
@@ -48,4 +48,4 @@ std::vector<Token> TokenizeText(std::string_view str) {
     return tokens;
 }
 
-}  // namespace mytoydb::tsearch
+}  // namespace pgcpp::tsearch

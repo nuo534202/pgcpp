@@ -18,8 +18,8 @@
 
 #include "pgcpp/regex/regex_internal.hpp"
 
-namespace mytoydb::regex {
+namespace pgcpp::regex {
 
 int pg_regprefix(const regex_t* re, char** prefix, std::size_t* prefix_size);
 
-}  // namespace mytoydb::regex
+}  // namespace pgcpp::regex

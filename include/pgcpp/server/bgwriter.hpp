@@ -8,14 +8,14 @@
 // perform write I/O themselves (which would block query execution).
 //
 // In PostgreSQL, bgwriter is a separate process forked by the postmaster.
-// MyToyDB is single-process, so the bgwriter is a stateful API that can
+// pgcpp is single-process, so the bgwriter is a stateful API that can
 // be invoked in a loop or scheduled to run periodically (no actual fork
 // needed for the simplified model).
 #pragma once
 
 #include <cstdint>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // BgWriterStats — statistics tracked by the background writer.
 struct BgWriterStats {
@@ -61,4 +61,4 @@ bool BgWriterIsRunning();
 // GetBgWriterStats — return the current bgwriter statistics.
 BgWriterStats GetBgWriterStats();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

@@ -1,16 +1,16 @@
 // worker.cpp — Logical replication apply worker.
 //
 // Converted from PostgreSQL 15's src/backend/replication/logical/worker.c.
-// MyToyDB keeps a small in-process pool (std::vector<LogicalRepWorker>)
+// pgcpp keeps a small in-process pool (std::vector<LogicalRepWorker>)
 // and runs workers synchronously in ApplyWorkerMain (no fork).
 #include "pgcpp/replication/worker.hpp"
 
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
-using mytoydb::error::LogLevel;
+using pgcpp::error::LogLevel;
 
 namespace {
 
@@ -135,4 +135,4 @@ LogicalRepWorkerPool* GetLogicalRepWorkerPool() {
     return &Pool();
 }
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

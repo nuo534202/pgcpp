@@ -4,13 +4,13 @@
 //
 // PostgreSQL derives the genetic algorithm's population size and number of
 // generations from the number of relations being joined, scaled by the
-// geqo_effort GUC. MyToyDB mirrors this so that larger joins get larger
+// geqo_effort GUC. pgcpp mirrors this so that larger joins get larger
 // populations (more thorough search) without an unbounded blow-up.
 #pragma once
 
 #include "pgcpp/optimizer/geqo/geqo_main.hpp"
 
-namespace mytoydb::optimizer::geqo {
+namespace pgcpp::optimizer::geqo {
 
 // GeqoParams — sizing parameters for one genetic-algorithm run.
 struct GeqoParams {
@@ -27,4 +27,4 @@ struct GeqoParams {
 // The minimum pool size is 2 so that even tiny joins still evolve.
 GeqoParams ComputeGeqoParams(int num_rels);
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

@@ -9,7 +9,7 @@
 // accepting client connections.
 //
 // In PostgreSQL, startup is a separate process that communicates with the
-// postmaster via shared memory. MyToyDB represents it as a stateful API
+// postmaster via shared memory. pgcpp represents it as a stateful API
 // that wraps PerformCrashRecovery (from xlogrecovery.h).
 #pragma once
 
@@ -17,7 +17,7 @@
 
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // StartupState — the state of the startup process.
 enum class StartupState {
@@ -78,4 +78,4 @@ StartupStats GetStartupStats();
 // Defaults to kSizeofXlogRecord (start of the WAL stream).
 void SetRecoveryStartLsn(transaction::XLogRecPtr lsn);
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

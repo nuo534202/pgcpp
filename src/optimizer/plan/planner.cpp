@@ -25,20 +25,20 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::executor::Agg;
-using mytoydb::executor::ModifyTable;
-using mytoydb::executor::Plan;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::CmdType;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::TargetEntry;
+using pgcpp::executor::Agg;
+using pgcpp::executor::ModifyTable;
+using pgcpp::executor::Plan;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::CmdType;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::TargetEntry;
 
 // Forward declaration — implemented in subplanner.cpp.
 Plan* subplanner(PlannerInfo* root);
@@ -79,7 +79,7 @@ Plan* planner(Query* query) {
             mt->lefttree = plan;
             // Copy target list for RETURNING (if any).
             for (Node* te : query->returning_list) {
-                mt->targetlist.push_back(static_cast<mytoydb::parser::TargetEntry*>(te));
+                mt->targetlist.push_back(static_cast<pgcpp::parser::TargetEntry*>(te));
             }
             plan = mt;
             break;
@@ -241,4 +241,4 @@ Plan* standard_planner(Query* query) {
                             /*tuple_fraction=*/0.0);
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

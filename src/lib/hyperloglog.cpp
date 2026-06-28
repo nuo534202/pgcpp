@@ -1,6 +1,6 @@
 // hyperloglog.cpp — HyperLogLog cardinality estimator implementation.
 //
-// See mytoydb/lib/hyperloglog.hpp for the algorithm summary. The hash
+// See pgcpp/lib/hyperloglog.hpp for the algorithm summary. The hash
 // function uses a salted FNV-1a pass (same primitive as BloomFilter) so the
 // module has no external hash dependency. The estimate follows Flajolet's
 // small/large-range bias corrections.
@@ -9,7 +9,7 @@
 
 #include <cmath>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 namespace {
 
@@ -126,4 +126,4 @@ uint64_t HyperLogLog::Hash(const void* data, std::size_t len) {
     return Fnv1a(data, len);
 }
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

@@ -19,7 +19,7 @@
 #include <string_view>
 #include <vector>
 
-namespace mytoydb::statistics {
+namespace pgcpp::statistics {
 
 // AttrNumber — PostgreSQL attribute number (1-based). Redeclared here so
 // this header is self-contained; identical to the alias in extended_stats.hpp.
@@ -67,4 +67,4 @@ std::string SerializeMVDependencies(const MVDependencies& deps);
 // DeserializeMVDependencies — inverse of SerializeMVDependencies.
 MVDependencies DeserializeMVDependencies(std::string_view data);
 
-}  // namespace mytoydb::statistics
+}  // namespace pgcpp::statistics

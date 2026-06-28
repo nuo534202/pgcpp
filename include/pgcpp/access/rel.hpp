@@ -9,7 +9,7 @@
 //   - Storage handle (SmgrRelation for physical file I/O)
 //   - Reference count (for open/close management)
 //
-// In PostgreSQL, RelationData is cached in a relcache. MyToyDB uses a simpler
+// In PostgreSQL, RelationData is cached in a relcache. pgcpp uses a simpler
 // model: relations are opened on demand and closed explicitly. The relcache
 // is a small map from OID to RelationData.
 #pragma once
@@ -25,7 +25,7 @@
 #include "pgcpp/storage/relfilenode.hpp"
 #include "pgcpp/storage/smgr.hpp"
 
-namespace mytoydb::access {
+namespace pgcpp::access {
 
 // AttrDefault — a column DEFAULT expression (PG pg_attrdef row, simplified).
 struct AttrDefault {
@@ -55,17 +55,17 @@ struct TupleConstr {
 // via the owning Relation.
 struct TupleDescData {
     int natts = 0;  // number of user attributes
-    std::vector<mytoydb::catalog::FormData_pg_attribute> attrs;
+    std::vector<pgcpp::catalog::FormData_pg_attribute> attrs;
 
     // --- P0 extensions (Task 15.8.2 / GAP-M8-F03) ---
-    TupleConstr constr;  // constraints (defaults + CHECKs)
-    mytoydb::catalog::Oid tdtypeid = mytoydb::catalog::kInvalidOid;  // composite type OID
-    int32_t tdtypmod = -1;                                           // type modifier
-    bool tdhasoid = false;  // has OID column (MyToyDB: always false)
+    TupleConstr constr;                                          // constraints (defaults + CHECKs)
+    pgcpp::catalog::Oid tdtypeid = pgcpp::catalog::kInvalidOid;  // composite type OID
+    int32_t tdtypmod = -1;                                       // type modifier
+    bool tdhasoid = false;  // has OID column (pgcpp: always false)
     int tdrefcount = 0;     // reference count (0 => may free)
 
     // Convenience accessor.
-    const mytoydb::catalog::FormData_pg_attribute* Attr(int attnum) const {
+    const pgcpp::catalog::FormData_pg_attribute* Attr(int attnum) const {
         // attnum is 1-based for user attributes.
         if (attnum < 1 || attnum > natts)
             return nullptr;
@@ -87,9 +87,9 @@ using TupleDesc = TupleDescData*;
 //   rd_isnailed — true for pinned catalog relations (not evicted)
 //   rd_isvalid  — true if the relcache entry is fully initialized
 struct RelationData {
-    mytoydb::catalog::Oid rd_id = mytoydb::catalog::kInvalidOid;
-    const mytoydb::catalog::FormData_pg_class* rd_rel = nullptr;
-    mytoydb::storage::SmgrRelation rd_smgr = nullptr;
+    pgcpp::catalog::Oid rd_id = pgcpp::catalog::kInvalidOid;
+    const pgcpp::catalog::FormData_pg_class* rd_rel = nullptr;
+    pgcpp::storage::SmgrRelation rd_smgr = nullptr;
     TupleDesc rd_att = nullptr;
     int rd_refcnt = 0;
     bool rd_isnailed = false;
@@ -108,35 +108,35 @@ using Relation = RelationData*;
 // a RelationData with a tuple descriptor, and opens the storage manager
 // handle. The reference count starts at 1.
 // Returns nullptr if the relation does not exist.
-Relation RelationOpen(mytoydb::catalog::Oid relid);
+Relation RelationOpen(pgcpp::catalog::Oid relid);
 
 // RelationClose — decrement the reference count and free if it reaches 0.
 void RelationClose(Relation relation);
 
 // RelationGetSmgr — return the SmgrRelation, opening it lazily if needed.
-mytoydb::storage::SmgrRelation RelationGetSmgr(Relation relation);
+pgcpp::storage::SmgrRelation RelationGetSmgr(Relation relation);
 
 // --- PG-compatible aliases (relcache API) ---
 
 // RelationIdGetRelation — PG alias for RelationOpen.
-Relation RelationIdGetRelation(mytoydb::catalog::Oid relid);
+Relation RelationIdGetRelation(pgcpp::catalog::Oid relid);
 
 // RelationCloseByOid — close a relation identified by OID (decrement refcnt).
 // No-op if the OID is not currently cached.
-void RelationCloseByOid(mytoydb::catalog::Oid relid);
+void RelationCloseByOid(pgcpp::catalog::Oid relid);
 
 // RelationBuildDesc — build a fresh RelationData from the catalog without
 // consulting the relcache. This is the cache-miss path used internally by
 // RelationOpen. The returned Relation has rd_refcnt = 1 and is owned by the
 // caller (the relcache may also take ownership via RelationOpen). Returns
 // nullptr if the catalog has no pg_class row for relid.
-Relation RelationBuildDesc(mytoydb::catalog::Oid relid);
+Relation RelationBuildDesc(pgcpp::catalog::Oid relid);
 
 // RelationCacheInvalidate — drop the relcache entry for the given OID.
 // Decrements the refcnt by 1 (matching PG's "invalidation drops one pin"
 // semantics). The relation is removed from the cache and any storage handle
 // is closed. Safe to call with an OID that is not cached (no-op).
-void RelationCacheInvalidate(mytoydb::catalog::Oid relid);
+void RelationCacheInvalidate(pgcpp::catalog::Oid relid);
 
 // RelationClearRelation — invalidate a specific Relation in the cache.
 // Decrements its refcnt and removes the entry. If the relation is not in
@@ -152,7 +152,7 @@ int RelationGetNumberOfAttributes(Relation rel);
 // RelationCreateStorage — create the physical storage file for a relation.
 // Uses the relfilenode from pg_class to build a RelFileNode and calls
 // smgrcreate. The relation must already have a pg_class entry.
-void RelationCreateStorage(mytoydb::catalog::Oid relfilenode, bool is_temp);
+void RelationCreateStorage(pgcpp::catalog::Oid relfilenode, bool is_temp);
 
 // RelationDropStorage — drop the physical storage for a relation.
 // Closes the smgr handle and removes the file. Does not remove the
@@ -162,18 +162,18 @@ void RelationDropStorage(Relation relation);
 // RelationExtendStorage — extend the relation's main fork by one block,
 // writing the provided page data. Used by heap_insert when a new page
 // is needed.
-void RelationExtendStorage(Relation relation, mytoydb::storage::BlockNumber block_num,
+void RelationExtendStorage(Relation relation, pgcpp::storage::BlockNumber block_num,
                            const char* page_data);
 
 // RelationGetNumberOfBlocks — return the number of blocks in the main fork.
-mytoydb::storage::BlockNumber RelationGetNumberOfBlocks(Relation relation);
+pgcpp::storage::BlockNumber RelationGetNumberOfBlocks(Relation relation);
 
 // --- Tuple descriptor construction ---
 
 // CreateTupleDesc — build a TupleDesc from a list of attributes.
 // The attributes are copied into the descriptor. natts is set from the
 // vector size.
-TupleDesc CreateTupleDesc(const std::vector<mytoydb::catalog::FormData_pg_attribute>& attrs);
+TupleDesc CreateTupleDesc(const std::vector<pgcpp::catalog::FormData_pg_attribute>& attrs);
 
 // --- tupdesc.c P0 extensions (Task 15.8.2 / GAP-M8-F03) ---
 
@@ -203,10 +203,10 @@ bool equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 // catalog's pg_type; common built-in types fall back to hardcoded metadata
 // when the catalog is not populated.
 void TupleDescInitEntry(TupleDesc desc, int attnum, const std::string& name,
-                        mytoydb::catalog::Oid type_oid, int32_t typmod, int attdim);
+                        pgcpp::catalog::Oid type_oid, int32_t typmod, int attdim);
 
 // TupleDescInitEntryCollation — set the collation of attr slot `attnum`.
-void TupleDescInitEntryCollation(TupleDesc desc, int attnum, mytoydb::catalog::Oid collation);
+void TupleDescInitEntryCollation(TupleDesc desc, int attnum, pgcpp::catalog::Oid collation);
 
 // --- Relcache management ---
 
@@ -216,4 +216,4 @@ void InitializeRelcache();
 // ResetRelcache — clear all cached relations (for testing).
 void ResetRelcache();
 
-}  // namespace mytoydb::access
+}  // namespace pgcpp::access

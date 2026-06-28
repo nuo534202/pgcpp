@@ -5,7 +5,7 @@
 // Combines base relations two at a time, building join RelOptInfo objects
 // and invoking the join path generator (NestLoop/HashJoin/MergeJoin).
 //
-// For MyToyDB's Task 15.15, the joinrel machinery is simplified to a
+// For pgcpp's Task 15.15, the joinrel machinery is simplified to a
 // left-deep linear join order:
 //   1. Iterate over base rels in RT order.
 //   2. For each adjacent pair (outer, inner), collect join clauses and
@@ -24,8 +24,8 @@
 #include "pgcpp/optimizer/util/relnode.hpp"
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::optimizer {
+using pgcpp::nodes::makePallocNode;
 
 namespace {
 
@@ -110,7 +110,7 @@ void make_rels_by_clause_joins(PlannerInfo* root, RelOptInfo* outer_rel) {
         auto* sjinfo = makePallocNode<SpecialJoinInfo>();
         sjinfo->min_lefthand = outer_rel->relindex;
         sjinfo->min_righthand = inner_rel->relindex;
-        sjinfo->jointype = mytoydb::parser::JoinType::kInner;
+        sjinfo->jointype = pgcpp::parser::JoinType::kInner;
         sjinfo->lhs_strict = true;
 
         // Build the joinrel. Note: build_join_rel currently doesn't merge
@@ -143,4 +143,4 @@ void build_joinrels_for_level(PlannerInfo* root, int level) {
     }
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

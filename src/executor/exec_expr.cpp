@@ -22,61 +22,61 @@
 #include "pgcpp/types/datum.hpp"
 #include "pgcpp/types/string_funcs.hpp"
 
-namespace mytoydb::executor {
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::executor {
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::kInvalidOid;
-using mytoydb::catalog::Oid;
-using mytoydb::memory::palloc;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::AArrayExpr;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::CaseExpr;
-using mytoydb::parser::CaseWhen;
-using mytoydb::parser::Const;
-using mytoydb::parser::FuncExpr;
-using mytoydb::parser::Node;
-using mytoydb::parser::NullTest;
-using mytoydb::parser::NullTestType;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Param;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::ScalarArrayOpExpr;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::BoolGetDatum;
-using mytoydb::types::Datum;
-using mytoydb::types::DatumGetBool;
-using mytoydb::types::DatumGetFloat8;
-using mytoydb::types::DatumGetInt32;
-using mytoydb::types::DatumGetInt64;
-using mytoydb::types::DatumGetTextP;
-using mytoydb::types::Float8GetDatum;
-using mytoydb::types::Int32GetDatum;
-using mytoydb::types::Int64GetDatum;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kDateOid;
-using mytoydb::types::kFloat8Oid;
-using mytoydb::types::kInt4Oid;
-using mytoydb::types::kInt8Oid;
-using mytoydb::types::kTextOid;
-using mytoydb::types::kTimestampOid;
-using mytoydb::types::like;
-using mytoydb::types::not_like;
-using mytoydb::types::VARDATA;
-using mytoydb::types::VARSIZE;
-using mytoydb::types::VARSIZE_DATA;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
+using pgcpp::memory::palloc;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::AArrayExpr;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::CaseExpr;
+using pgcpp::parser::CaseWhen;
+using pgcpp::parser::Const;
+using pgcpp::parser::FuncExpr;
+using pgcpp::parser::Node;
+using pgcpp::parser::NullTest;
+using pgcpp::parser::NullTestType;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Param;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::ScalarArrayOpExpr;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::BoolGetDatum;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetBool;
+using pgcpp::types::DatumGetFloat8;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::DatumGetTextP;
+using pgcpp::types::Float8GetDatum;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kDateOid;
+using pgcpp::types::kFloat8Oid;
+using pgcpp::types::kInt4Oid;
+using pgcpp::types::kInt8Oid;
+using pgcpp::types::kTextOid;
+using pgcpp::types::kTimestampOid;
+using pgcpp::types::like;
+using pgcpp::types::not_like;
+using pgcpp::types::VARDATA;
+using pgcpp::types::VARSIZE;
+using pgcpp::types::VARSIZE_DATA;
 
 namespace {
 
 // Special varno values for join evaluation (from primnodes.h).
-using mytoydb::parser::kInnerVar;
-using mytoydb::parser::kOuterVar;
+using pgcpp::parser::kInnerVar;
+using pgcpp::parser::kOuterVar;
 
 // Current bound parameter values for extended query protocol execution.
 // Set by SetExecParams() and cleared by ClearExecParams().
@@ -339,7 +339,7 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
 
         case NodeTag::kScalarArrayOpExpr: {
             // Scalar OP array, e.g. x IN (1,2,3) (use_or=true) or
-            // x OP ALL(...) (use_or=false). MyToyDB represents the IN list
+            // x OP ALL(...) (use_or=false). pgcpp represents the IN list
             // directly as an AArrayExpr in args[1] (no ArrayExpr coercion).
             auto* saop = static_cast<ScalarArrayOpExpr*>(expr);
             if (saop->args.size() != 2) {
@@ -363,7 +363,7 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                 return 0;
             }
 
-            // args[1] must be an AArrayExpr (MyToyDB's IN-list representation).
+            // args[1] must be an AArrayExpr (pgcpp's IN-list representation).
             if (saop->args[1]->GetTag() != NodeTag::kAArrayExpr) {
                 *isNull = true;
                 return 0;
@@ -443,7 +443,7 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                 int len = VARSIZE_DATA(text);
                 std::string field(VARDATA(text), len);
                 *isNull = false;
-                return mytoydb::types::extract(field.c_str(), arg_values[1]);
+                return pgcpp::types::extract(field.c_str(), arg_values[1]);
             }
 
             // date_trunc(field, timestamp) — truncate a timestamp to the
@@ -458,7 +458,7 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                 int len = VARSIZE_DATA(text);
                 std::string field(VARDATA(text), len);
                 *isNull = false;
-                return mytoydb::types::date_trunc(field.c_str(), arg_values[1]);
+                return pgcpp::types::date_trunc(field.c_str(), arg_values[1]);
             }
 
             // length(text) — return the number of bytes in a text value.
@@ -468,7 +468,7 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                     return 0;
                 }
                 *isNull = false;
-                return mytoydb::types::text_length(arg_values[0]);
+                return pgcpp::types::text_length(arg_values[0]);
             }
 
             // regexp_replace(source, pattern, replacement) — regex replacement.
@@ -478,7 +478,7 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                     return 0;
                 }
                 *isNull = false;
-                return mytoydb::types::regexp_replace(arg_values[0], arg_values[1], arg_values[2]);
+                return pgcpp::types::regexp_replace(arg_values[0], arg_values[1], arg_values[2]);
             }
 
             // substring(text, pattern) — regex substring extraction.
@@ -488,7 +488,7 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                     return 0;
                 }
                 *isNull = false;
-                return mytoydb::types::substring(arg_values[0], arg_values[1]);
+                return pgcpp::types::substring(arg_values[0], arg_values[1]);
             }
 
             *isNull = true;
@@ -647,7 +647,7 @@ void ExecProject(const std::vector<TargetEntry*>& targetlist, ExprContext* econt
 ExprContext* CreateExprContext() {
     auto* econtext = makePallocNode<ExprContext>();
     // Create a per-tuple memory context as a child of the current context.
-    econtext->ecxt_per_tuple_memory = mytoydb::memory::AllocSetContext::Create("ExprContext");
+    econtext->ecxt_per_tuple_memory = pgcpp::memory::AllocSetContext::Create("ExprContext");
     return econtext;
 }
 
@@ -690,4 +690,4 @@ ExprContext::~ExprContext() {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

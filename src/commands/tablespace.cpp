@@ -1,17 +1,17 @@
 // tablespace.cpp — CREATE/DROP TABLESPACE implementation.
 //
 // Converted from PostgreSQL 15's src/backend/commands/tablespace.c.
-// MyToyDB uses a single storage directory; this is a stub.
+// pgcpp uses a single storage directory; this is a stub.
 #include "pgcpp/commands/tablespace.hpp"
 
 #include <string>
 
 #include "pgcpp/parser/parsenodes.hpp"
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-using mytoydb::parser::CreateTableSpaceStmt;
-using mytoydb::parser::DropTableSpaceStmt;
+using pgcpp::parser::CreateTableSpaceStmt;
+using pgcpp::parser::DropTableSpaceStmt;
 
 std::string CreateTableSpace(CreateTableSpaceStmt* stmt) {
     (void)stmt;  // Stub.
@@ -23,4 +23,4 @@ std::string DropTableSpace(DropTableSpaceStmt* stmt) {
     return "DROP TABLESPACE";
 }
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

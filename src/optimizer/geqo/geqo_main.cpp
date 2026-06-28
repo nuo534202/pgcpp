@@ -41,8 +41,8 @@
 #include "pgcpp/optimizer/planner.hpp"
 #include "pgcpp/optimizer/util/relnode.hpp"
 
-namespace mytoydb::optimizer::geqo {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::optimizer::geqo {
+using pgcpp::nodes::makePallocNode;
 
 namespace {
 
@@ -118,7 +118,7 @@ Path* GeqoSolve(PlannerInfo* root) {
     int generations = params.generations;
 
     // 3. Seed the global RNG deterministically (PG uses the PID + a counter;
-    // MyToyDB uses a fixed seed for reproducibility across runs, keyed on
+    // pgcpp uses a fixed seed for reproducibility across runs, keyed on
     // the relation count so different queries get different orderings).
     SetGeqoSeed(static_cast<uint64_t>(rel_ids.size()) * 0x9E3779B97F4A7C15ULL ^
                 0x123456789ABCDEF0ULL);
@@ -203,4 +203,4 @@ Path* GeqoSolve(PlannerInfo* root) {
     return GeqoBuildBestPath(root, best->genes);
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

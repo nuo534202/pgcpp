@@ -7,14 +7,14 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class CopyStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
 // DoCopy — top-level COPY dispatcher. Routes to CopyFrom or CopyTo based
 // on stmt->is_from. Returns the command tag ("COPY <n>").
 std::string DoCopy(parser::CopyStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

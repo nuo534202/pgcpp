@@ -5,14 +5,14 @@
 
 #include <string>
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class CreateStmt;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::commands {
+namespace pgcpp::commands {
 
-// DefineType — execute CREATE TYPE. Stub (MyToyDB has no user-defined
+// DefineType — execute CREATE TYPE. Stub (pgcpp has no user-defined
 // type system yet).
 std::string DefineType(parser::CreateStmt* stmt);
 
-}  // namespace mytoydb::commands
+}  // namespace pgcpp::commands

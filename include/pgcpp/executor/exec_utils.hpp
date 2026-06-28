@@ -15,7 +15,7 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 // Build a TupleDesc from a target list.
 // Each TargetEntry contributes one attribute. The attribute type is
@@ -25,18 +25,18 @@ namespace mytoydb::executor {
 //   Aggref    → aggtype
 //   OpExpr    → opresulttype
 //   default   → int4
-mytoydb::access::TupleDesc BuildTupleDescFromTargetList(
-    const std::vector<mytoydb::parser::TargetEntry*>& targetlist);
+pgcpp::access::TupleDesc BuildTupleDescFromTargetList(
+    const std::vector<pgcpp::parser::TargetEntry*>& targetlist);
 
 // Fill in attlen/attbyval/attalign for a known type OID.
 // Defaults to int4 (len=4, byval=true, align=int) for unknown types.
-void FillTypeAttrs(mytoydb::catalog::Oid typid, int16_t* attlen, bool* attbyval,
-                   mytoydb::catalog::AttAlign* attalign);
+void FillTypeAttrs(pgcpp::catalog::Oid typid, int16_t* attlen, bool* attbyval,
+                   pgcpp::catalog::AttAlign* attalign);
 
 // Compare two Datum values of the given type.
 // Returns -1 if a < b, 0 if a == b, 1 if a > b. NULLs sort before non-NULLs.
-int CompareDatumValues(mytoydb::types::Datum a, bool a_null, mytoydb::types::Datum b, bool b_null,
-                       mytoydb::catalog::Oid typid);
+int CompareDatumValues(pgcpp::types::Datum a, bool a_null, pgcpp::types::Datum b, bool b_null,
+                       pgcpp::catalog::Oid typid);
 
 // Compare two TupleTableSlots on the given 1-based attribute numbers.
 // Returns -1 / 0 / 1. Uses the slot's tuple descriptor to determine types.
@@ -44,4 +44,4 @@ int CompareDatumValues(mytoydb::types::Datum a, bool a_null, mytoydb::types::Dat
 int CompareTuplesOnAttrs(const TupleTableSlot* a, const TupleTableSlot* b,
                          const std::vector<int>& attnos);
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

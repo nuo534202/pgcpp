@@ -12,10 +12,10 @@
 #include "pgcpp/executor/plannodes.hpp"
 #include "pgcpp/executor/tupletable.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
 
 void UniqueState::ExecInit() {
     auto* uniqueplan = static_cast<Unique*>(plan);
@@ -90,4 +90,4 @@ void UniqueState::ExecReScan() {
         leftps->ExecReScan();
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

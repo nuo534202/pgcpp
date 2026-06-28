@@ -21,7 +21,7 @@
 #include <functional>
 #include <vector>
 
-namespace mytoydb::lib {
+namespace pgcpp::lib {
 
 template<typename T, typename Compare = std::less<T>>
 class PairingHeap {
@@ -229,4 +229,4 @@ void PairingHeap<T, Compare>::Clear() {
     size_ = 0;
 }
 
-}  // namespace mytoydb::lib
+}  // namespace pgcpp::lib

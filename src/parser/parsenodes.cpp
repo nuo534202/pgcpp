@@ -12,12 +12,12 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::parser {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::parser {
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::nodes::copyObject;
-using mytoydb::nodes::equal;
-using mytoydb::nodes::Node;
+using pgcpp::nodes::copyObject;
+using pgcpp::nodes::equal;
+using pgcpp::nodes::Node;
 
 namespace {
 
@@ -1712,4 +1712,4 @@ bool Query::Equals(const Node& other) const {
            stmt_len == o.stmt_len;
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

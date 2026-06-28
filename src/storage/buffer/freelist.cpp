@@ -21,7 +21,7 @@
 #include "pgcpp/storage/buf_internals.hpp"
 #include "pgcpp/storage/bufmgr.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // Maximum usage count (PostgreSQL's BM_MAX_USAGE_COUNT).
 constexpr int kMaxUsageCount = 5;
@@ -98,7 +98,7 @@ BufferAccessStrategyHandle GetAccessStrategy(BufferAccessStrategy btype) {
             break;
     }
 
-    auto* strategy = mytoydb::nodes::makePallocNode<BufferAccessStrategyData>();
+    auto* strategy = pgcpp::nodes::makePallocNode<BufferAccessStrategyData>();
     strategy->type = btype;
     strategy->ring_size = ring_size;
     strategy->current = 0;
@@ -111,14 +111,14 @@ BufferAccessStrategyHandle GetAccessStrategy(BufferAccessStrategy btype) {
 void FreeAccessStrategy(BufferAccessStrategyHandle strategy) {
     if (strategy == nullptr)
         return;
-    mytoydb::nodes::destroyPallocNode(strategy);
+    pgcpp::nodes::destroyPallocNode(strategy);
 }
 
 void StrategyFreeBuffer(Buffer /*buffer*/) {
-    // MyToyDB is single-process: there is no shared freelist to return the
+    // pgcpp is single-process: there is no shared freelist to return the
     // buffer to. The clock sweep will reclaim the slot on the next victim
     // search. PostgreSQL uses this hook to push the buffer back onto the
     // shared free list for fast reuse by InvalidateBuffer.
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

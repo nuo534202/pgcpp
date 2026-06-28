@@ -13,12 +13,12 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::parser {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::parser {
+using pgcpp::nodes::makePallocNode;
 
-using mytoydb::nodes::copyObject;
-using mytoydb::nodes::equal;
-using mytoydb::nodes::Node;
+using pgcpp::nodes::copyObject;
+using pgcpp::nodes::equal;
+using pgcpp::nodes::Node;
 
 namespace {
 
@@ -452,8 +452,7 @@ Var* makeVar(int varno, int varattno, Oid vartype, int vartypmod, Oid varcollid,
 }
 
 Const* makeConst(Oid consttype, int consttypmod, Oid constcollid, int constlen,
-                 mytoydb::types::Datum constvalue, bool constisnull, bool constbyval,
-                 int location) {
+                 pgcpp::types::Datum constvalue, bool constisnull, bool constbyval, int location) {
     auto* con = makeNode<Const>();
     con->consttype = consttype;
     con->consttypmod = consttypmod;
@@ -470,4 +469,4 @@ Const* makeNullConst(Oid consttype, int consttypmod, Oid constcollid) {
     return makeConst(consttype, consttypmod, constcollid, 0, 0, true, false, -1);
 }
 
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser

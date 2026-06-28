@@ -19,42 +19,42 @@
 #include "pgcpp/parser/parsenodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-using mytoydb::executor::Agg;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::add_path;
-using mytoydb::optimizer::AggPath;
-using mytoydb::optimizer::cheapest_path;
-using mytoydb::optimizer::create_agg_path;
-using mytoydb::optimizer::create_hashjoin_path;
-using mytoydb::optimizer::create_index_path;
-using mytoydb::optimizer::create_nestloop_path;
-using mytoydb::optimizer::create_result_path;
-using mytoydb::optimizer::create_seqscan_path;
-using mytoydb::optimizer::create_sort_path;
-using mytoydb::optimizer::HashJoinPath;
-using mytoydb::optimizer::IndexPath;
-using mytoydb::optimizer::NestLoopPath;
-using mytoydb::optimizer::Path;
-using mytoydb::optimizer::PathType;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::RelOptInfo;
-using mytoydb::optimizer::ResultPath;
-using mytoydb::optimizer::SeqScanPath;
-using mytoydb::optimizer::SortPath;
-using mytoydb::parser::SortGroupClause;
+using pgcpp::executor::Agg;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::add_path;
+using pgcpp::optimizer::AggPath;
+using pgcpp::optimizer::cheapest_path;
+using pgcpp::optimizer::create_agg_path;
+using pgcpp::optimizer::create_hashjoin_path;
+using pgcpp::optimizer::create_index_path;
+using pgcpp::optimizer::create_nestloop_path;
+using pgcpp::optimizer::create_result_path;
+using pgcpp::optimizer::create_seqscan_path;
+using pgcpp::optimizer::create_sort_path;
+using pgcpp::optimizer::HashJoinPath;
+using pgcpp::optimizer::IndexPath;
+using pgcpp::optimizer::NestLoopPath;
+using pgcpp::optimizer::Path;
+using pgcpp::optimizer::PathType;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::RelOptInfo;
+using pgcpp::optimizer::ResultPath;
+using pgcpp::optimizer::SeqScanPath;
+using pgcpp::optimizer::SortPath;
+using pgcpp::parser::SortGroupClause;
 
 namespace {
 
 class PathNodeTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
-        context_ = mytoydb::memory::AllocSetContext::Create("pathnode_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("pathnode_test_context");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -72,7 +72,7 @@ protected:
         return rel;
     }
 
-    mytoydb::memory::AllocSetContext* context_ = nullptr;
+    pgcpp::memory::AllocSetContext* context_ = nullptr;
 };
 
 // create_seqscan_path sets the type, parent_rel, and cost.
@@ -95,7 +95,7 @@ TEST_F(PathNodeTest, CreateIndexPath_SetsIndexId) {
     auto* root = makePallocNode<PlannerInfo>();
     RelOptInfo* rel = MakeRel();
 
-    std::vector<mytoydb::parser::Node*> quals;
+    std::vector<pgcpp::parser::Node*> quals;
     IndexPath* path = create_index_path(root, rel, /*indexid=*/42, quals);
 
     ASSERT_NE(path, nullptr);
@@ -114,7 +114,7 @@ TEST_F(PathNodeTest, CreateNestLoopPath_SetsSubpaths) {
     Path* outer = create_seqscan_path(root, outer_rel);
     Path* inner = create_seqscan_path(root, inner_rel);
 
-    std::vector<mytoydb::optimizer::RestrictInfo*> restrictlist;
+    std::vector<pgcpp::optimizer::RestrictInfo*> restrictlist;
     NestLoopPath* path = create_nestloop_path(root, joinrel, outer, inner, restrictlist);
 
     ASSERT_NE(path, nullptr);
@@ -134,7 +134,7 @@ TEST_F(PathNodeTest, CreateHashJoinPath_SetsHashClauses) {
     Path* outer = create_seqscan_path(root, outer_rel);
     Path* inner = create_seqscan_path(root, inner_rel);
 
-    std::vector<mytoydb::parser::Node*> hashclauses;
+    std::vector<pgcpp::parser::Node*> hashclauses;
     HashJoinPath* path = create_hashjoin_path(root, joinrel, outer, inner, hashclauses);
 
     ASSERT_NE(path, nullptr);
@@ -166,7 +166,7 @@ TEST_F(PathNodeTest, CreateAggPath_SetsStrategy) {
     RelOptInfo* rel = MakeRel();
     Path* subpath = create_seqscan_path(root, rel);
 
-    std::vector<mytoydb::parser::Node*> group_clause;
+    std::vector<pgcpp::parser::Node*> group_clause;
     AggPath* path = create_agg_path(root, rel, subpath, Agg::Strategy::kPlain, group_clause, 1);
 
     ASSERT_NE(path, nullptr);
@@ -183,7 +183,7 @@ TEST_F(PathNodeTest, CreateAggPath_HashedStrategy) {
     RelOptInfo* rel = MakeRel();
     Path* subpath = create_seqscan_path(root, rel);
 
-    std::vector<mytoydb::parser::Node*> group_clause;
+    std::vector<pgcpp::parser::Node*> group_clause;
     AggPath* path = create_agg_path(root, rel, subpath, Agg::Strategy::kHashed, group_clause, 10);
 
     ASSERT_NE(path, nullptr);
@@ -197,7 +197,7 @@ TEST_F(PathNodeTest, CreateResultPath_NoFromQuery) {
     auto* root = makePallocNode<PlannerInfo>();
     RelOptInfo dummy_rel;
 
-    std::vector<mytoydb::parser::Node*> quals;
+    std::vector<pgcpp::parser::Node*> quals;
     ResultPath* path = create_result_path(root, &dummy_rel, quals);
 
     ASSERT_NE(path, nullptr);

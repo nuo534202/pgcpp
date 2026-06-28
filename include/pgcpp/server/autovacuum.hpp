@@ -7,7 +7,7 @@
 // to do the actual work. This prevents heap bloat from accumulating
 // (dead tuples not being reclaimed) and keeps planner statistics fresh.
 //
-// In MyToyDB (single-process), autovacuum is a stateful API: the launcher
+// In pgcpp (single-process), autovacuum is a stateful API: the launcher
 // maintains a queue of pending work items, AutoVacuumLauncherMain processes
 // them, and AutoVacuumWorkerMain executes a single item. No actual fork
 // is needed for the simplified model.
@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // AutoVacuumWorkItem — a table scheduled for autovacuum.
 struct AutoVacuumWorkItem {
@@ -77,4 +77,4 @@ std::vector<AutoVacuumWorkItem> GetPendingAutoVacuumItems();
 // GetAutoVacuumStats — return the current autovacuum statistics.
 AutoVacuumStats GetAutoVacuumStats();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

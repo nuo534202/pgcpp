@@ -4,7 +4,7 @@
 //
 // The storage manager (smgr) provides a uniform interface for reading and
 // writing relation files, decoupling the buffer manager from the specifics
-// of the on-disk file layout. MyToyDB implements only the "md" (magnetic
+// of the on-disk file layout. pgcpp implements only the "md" (magnetic
 // disk) storage manager, which is PostgreSQL's default.
 //
 // Key design decisions (preserved from PostgreSQL):
@@ -21,12 +21,12 @@
 #include "pgcpp/storage/block.hpp"
 #include "pgcpp/storage/relfilenode.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // SmgrRelation — a handle to an open relation's storage.
 //
 // In PostgreSQL, this is a struct with a switch table for multiple storage
-// managers. MyToyDB only has md.c, so the smgr operations are direct methods.
+// managers. pgcpp only has md.c, so the smgr operations are direct methods.
 // The struct is palloc-allocated and lives in a long-lived memory context.
 //
 // File segmentation: large relations are split into segment files of
@@ -144,7 +144,7 @@ void smgrimmedsync(SmgrRelation reln, ForkNumber fork_num);
 // --- M6 P0 extensions (Task 15.7.4) ---
 //
 // These functions extend the smgr API to cover the remaining P0 surface
-// from PostgreSQL's smgr.c. MyToyDB simplifies them for the single-process,
+// from PostgreSQL's smgr.c. pgcpp simplifies them for the single-process,
 // no-checkpoint model.
 
 // smgrexists — test whether the given fork's storage file exists.
@@ -174,14 +174,14 @@ void smgrclosenode(RelFileNodeBackend rnode);
 void smgrdosyncall();
 
 // smgrsync — fsync all open smgr file descriptors (simplified checkpoint
-// sync). MyToyDB single-process: iterates all SmgrRelations and fsyncs
+// sync). pgcpp single-process: iterates all SmgrRelations and fsyncs
 // every open segment FD.
 void smgrsync();
 
 // --- Base directory for storage ---
 //
 // In PostgreSQL, files live in $PGDATA/base/<dboid>/<relfilenode>.
-// MyToyDB uses a configurable base directory (default: a temp dir set by
+// pgcpp uses a configurable base directory (default: a temp dir set by
 // the test or application). This keeps the storage layer testable without
 // a running PostgreSQL cluster.
 void SetStorageBaseDir(const std::string& path);
@@ -191,4 +191,4 @@ const std::string& GetStorageBaseDir();
 // Format: base/<db_node>/<rel_node>[_forkName]
 std::string relpathbackend(RelFileNodeBackend rnode, ForkNumber fork_num);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

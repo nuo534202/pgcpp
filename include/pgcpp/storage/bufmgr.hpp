@@ -22,10 +22,10 @@
 #include "pgcpp/storage/relfilenode.hpp"
 #include "pgcpp/storage/smgr.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // Buffer access strategy (mirrors PostgreSQL's BufferAccessStrategyType).
-// MyToyDB implements only BAS_NORMAL (clock sweep). The enum is preserved
+// pgcpp implements only BAS_NORMAL (clock sweep). The enum is preserved
 // for API compatibility.
 enum class BufferAccessStrategy {
     kNormal,     // BAS_NORMAL — normal clock sweep
@@ -38,7 +38,7 @@ enum class BufferAccessStrategy {
 enum class ReadBufferMode {
     kNormal,  // RBM_NORMAL — read existing page, error if missing
     kZero,    // RBM_ZERO — return zeroed page without I/O
-    kNoLock,  // RBM_NO_LOG — don't log (not used in MyToyDB)
+    kNoLock,  // RBM_NO_LOG — don't log (not used in pgcpp)
 };
 
 // ReadBuffer — read a page into the buffer pool and pin it.
@@ -60,7 +60,7 @@ Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block
                   BufferAccessStrategy strategy = BufferAccessStrategy::kNormal);
 
 // ReadBufferExtended — same as ReadBuffer but with explicit strategy.
-// (In MyToyDB, this is the same as ReadBuffer with the strategy parameter.)
+// (In pgcpp, this is the same as ReadBuffer with the strategy parameter.)
 Buffer ReadBufferExtended(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block_num,
                           ReadBufferMode mode, BufferAccessStrategy strategy);
 
@@ -103,13 +103,13 @@ void ShutdownBufferPool();
 // --- M6 P0 extensions (Task 15.7.1) ---
 //
 // These functions extend the buffer manager to cover the remaining P0 API
-// surface from PostgreSQL's bufmgr.c. MyToyDB simplifies them for the
+// surface from PostgreSQL's bufmgr.c. pgcpp simplifies them for the
 // single-process, no-WAL model: hint dirty == dirty, and DROP/FLUSH by
 // database falls back to scanning the whole pool.
 
 // MarkBufferDirtyHint — mark a buffer as "hint dirty" (hint-bit writeback).
 // In PostgreSQL this generates a special WAL record only if the page LSN is
-// newer than the redo pointer. MyToyDB has no WAL, so a hint dirty is
+// newer than the redo pointer. pgcpp has no WAL, so a hint dirty is
 // equivalent to a normal dirty mark. If `release` is true, the buffer is
 // unpinned after being marked (matching PG's MarkBufferDirtyHint signature).
 void MarkBufferDirtyHint(Buffer buffer, bool release);
@@ -121,7 +121,7 @@ Buffer ReleaseAndReadBuffer(Buffer buffer, SmgrRelation reln, ForkNumber forknum
                             BlockNumber blocknum, ReadBufferMode mode);
 
 // IncrBufferRefCount — increment the private (per-backend) refcount of a
-// buffer handle. MyToyDB stores refcount directly in BufferDesc, so this
+// buffer handle. pgcpp stores refcount directly in BufferDesc, so this
 // is a thin wrapper around PinBuffer.
 void IncrBufferRefCount(Buffer buffer);
 
@@ -133,7 +133,7 @@ void BufferGetTag(Buffer buffer, RelFileNode* rnode, ForkNumber* forknum, BlockN
 void DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forknum);
 
 // DropDatabaseBuffers — drop all buffers belonging to the given database.
-// MyToyDB simplification: scan the entire pool and drop matching buffers.
+// pgcpp simplification: scan the entire pool and drop matching buffers.
 void DropDatabaseBuffers(Oid dbid);
 
 // FlushDatabaseBuffers — flush all dirty buffers belonging to the given
@@ -141,7 +141,7 @@ void DropDatabaseBuffers(Oid dbid);
 void FlushDatabaseBuffers(Oid dbid);
 
 // ReadBufferWithoutRelcache — read a buffer bypassing the relcache (used by
-// WAL redo / recovery). MyToyDB simplification: open the SmgrRelation for
+// WAL redo / recovery). pgcpp simplification: open the SmgrRelation for
 // the rnode and call ReadBuffer.
 Buffer ReadBufferWithoutRelcache(RelFileNodeBackend rnode, ForkNumber forknum, BlockNumber blocknum,
                                  ReadBufferMode mode, BufferAccessStrategy strategy);
@@ -149,7 +149,7 @@ Buffer ReadBufferWithoutRelcache(RelFileNodeBackend rnode, ForkNumber forknum, B
 // --- M6 P0 extensions (Task 15.7.3): access strategy ring ---
 
 // BufferAccessStrategyData — ring buffer for bulk access strategies
-// (BAS_BULKREAD / BAS_BULKWRITE / BAS_VACUUM). MyToyDB simplification: the
+// (BAS_BULKREAD / BAS_BULKWRITE / BAS_VACUUM). pgcpp simplification: the
 // ring is allocated for API compatibility but the clock sweep is still used
 // for victim selection (single-process, the ring reuse optimization is not
 // needed for correctness). PostgreSQL uses the ring to reuse a small set of
@@ -170,8 +170,8 @@ BufferAccessStrategyHandle GetAccessStrategy(BufferAccessStrategy btype);
 // FreeAccessStrategy — release a strategy allocated by GetAccessStrategy.
 void FreeAccessStrategy(BufferAccessStrategyHandle strategy);
 
-// StrategyFreeBuffer — return a buffer to the freelist. MyToyDB is
+// StrategyFreeBuffer — return a buffer to the freelist. pgcpp is
 // single-process, so this is a no-op (the clock sweep reclaims the slot).
 void StrategyFreeBuffer(Buffer buffer);
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage

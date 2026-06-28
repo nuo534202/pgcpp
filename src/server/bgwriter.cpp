@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/postmaster/bgwriter.c.
 //
 // The bgwriter periodically scans the buffer pool for dirty pages and
-// writes them to disk. In MyToyDB (single-process, in-memory buffer pool),
+// writes them to disk. In pgcpp (single-process, in-memory buffer pool),
 // the bgwriter is a stateful API: BgWriterScheduleFlush queues a target
 // count of dirty buffers to flush, BgWriterFlushBuffers flushes up to
 // that many (returning the count actually flushed), and BgWriterMain runs
@@ -20,7 +20,7 @@
 
 #include "pgcpp/server/interrupt.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -87,7 +87,7 @@ int BgWriterMain(int max_iterations) {
         ++s.flush_cycles;
         s.last_flush_time_ms = NowMs();
 
-        // If nothing to flush, we'd sleep here in PG; in MyToyDB we just exit
+        // If nothing to flush, we'd sleep here in PG; in pgcpp we just exit
         // the loop early to avoid busy-waiting in tests.
         if (flushed == 0) {
             break;
@@ -110,4 +110,4 @@ BgWriterStats GetBgWriterStats() {
     return Stats();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

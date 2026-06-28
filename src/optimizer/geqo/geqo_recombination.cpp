@@ -13,8 +13,8 @@
 #include "pgcpp/common/containers/node.hpp"
 #include "pgcpp/optimizer/geqo/geqo_random.hpp"
 
-namespace mytoydb::optimizer::geqo {
-using mytoydb::nodes::makePallocNode;
+namespace pgcpp::optimizer::geqo {
+using pgcpp::nodes::makePallocNode;
 
 Chromosome* AllocateChromosome() {
     return makePallocNode<Chromosome>();
@@ -43,4 +43,4 @@ void InitChromosomeIdentity(Chromosome* chrom, const std::vector<Gene>& rel_ids)
     chrom->fitness = kInvalidCost;
 }
 
-}  // namespace mytoydb::optimizer::geqo
+}  // namespace pgcpp::optimizer::geqo

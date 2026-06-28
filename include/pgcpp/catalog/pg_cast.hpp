@@ -4,7 +4,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // FormData_pg_cast — C++ equivalent of PostgreSQL's catalog/pg_cast.h.
 //
@@ -35,4 +35,4 @@ struct FormData_pg_cast {
 
 using Form_pg_cast = FormData_pg_cast*;
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

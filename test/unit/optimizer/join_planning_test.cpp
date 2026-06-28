@@ -29,75 +29,75 @@
 #include "pgcpp/parser/primnodes.hpp"
 #include "pgcpp/types/datum.hpp"
 
-using mytoydb::catalog::Catalog;
-using mytoydb::catalog::FormData_pg_operator;
-using mytoydb::catalog::GetCatalog;
-using mytoydb::catalog::Oid;
-using mytoydb::catalog::OperatorKind;
-using mytoydb::catalog::SetCatalog;
-using mytoydb::executor::MergeJoin;
-using mytoydb::executor::NestLoop;
-using mytoydb::executor::Plan;
-using mytoydb::executor::PlanType;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::SubqueryScan;
-using mytoydb::memory::AllocSetContext;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::optimizer::add_eq_class;
-using mytoydb::optimizer::add_path;
-using mytoydb::optimizer::add_paths_to_joinrel;
-using mytoydb::optimizer::build_joinrels_for_level;
-using mytoydb::optimizer::classify_restrictinfo;
-using mytoydb::optimizer::compare_pathkeys;
-using mytoydb::optimizer::convert_any_sublink_to_join;
-using mytoydb::optimizer::create_mergejoin_path;
-using mytoydb::optimizer::create_mergejoin_plan;
-using mytoydb::optimizer::create_nestloop_path;
-using mytoydb::optimizer::create_seqscan_path;
-using mytoydb::optimizer::create_subqueryscan_path;
-using mytoydb::optimizer::create_subqueryscan_plan;
-using mytoydb::optimizer::EquivalenceClass;
-using mytoydb::optimizer::EquivalenceMember;
-using mytoydb::optimizer::find_ec_member_for_var;
-using mytoydb::optimizer::find_ecs_for_rel;
-using mytoydb::optimizer::generate_join_implied_equalities;
-using mytoydb::optimizer::HashJoinPath;
-using mytoydb::optimizer::make_canonical_pathkey;
-using mytoydb::optimizer::make_restrictinfo;
-using mytoydb::optimizer::MergeJoinPath;
-using mytoydb::optimizer::NestLoopPath;
-using mytoydb::optimizer::Path;
-using mytoydb::optimizer::PathKey;
-using mytoydb::optimizer::pathkeys_equal;
-using mytoydb::optimizer::pathkeys_is_subset;
-using mytoydb::optimizer::PathType;
-using mytoydb::optimizer::PlannerInfo;
-using mytoydb::optimizer::process_equivalence;
-using mytoydb::optimizer::pull_up_sublinks;
-using mytoydb::optimizer::Relids;
-using mytoydb::optimizer::RelOptInfo;
-using mytoydb::optimizer::RestrictInfo;
-using mytoydb::optimizer::SeqScanPath;
-using mytoydb::optimizer::SpecialJoinInfo;
-using mytoydb::optimizer::SubqueryScanPath;
-using mytoydb::parser::Alias;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::BoolExprType;
-using mytoydb::parser::FromExpr;
-using mytoydb::parser::JoinType;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RTEKind;
-using mytoydb::parser::SortGroupClause;
-using mytoydb::parser::SubLink;
-using mytoydb::parser::SubLinkType;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
-using mytoydb::types::kBoolOid;
-using mytoydb::types::kInt4Oid;
+using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_operator;
+using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::Oid;
+using pgcpp::catalog::OperatorKind;
+using pgcpp::catalog::SetCatalog;
+using pgcpp::executor::MergeJoin;
+using pgcpp::executor::NestLoop;
+using pgcpp::executor::Plan;
+using pgcpp::executor::PlanType;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::SubqueryScan;
+using pgcpp::memory::AllocSetContext;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::optimizer::add_eq_class;
+using pgcpp::optimizer::add_path;
+using pgcpp::optimizer::add_paths_to_joinrel;
+using pgcpp::optimizer::build_joinrels_for_level;
+using pgcpp::optimizer::classify_restrictinfo;
+using pgcpp::optimizer::compare_pathkeys;
+using pgcpp::optimizer::convert_any_sublink_to_join;
+using pgcpp::optimizer::create_mergejoin_path;
+using pgcpp::optimizer::create_mergejoin_plan;
+using pgcpp::optimizer::create_nestloop_path;
+using pgcpp::optimizer::create_seqscan_path;
+using pgcpp::optimizer::create_subqueryscan_path;
+using pgcpp::optimizer::create_subqueryscan_plan;
+using pgcpp::optimizer::EquivalenceClass;
+using pgcpp::optimizer::EquivalenceMember;
+using pgcpp::optimizer::find_ec_member_for_var;
+using pgcpp::optimizer::find_ecs_for_rel;
+using pgcpp::optimizer::generate_join_implied_equalities;
+using pgcpp::optimizer::HashJoinPath;
+using pgcpp::optimizer::make_canonical_pathkey;
+using pgcpp::optimizer::make_restrictinfo;
+using pgcpp::optimizer::MergeJoinPath;
+using pgcpp::optimizer::NestLoopPath;
+using pgcpp::optimizer::Path;
+using pgcpp::optimizer::PathKey;
+using pgcpp::optimizer::pathkeys_equal;
+using pgcpp::optimizer::pathkeys_is_subset;
+using pgcpp::optimizer::PathType;
+using pgcpp::optimizer::PlannerInfo;
+using pgcpp::optimizer::process_equivalence;
+using pgcpp::optimizer::pull_up_sublinks;
+using pgcpp::optimizer::Relids;
+using pgcpp::optimizer::RelOptInfo;
+using pgcpp::optimizer::RestrictInfo;
+using pgcpp::optimizer::SeqScanPath;
+using pgcpp::optimizer::SpecialJoinInfo;
+using pgcpp::optimizer::SubqueryScanPath;
+using pgcpp::parser::Alias;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::BoolExprType;
+using pgcpp::parser::FromExpr;
+using pgcpp::parser::JoinType;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RTEKind;
+using pgcpp::parser::SortGroupClause;
+using pgcpp::parser::SubLink;
+using pgcpp::parser::SubLinkType;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
+using pgcpp::types::kBoolOid;
+using pgcpp::types::kInt4Oid;
 
 namespace {
 
@@ -107,9 +107,9 @@ constexpr Oid kInt4EqOp = 96;  // int4 = int4
 class JoinPlanningTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        mytoydb::error::InitErrorSubsystem();
+        pgcpp::error::InitErrorSubsystem();
         context_ = AllocSetContext::Create("join_planning_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
 
         // Set up a minimal catalog with the int4eq operator (OID 96) so
         // classify_restrictinfo can set mergejoinable/hashjoinable flags.
@@ -130,7 +130,7 @@ protected:
     void TearDown() override {
         SetCatalog(nullptr);
         delete catalog_;
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }
@@ -179,7 +179,7 @@ protected:
     PlannerInfo* MakePlanner() {
         auto* root = makePallocNode<PlannerInfo>();
         auto* query = makePallocNode<Query>();
-        query->command_type = mytoydb::parser::CmdType::kSelect;
+        query->command_type = pgcpp::parser::CmdType::kSelect;
         query->jointree = makePallocNode<FromExpr>();
         root->parse = query;
         return root;
@@ -509,7 +509,7 @@ TEST_F(JoinPlanningTest, CreatePlan_DispatchesMergeJoin) {
     MergeJoinPath* path =
         create_mergejoin_path(root, nullptr, outer_path, inner_path, {clause}, JoinType::kInner);
 
-    Plan* plan = mytoydb::optimizer::create_plan(root, path);
+    Plan* plan = pgcpp::optimizer::create_plan(root, path);
     ASSERT_NE(plan, nullptr);
     EXPECT_EQ(plan->type, PlanType::kMergeJoin);
 }
@@ -521,7 +521,7 @@ TEST_F(JoinPlanningTest, CreatePlan_DispatchesSubqueryScan) {
     auto* subpath = MakeSeqScanPath(rel);
 
     SubqueryScanPath* path = create_subqueryscan_path(root, rel, subpath, 1, {});
-    Plan* plan = mytoydb::optimizer::create_plan(root, path);
+    Plan* plan = pgcpp::optimizer::create_plan(root, path);
     ASSERT_NE(plan, nullptr);
     EXPECT_EQ(plan->type, PlanType::kSubqueryScan);
 }
@@ -557,7 +557,7 @@ TEST_F(JoinPlanningTest, PullUpSubLinks_ConvertsINSubLinkToJoin) {
 
     // Subquery: SELECT b FROM t2
     auto* subquery = makePallocNode<Query>();
-    subquery->command_type = mytoydb::parser::CmdType::kSelect;
+    subquery->command_type = pgcpp::parser::CmdType::kSelect;
     auto* sub_rte = makePallocNode<RangeTblEntry>();
     sub_rte->rtekind = RTEKind::kRelation;
     sub_rte->relid = 1002;
@@ -593,7 +593,7 @@ TEST_F(JoinPlanningTest, PullUpSubLinks_ConvertsINSubLinkToJoin) {
     ASSERT_EQ(from->fromlist.size(), 2u);
     // The qual should no longer be a SubLink; it should be an OpExpr.
     ASSERT_NE(from->quals, nullptr);
-    EXPECT_EQ(from->quals->GetTag(), mytoydb::nodes::NodeTag::kOpExpr);
+    EXPECT_EQ(from->quals->GetTag(), pgcpp::nodes::NodeTag::kOpExpr);
 }
 
 // pull_up_sublinks returns 0 when there are no SubLinks in WHERE.

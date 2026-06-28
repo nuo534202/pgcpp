@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // Oid — the fundamental object identifier type used throughout PostgreSQL.
-// In C PostgreSQL this is a global typedef; in MyToyDB it lives in the catalog
+// In C PostgreSQL this is a global typedef; in pgcpp it lives in the catalog
 // namespace (see rules/04-naming-and-namespace.md).
 using Oid = uint32_t;
 
@@ -31,7 +31,7 @@ struct FormData_pg_collation;
 //
 // In PostgreSQL, system catalogs (pg_class, pg_attribute, pg_type, ...) are
 // ordinary tables stored on disk and cached in the system cache (SysCache).
-// For MyToyDB's early phases we keep an in-memory representation populated
+// For pgcpp's early phases we keep an in-memory representation populated
 // during bootstrap, with the same row types and lookup semantics.
 //
 // Row storage uses palloc-allocated copies; the Catalog does not own the
@@ -143,7 +143,7 @@ private:
 };
 
 // Global catalog accessor. Returns the process-wide catalog instance.
-// In PostgreSQL this is implicit (catalogs are tables); in MyToyDB we use an
+// In PostgreSQL this is implicit (catalogs are tables); in pgcpp we use an
 // explicit global until the storage layer is built (Phase 6).
 Catalog* GetCatalog();
 void SetCatalog(Catalog* catalog);
@@ -160,4 +160,4 @@ bool CatalogTupleUpdate(Oid oid, const FormData_pg_class* new_row);
 // Delete the pg_class row with the given OID. Returns false if not found.
 bool CatalogTupleDelete(Oid oid);
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

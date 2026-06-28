@@ -16,9 +16,9 @@
 #include "pgcpp/server/main.hpp"
 #include "pgcpp/server/postmaster.hpp"
 
-using mytoydb::server::GucConfig;
-using mytoydb::server::LoadGucFromDataDir;
-using mytoydb::server::ServerConfig;
+using pgcpp::server::GucConfig;
+using pgcpp::server::LoadGucFromDataDir;
+using pgcpp::server::ServerConfig;
 
 namespace {
 

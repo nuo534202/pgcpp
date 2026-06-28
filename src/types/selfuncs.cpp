@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 double eqsel(double null_fraction, int32_t n_distinct, bool most_common_value_match) {
     if (n_distinct <= 0) {
@@ -84,4 +84,4 @@ double cost_qual_eval_walker(int32_t num_clauses) {
     return static_cast<double>(num_clauses) * 0.0025;  // 2.5x CPU_PAGE_COST per op
 }
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

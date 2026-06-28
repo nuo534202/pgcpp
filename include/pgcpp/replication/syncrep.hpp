@@ -8,7 +8,7 @@
 // `synchronous_standby_names` into a SyncRepConfigData tree and walks
 // it in SyncRepWaitForLSN.
 //
-// MyToyDB keeps a flat list of standby names + a count of how many must
+// pgcpp keeps a flat list of standby names + a count of how many must
 // ack. The wait itself is a stub: SyncRepWaitForLSN returns immediately.
 #pragma once
 
@@ -18,7 +18,7 @@
 
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // SyncRepSyncMethod — how to count acks (PG: SYNC_REP_PRIORITY vs
 // SYNC_REP_QUORUM).
@@ -60,7 +60,7 @@ const SyncRepConfig* SyncRepConfigGet();
 bool SyncRepConfigParse(const std::string& text);
 
 // SyncRepWaitForLSN — block until enough standbys have acknowledged `lsn`.
-// In MyToyDB this is a stub that just records the wait and returns.
+// In pgcpp this is a stub that just records the wait and returns.
 // Returns the LSN we waited for.
 transaction::XLogRecPtr SyncRepWaitForLSN(transaction::XLogRecPtr lsn);
 
@@ -72,4 +72,4 @@ int SyncRepGetWaiters();
 // current config.
 bool SyncRepIsSyncStandby(const std::string& application_name);
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

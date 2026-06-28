@@ -7,7 +7,7 @@
 
 #include "pgcpp/catalog/catalog.hpp"
 
-namespace mytoydb::catalog {
+namespace pgcpp::catalog {
 
 // SysCacheIdentifier — enumerates the cached lookups, mirroring PostgreSQL's
 // SysCacheIdentifier enum (see utils/cache/syscache.h). Each entry names a
@@ -34,7 +34,7 @@ enum class SysCacheIdentifier : int {
 // SysCache — the in-memory system cache.
 //
 // PostgreSQL's SysCache is a per-row cache backed by a hash table per
-// (catalog, index) pair. In MyToyDB we replace the hand-written hash with
+// (catalog, index) pair. In pgcpp we replace the hand-written hash with
 // std::unordered_map keyed by the appropriate tuple of columns. The public
 // API (SearchSysCache / ReleaseSysCache) is preserved.
 //
@@ -86,7 +86,7 @@ public:
 
     // --- Pin management ---
     // PostgreSQL pins rows returned by SearchSysCache; ReleaseSysCache drops
-    // the pin. In MyToyDB the rows are stable (owned by Catalog), so pins are
+    // the pin. In pgcpp the rows are stable (owned by Catalog), so pins are
     // reference-counted for API compatibility and future invalidation safety.
     void Release(const void* entry) const;
 
@@ -185,4 +185,4 @@ const void* SearchSysCache4(SysCacheIdentifier cache_id, uintptr_t key1, uintptr
 // ReleaseSysCache: drop the pin on a row returned by SearchSysCache*.
 void ReleaseSysCache(const void* entry);
 
-}  // namespace mytoydb::catalog
+}  // namespace pgcpp::catalog

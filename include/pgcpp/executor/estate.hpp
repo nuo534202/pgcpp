@@ -26,26 +26,26 @@
 #include "pgcpp/transaction/snapshot.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
 class PlanState;
 
 // EState — per-query executor state.
 struct EState {
     // Range table from the Query (1-based indexing: rtindex 1 = es_range_table[0]).
-    std::vector<mytoydb::parser::RangeTblEntry*> es_range_table;
+    std::vector<pgcpp::parser::RangeTblEntry*> es_range_table;
 
     // Snapshot for visibility checks (NULL = use transaction snapshot).
-    mytoydb::transaction::Snapshot es_snapshot = nullptr;
+    pgcpp::transaction::Snapshot es_snapshot = nullptr;
 
     // Command ID for DML operations.
-    mytoydb::transaction::CommandId es_output_cid = 0;
+    pgcpp::transaction::CommandId es_output_cid = 0;
 
     // Per-query memory context (all plan state allocations go here).
-    mytoydb::memory::MemoryContext* es_query_cxt = nullptr;
+    pgcpp::memory::MemoryContext* es_query_cxt = nullptr;
 
     // Opened relations (for cleanup at ExecutorEnd).
-    std::vector<mytoydb::access::Relation> es_open_relations;
+    std::vector<pgcpp::access::Relation> es_open_relations;
 
     // Tuple table slots allocated during execution (for cleanup).
     std::vector<TupleTableSlot*> es_tupleTable;
@@ -56,7 +56,7 @@ struct EState {
 
 // QueryDesc — ties together a Query, its Plan, and executor state.
 struct QueryDesc {
-    mytoydb::parser::Query* query = nullptr;
+    pgcpp::parser::Query* query = nullptr;
     Plan* plan = nullptr;
     EState* estate = nullptr;
     PlanState* planstate = nullptr;
@@ -65,4 +65,4 @@ struct QueryDesc {
     ~QueryDesc();
 };
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

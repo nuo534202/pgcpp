@@ -33,19 +33,19 @@
 #include "pgcpp/catalog/catalog.hpp"
 #include "pgcpp/protocol/pqformat.hpp"
 
-namespace mytoydb::parser {
+namespace pgcpp::parser {
 class Query;
-}  // namespace mytoydb::parser
+}  // namespace pgcpp::parser
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 struct Plan;
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 class SocketSink;
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server
 
-namespace mytoydb::protocol {
+namespace pgcpp::protocol {
 
 // PreparedStatement — a parsed statement in the extended query protocol.
 //
@@ -55,8 +55,8 @@ namespace mytoydb::protocol {
 // statement of a multi-statement parse).
 struct PreparedStatement {
     std::string name;
-    std::vector<mytoydb::parser::Query*> queries;
-    std::vector<mytoydb::catalog::Oid> param_types;
+    std::vector<pgcpp::parser::Query*> queries;
+    std::vector<pgcpp::catalog::Oid> param_types;
     bool has_results = false;  // true if the first query is a SELECT
 };
 
@@ -102,7 +102,7 @@ public:
     // HandleParse — parse SQL into a named prepared statement.
     // Sends ParseComplete ('1') on success, ErrorResponse ('E') on failure.
     void HandleParse(const std::string& stmt_name, const std::string& query,
-                     const std::vector<mytoydb::catalog::Oid>& param_types);
+                     const std::vector<pgcpp::catalog::Oid>& param_types);
 
     // HandleBind — bind parameters to a prepared statement, creating a portal.
     // Sends BindComplete ('2') on success, ErrorResponse ('E') on failure.
@@ -145,14 +145,14 @@ private:
     // If send_row_description is true, sends RowDescription before DataRows
     // (used by the simple query protocol; the extended query protocol sends
     // RowDescription via Describe instead).
-    std::string ExecuteQuery(mytoydb::parser::Query* query, bool send_row_description = true);
+    std::string ExecuteQuery(pgcpp::parser::Query* query, bool send_row_description = true);
 
     // Send a RowDescription for a SELECT query's target list.
-    void SendRowDescription(mytoydb::parser::Query* query);
+    void SendRowDescription(pgcpp::parser::Query* query);
 
     // Send a DataRow from a TupleTableSlot.
     // Encodes each attribute using the type's output function.
-    void SendDataRow(mytoydb::parser::Query* query, const std::vector<std::string>& values,
+    void SendDataRow(pgcpp::parser::Query* query, const std::vector<std::string>& values,
                      const std::vector<bool>& isnull);
 
     // Get the current transaction status for ReadyForQuery.
@@ -181,7 +181,7 @@ private:
 //
 // `client_fd` is the accepted TCP socket. `sink` is the SocketSink wrapping it.
 // The caller (postmaster) is responsible for fork() and resource init.
-void PostgresMain(int client_fd, mytoydb::server::SocketSink* sink);
+void PostgresMain(int client_fd, pgcpp::server::SocketSink* sink);
 
 // ProcessInterrupts — called at safe points in the main loop.
 // If the interrupt-pending flag is set, ereport(ERROR) with a cancel message.
@@ -190,4 +190,4 @@ void ProcessInterrupts();
 // SetInterruptPending — set the interrupt-pending flag (signal-safe).
 void SetInterruptPending();
 
-}  // namespace mytoydb::protocol
+}  // namespace pgcpp::protocol

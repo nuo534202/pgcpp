@@ -2,7 +2,7 @@
 //
 // Converted from PostgreSQL 15's src/backend/optimizer/plan/setrefs.c.
 //
-// Walks the plan tree and fixes Var references. For MyToyDB's single-table
+// Walks the plan tree and fixes Var references. For pgcpp's single-table
 // workload with rtoffset=0, the fixup is mostly a no-op: the parser already
 // sets Var.varno to the correct 1-based range table index. The upper-node
 // (Agg/Sort) Var conversion to OUTER_VAR is simplified to preserve the
@@ -13,24 +13,24 @@
 #include "pgcpp/executor/plannodes.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
-using mytoydb::executor::Agg;
-using mytoydb::executor::HashJoin;
-using mytoydb::executor::IndexScan;
-using mytoydb::executor::NestLoop;
-using mytoydb::executor::Plan;
-using mytoydb::executor::PlanType;
-using mytoydb::executor::Result;
-using mytoydb::executor::SeqScan;
-using mytoydb::executor::Sort;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::nodes::NodeTag;
-using mytoydb::parser::Aggref;
-using mytoydb::parser::Node;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
+namespace pgcpp::optimizer {
+using pgcpp::executor::Agg;
+using pgcpp::executor::HashJoin;
+using pgcpp::executor::IndexScan;
+using pgcpp::executor::NestLoop;
+using pgcpp::executor::Plan;
+using pgcpp::executor::PlanType;
+using pgcpp::executor::Result;
+using pgcpp::executor::SeqScan;
+using pgcpp::executor::Sort;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::nodes::NodeTag;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::Node;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
 
 // copy_var — deep-copy a Var node (PG's copyVar equivalent).
 static Var* copy_var(Var* var) {
@@ -124,7 +124,7 @@ static void set_scan_references(PlannerInfo* root, Plan* plan, int rtoffset) {
 }
 
 // set_join_references — fix Var references in a join plan (skeleton).
-// For MyToyDB, join plans are not exercised by ClickBench; this is a no-op
+// For pgcpp, join plans are not exercised by ClickBench; this is a no-op
 // that preserves the plan structure.
 static void set_join_references(PlannerInfo* root, Plan* plan, int rtoffset) {
     (void)root;
@@ -192,4 +192,4 @@ void set_plan_references(PlannerInfo* root, Plan* plan) {
     set_plan_refs(root, plan, 0);
 }
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

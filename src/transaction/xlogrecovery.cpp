@@ -16,7 +16,7 @@
 #include "pgcpp/transaction/xlog.hpp"
 #include "pgcpp/transaction/xlogreader.hpp"
 
-namespace mytoydb::transaction {
+namespace pgcpp::transaction {
 
 namespace {
 
@@ -70,4 +70,4 @@ RecoveryStats PerformCrashRecoveryFrom(XLogRecPtr start_lsn) {
     return stats;
 }
 
-}  // namespace mytoydb::transaction
+}  // namespace pgcpp::transaction

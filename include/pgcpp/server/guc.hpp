@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/utils/misc/guc.c and guc-file.l.
 //
 // PostgreSQL's GUC system manages thousands of configuration variables. For
-// MyToyDB we implement a minimal subset: parse a postgresql.conf file into a
+// pgcpp we implement a minimal subset: parse a postgresql.conf file into a
 // key-value map, then apply selected values to ServerConfig.
 //
 // Supported file format (simplified, matches PostgreSQL's guc-file.l):
@@ -21,7 +21,7 @@
 #include <map>
 #include <string>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 struct ServerConfig;
 
@@ -71,4 +71,4 @@ private:
     std::map<std::string, std::string> values_;
 };
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

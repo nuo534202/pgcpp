@@ -18,14 +18,14 @@
 #include "pgcpp/transaction/snapshot.hpp"
 #include "pgcpp/transaction/xact.hpp"
 
-namespace mytoydb::executor {
+namespace pgcpp::executor {
 
-using mytoydb::nodes::destroyPallocNode;
-using mytoydb::nodes::makePallocNode;
-using mytoydb::parser::Query;
-using mytoydb::parser::RangeTblEntry;
-using mytoydb::transaction::GetCurrentCommandId;
-using mytoydb::transaction::GetTransactionSnapshot;
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::parser::Query;
+using pgcpp::parser::RangeTblEntry;
+using pgcpp::transaction::GetCurrentCommandId;
+using pgcpp::transaction::GetTransactionSnapshot;
 
 void ExecutorStart(QueryDesc* queryDesc) {
     if (queryDesc == nullptr || queryDesc->plan == nullptr)
@@ -37,8 +37,8 @@ void ExecutorStart(QueryDesc* queryDesc) {
 
     // Copy the range table from the Query.
     if (queryDesc->query != nullptr) {
-        for (mytoydb::parser::Node* node : queryDesc->query->rtable) {
-            if (node != nullptr && node->GetTag() == mytoydb::nodes::NodeTag::kRangeTblEntry) {
+        for (pgcpp::parser::Node* node : queryDesc->query->rtable) {
+            if (node != nullptr && node->GetTag() == pgcpp::nodes::NodeTag::kRangeTblEntry) {
                 estate->es_range_table.push_back(static_cast<RangeTblEntry*>(node));
             }
         }
@@ -51,7 +51,7 @@ void ExecutorStart(QueryDesc* queryDesc) {
     estate->es_output_cid = GetCurrentCommandId(false);
 
     // Create a per-query memory context.
-    estate->es_query_cxt = mytoydb::memory::AllocSetContext::Create("ExecutorState");
+    estate->es_query_cxt = pgcpp::memory::AllocSetContext::Create("ExecutorState");
 
     // Initialize the plan tree.
     queryDesc->planstate = ExecInitNode(queryDesc->plan, estate);
@@ -67,7 +67,7 @@ TupleTableSlot* ExecutorRun(QueryDesc* queryDesc) {
 void ExecutorFinish(QueryDesc* queryDesc) {
     // For SELECT this is a no-op.
     // For DML, this would fire AFTER triggers and finalize modifications.
-    // MyToyDB does not yet implement triggers.
+    // pgcpp does not yet implement triggers.
     (void)queryDesc;
 }
 
@@ -97,4 +97,4 @@ void ExecutorEnd(QueryDesc* queryDesc) {
     }
 }
 
-}  // namespace mytoydb::executor
+}  // namespace pgcpp::executor

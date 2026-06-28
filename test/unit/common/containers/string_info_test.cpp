@@ -11,23 +11,23 @@
 
 namespace {
 
-using mytoydb::containers::appendBinaryStringInfo;
-using mytoydb::containers::appendStringInfo;
-using mytoydb::containers::appendStringInfoChar;
-using mytoydb::containers::appendStringInfoString;
-using mytoydb::containers::Data;
-using mytoydb::containers::initStringInfo;
-using mytoydb::containers::Length;
-using mytoydb::containers::makeStringInfo;
-using mytoydb::containers::resetStringInfo;
-using mytoydb::containers::StringInfo;
-using mytoydb::memory::AllocSetContext;
+using pgcpp::containers::appendBinaryStringInfo;
+using pgcpp::containers::appendStringInfo;
+using pgcpp::containers::appendStringInfoChar;
+using pgcpp::containers::appendStringInfoString;
+using pgcpp::containers::Data;
+using pgcpp::containers::initStringInfo;
+using pgcpp::containers::Length;
+using pgcpp::containers::makeStringInfo;
+using pgcpp::containers::resetStringInfo;
+using pgcpp::containers::StringInfo;
+using pgcpp::memory::AllocSetContext;
 
 // Helper to properly destroy a palloc'd StringInfo (unregister destructor,
 // then call destructor and pfree).
 void DestroyStringInfo(StringInfo* si) {
     if (si != nullptr) {
-        mytoydb::nodes::destroyPallocNode(si);
+        pgcpp::nodes::destroyPallocNode(si);
     }
 }
 
@@ -35,11 +35,11 @@ class StringInfoTest : public ::testing::Test {
 protected:
     void SetUp() override {
         context_ = AllocSetContext::Create("string_info_test_context");
-        mytoydb::memory::SetCurrentMemoryContext(context_);
+        pgcpp::memory::SetCurrentMemoryContext(context_);
     }
 
     void TearDown() override {
-        mytoydb::memory::SetCurrentMemoryContext(nullptr);
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {
             context_->Delete();
         }

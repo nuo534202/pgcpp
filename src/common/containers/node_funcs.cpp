@@ -11,31 +11,31 @@
 
 #include "pgcpp/types/datum.hpp"  // kBoolOid, kInvalidOid
 
-namespace mytoydb::nodes {
+namespace pgcpp::nodes {
 
-using mytoydb::parser::Aggref;
-using mytoydb::parser::BooleanTest;
-using mytoydb::parser::BoolExpr;
-using mytoydb::parser::CaseExpr;
-using mytoydb::parser::CaseWhen;
-using mytoydb::parser::CoerceToDomain;
-using mytoydb::parser::CoerceViaIO;
-using mytoydb::parser::Const;
-using mytoydb::parser::FuncExpr;
-using mytoydb::parser::NullTest;
-using mytoydb::parser::OpExpr;
-using mytoydb::parser::Param;
-using mytoydb::parser::RangeTblRef;
-using mytoydb::parser::RelabelType;
-using mytoydb::parser::ScalarArrayOpExpr;
-using mytoydb::parser::SubLink;
-using mytoydb::parser::TargetEntry;
-using mytoydb::parser::Var;
+using pgcpp::parser::Aggref;
+using pgcpp::parser::BooleanTest;
+using pgcpp::parser::BoolExpr;
+using pgcpp::parser::CaseExpr;
+using pgcpp::parser::CaseWhen;
+using pgcpp::parser::CoerceToDomain;
+using pgcpp::parser::CoerceViaIO;
+using pgcpp::parser::Const;
+using pgcpp::parser::FuncExpr;
+using pgcpp::parser::NullTest;
+using pgcpp::parser::OpExpr;
+using pgcpp::parser::Param;
+using pgcpp::parser::RangeTblRef;
+using pgcpp::parser::RelabelType;
+using pgcpp::parser::ScalarArrayOpExpr;
+using pgcpp::parser::SubLink;
+using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
 
 namespace {
 
-constexpr Oid kInvalidOid = mytoydb::types::kInvalidOid;
-constexpr Oid kBoolOid = mytoydb::types::kBoolOid;
+constexpr Oid kInvalidOid = pgcpp::types::kInvalidOid;
+constexpr Oid kBoolOid = pgcpp::types::kBoolOid;
 
 // Walk a single child pointer; returns true if the walker short-circuited.
 bool WalkOne(Node* child, const NodeWalker& walker) {
@@ -310,4 +310,4 @@ bool contain_subplans(Node* node) {
     return expression_tree_walker(node, [](Node* n) { return n->GetTag() == NodeTag::kSubLink; });
 }
 
-}  // namespace mytoydb::nodes
+}  // namespace pgcpp::nodes

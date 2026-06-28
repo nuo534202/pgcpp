@@ -10,7 +10,7 @@
 //   - Detect mergejoinable and hashjoinable clauses.
 //   - Build canonical pathkeys (sort orderings) for Sort/MergeJoin planning.
 //
-// For MyToyDB's M10 Task 15.15, the EC machinery is simplified: a single EC
+// For pgcpp's M10 Task 15.15, the EC machinery is simplified: a single EC
 // per distinct equivalence group, no constant-propagation, no outer-join
 // barriers. Each EC tracks its members, the relations it touches, and the
 // mergejoinable RestrictInfos that produced it.
@@ -22,26 +22,26 @@
 #include "pgcpp/optimizer/util/restrictinfo.hpp"
 #include "pgcpp/parser/primnodes.hpp"
 
-namespace mytoydb::optimizer {
+namespace pgcpp::optimizer {
 
-// Forward declaration — defined in mytoydb/optimizer/planner.hpp.
+// Forward declaration — defined in pgcpp/optimizer/planner.hpp.
 struct PlannerInfo;
 
 // EquivalenceMember — one expression in an EquivalenceClass.
-// In PostgreSQL this carries relids, is_const, and a datatype. For MyToyDB
+// In PostgreSQL this carries relids, is_const, and a datatype. For pgcpp
 // we keep the expr, the relids it references, and whether it's a constant.
 struct EquivalenceMember {
-    mytoydb::parser::Node* expr = nullptr;  // the wrapped expression (usually a Var)
-    Relids relids;                          // relations referenced (1-based RT indexes)
-    bool is_const = false;                  // is this a Const (no Vars)?
-    mytoydb::catalog::Oid datatype = 0;     // type OID of the expression
+    pgcpp::parser::Node* expr = nullptr;  // the wrapped expression (usually a Var)
+    Relids relids;                        // relations referenced (1-based RT indexes)
+    bool is_const = false;                // is this a Const (no Vars)?
+    pgcpp::catalog::Oid datatype = 0;     // type OID of the expression
 };
 
 // EquivalenceClass — a set of expressions known to be equal at runtime.
 struct EquivalenceClass {
     std::vector<EquivalenceMember*> ec_members;  // members of the equivalence class
     Relids ec_relids;                            // union of all members' relids
-    mytoydb::catalog::Oid ec_min_op = 0;         // the btree equality operator (e.g., int4eq)
+    pgcpp::catalog::Oid ec_min_op = 0;           // the btree equality operator (e.g., int4eq)
     bool ec_has_const = false;                   // does the EC include a Const member?
     bool ec_below_outer_join = false;            // affected by outer-join barrier?
     bool ec_broken = false;                      // can't be used (e.g., volatile)
@@ -79,7 +79,7 @@ std::vector<EquivalenceClass*> find_ecs_for_rel(PlannerInfo* root, int relid);
 // find_ec_member_for_var — find an EquivalenceMember in any EC whose
 // expression is the same Var as `var`. Returns nullptr if no match.
 // Used to look up the canonical EC for a sort key (e.g., ORDER BY col).
-EquivalenceMember* find_ec_member_for_var(PlannerInfo* root, const mytoydb::parser::Var* var);
+EquivalenceMember* find_ec_member_for_var(PlannerInfo* root, const pgcpp::parser::Var* var);
 
 // generate_join_implied_equalities — for each EC shared between `outer_rel`
 // and `inner_rel`, generate a RestrictInfo equating one outer member to one
@@ -91,4 +91,4 @@ std::vector<RestrictInfo*> generate_join_implied_equalities(PlannerInfo* root,
                                                             RelOptInfo* outer_rel,
                                                             RelOptInfo* inner_rel);
 
-}  // namespace mytoydb::optimizer
+}  // namespace pgcpp::optimizer

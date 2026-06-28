@@ -8,7 +8,7 @@
 
 #include "pgcpp/types/datum.hpp"
 
-namespace mytoydb::types {
+namespace pgcpp::types {
 
 // ---------------------------------------------------------------------------
 // JSON / JSONB (PostgreSQL utils/adt/json.c, jsonb.c).
@@ -66,4 +66,4 @@ JsonValue* AllocJsonValue();
 // Free a JsonValue tree (recursive). Use only outside MemoryContext delete.
 void FreeJsonValue(JsonValue* v);
 
-}  // namespace mytoydb::types
+}  // namespace pgcpp::types

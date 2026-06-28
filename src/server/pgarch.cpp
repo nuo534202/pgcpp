@@ -4,7 +4,7 @@
 //
 // The archiver runs in a loop, polling for completed WAL segment files
 // and archiving each via the configured archive_command (see
-// shell_archive.h). In MyToyDB (single-process), the archiver maintains
+// shell_archive.h). In pgcpp (single-process), the archiver maintains
 // a queue of pending archive requests; PgArchiverMain processes them.
 #include "pgcpp/server/pgarch.hpp"
 
@@ -18,7 +18,7 @@
 #include "pgcpp/server/interrupt.hpp"
 #include "pgcpp/server/shell_archive.hpp"
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 namespace {
 
@@ -133,4 +133,4 @@ PgArchStats GetPgArchStats() {
     return Stats();
 }
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

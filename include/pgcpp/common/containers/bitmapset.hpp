@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace mytoydb::nodes {
+namespace pgcpp::nodes {
 
 class Bitmapset {
 public:
@@ -98,4 +98,4 @@ void bms_free(Bitmapset* a);
 int bms_next_member(const Bitmapset* a, int prevbit);
 int bms_minimum_member(const Bitmapset* a);
 
-}  // namespace mytoydb::nodes
+}  // namespace pgcpp::nodes

@@ -17,7 +17,7 @@
 #include "pgcpp/replication/slot.hpp"
 #include "pgcpp/transaction/xlog.hpp"
 
-namespace mytoydb::replication {
+namespace pgcpp::replication {
 
 // PgCreateReplicationSlotResult — return value of pg_create_replication_slot.
 struct PgCreateReplicationSlotResult {
@@ -50,4 +50,4 @@ transaction::XLogRecPtr PgReplicationSlotAdvance(const std::string& name,
 // current WAL insert pointer. Returns the new LSN.
 transaction::XLogRecPtr PgReplicationSlotAdvanceToCurrent(const std::string& name);
 
-}  // namespace mytoydb::replication
+}  // namespace pgcpp::replication

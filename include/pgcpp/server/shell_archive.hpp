@@ -10,7 +10,7 @@
 // If the command exits with status 0, archiving is considered successful;
 // any non-zero exit status causes a retry on the next archiver cycle.
 //
-// In MyToyDB, ShellArchive is a function that takes a file path and a
+// In pgcpp, ShellArchive is a function that takes a file path and a
 // "last" identifier (used by tests to verify substitution) and executes
 // the configured archive command via the system shell.
 #pragma once
@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <string>
 
-namespace mytoydb::server {
+namespace pgcpp::server {
 
 // ShellArchiveStats — statistics tracked by shell archiving.
 struct ShellArchiveStats {
@@ -68,4 +68,4 @@ int ShellArchive(const std::string& file_path, const std::string& last);
 // GetShellArchiveStats — return the current shell archive statistics.
 ShellArchiveStats GetShellArchiveStats();
 
-}  // namespace mytoydb::server
+}  // namespace pgcpp::server

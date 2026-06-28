@@ -15,7 +15,7 @@
 #include "pgcpp/common/error/elog.hpp"
 #include "pgcpp/common/memory/memory_context.hpp"
 
-namespace mytoydb::storage {
+namespace pgcpp::storage {
 
 // Maximum size for an item on a page. PostgreSQL limits this to 1/4 of the
 // page to ensure efficient space utilization. We use the same heuristic.
@@ -198,13 +198,12 @@ void PageIndexTupleDelete(Page page, OffsetNumber offset) {
     OffsetNumber nline = PageGetMaxOffsetNumber(page);
 
     if (offset < 1 || offset > nline) {
-        ereport(mytoydb::error::LogLevel::kError, "PageIndexTupleDelete: invalid offset");
+        ereport(pgcpp::error::LogLevel::kError, "PageIndexTupleDelete: invalid offset");
     }
 
     ItemIdData* lp = PageGetItemId(page, offset);
     if (lp->li_flags != kLPNormal) {
-        ereport(mytoydb::error::LogLevel::kError,
-                "PageIndexTupleDelete: line pointer is not normal");
+        ereport(pgcpp::error::LogLevel::kError, "PageIndexTupleDelete: line pointer is not normal");
     }
 
     // Save the deleted tuple's offset and aligned size before clearing.
@@ -413,7 +412,7 @@ Page PageGetTempPage(Page page) {
     int page_size = PageGetPageSize(page);
     int special_size = page_size - phdr->pd_special;
 
-    Page temp = static_cast<Page>(mytoydb::memory::palloc(page_size));
+    Page temp = static_cast<Page>(pgcpp::memory::palloc(page_size));
     // Zero the new page, then copy the header and special area only.
     std::memset(temp, 0, page_size);
     std::memcpy(temp, page, kPageHeaderSize);
@@ -429,7 +428,7 @@ Page PageGetTempPage(Page page) {
 
 Page PageGetTempPageCopy(Page page) {
     int page_size = PageGetPageSize(page);
-    Page temp = static_cast<Page>(mytoydb::memory::palloc(page_size));
+    Page temp = static_cast<Page>(pgcpp::memory::palloc(page_size));
     std::memcpy(temp, page, page_size);
     return temp;
 }
@@ -438,7 +437,7 @@ Page PageGetTempPageCopySpecial(Page page, int special_size) {
     auto* phdr = reinterpret_cast<PageHeader>(page);
     int page_size = PageGetPageSize(page);
 
-    Page temp = static_cast<Page>(mytoydb::memory::palloc(page_size));
+    Page temp = static_cast<Page>(pgcpp::memory::palloc(page_size));
     std::memset(temp, 0, page_size);
     // Copy the header only.
     std::memcpy(temp, page, kPageHeaderSize);
@@ -458,7 +457,7 @@ Page PageGetTempPageCopySpecial(Page page, int special_size) {
 void PageRestoreTempPage(Page temp_page, Page page) {
     int page_size = PageGetPageSize(temp_page);
     std::memcpy(page, temp_page, page_size);
-    mytoydb::memory::pfree(temp_page);
+    pgcpp::memory::pfree(temp_page);
 }
 
-}  // namespace mytoydb::storage
+}  // namespace pgcpp::storage
