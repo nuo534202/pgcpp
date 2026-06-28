@@ -1,5 +1,5 @@
 ---
-# MyToyDB clang-tidy configuration
+# pgcpp clang-tidy configuration
 # Enables Google-style checks plus selected modernize/cppcoreguidelines checks.
 
 Checks: >
@@ -20,7 +20,7 @@ Checks: >
 
 WarningsAsErrors: ''
 
-HeaderFilterRegex: ".*mytoydb/.*"
+HeaderFilterRegex: ".*pgcpp/.*"
 
 CheckOptions:
   - key:   readability-identifier-naming.ClassCase

@@ -1,6 +1,6 @@
-# src/CMakeLists.txt - MyToyDB source library
+# src/CMakeLists.txt - pgcpp source library
 #
-# Builds the mytoydb_core static library from all module sources. New source
+# Builds the pgcpp_core static library from all module sources. New source
 # files are added here as modules are converted from PostgreSQL C to C++20.
 
 # ---------------------------------------------------------------------------
@@ -12,7 +12,7 @@ find_package(FLEX 2.6 REQUIRED)
 # Bison generates parser.cpp and parser.hpp from gram.yy
 # Use C++ skeleton (lalr1.cc) for clean C++ integration.
 BISON_TARGET(
-    mytoydb_parser
+    pgcpp_parser
     ${CMAKE_CURRENT_SOURCE_DIR}/parser/gram.yy
     ${CMAKE_CURRENT_BINARY_DIR}/parser/gram.tab.cpp
     DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser/gram.tab.hpp
@@ -22,13 +22,13 @@ BISON_TARGET(
 # Flex generates scanner.cpp from scan.ll
 # Use C++ mode for clean C++ integration.
 FLEX_TARGET(
-    mytoydb_scanner
+    pgcpp_scanner
     ${CMAKE_CURRENT_SOURCE_DIR}/parser/scan.ll
     ${CMAKE_CURRENT_BINARY_DIR}/parser/lex.yy.cpp
     COMPILE_FLAGS "--c++"
 )
 
-set(MYTOYDB_CORE_SOURCES
+set(PGCPP_CORE_SOURCES
     common/memory/memory_context.cpp
     common/memory/alloc_set.cpp
     common/error/elog.cpp
@@ -84,8 +84,8 @@ set(MYTOYDB_CORE_SOURCES
     parser/parse_utilcmd.cpp
     parser/parse_cte.cpp
     parser/analyze.cpp
-    ${BISON_mytoydb_parser_OUTPUTS}
-    ${FLEX_mytoydb_scanner_OUTPUTS}
+    ${BISON_pgcpp_parser_OUTPUTS}
+    ${FLEX_pgcpp_scanner_OUTPUTS}
     storage/smgr/smgr.cpp
     storage/smgr/md.cpp
     storage/buffer/bufpage.cpp
@@ -271,10 +271,10 @@ set(MYTOYDB_CORE_SOURCES
     tsearch/wparser.cpp
 )
 
-add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})
+add_library(pgcpp_core STATIC ${PGCPP_CORE_SOURCES})
 
-target_compile_features(mytoydb_core PUBLIC cxx_std_20)
-target_include_directories(mytoydb_core
+target_compile_features(pgcpp_core PUBLIC cxx_std_20)
+target_include_directories(pgcpp_core
     PUBLIC
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}
@@ -283,22 +283,22 @@ target_include_directories(mytoydb_core
 )
 
 # Apply warning flags from the root CMakeLists.txt
-target_compile_options(mytoydb_core PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(pgcpp_core PRIVATE -Wall -Wextra -Wpedantic)
 
 # Generated Flex/Bison code triggers various warnings; suppress them.
 set_source_files_properties(
-    ${BISON_mytoydb_parser_OUTPUTS}
-    ${FLEX_mytoydb_scanner_OUTPUTS}
+    ${BISON_pgcpp_parser_OUTPUTS}
+    ${FLEX_pgcpp_scanner_OUTPUTS}
     PROPERTIES
         COMPILE_OPTIONS "-Wno-unused;-Wno-sign-compare;-Wno-old-style-cast"
 )
 
 # ---------------------------------------------------------------------------
-# mytoydb_server — the standalone server executable (M12)
+# pgcpp_server — the standalone server executable (M12)
 # ---------------------------------------------------------------------------
-add_executable(mytoydb_server server/main.cpp)
-target_compile_features(mytoydb_server PRIVATE cxx_std_20)
-target_link_libraries(mytoydb_server PRIVATE mytoydb_core)
-target_include_directories(mytoydb_server PRIVATE
+add_executable(pgcpp_server server/main.cpp)
+target_compile_features(pgcpp_server PRIVATE cxx_std_20)
+target_link_libraries(pgcpp_server PRIVATE pgcpp_core)
+target_include_directories(pgcpp_server PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )

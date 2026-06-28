@@ -1,5 +1,5 @@
 ---
-# MyToyDB clang-format configuration
+# pgcpp clang-format configuration
 # Based on Google style with project-specific overrides for C++20.
 
 BasedOnStyle: Google

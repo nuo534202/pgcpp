@@ -1,4 +1,4 @@
-# FetchContent / dependency setup for MyToyDB
+# FetchContent / dependency setup for pgcpp
 #
 # Strategy:
 #   1. Prefer a system-installed Google Test (found via find_package(GTest CONFIG))
@@ -9,12 +9,12 @@
 # After this function runs, the following targets are guaranteed to exist:
 #   - gtest        (alias of either system gtest or FetchContent gtest)
 #   - gtest_main   (alias of either system gtest_main or FetchContent gtest_main)
-function(mytoydb_setup_fetchcontent)
+function(pgcpp_setup_fetchcontent)
     # 1. Try system-installed Google Test first.
     find_package(GTest CONFIG QUIET)
 
     if(GTest_FOUND)
-        message(STATUS "MyToyDB: using system-installed Google Test "
+        message(STATUS "pgcpp: using system-installed Google Test "
                        "(${GTest_VERSION})")
         # GTest::gtest / GTest::gtest_main are provided by the config file.
         # Create plain aliases named gtest / gtest_main so downstream code can
@@ -38,7 +38,7 @@ function(mytoydb_setup_fetchcontent)
         GIT_SHALLOW    TRUE
     )
 
-    message(STATUS "MyToyDB: fetching Google Test 1.17.0 via FetchContent "
+    message(STATUS "pgcpp: fetching Google Test 1.17.0 via FetchContent "
                    "(gitee mirror)")
 
     if(NOT TARGET gtest)

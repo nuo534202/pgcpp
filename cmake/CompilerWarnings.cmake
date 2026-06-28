@@ -1,5 +1,5 @@
-function(mytoydb_enable_warnings)
-    option(MYTOYDB_WERROR "Turn compiler warnings into errors" OFF)
+function(pgcpp_enable_warnings)
+    option(PGCPP_WERROR "Turn compiler warnings into errors" OFF)
 
     add_compile_options(
         -Wall
@@ -15,7 +15,7 @@ function(mytoydb_enable_warnings)
         -Wformat=2
     )
 
-    if(MYTOYDB_WERROR)
+    if(PGCPP_WERROR)
         add_compile_options(-Werror)
     endif()
 endfunction()

@@ -1,4 +1,4 @@
-function(mytoydb_enable_sanitizers)
+function(pgcpp_enable_sanitizers)
     option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
     option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
     option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
