@@ -127,3 +127,11 @@ mytoydb_add_test(psql_command_test unit/tools/psql_command_test.cpp)
 # Phase 15.13 tests (M14: commands module — sequence/view/trigger/explain/
 # dbcommands/schemacmds/tablespace/functioncmds)
 mytoydb_add_test(commands_test unit/commands/commands_test.cpp)
+
+# Phase 15.20 tests (P2 top-level directories: lib/partitioning/regex/replication/statistics/tsearch)
+mytoydb_add_test(lib_test unit/lib/lib_test.cpp)
+mytoydb_add_test(partitioning_test unit/partitioning/partitioning_test.cpp)
+mytoydb_add_test(regex_test unit/regex/regex_test.cpp)
+mytoydb_add_test(replication_test unit/replication/replication_test.cpp)
+mytoydb_add_test(statistics_test unit/statistics/statistics_test.cpp)
+mytoydb_add_test(tsearch_test unit/tsearch/tsearch_test.cpp)

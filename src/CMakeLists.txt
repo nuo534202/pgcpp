@@ -210,6 +210,50 @@ set(MYTOYDB_CORE_SOURCES
     tools/psql_client.cpp
     tools/psql_command.cpp
     tools/psql_describe.cpp
+    # Phase 15.20 (P2 top-level directories: lib/partitioning/regex/replication/statistics/tsearch)
+    lib/dshash.cpp
+    lib/ilist.cpp
+    lib/rbtree.cpp
+    lib/integerset.cpp
+    lib/bloom.cpp
+    lib/hyperloglog.cpp
+    lib/binaryheap.cpp
+    lib/pairingheap.cpp
+    partitioning/partbounds.cpp
+    partitioning/partdesc.cpp
+    partitioning/partprune.cpp
+    regex/regcomp.cpp
+    regex/regexec.cpp
+    regex/regfree.cpp
+    regex/regerror.cpp
+    regex/regprefix.cpp
+    regex/regexport.cpp
+    replication/replutil.cpp
+    replication/walsender.cpp
+    replication/walsenderfuncs.cpp
+    replication/walreceiver.cpp
+    replication/slot.cpp
+    replication/slotfuncs.cpp
+    replication/logical.cpp
+    replication/worker.cpp
+    replication/origin.cpp
+    replication/launcher.cpp
+    replication/syncrep.cpp
+    replication/backup.cpp
+    statistics/extended_stats.cpp
+    statistics/mvdistinct.cpp
+    statistics/mvdependencies.cpp
+    statistics/mvdistinct_sample.cpp
+    tsearch/dict.cpp
+    tsearch/ispell.cpp
+    tsearch/thesaurus.cpp
+    tsearch/to_tsquery.cpp
+    tsearch/to_tsvector.cpp
+    tsearch/ts_typanalyze.cpp
+    tsearch/ts_utils.cpp
+    tsearch/tsquery_parser.cpp
+    tsearch/tsvector_parser.cpp
+    tsearch/wparser.cpp
 )
 
 add_library(mytoydb_core STATIC ${MYTOYDB_CORE_SOURCES})
