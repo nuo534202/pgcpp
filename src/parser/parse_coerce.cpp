@@ -4,15 +4,15 @@
 // Implements type coercion between compatible types (e.g., int4 -> float8,
 // unknown -> text). For ClickBench, we need numeric promotions and
 // string type resolution.
-#include "mytoydb/parser/parse_coerce.hpp"
+#include "pgcpp/parser/parse_coerce.hpp"
 
 #include <cstring>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/parser/parse_type.hpp"
-#include "mytoydb/types/builtins.hpp"
-#include "mytoydb/types/datetime.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/parser/parse_type.hpp"
+#include "pgcpp/types/builtins.hpp"
+#include "pgcpp/types/datetime.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::parser {
 

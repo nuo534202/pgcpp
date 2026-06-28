@@ -7,13 +7,13 @@
 // first metacharacter. This covers the common index-optimization cases used by
 // MyToyDB's planner (e.g. '^prefix.*', '^literal$').
 
-#include "mytoydb/regex/regprefix.hpp"
+#include "pgcpp/regex/regprefix.hpp"
 
 #include <cstring>
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::regex {
 

@@ -4,20 +4,20 @@
 // rtoffset=0, the fixup is mostly a no-op: Var.varno is already correct.
 // These tests verify that set_plan_references does not corrupt the plan tree.
 
-#include "mytoydb/optimizer/plan/set_refs.hpp"
+#include "pgcpp/optimizer/plan/set_refs.hpp"
 
 #include <gtest/gtest.h>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 using mytoydb::executor::Agg;
 using mytoydb::executor::Plan;

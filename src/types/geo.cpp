@@ -2,7 +2,7 @@
 //
 // Mirrors PostgreSQL's utils/adt/geo_ops.c with simplified storage.
 
-#include "mytoydb/types/geo.hpp"
+#include "pgcpp/types/geo.hpp"
 
 #include <cctype>
 #include <cmath>
@@ -13,8 +13,8 @@
 #include <string_view>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

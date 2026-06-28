@@ -5,7 +5,7 @@
 // implemented with a direct state machine (matching PostgreSQL's approach);
 // regexp_replace/substring use C++ <regex>.
 
-#include "mytoydb/types/string_funcs.hpp"
+#include "pgcpp/types/string_funcs.hpp"
 
 #include <cctype>
 #include <cstring>
@@ -13,9 +13,9 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/types/builtins.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/types/builtins.hpp"
 
 namespace mytoydb::types {
 

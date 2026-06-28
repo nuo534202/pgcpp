@@ -9,10 +9,10 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::parser {
 

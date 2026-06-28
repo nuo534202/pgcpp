@@ -4,12 +4,12 @@
 //
 // PG stores slots in shared memory; MyToyDB keeps an in-process
 // std::map<std::string, ReplicationSlot> keyed by slot name.
-#include "mytoydb/replication/slot.hpp"
+#include "pgcpp/replication/slot.hpp"
 
 #include <algorithm>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

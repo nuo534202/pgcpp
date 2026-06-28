@@ -8,9 +8,9 @@
 // a no-op because the parser already sets Var.varno correctly and rtoffset=0.
 #pragma once
 
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 

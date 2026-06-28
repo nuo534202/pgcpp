@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-#include "mytoydb/catalog/catalog.hpp"
+#include "pgcpp/catalog/catalog.hpp"
 
 namespace mytoydb::catalog {
 

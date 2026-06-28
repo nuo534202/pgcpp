@@ -8,9 +8,9 @@
 #include <algorithm>
 #include <cmath>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/cost.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/cost.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 

@@ -4,7 +4,7 @@
 // 0 to indicate "no data exported". A non-zero argument-status return is used
 // only for obviously invalid input.
 
-#include "mytoydb/regex/regexport.hpp"
+#include "pgcpp/regex/regexport.hpp"
 
 namespace mytoydb::regex {
 

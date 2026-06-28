@@ -2,22 +2,22 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/indexcmds.c.
 // Extracted from src/protocol/utility.cpp to the commands/ module.
-#include "mytoydb/commands/indexcmds.hpp"
+#include "pgcpp/commands/indexcmds.hpp"
 
 #include <cstdint>
 #include <string>
 
-#include "mytoydb/access/nbtree.hpp"
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/parser/parse_type.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/types/builtins.hpp"
+#include "pgcpp/access/nbtree.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/parser/parse_type.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/types/builtins.hpp"
 
 namespace mytoydb::commands {
 

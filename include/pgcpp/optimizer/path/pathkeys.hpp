@@ -22,8 +22,8 @@
 
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 

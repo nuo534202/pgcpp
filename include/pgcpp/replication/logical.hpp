@@ -17,8 +17,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/replication/replutil.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/replication/replutil.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

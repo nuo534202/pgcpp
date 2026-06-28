@@ -4,11 +4,11 @@
 //
 // Implements the MessageWriter/MessageReader classes and the convenience
 // message builder functions declared in pqformat.h.
-#include "mytoydb/protocol/pqformat.hpp"
+#include "pgcpp/protocol/pqformat.hpp"
 
 #include <cstring>
 
-#include "mytoydb/common/error/elog.hpp"
+#include "pgcpp/common/error/elog.hpp"
 
 namespace mytoydb::protocol {
 

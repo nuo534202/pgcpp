@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-#include "mytoydb/tsearch/dict.hpp"
+#include "pgcpp/tsearch/dict.hpp"
 
 namespace mytoydb::tsearch {
 

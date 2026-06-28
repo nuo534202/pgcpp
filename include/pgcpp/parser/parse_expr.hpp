@@ -3,8 +3,8 @@
 // Converted from PostgreSQL 15's src/include/parser/parse_expr.h.
 #pragma once
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/parser/parse_node.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/parser/parse_node.hpp"
 
 namespace mytoydb::parser {
 

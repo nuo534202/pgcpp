@@ -12,16 +12,16 @@
 // p_ctenamespace after analysis completes. We do the same here, though
 // full recursive-execution support (worktable scan, etc.) is out of scope
 // for this task — only the parse-analysis plumbing is implemented.
-#include "mytoydb/parser/parse_cte.hpp"
+#include "pgcpp/parser/parse_cte.hpp"
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/parser/analyze.hpp"
-#include "mytoydb/parser/parse_node.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/parser/analyze.hpp"
+#include "pgcpp/parser/parse_node.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::parser {
 

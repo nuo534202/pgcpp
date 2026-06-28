@@ -3,11 +3,11 @@
 // Converted from PostgreSQL 15's src/backend/commands/functioncmds.c.
 // MyToyDB doesn't yet support user-defined functions; this stub
 // acknowledges the request without persisting a pg_proc row.
-#include "mytoydb/commands/functioncmds.hpp"
+#include "pgcpp/commands/functioncmds.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

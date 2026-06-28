@@ -5,10 +5,10 @@
 // is removed from the owning MemoryContext (to avoid a double-destroy when the
 // context is later reset), and the block is pfree'd.
 
-#include "mytoydb/regex/regfree.hpp"
+#include "pgcpp/regex/regfree.hpp"
 
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::regex {
 

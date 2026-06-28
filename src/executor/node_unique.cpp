@@ -3,14 +3,14 @@
 // Deduplicates a sorted input. Assumes the child produces tuples
 // already sorted on uniq_colIdx columns so duplicates are adjacent.
 // Returns a tuple only when it differs from the previously returned one.
-#include "mytoydb/executor/node_unique.hpp"
+#include "pgcpp/executor/node_unique.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/exec_expr.hpp"
-#include "mytoydb/executor/exec_utils.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/executor/tupletable.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/exec_expr.hpp"
+#include "pgcpp/executor/exec_utils.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/executor/tupletable.hpp"
 
 namespace mytoydb::executor {
 

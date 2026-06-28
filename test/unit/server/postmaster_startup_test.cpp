@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/server/postmaster.hpp"
+#include "pgcpp/server/postmaster.hpp"
 
 using mytoydb::server::ProcessStartupPacket;
 using mytoydb::server::StartupPacketResult;

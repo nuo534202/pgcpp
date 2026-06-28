@@ -7,22 +7,22 @@
 // expressions, and reject duplicate column names at parse-analysis time.
 // The transformed statements are still wrapped as CMD_UTILITY Query nodes;
 // the actual catalog/storage side effects happen later in ProcessUtility.
-#include "mytoydb/parser/parse_utilcmd.hpp"
+#include "pgcpp/parser/parse_utilcmd.hpp"
 
 #include <string>
 #include <unordered_set>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_type.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/parser/parse_expr.hpp"
-#include "mytoydb/parser/parse_node.hpp"
-#include "mytoydb/parser/parse_relation.hpp"
-#include "mytoydb/parser/parse_type.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_type.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/parser/parse_expr.hpp"
+#include "pgcpp/parser/parse_node.hpp"
+#include "pgcpp/parser/parse_relation.hpp"
+#include "pgcpp/parser/parse_type.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::parser {
 

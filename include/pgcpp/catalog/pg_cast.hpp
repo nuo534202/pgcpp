@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "mytoydb/catalog/catalog.hpp"
+#include "pgcpp/catalog/catalog.hpp"
 
 namespace mytoydb::catalog {
 

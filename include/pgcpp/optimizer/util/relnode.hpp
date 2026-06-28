@@ -7,9 +7,9 @@
 // and provides lookup by relid / joinrelids.
 #pragma once
 
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::optimizer {
 

@@ -6,7 +6,7 @@
 // forks them on startup or on demand. Each worker has a name, type, and
 // main function. MyToyDB preserves the registry/launch/dispatch structure
 // but runs workers synchronously (no actual fork).
-#include "mytoydb/server/bgworker.hpp"
+#include "pgcpp/server/bgworker.hpp"
 
 #include <unistd.h>
 

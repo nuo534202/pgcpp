@@ -22,9 +22,9 @@
 // and may be lost on crash, but are always safe to recompute.
 #pragma once
 
-#include "mytoydb/transaction/heap_tuple.hpp"
-#include "mytoydb/transaction/snapshot.hpp"
-#include "mytoydb/transaction/transam.hpp"
+#include "pgcpp/transaction/heap_tuple.hpp"
+#include "pgcpp/transaction/snapshot.hpp"
+#include "pgcpp/transaction/transam.hpp"
 
 namespace mytoydb::transaction {
 

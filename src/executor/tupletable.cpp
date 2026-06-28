@@ -6,13 +6,13 @@
 // a tuple in deformed (Datum array) form and optionally owns the backing
 // HeapTuple. The slot is the primary vehicle for passing tuples between
 // plan nodes.
-#include "mytoydb/executor/tupletable.hpp"
+#include "pgcpp/executor/tupletable.hpp"
 
 #include <new>
 
-#include "mytoydb/access/heapam.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/access/heapam.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::executor {
 using mytoydb::nodes::makePallocNode;

@@ -1,7 +1,7 @@
 // latch.cpp — Latch and WaitEventSet primitives.
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/latch.c.
-#include "mytoydb/storage/ipc/latch.hpp"
+#include "pgcpp/storage/ipc/latch.hpp"
 
 #include <poll.h>
 #include <unistd.h>

@@ -16,13 +16,13 @@
 // This is sufficient for two-table queries (the minimum required by Task
 // 15.15's verification criteria). N-way joins require chaining joinrels,
 // which is left as a TODO.
-#include "mytoydb/optimizer/path/joinrels.hpp"
+#include "pgcpp/optimizer/path/joinrels.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/path/joinpath.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/optimizer/util/relnode.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/path/joinpath.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/optimizer/util/relnode.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

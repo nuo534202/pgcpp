@@ -9,8 +9,8 @@
 //   4. ExecutorEnd(queryDesc)   — tear down everything
 #pragma once
 
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/node_exec.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/node_exec.hpp"
 
 namespace mytoydb::executor {
 

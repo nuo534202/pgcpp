@@ -1,4 +1,4 @@
-#include "mytoydb/types/numutils.hpp"
+#include "pgcpp/types/numutils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -6,9 +6,9 @@
 #include <cstring>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace {
 

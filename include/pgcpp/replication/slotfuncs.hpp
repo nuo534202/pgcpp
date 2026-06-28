@@ -14,8 +14,8 @@
 #include <cstdint>
 #include <string>
 
-#include "mytoydb/replication/slot.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/replication/slot.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

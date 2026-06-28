@@ -11,12 +11,12 @@
 // children (left-associative chain folded into a single node). NOT nodes
 // have exactly one child.
 
-#include "mytoydb/tsearch/tsquery_parser.hpp"
+#include "pgcpp/tsearch/tsquery_parser.hpp"
 
 #include <cctype>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
+#include "pgcpp/common/error/elog.hpp"
 
 namespace mytoydb::tsearch {
 

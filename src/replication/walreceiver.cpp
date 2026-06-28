@@ -3,9 +3,9 @@
 // Converted from PostgreSQL 15's src/backend/replication/walreceiver.c.
 // Network code is stubbed: WalRcvStart records the requested conninfo /
 // slotname / startpoint and transitions the state to kStreaming.
-#include "mytoydb/replication/walreceiver.hpp"
+#include "pgcpp/replication/walreceiver.hpp"
 
-#include "mytoydb/common/error/elog.hpp"
+#include "pgcpp/common/error/elog.hpp"
 
 namespace mytoydb::replication {
 

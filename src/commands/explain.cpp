@@ -4,12 +4,12 @@
 // MyToyDB's EXPLAIN currently prints a placeholder plan description
 // to stdout; full plan-tree dumping is deferred until the executor
 // exposes an ExplainState API.
-#include "mytoydb/commands/explain.hpp"
+#include "pgcpp/commands/explain.hpp"
 
 #include <iostream>
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

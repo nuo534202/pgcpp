@@ -8,12 +8,12 @@
 #include <cstdint>
 #include <string>
 
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/tupletable.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/tupletable.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::executor {
 

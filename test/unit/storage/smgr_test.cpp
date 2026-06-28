@@ -4,7 +4,7 @@
 // truncation, and the smgr hash table. Uses a temporary directory for file
 // storage to avoid polluting the workspace.
 
-#include "mytoydb/storage/smgr.hpp"
+#include "pgcpp/storage/smgr.hpp"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -14,10 +14,10 @@
 #include <cstring>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/storage/bufpage.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/storage/bufpage.hpp"
 
 using mytoydb::catalog::Oid;
 using mytoydb::memory::AllocSetContext;

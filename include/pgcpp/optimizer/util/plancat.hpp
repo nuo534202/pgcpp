@@ -7,8 +7,8 @@
 // by reading the system catalog (pg_class.relpages/reltuples and pg_attribute).
 #pragma once
 
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/optimizer/planner.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/optimizer/planner.hpp"
 
 namespace mytoydb::optimizer {
 

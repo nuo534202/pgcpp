@@ -16,9 +16,9 @@
 
 #include <functional>
 
-#include "mytoydb/catalog/catalog.hpp"  // Oid
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/parser/primnodes.hpp"  // concrete node types
+#include "pgcpp/catalog/catalog.hpp"  // Oid
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/parser/primnodes.hpp"  // concrete node types
 
 namespace mytoydb::nodes {
 

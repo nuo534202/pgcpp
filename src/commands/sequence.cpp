@@ -4,17 +4,17 @@
 // Creates a relation of relkind 'S' (sequence). MyToyDB doesn't yet
 // implement nextval()/currval() — this stub records the catalog entry
 // so CREATE SEQUENCE doesn't fail.
-#include "mytoydb/commands/sequence.hpp"
+#include "pgcpp/commands/sequence.hpp"
 
 #include <string>
 
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

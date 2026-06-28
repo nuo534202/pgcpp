@@ -3,7 +3,7 @@
 // Mirrors PostgreSQL's utils/adt/rowtypes.c. Parses a literal of the form
 // "(val1,val2,val3)" with the standard quoting rules.
 
-#include "mytoydb/types/rowtypes.hpp"
+#include "pgcpp/types/rowtypes.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -11,9 +11,9 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/types/builtins.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/types/builtins.hpp"
 
 namespace mytoydb::types {
 

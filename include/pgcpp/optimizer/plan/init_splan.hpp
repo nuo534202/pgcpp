@@ -7,10 +7,10 @@
 // distributes WHERE-clause quals to the appropriate RelOptInfo baserestrictinfo.
 #pragma once
 
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::optimizer {
 

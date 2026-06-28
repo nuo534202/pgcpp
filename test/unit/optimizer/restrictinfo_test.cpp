@@ -4,19 +4,19 @@
 // make_restrictinfos_from_quals. Verifies that qual clauses are correctly
 // wrapped with optimizer metadata (required_relids, can_join).
 
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
 
 #include <gtest/gtest.h>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 using mytoydb::nodes::makePallocNode;
 using mytoydb::optimizer::make_restrictinfo;

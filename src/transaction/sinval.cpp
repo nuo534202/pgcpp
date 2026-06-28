@@ -13,15 +13,15 @@
 // single-process, so we keep a local queue and dispatch to locally
 // registered handlers at AcceptInvalidationMessages time. This preserves
 // the API and the invalidation-driven cache-refresh pattern.
-#include "mytoydb/transaction/sinval.hpp"
+#include "pgcpp/transaction/sinval.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <utility>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/transaction/transam.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/transaction/transam.hpp"
 
 namespace mytoydb::transaction {
 

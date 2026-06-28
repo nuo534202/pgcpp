@@ -7,11 +7,11 @@
 // sets Var.varno to the correct 1-based range table index. The upper-node
 // (Agg/Sort) Var conversion to OUTER_VAR is simplified to preserve the
 // existing varno/varattno, matching the behavior of the legacy subplanner.
-#include "mytoydb/optimizer/plan/set_refs.hpp"
+#include "pgcpp/optimizer/plan/set_refs.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::executor::Agg;

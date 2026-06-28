@@ -6,13 +6,13 @@
 // WAL buffer contents to disk. In MyToyDB (in-memory WAL buffer, always
 // "durable"), XLogFlush is a no-op; the WAL writer tracks the current
 // insert position and counts any new bytes as "flushed".
-#include "mytoydb/server/walwriter.hpp"
+#include "pgcpp/server/walwriter.hpp"
 
 #include <chrono>
 #include <cstdint>
 
-#include "mytoydb/server/interrupt.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/server/interrupt.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::server {
 

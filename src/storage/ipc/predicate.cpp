@@ -1,12 +1,12 @@
 // predicate.cpp — Predicate locks for SERIALIZABLE isolation.
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/predicate.c.
-#include "mytoydb/storage/ipc/predicate.hpp"
+#include "pgcpp/storage/ipc/predicate.hpp"
 
 #include <algorithm>
 #include <vector>
 
-#include "mytoydb/storage/block.hpp"
+#include "pgcpp/storage/block.hpp"
 
 namespace mytoydb::storage {
 

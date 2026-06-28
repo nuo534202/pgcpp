@@ -3,21 +3,21 @@
 // Converted from PostgreSQL 15's src/backend/commands/copyfrom.c.
 // Reads tab-delimited text rows from a file and inserts them into a
 // relation using heap_insert.
-#include "mytoydb/commands/copy_from.hpp"
+#include "pgcpp/commands/copy_from.hpp"
 
 #include <cstdint>
 #include <fstream>
 #include <string>
 
-#include "mytoydb/access/heapam.hpp"
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/storage/bufmgr.hpp"
-#include "mytoydb/transaction/heap_tuple.hpp"
-#include "mytoydb/types/builtins.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/access/heapam.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/storage/bufmgr.hpp"
+#include "pgcpp/transaction/heap_tuple.hpp"
+#include "pgcpp/types/builtins.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::commands {
 

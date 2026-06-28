@@ -8,22 +8,22 @@
 //   RemoteReceiver      — sends RowDescription + DataRow via OutputSink
 //   TuplestoreReceiver  — collects slots into a vector
 //   IntoRelReceiver     — inserts tuples into a relation
-#include "mytoydb/protocol/dest.hpp"
+#include "pgcpp/protocol/dest.hpp"
 
 #include <cstdio>
 #include <string>
 #include <vector>
 
-#include "mytoydb/access/heapam.hpp"
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/tupletable.hpp"
-#include "mytoydb/transaction/heap_tuple.hpp"
-#include "mytoydb/types/builtins.hpp"
-#include "mytoydb/types/datetime.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/access/heapam.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/tupletable.hpp"
+#include "pgcpp/transaction/heap_tuple.hpp"
+#include "pgcpp/types/builtins.hpp"
+#include "pgcpp/types/datetime.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::protocol {
 

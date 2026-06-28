@@ -3,10 +3,10 @@
 // Converted from PostgreSQL 15's src/include/parser/parse_coerce.h.
 #pragma once
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/parser/parse_node.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/parser/parse_node.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::parser {
 

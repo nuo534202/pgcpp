@@ -11,14 +11,14 @@
 // a single-column inner query are unfolded. kExists / kAll / kRowcompare
 // are left as SubLink nodes (skeleton; the executor falls back to one-row-
 // at-a-time evaluation).
-#include "mytoydb/optimizer/plan/subselect.hpp"
+#include "pgcpp/optimizer/plan/subselect.hpp"
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::catalog::Oid;

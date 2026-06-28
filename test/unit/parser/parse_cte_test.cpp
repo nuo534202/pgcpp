@@ -10,25 +10,25 @@
 //   * End-to-end: "WITH cte AS (SELECT ...) SELECT ... FROM cte" must
 //     produce a Query whose range table contains a subquery RTE for cte.
 
-#include "mytoydb/parser/parse_cte.hpp"
+#include "pgcpp/parser/parse_cte.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/bootstrap_catalog.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/syscache.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/parser/analyze.hpp"
-#include "mytoydb/parser/parse_node.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/parser.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/bootstrap_catalog.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/syscache.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/parser/analyze.hpp"
+#include "pgcpp/parser/parse_node.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/parser.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 using mytoydb::catalog::BootstrapCatalog;
 using mytoydb::catalog::Catalog;

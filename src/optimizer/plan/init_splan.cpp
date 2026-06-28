@@ -5,17 +5,17 @@
 // Initializes planner state for a query: builds the RTE array, constructs
 // RelOptInfo for each base relation, and distributes WHERE quals. For
 // MyToyDB's single-table workload, the jointree handling is simplified.
-#include "mytoydb/optimizer/plan/init_splan.hpp"
+#include "pgcpp/optimizer/plan/init_splan.hpp"
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/cost.hpp"
-#include "mytoydb/optimizer/path/equivclass.hpp"
-#include "mytoydb/optimizer/util/pathnode.hpp"
-#include "mytoydb/optimizer/util/plancat.hpp"
-#include "mytoydb/optimizer/util/relnode.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/cost.hpp"
+#include "pgcpp/optimizer/path/equivclass.hpp"
+#include "pgcpp/optimizer/util/pathnode.hpp"
+#include "pgcpp/optimizer/util/plancat.hpp"
+#include "pgcpp/optimizer/util/relnode.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::catalog::GetCatalog;

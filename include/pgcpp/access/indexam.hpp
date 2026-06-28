@@ -16,10 +16,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "mytoydb/access/nbtree.hpp"  // BTScanDesc, BTScanKeyData, BTKeyKind
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/transaction/heap_tuple.hpp"
+#include "pgcpp/access/nbtree.hpp"  // BTScanDesc, BTScanKeyData, BTKeyKind
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/transaction/heap_tuple.hpp"
 
 namespace mytoydb::access {
 

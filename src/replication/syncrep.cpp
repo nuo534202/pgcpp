@@ -3,15 +3,15 @@
 // Converted from PostgreSQL 15's src/backend/replication/syncrep.c.
 // SyncRepConfigUpdate / SyncRepConfigParse manipulate the active
 // SyncRepConfig; SyncRepWaitForLSN is a stub that returns immediately.
-#include "mytoydb/replication/syncrep.hpp"
+#include "pgcpp/replication/syncrep.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

@@ -12,8 +12,8 @@
 //   LockRelation(relid, AccessExclusiveLock); // DROP/TRUNCATE
 #pragma once
 
-#include "mytoydb/catalog/catalog.hpp"  // Oid
-#include "mytoydb/transaction/lock.hpp"
+#include "pgcpp/catalog/catalog.hpp"  // Oid
+#include "pgcpp/transaction/lock.hpp"
 
 namespace mytoydb::transaction {
 

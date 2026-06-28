@@ -7,7 +7,7 @@
 // during a scan. MyToyDB extends ScanKeyData with sk_key_kind / sk_key_len
 // so the B-tree AM can compare without a function manager.
 
-#include "mytoydb/access/genam.hpp"
+#include "pgcpp/access/genam.hpp"
 
 namespace mytoydb::access {
 

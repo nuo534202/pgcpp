@@ -11,20 +11,20 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/tsearch/dict.hpp"
-#include "mytoydb/tsearch/ispell.hpp"
-#include "mytoydb/tsearch/thesaurus.hpp"
-#include "mytoydb/tsearch/to_tsquery.hpp"
-#include "mytoydb/tsearch/to_tsvector.hpp"
-#include "mytoydb/tsearch/ts_typanalyze.hpp"
-#include "mytoydb/tsearch/ts_utils.hpp"
-#include "mytoydb/tsearch/tsquery_parser.hpp"
-#include "mytoydb/tsearch/tsvector_parser.hpp"
-#include "mytoydb/tsearch/wparser.hpp"
-#include "mytoydb/types/ts_types.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/tsearch/dict.hpp"
+#include "pgcpp/tsearch/ispell.hpp"
+#include "pgcpp/tsearch/thesaurus.hpp"
+#include "pgcpp/tsearch/to_tsquery.hpp"
+#include "pgcpp/tsearch/to_tsvector.hpp"
+#include "pgcpp/tsearch/ts_typanalyze.hpp"
+#include "pgcpp/tsearch/ts_utils.hpp"
+#include "pgcpp/tsearch/tsquery_parser.hpp"
+#include "pgcpp/tsearch/tsvector_parser.hpp"
+#include "pgcpp/tsearch/wparser.hpp"
+#include "pgcpp/types/ts_types.hpp"
 
 namespace {
 

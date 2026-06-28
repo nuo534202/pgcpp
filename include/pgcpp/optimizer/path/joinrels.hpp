@@ -15,7 +15,7 @@
 //   - No GEQO/swarm optimization for >10 tables.
 #pragma once
 
-#include "mytoydb/optimizer/path.hpp"
+#include "pgcpp/optimizer/path.hpp"
 
 namespace mytoydb::optimizer {
 

@@ -5,7 +5,7 @@
 #include <tuple>
 #include <unordered_map>
 
-#include "mytoydb/catalog/catalog.hpp"
+#include "pgcpp/catalog/catalog.hpp"
 
 namespace mytoydb::catalog {
 

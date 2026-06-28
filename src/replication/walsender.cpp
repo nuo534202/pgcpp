@@ -7,12 +7,12 @@
 // single-process, so we hold a file-static WalSndCtlData singleton.
 // Network I/O is stubbed: the LSN accessors and state machine are the
 // meaningful surface area.
-#include "mytoydb/replication/walsender.hpp"
+#include "pgcpp/replication/walsender.hpp"
 
 #include <algorithm>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

@@ -3,11 +3,11 @@
 // Converted from PostgreSQL 15's src/backend/commands/aggregatecmds.c.
 // MyToyDB has fixed built-in aggregates (count, sum, avg, min, max);
 // this is a stub for user-defined aggregates.
-#include "mytoydb/commands/aggregatecmds.hpp"
+#include "pgcpp/commands/aggregatecmds.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

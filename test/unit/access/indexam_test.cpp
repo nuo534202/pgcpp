@@ -7,7 +7,7 @@
 // The fixture mirrors nbtree_test.cpp: full stack with catalog, storage,
 // buffer pool, and relcache.
 
-#include "mytoydb/access/indexam.hpp"
+#include "pgcpp/access/indexam.hpp"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -17,21 +17,21 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/access/genam.hpp"
-#include "mytoydb/access/nbtree.hpp"
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/catalog/syscache.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/storage/bufmgr.hpp"
-#include "mytoydb/storage/smgr.hpp"
-#include "mytoydb/transaction/heap_tuple.hpp"
-#include "mytoydb/transaction/transam.hpp"
-#include "mytoydb/transaction/xact.hpp"
+#include "pgcpp/access/genam.hpp"
+#include "pgcpp/access/nbtree.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/catalog/syscache.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/storage/bufmgr.hpp"
+#include "pgcpp/storage/smgr.hpp"
+#include "pgcpp/transaction/heap_tuple.hpp"
+#include "pgcpp/transaction/transam.hpp"
+#include "pgcpp/transaction/xact.hpp"
 
 using mytoydb::access::btbeginscan;
 using mytoydb::access::btbuild;

@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
+#include "pgcpp/catalog/catalog.hpp"
 
 // Forward declaration to avoid a hard parser dependency in the header.
 namespace mytoydb::parser {

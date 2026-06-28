@@ -17,14 +17,14 @@
 //   uint32 count
 //   count * (uint32 nattrs, nattrs * (int32 attnum, uint8 is_eq), double degree)
 
-#include "mytoydb/statistics/mvdependencies.hpp"
+#include "pgcpp/statistics/mvdependencies.hpp"
 
 #include <cstring>
 #include <map>
 #include <set>
 #include <vector>
 
-#include "mytoydb/statistics/mvdistinct.hpp"  // StatsBuildData
+#include "pgcpp/statistics/mvdistinct.hpp"  // StatsBuildData
 
 namespace mytoydb::statistics {
 

@@ -6,7 +6,7 @@
 // processes' stderr and writes them to a log file (or syslog). In MyToyDB
 // (single-process), the syslogger is a stateful API: SysLoggerWrite
 // queues a message; SysLoggerMain processes the queue.
-#include "mytoydb/server/syslogger.hpp"
+#include "pgcpp/server/syslogger.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/server/interrupt.hpp"
+#include "pgcpp/server/interrupt.hpp"
 
 namespace mytoydb::server {
 

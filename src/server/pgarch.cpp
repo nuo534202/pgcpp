@@ -6,7 +6,7 @@
 // and archiving each via the configured archive_command (see
 // shell_archive.h). In MyToyDB (single-process), the archiver maintains
 // a queue of pending archive requests; PgArchiverMain processes them.
-#include "mytoydb/server/pgarch.hpp"
+#include "pgcpp/server/pgarch.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -15,8 +15,8 @@
 #include <utility>
 #include <vector>
 
-#include "mytoydb/server/interrupt.hpp"
-#include "mytoydb/server/shell_archive.hpp"
+#include "pgcpp/server/interrupt.hpp"
+#include "pgcpp/server/shell_archive.hpp"
 
 namespace mytoydb::server {
 

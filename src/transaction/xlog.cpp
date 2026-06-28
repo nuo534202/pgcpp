@@ -8,7 +8,7 @@
 // start; the first record begins at LSN kSizeofXlogRecord (24). All inserted
 // records are immediately durable (the write pointer tracks the insert
 // pointer), so XLogFlush is a no-op.
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 #include <cstddef>
 #include <cstring>

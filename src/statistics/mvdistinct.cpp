@@ -11,13 +11,13 @@
 //   count * (uint32 attrs, double ndistinct)
 // matching the role (not the exact bytes) of PostgreSQL's bytea layout.
 
-#include "mytoydb/statistics/mvdistinct.hpp"
+#include "pgcpp/statistics/mvdistinct.hpp"
 
 #include <cstring>
 #include <map>
 #include <vector>
 
-#include "mytoydb/statistics/mvdistinct_sample.hpp"
+#include "pgcpp/statistics/mvdistinct_sample.hpp"
 
 namespace mytoydb::statistics {
 

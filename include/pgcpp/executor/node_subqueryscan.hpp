@@ -4,7 +4,7 @@
 // output through the parent query's target list.
 #pragma once
 
-#include "mytoydb/executor/node_exec.hpp"
+#include "pgcpp/executor/node_exec.hpp"
 
 namespace mytoydb::executor {
 

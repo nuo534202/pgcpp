@@ -17,9 +17,9 @@
 
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"    // Oid
-#include "mytoydb/protocol/pqformat.hpp"  // OutputSink, Message
-#include "mytoydb/types/datum.hpp"        // Datum
+#include "pgcpp/catalog/catalog.hpp"    // Oid
+#include "pgcpp/protocol/pqformat.hpp"  // OutputSink, Message
+#include "pgcpp/types/datum.hpp"        // Datum
 
 namespace mytoydb::access {
 struct TupleDescData;

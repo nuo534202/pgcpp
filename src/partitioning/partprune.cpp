@@ -21,14 +21,14 @@
 //   - NULL handling is limited: a NULL value in an op step matches only the
 //     null-accepting partition (if any).
 
-#include "mytoydb/partitioning/partprune.hpp"
+#include "pgcpp/partitioning/partprune.hpp"
 
 #include <algorithm>
 #include <cstdint>
 #include <utility>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
+#include "pgcpp/common/error/elog.hpp"
 
 namespace mytoydb::partitioning {
 

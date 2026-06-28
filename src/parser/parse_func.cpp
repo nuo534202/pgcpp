@@ -14,21 +14,21 @@
 // All function metadata is read from the Catalog (pg_proc rows populated
 // by BootstrapCatalog). No hardcoded function table remains.
 
-#include "mytoydb/parser/parse_func.hpp"
+#include "pgcpp/parser/parse_func.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_proc.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/parser/parse_coerce.hpp"
-#include "mytoydb/parser/parse_expr.hpp"
-#include "mytoydb/parser/parse_type.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_proc.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/parser/parse_coerce.hpp"
+#include "pgcpp/parser/parse_expr.hpp"
+#include "pgcpp/parser/parse_type.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::parser {
 

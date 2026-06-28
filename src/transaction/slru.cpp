@@ -7,7 +7,7 @@
 // MyToyDB keeps the API but uses an in-memory std::vector<Page> for simplicity;
 // the in-memory store IS the backing store, so flush is a no-op that just
 // clears dirty flags. Eviction is FIFO (the page at index 0), not true LRU.
-#include "mytoydb/transaction/slru.hpp"
+#include "pgcpp/transaction/slru.hpp"
 
 #include <cstring>
 #include <vector>

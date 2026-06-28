@@ -4,24 +4,24 @@
 // These handlers were previously inline in src/protocol/utility.cpp;
 // they have been moved here so utility.cpp can be a thin dispatcher
 // (matching PostgreSQL's tcop/utility.c + commands/* separation).
-#include "mytoydb/commands/tablecmds.hpp"
+#include "pgcpp/commands/tablecmds.hpp"
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include "mytoydb/access/heapam.hpp"
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/parser/parse_type.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/storage/smgr.hpp"
-#include "mytoydb/types/builtins.hpp"
+#include "pgcpp/access/heapam.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/parser/parse_type.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/storage/smgr.hpp"
+#include "pgcpp/types/builtins.hpp"
 
 namespace mytoydb::commands {
 

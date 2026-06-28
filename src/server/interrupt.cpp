@@ -7,7 +7,7 @@
 // flags; the main loop calls HandleInterrupts() at safe points to dispatch
 // pending interrupts to registered handlers. C++ exceptions are disabled,
 // so query-cancel sets a flag that the executor polls via InterruptRequested().
-#include "mytoydb/server/interrupt.hpp"
+#include "pgcpp/server/interrupt.hpp"
 
 #include <chrono>
 #include <csignal>

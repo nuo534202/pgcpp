@@ -2,11 +2,11 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/operatorcmds.c.
 // MyToyDB has no user-defined operator system yet; this is a stub.
-#include "mytoydb/commands/operatorcmds.hpp"
+#include "pgcpp/commands/operatorcmds.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

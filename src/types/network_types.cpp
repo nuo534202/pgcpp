@@ -3,7 +3,7 @@
 // Mirrors PostgreSQL's utils/adt/network.c, mac.c, mac8.c with a simplified
 // in-memory NetworkAddr struct.
 
-#include "mytoydb/types/network_types.hpp"
+#include "pgcpp/types/network_types.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -11,8 +11,8 @@
 #include <cstring>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

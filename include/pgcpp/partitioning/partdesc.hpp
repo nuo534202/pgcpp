@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-#include "mytoydb/partitioning/partbounds.hpp"
+#include "pgcpp/partitioning/partbounds.hpp"
 
 namespace mytoydb::partitioning {
 

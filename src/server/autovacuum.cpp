@@ -6,7 +6,7 @@
 // AutoVacuumLauncherMain processes the queue by calling
 // AutoVacuumWorkerMain for each item. In MyToyDB (single-process), the
 // worker executes synchronously rather than being forked.
-#include "mytoydb/server/autovacuum.hpp"
+#include "pgcpp/server/autovacuum.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-#include "mytoydb/server/interrupt.hpp"
+#include "pgcpp/server/interrupt.hpp"
 
 namespace mytoydb::server {
 

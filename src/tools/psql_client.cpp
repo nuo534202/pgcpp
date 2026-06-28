@@ -2,7 +2,7 @@
 //
 // Implements the TCP connection, startup handshake, and simple query
 // protocol for the MyToyDB client.
-#include "mytoydb/tools/psql_client.hpp"
+#include "pgcpp/tools/psql_client.hpp"
 
 #include <arpa/inet.h>
 #include <errno.h>

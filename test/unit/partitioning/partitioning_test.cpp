@@ -10,7 +10,7 @@
 //   - Partition pruning: prune by list membership, prune by range bounds,
 //     combine AND/OR steps.
 
-#include "mytoydb/partitioning/partitioning.hpp"
+#include "pgcpp/partitioning/partitioning.hpp"
 
 #include <gtest/gtest.h>
 
@@ -18,10 +18,10 @@
 #include <memory>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace {
 

@@ -4,10 +4,10 @@
 //
 // Builds RelOptInfo objects for base relations and (skeleton) join relations.
 // For MyToyDB's single-table workload, the join-rel machinery is minimal.
-#include "mytoydb/optimizer/util/relnode.hpp"
+#include "pgcpp/optimizer/util/relnode.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/planner.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/planner.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

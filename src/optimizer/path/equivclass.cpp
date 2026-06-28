@@ -13,14 +13,14 @@
 //   - No outer-join barrier tracking (treat all ECs as below-inner-join).
 //   - No volatile-expression rejection (callers must guard).
 //   - Member equality is structural (same NodeTag + same Var fields).
-#include "mytoydb/optimizer/path/equivclass.hpp"
+#include "pgcpp/optimizer/path/equivclass.hpp"
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_operator.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_operator.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

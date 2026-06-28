@@ -6,7 +6,7 @@
 // compiler validates template syntax even when no explicit instantiation is
 // requested by callers.
 
-#include "mytoydb/lib/dshash.hpp"
+#include "pgcpp/lib/dshash.hpp"
 
 namespace mytoydb::lib {
 

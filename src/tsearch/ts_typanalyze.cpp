@@ -4,7 +4,7 @@
 // entire sample set. The most common lexemes (by total count) are returned,
 // along with the average number of entries per vector.
 
-#include "mytoydb/tsearch/ts_typanalyze.hpp"
+#include "pgcpp/tsearch/ts_typanalyze.hpp"
 
 #include <algorithm>
 #include <map>

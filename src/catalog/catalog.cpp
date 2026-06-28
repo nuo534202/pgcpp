@@ -4,22 +4,22 @@
 // helpers to C++20. Row storage is a std::vector of palloc-allocated pointers,
 // preserving PostgreSQL's "rows live in a long-lived memory context" model.
 
-#include "mytoydb/catalog/catalog.hpp"
+#include "pgcpp/catalog/catalog.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <utility>
 
-#include "mytoydb/catalog/pg_aggregate.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/catalog/pg_cast.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/catalog/pg_collation.hpp"
-#include "mytoydb/catalog/pg_operator.hpp"
-#include "mytoydb/catalog/pg_proc.hpp"
-#include "mytoydb/catalog/pg_type.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/catalog/pg_aggregate.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/catalog/pg_cast.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/catalog/pg_collation.hpp"
+#include "pgcpp/catalog/pg_operator.hpp"
+#include "pgcpp/catalog/pg_proc.hpp"
+#include "pgcpp/catalog/pg_type.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::catalog {
 

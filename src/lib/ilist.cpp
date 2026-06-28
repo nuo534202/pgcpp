@@ -6,7 +6,7 @@
 // &head. For SList we use a self-pointing sentinel so end() is the head
 // pointer itself.
 
-#include "mytoydb/lib/ilist.hpp"
+#include "pgcpp/lib/ilist.hpp"
 
 namespace mytoydb::lib {
 

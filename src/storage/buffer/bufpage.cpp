@@ -6,14 +6,14 @@
 // pointer array growing downward, and tuple data growing upward from the
 // end of the page.
 
-#include "mytoydb/storage/bufpage.hpp"
+#include "pgcpp/storage/bufpage.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::storage {
 

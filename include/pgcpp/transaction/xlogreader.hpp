@@ -10,8 +10,8 @@
 #include <cstdint>
 #include <vector>
 
-#include "mytoydb/transaction/transam.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/transaction/transam.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::transaction {
 

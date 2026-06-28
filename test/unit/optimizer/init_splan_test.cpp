@@ -4,20 +4,20 @@
 // distribute_quals_to_rels. Verifies that PlannerInfo is correctly populated
 // with simple_rte_array, simple_rel_array, and baserestrictinfo.
 
-#include "mytoydb/optimizer/plan/init_splan.hpp"
+#include "pgcpp/optimizer/plan/init_splan.hpp"
 
 #include <gtest/gtest.h>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 using mytoydb::nodes::makePallocNode;
 using mytoydb::nodes::NodeTag;

@@ -25,9 +25,9 @@
 
 #include <cstdint>
 
-#include "mytoydb/storage/block.hpp"
-#include "mytoydb/storage/bufpage.hpp"
-#include "mytoydb/transaction/heap_tuple.hpp"
+#include "pgcpp/storage/block.hpp"
+#include "pgcpp/storage/bufpage.hpp"
+#include "pgcpp/transaction/heap_tuple.hpp"
 
 namespace mytoydb::access {
 

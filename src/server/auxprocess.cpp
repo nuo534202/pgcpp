@@ -5,19 +5,19 @@
 // In PostgreSQL, auxprocess.c provides the AuxiliaryProcessMain entry point
 // that dispatches to the specific auxiliary process's main loop based on
 // the AuxiliaryProcessType argument. MyToyDB preserves this dispatch table.
-#include "mytoydb/server/auxprocess.hpp"
+#include "pgcpp/server/auxprocess.hpp"
 
 #include <string>
 #include <string_view>
 
-#include "mytoydb/server/autovacuum.hpp"
-#include "mytoydb/server/bgwriter.hpp"
-#include "mytoydb/server/checkpointer.hpp"
-#include "mytoydb/server/interrupt.hpp"
-#include "mytoydb/server/pgarch.hpp"
-#include "mytoydb/server/startup.hpp"
-#include "mytoydb/server/syslogger.hpp"
-#include "mytoydb/server/walwriter.hpp"
+#include "pgcpp/server/autovacuum.hpp"
+#include "pgcpp/server/bgwriter.hpp"
+#include "pgcpp/server/checkpointer.hpp"
+#include "pgcpp/server/interrupt.hpp"
+#include "pgcpp/server/pgarch.hpp"
+#include "pgcpp/server/startup.hpp"
+#include "pgcpp/server/syslogger.hpp"
+#include "pgcpp/server/walwriter.hpp"
 
 namespace mytoydb::server {
 

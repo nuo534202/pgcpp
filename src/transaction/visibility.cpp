@@ -12,10 +12,10 @@
 //   4. If t_xmax is visible (committed before snapshot), the tuple is
 //      invisible (it was deleted). Otherwise it's visible.
 //   5. Set hint flags to accelerate future checks.
-#include "mytoydb/transaction/visibility.hpp"
+#include "pgcpp/transaction/visibility.hpp"
 
-#include "mytoydb/transaction/transam.hpp"
-#include "mytoydb/transaction/xact.hpp"
+#include "pgcpp/transaction/transam.hpp"
+#include "pgcpp/transaction/xact.hpp"
 
 namespace mytoydb::transaction {
 

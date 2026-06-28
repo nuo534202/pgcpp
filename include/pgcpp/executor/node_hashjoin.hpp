@@ -1,8 +1,8 @@
 // node_hashjoin.h — Hash join node state.
 #pragma once
 
-#include "mytoydb/executor/node_exec.hpp"
-#include "mytoydb/executor/node_hash.hpp"
+#include "pgcpp/executor/node_exec.hpp"
+#include "pgcpp/executor/node_hash.hpp"
 
 namespace mytoydb::executor {
 

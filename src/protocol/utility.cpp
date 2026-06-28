@@ -8,26 +8,26 @@
 // explain, dbcommands, schemacmds, ...). Transaction control
 // (BEGIN/COMMIT/ROLLBACK) and GUC SET/RESET are handled inline since
 // they belong to the transaction and GUC modules respectively.
-#include "mytoydb/protocol/utility.hpp"
+#include "pgcpp/protocol/utility.hpp"
 
 #include <string>
 
-#include "mytoydb/commands/analyze.hpp"
-#include "mytoydb/commands/copy.hpp"
-#include "mytoydb/commands/dbcommands.hpp"
-#include "mytoydb/commands/explain.hpp"
-#include "mytoydb/commands/functioncmds.hpp"
-#include "mytoydb/commands/indexcmds.hpp"
-#include "mytoydb/commands/schemacmds.hpp"
-#include "mytoydb/commands/sequence.hpp"
-#include "mytoydb/commands/tablecmds.hpp"
-#include "mytoydb/commands/tablespace.hpp"
-#include "mytoydb/commands/trigger.hpp"
-#include "mytoydb/commands/vacuum.hpp"
-#include "mytoydb/commands/view.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/transaction/xact.hpp"
+#include "pgcpp/commands/analyze.hpp"
+#include "pgcpp/commands/copy.hpp"
+#include "pgcpp/commands/dbcommands.hpp"
+#include "pgcpp/commands/explain.hpp"
+#include "pgcpp/commands/functioncmds.hpp"
+#include "pgcpp/commands/indexcmds.hpp"
+#include "pgcpp/commands/schemacmds.hpp"
+#include "pgcpp/commands/sequence.hpp"
+#include "pgcpp/commands/tablecmds.hpp"
+#include "pgcpp/commands/tablespace.hpp"
+#include "pgcpp/commands/trigger.hpp"
+#include "pgcpp/commands/vacuum.hpp"
+#include "pgcpp/commands/view.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/transaction/xact.hpp"
 
 namespace mytoydb::protocol {
 

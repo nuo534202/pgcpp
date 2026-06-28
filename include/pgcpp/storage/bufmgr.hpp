@@ -16,11 +16,11 @@
 // Buffer handles are 1-based integers (Buffer = 1..N, 0 = InvalidBuffer).
 #pragma once
 
-#include "mytoydb/storage/block.hpp"
-#include "mytoydb/storage/buf_internals.hpp"
-#include "mytoydb/storage/bufpage.hpp"
-#include "mytoydb/storage/relfilenode.hpp"
-#include "mytoydb/storage/smgr.hpp"
+#include "pgcpp/storage/block.hpp"
+#include "pgcpp/storage/buf_internals.hpp"
+#include "pgcpp/storage/bufpage.hpp"
+#include "pgcpp/storage/relfilenode.hpp"
+#include "pgcpp/storage/smgr.hpp"
 
 namespace mytoydb::storage {
 

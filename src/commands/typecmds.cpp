@@ -2,11 +2,11 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/typecmds.c.
 // MyToyDB has no user-defined type system yet; this is a stub.
-#include "mytoydb/commands/typecmds.hpp"
+#include "pgcpp/commands/typecmds.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

@@ -4,14 +4,14 @@
 // MyToyDB doesn't execute triggers at runtime yet; this stub records
 // the trigger definition by setting relhastriggers on the target
 // relation's pg_class entry so \d and dump can report it.
-#include "mytoydb/commands/trigger.hpp"
+#include "pgcpp/commands/trigger.hpp"
 
 #include <string>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

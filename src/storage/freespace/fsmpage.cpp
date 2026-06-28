@@ -1,7 +1,7 @@
 // fsmpage.cpp — FSM leaf page (binary-tree-of-slots layout).
 //
 // Converted from PostgreSQL 15's src/backend/storage/freespace/fsmpage.c.
-#include "mytoydb/storage/freespace/fsmpage.hpp"
+#include "pgcpp/storage/freespace/fsmpage.hpp"
 
 #include <algorithm>
 

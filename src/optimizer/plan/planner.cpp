@@ -10,19 +10,20 @@
 // subquery_planner → grouping_planner → query_planner) exercised by the
 // new unit tests. The existing planner()/subplanner() entry points remain
 // unchanged for ClickBench compatibility.
-#include "mytoydb/optimizer/planner.hpp"
+#include "pgcpp/optimizer/planner.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/optimizer/plan/create_plan.hpp"
-#include "mytoydb/optimizer/plan/init_splan.hpp"
-#include "mytoydb/optimizer/plan/set_refs.hpp"
-#include "mytoydb/optimizer/util/pathnode.hpp"
-#include "mytoydb/optimizer/util/relnode.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/optimizer/geqo/geqo_main.hpp"
+#include "pgcpp/optimizer/plan/create_plan.hpp"
+#include "pgcpp/optimizer/plan/init_splan.hpp"
+#include "pgcpp/optimizer/plan/set_refs.hpp"
+#include "pgcpp/optimizer/util/pathnode.hpp"
+#include "pgcpp/optimizer/util/relnode.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;
@@ -125,12 +126,21 @@ static int FindFirstBaseRelIndex(Query* parse) {
 //
 // Builds a Path tree (SeqScanPath, optionally wrapped in AggPath and
 // SortPath), translates to a Plan tree, and finalizes references.
+//
+// Task 15.21: when the query joins >= kGeqoThreshold base relations, the
+// join order is found by the genetic algorithm (geqo::GeqoSolve) instead of
+// the exhaustive dynamic-programming search (which is not yet implemented
+// for >2-way joins). The GEQO solver returns the root Path of a left-deep
+// join tree covering all base rels; this Path is then wrapped with the
+// usual Agg/Sort layers by the remainder of query_planner.
 Plan* query_planner(PlannerInfo* root, Query* parse) {
     // 1. Initialize planner state (build RelOptInfos, distribute quals).
     query_planner_init(root, parse);
 
     // 2. Generate paths and select the cheapest for each base relation.
     //    For single-table queries, this creates a SeqScanPath per base rel.
+    //    GEQO's fitness function and path builder also rely on each base
+    //    rel having a cheapest_path set.
     for (RelOptInfo* rel : root->simple_rel_array) {
         if (rel == nullptr)
             continue;
@@ -149,6 +159,17 @@ Plan* query_planner(PlannerInfo* root, Query* parse) {
         // No FROM clause: use a ResultPath (one-time evaluation).
         RelOptInfo dummy_rel;  // stack-resident placeholder (no catalog data)
         best_path = create_result_path(root, &dummy_rel, {});
+    } else if (geqo::ShouldUseGeqo(root)) {
+        // Multi-table join with >= kGeqoThreshold base rels: route through
+        // the genetic algorithm to find a good left-deep join order.
+        best_path = geqo::GeqoSolve(root);
+        if (best_path == nullptr) {
+            // GEQO failed (e.g., a base rel has no cheapest_path); fall back
+            // to the single-table path so the planner still returns a plan.
+            RelOptInfo* rel = find_base_rel(root, base_rel);
+            if (rel != nullptr)
+                best_path = cheapest_path(rel);
+        }
     } else {
         RelOptInfo* rel = find_base_rel(root, base_rel);
         if (rel == nullptr)

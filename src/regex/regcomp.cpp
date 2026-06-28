@@ -11,14 +11,14 @@
 //   REG_EXTENDED-> treated as the default (ECMAScript syntax is used, which is a
 //                  superset of ERE for the constructs MyToyDB exercises)
 
-#include "mytoydb/regex/regcomp.hpp"
+#include "pgcpp/regex/regcomp.hpp"
 
 #include <regex>
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::regex {
 

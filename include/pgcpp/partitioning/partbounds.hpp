@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::partitioning {
 

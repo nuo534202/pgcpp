@@ -7,14 +7,14 @@
 // MyToyDB only implements the B-tree AM (kBTreeAmOid = 403); other AM OIDs
 // return nullptr from LookupAmRoutine and the generic entry points ereport.
 
-#include "mytoydb/access/indexam.hpp"
+#include "pgcpp/access/indexam.hpp"
 
 #include <string>
 
-#include "mytoydb/access/nbtree.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/storage/bufmgr.hpp"
+#include "pgcpp/access/nbtree.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/storage/bufmgr.hpp"
 
 namespace mytoydb::access {
 using mytoydb::catalog::kInvalidOid;

@@ -6,7 +6,7 @@
 // on a tuple (e.g., SELECT ... FOR SHARE creates a multixact). In PostgreSQL
 // members are stored in pg_multixact/members and offsets in pg_multixact/offsets.
 // MyToyDB keeps an in-memory vector of member-lists indexed by MultiXactId.
-#include "mytoydb/transaction/multixact.hpp"
+#include "pgcpp/transaction/multixact.hpp"
 
 #include <vector>
 

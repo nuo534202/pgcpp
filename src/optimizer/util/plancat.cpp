@@ -5,11 +5,11 @@
 // Reads pg_class (relpages, reltuples) and pg_attribute (column count/width)
 // to populate a RelOptInfo's size estimates. When the catalog has no data
 // (e.g., synthetic OIDs in unit tests), conservative defaults are used.
-#include "mytoydb/optimizer/util/plancat.hpp"
+#include "pgcpp/optimizer/util/plancat.hpp"
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::catalog::Catalog;

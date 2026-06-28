@@ -7,8 +7,8 @@
 #include <cstring>
 #include <string>
 
-#include "mytoydb/server/guc.hpp"
-#include "mytoydb/server/main.hpp"
+#include "pgcpp/server/guc.hpp"
+#include "pgcpp/server/main.hpp"
 
 namespace mytoydb::server {
 

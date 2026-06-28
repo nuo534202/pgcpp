@@ -10,12 +10,12 @@
 // In PostgreSQL, ProcArray is a shared-memory array of PGPROC entries, one
 // per backend process. MyToyDB is single-process, so we keep an in-memory
 // vector of XIDs that grows/shrinks as transactions start/commit.
-#include "mytoydb/transaction/procarray.hpp"
+#include "pgcpp/transaction/procarray.hpp"
 
 #include <algorithm>
 #include <vector>
 
-#include "mytoydb/transaction/transam.hpp"
+#include "pgcpp/transaction/transam.hpp"
 
 namespace mytoydb::transaction {
 

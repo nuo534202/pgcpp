@@ -5,14 +5,14 @@
 // Parses command-line arguments and dispatches to the postmaster or
 // bootstrap mode. The argument parsing logic is in options.cpp (linked
 // into mytoydb_core) so it can be tested independently.
-#include "mytoydb/server/main.hpp"
+#include "pgcpp/server/main.hpp"
 
 #include <cstdio>
 #include <string>
 
-#include "mytoydb/server/bootstrap.hpp"
-#include "mytoydb/server/guc.hpp"
-#include "mytoydb/server/postmaster.hpp"
+#include "pgcpp/server/bootstrap.hpp"
+#include "pgcpp/server/guc.hpp"
+#include "pgcpp/server/postmaster.hpp"
 
 namespace mytoydb::server {
 

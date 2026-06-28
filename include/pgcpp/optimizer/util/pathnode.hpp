@@ -10,11 +10,11 @@
 
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::optimizer {
 

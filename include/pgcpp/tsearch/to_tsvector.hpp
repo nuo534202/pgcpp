@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/types/ts_types.hpp"
+#include "pgcpp/types/ts_types.hpp"
 
 namespace mytoydb::tsearch {
 

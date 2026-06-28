@@ -17,14 +17,14 @@
 #include <cstdint>
 #include <vector>
 
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/executor/tupletable.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/transaction/snapshot.hpp"
-#include "mytoydb/transaction/xact.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/executor/tupletable.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/transaction/snapshot.hpp"
+#include "pgcpp/transaction/xact.hpp"
 
 namespace mytoydb::executor {
 

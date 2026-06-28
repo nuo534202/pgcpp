@@ -2,11 +2,11 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/tablespace.c.
 // MyToyDB uses a single storage directory; this is a stub.
-#include "mytoydb/commands/tablespace.hpp"
+#include "pgcpp/commands/tablespace.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

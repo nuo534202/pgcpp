@@ -2,11 +2,11 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/opclasscmds.c.
 // MyToyDB has a fixed B-tree operator class; this is a stub.
-#include "mytoydb/commands/opclasscmds.hpp"
+#include "pgcpp/commands/opclasscmds.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

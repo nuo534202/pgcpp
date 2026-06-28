@@ -6,7 +6,7 @@
 // DelMember so that Equals/IsEmpty can be implemented by simple vector
 // comparison.
 
-#include "mytoydb/common/containers/bitmapset.hpp"
+#include "pgcpp/common/containers/bitmapset.hpp"
 
 #include <algorithm>
 #include <cstdio>

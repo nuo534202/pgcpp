@@ -14,12 +14,12 @@
 //     (the parser would normally resolve names to attnums via the relation's
 //     attribute list).
 
-#include "mytoydb/statistics/extended_stats.hpp"
+#include "pgcpp/statistics/extended_stats.hpp"
 
 #include <map>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
+#include "pgcpp/common/error/elog.hpp"
 
 namespace mytoydb::statistics {
 

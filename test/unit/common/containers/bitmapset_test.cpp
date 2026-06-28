@@ -1,12 +1,12 @@
-#include "mytoydb/common/containers/bitmapset.hpp"
+#include "pgcpp/common/containers/bitmapset.hpp"
 
 #include <gtest/gtest.h>
 
 #include <memory>
 #include <string>
 
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace {
 

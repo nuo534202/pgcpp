@@ -11,9 +11,9 @@
 // produce cooked expression trees that the executor can apply directly.
 #pragma once
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/parser/parse_node.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/parser/parse_node.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::parser {
 

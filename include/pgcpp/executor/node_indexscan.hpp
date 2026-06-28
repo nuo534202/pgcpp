@@ -1,9 +1,9 @@
 // node_indexscan.h — Index scan node state.
 #pragma once
 
-#include "mytoydb/access/nbtree.hpp"
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/executor/node_exec.hpp"
+#include "pgcpp/access/nbtree.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/executor/node_exec.hpp"
 
 namespace mytoydb::executor {
 

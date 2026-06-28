@@ -13,10 +13,10 @@
 // the next result tuple (as a TupleTableSlot*) or NULL when exhausted.
 #pragma once
 
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/exec_expr.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/executor/tupletable.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/exec_expr.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/executor/tupletable.hpp"
 
 namespace mytoydb::executor {
 

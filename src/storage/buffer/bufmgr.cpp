@@ -19,13 +19,13 @@
 // plain fields and no locking. The refcount still matters (a pinned
 // buffer cannot be evicted).
 
-#include "mytoydb/storage/bufmgr.hpp"
+#include "pgcpp/storage/bufmgr.hpp"
 
 #include <cstring>
 #include <new>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::storage {
 

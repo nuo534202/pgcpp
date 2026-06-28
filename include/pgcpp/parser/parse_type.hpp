@@ -6,8 +6,8 @@
 #include <cstdint>
 #include <string>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_type.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_type.hpp"
 
 namespace mytoydb::parser {
 

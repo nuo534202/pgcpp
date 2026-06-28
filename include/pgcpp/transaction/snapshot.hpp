@@ -29,8 +29,8 @@
 #include <cstdint>
 #include <vector>
 
-#include "mytoydb/transaction/transam.hpp"
-#include "mytoydb/transaction/xact.hpp"
+#include "pgcpp/transaction/transam.hpp"
+#include "pgcpp/transaction/xact.hpp"
 
 namespace mytoydb::transaction {
 

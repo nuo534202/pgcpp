@@ -5,11 +5,11 @@
 // traversal short-circuits. Children are then recursed in declaration
 // order for the supported container node types.
 
-#include "mytoydb/common/containers/node_funcs.hpp"
+#include "pgcpp/common/containers/node_funcs.hpp"
 
 #include <utility>
 
-#include "mytoydb/types/datum.hpp"  // kBoolOid, kInvalidOid
+#include "pgcpp/types/datum.hpp"  // kBoolOid, kInvalidOid
 
 namespace mytoydb::nodes {
 

@@ -7,12 +7,12 @@
 // start_lsn is nullptr): it reads kSizeofXlogRecord bytes for the header via
 // XLogReadRaw, then reads xl_tot_len - kSizeofXlogRecord bytes for the
 // payload. Returns false at end-of-WAL.
-#include "mytoydb/transaction/xlogreader.hpp"
+#include "pgcpp/transaction/xlogreader.hpp"
 
 #include <cstddef>
 #include <vector>
 
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::transaction {
 

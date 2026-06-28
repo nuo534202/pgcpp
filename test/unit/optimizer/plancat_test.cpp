@@ -4,19 +4,19 @@
 // statistics (pages, tuples, width) are correctly populated from pg_class
 // and pg_attribute, with conservative defaults when the catalog has no data.
 
-#include "mytoydb/optimizer/util/plancat.hpp"
+#include "pgcpp/optimizer/util/plancat.hpp"
 
 #include <gtest/gtest.h>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 using mytoydb::catalog::Oid;
 using mytoydb::nodes::makePallocNode;

@@ -16,9 +16,9 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"         // Oid
-#include "mytoydb/common/containers/node.hpp"  // makePallocNode
-#include "mytoydb/parser/primnodes.hpp"        // Var/Const/OpExpr/...
+#include "pgcpp/catalog/catalog.hpp"         // Oid
+#include "pgcpp/common/containers/node.hpp"  // makePallocNode
+#include "pgcpp/parser/primnodes.hpp"        // Var/Const/OpExpr/...
 
 namespace mytoydb::nodes {
 

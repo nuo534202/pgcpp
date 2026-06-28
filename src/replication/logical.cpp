@@ -2,14 +2,14 @@
 //
 // Converted from PostgreSQL 15's src/backend/replication/logical/ logical.c.
 // The actual decoding loop is stubbed.
-#include "mytoydb/replication/logical.hpp"
+#include "pgcpp/replication/logical.hpp"
 
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/replication/replutil.hpp"
-#include "mytoydb/replication/slot.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/replication/replutil.hpp"
+#include "pgcpp/replication/slot.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

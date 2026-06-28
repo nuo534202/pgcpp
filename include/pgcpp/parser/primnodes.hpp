@@ -11,11 +11,11 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/parser/parsenodes.hpp"  // CoercionForm, JoinType, CmdType
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/parser/parsenodes.hpp"  // CoercionForm, JoinType, CmdType
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::parser {
 

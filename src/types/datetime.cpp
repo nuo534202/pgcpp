@@ -4,7 +4,7 @@
 // Timestamps are int64 microseconds since 2000-01-01 UTC (PostgreSQL convention).
 // Dates are int32 days since 2000-01-01.
 
-#include "mytoydb/types/datetime.hpp"
+#include "pgcpp/types/datetime.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -16,8 +16,8 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

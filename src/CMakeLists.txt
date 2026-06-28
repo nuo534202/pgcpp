@@ -163,6 +163,21 @@ set(MYTOYDB_CORE_SOURCES
     optimizer/path/pathkeys.cpp
     optimizer/path/joinpath.cpp
     optimizer/path/joinrels.cpp
+    optimizer/geqo/geqo_main.cpp
+    optimizer/geqo/geqo_random.cpp
+    optimizer/geqo/geqo_params.cpp
+    optimizer/geqo/geqo_recombination.cpp
+    optimizer/geqo/geqo_copy.cpp
+    optimizer/geqo/geqo_mutation.cpp
+    optimizer/geqo/geqo_cx.cpp
+    optimizer/geqo/geqo_erx.cpp
+    optimizer/geqo/geqo_pmx.cpp
+    optimizer/geqo/geqo_ox1.cpp
+    optimizer/geqo/geqo_ox2.cpp
+    optimizer/geqo/geqo_px.cpp
+    optimizer/geqo/geqo_eval.cpp
+    optimizer/geqo/geqo_io.cpp
+    optimizer/geqo/geqo_misc.cpp
     optimizer/cost/costsize.cpp
     optimizer/util/pathnode.cpp
     optimizer/util/relnode.cpp

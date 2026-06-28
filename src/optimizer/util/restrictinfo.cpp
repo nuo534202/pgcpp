@@ -5,10 +5,10 @@
 // Wraps qual clauses (WHERE conditions) in RestrictInfo structs carrying
 // optimizer metadata. For MyToyDB's single-table workload, the metadata is
 // minimal: the wrapped clause and the relations it references.
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

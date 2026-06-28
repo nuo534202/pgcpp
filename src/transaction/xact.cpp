@@ -15,15 +15,15 @@
 //   - No resource owners (memory contexts handle cleanup)
 //   - No GUC nesting
 //   - No prepared transactions (2PC)
-#include "mytoydb/transaction/xact.hpp"
+#include "pgcpp/transaction/xact.hpp"
 
 #include <cstdio>
 #include <list>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/transaction/snapshot.hpp"
-#include "mytoydb/transaction/transam.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/transaction/snapshot.hpp"
+#include "pgcpp/transaction/transam.hpp"
 
 namespace mytoydb::transaction {
 

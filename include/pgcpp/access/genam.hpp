@@ -12,9 +12,9 @@
 
 #include <cstdint>
 
-#include "mytoydb/access/nbtpage.hpp"  // BTKeyKind
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/access/nbtpage.hpp"  // BTKeyKind
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::access {
 

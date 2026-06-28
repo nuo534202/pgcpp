@@ -8,7 +8,7 @@
 
 #include <cstdint>
 
-#include "mytoydb/catalog/catalog.hpp"  // Oid
+#include "pgcpp/catalog/catalog.hpp"  // Oid
 
 namespace mytoydb::storage {
 

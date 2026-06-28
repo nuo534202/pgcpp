@@ -13,10 +13,10 @@
 
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 

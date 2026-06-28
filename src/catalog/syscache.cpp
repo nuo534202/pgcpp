@@ -4,19 +4,19 @@
 // hash table is replaced with std::unordered_map; the public API
 // (SearchSysCache / ReleaseSysCache) is preserved.
 
-#include "mytoydb/catalog/syscache.hpp"
+#include "pgcpp/catalog/syscache.hpp"
 
 #include <functional>
 #include <utility>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/catalog/pg_cast.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/catalog/pg_operator.hpp"
-#include "mytoydb/catalog/pg_proc.hpp"
-#include "mytoydb/catalog/pg_type.hpp"
-#include "mytoydb/common/error/elog.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/catalog/pg_cast.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/catalog/pg_operator.hpp"
+#include "pgcpp/catalog/pg_proc.hpp"
+#include "pgcpp/catalog/pg_type.hpp"
+#include "pgcpp/common/error/elog.hpp"
 
 namespace mytoydb::catalog {
 

@@ -11,7 +11,7 @@
 // Also re-exports the PG-compatible constants and types from regex_internal.hpp.
 //
 // Usage:
-//   #include "mytoydb/regex/regex.hpp"
+//   #include "pgcpp/regex/regex.hpp"
 //   using namespace mytoydb::regex;  // or explicit mytoydb::regex::pg_regcomp
 //   regex_t* re = pg_regcomp("^abc", REG_EXTENDED);
 //   regmatch_t m[2];
@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "mytoydb/regex/regcomp.hpp"
-#include "mytoydb/regex/regerror.hpp"
-#include "mytoydb/regex/regex_internal.hpp"
-#include "mytoydb/regex/regexec.hpp"
-#include "mytoydb/regex/regexport.hpp"
-#include "mytoydb/regex/regfree.hpp"
-#include "mytoydb/regex/regprefix.hpp"
+#include "pgcpp/regex/regcomp.hpp"
+#include "pgcpp/regex/regerror.hpp"
+#include "pgcpp/regex/regex_internal.hpp"
+#include "pgcpp/regex/regexec.hpp"
+#include "pgcpp/regex/regexport.hpp"
+#include "pgcpp/regex/regfree.hpp"
+#include "pgcpp/regex/regprefix.hpp"

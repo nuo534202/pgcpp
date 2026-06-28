@@ -4,10 +4,10 @@
 // (the message-handling subset). Network I/O is stubbed; each call
 // records the LSN it "would have sent" on the targeted WalSnd and
 // returns a small struct describing what was sent.
-#include "mytoydb/replication/walsenderfuncs.hpp"
+#include "pgcpp/replication/walsenderfuncs.hpp"
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

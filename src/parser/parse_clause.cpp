@@ -3,18 +3,18 @@
 // Converted from PostgreSQL 15's src/backend/parser/parse_clause.c.
 // Transforms FROM clauses (including JOINs and subqueries), WHERE clauses,
 // and LIMIT/OFFSET clauses.
-#include "mytoydb/parser/parse_clause.hpp"
+#include "pgcpp/parser/parse_clause.hpp"
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/parser/analyze.hpp"
-#include "mytoydb/parser/parse_coerce.hpp"
-#include "mytoydb/parser/parse_expr.hpp"
-#include "mytoydb/parser/parse_relation.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/parser/analyze.hpp"
+#include "pgcpp/parser/parse_coerce.hpp"
+#include "pgcpp/parser/parse_expr.hpp"
+#include "pgcpp/parser/parse_relation.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::parser {
 

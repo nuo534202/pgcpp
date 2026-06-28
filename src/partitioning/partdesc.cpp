@@ -10,11 +10,11 @@
 // pointers returned to callers remain stable across map mutations
 // (std::map is node-based).
 
-#include "mytoydb/partitioning/partdesc.hpp"
+#include "pgcpp/partitioning/partdesc.hpp"
 
 #include <utility>
 
-#include "mytoydb/common/error/elog.hpp"
+#include "pgcpp/common/error/elog.hpp"
 
 namespace mytoydb::partitioning {
 

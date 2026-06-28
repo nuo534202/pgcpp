@@ -1,4 +1,4 @@
-# MyToyDB
+# pgcpp
 
 A C++20 reimplementation of the PostgreSQL — a readable path into database internals. It keeps PostgreSQL's original architecture intact and moves the code to modern C++. The goal isn't to replace PostgreSQL but to make its internals approachable — every module is ported from the C source behind a unit-test gate, and a ClickBench suite checks the whole system against stock PostgreSQL.
 

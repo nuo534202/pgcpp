@@ -11,17 +11,17 @@
 //   - StatisticsProvider registry: register, lookup, unknown returns null.
 //   - EstimateNDistinct single-column estimator.
 
-#include "mytoydb/statistics/statistics.hpp"
+#include "pgcpp/statistics/statistics.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/types/datum.hpp"
 
 using mytoydb::error::ErrorData;
 using mytoydb::error::LogLevel;

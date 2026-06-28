@@ -3,7 +3,7 @@
 // Mirrors PostgreSQL's utils/adt/rangetypes.c with a simplified RangeDatum
 // struct that supports int4/int8/numeric/timestamp element types.
 
-#include "mytoydb/types/range.hpp"
+#include "pgcpp/types/range.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -11,11 +11,11 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/types/builtins.hpp"
-#include "mytoydb/types/datetime.hpp"
-#include "mytoydb/types/numeric.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/types/builtins.hpp"
+#include "pgcpp/types/datetime.hpp"
+#include "pgcpp/types/numeric.hpp"
 
 namespace mytoydb::types {
 

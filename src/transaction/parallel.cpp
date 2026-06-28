@@ -7,7 +7,7 @@
 // and cooperate on query execution. MyToyDB is single-process and does not
 // implement parallel workers, but we provide the API surface so that
 // higher-level modules (executor, planner) can compile against it.
-#include "mytoydb/transaction/parallel.hpp"
+#include "pgcpp/transaction/parallel.hpp"
 
 namespace mytoydb::transaction {
 

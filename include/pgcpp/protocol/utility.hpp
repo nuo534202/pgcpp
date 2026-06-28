@@ -13,9 +13,9 @@
 
 #include <string>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/protocol/pqformat.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/protocol/pqformat.hpp"
 
 namespace mytoydb::protocol {
 

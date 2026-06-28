@@ -12,7 +12,7 @@
 #include <cstring>
 #include <string>
 
-#include "mytoydb/server/bootstrap.hpp"
+#include "pgcpp/server/bootstrap.hpp"
 
 using mytoydb::server::BootstrapCluster;
 using mytoydb::server::BootstrapResult;

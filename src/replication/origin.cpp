@@ -4,13 +4,13 @@
 // PG stores origins in pg_replication_origin catalog; MyToyDB keeps an
 // in-process std::map<uint16, CommitOrigin> and tracks the current
 // session's origin id and LSN.
-#include "mytoydb/replication/origin.hpp"
+#include "pgcpp/replication/origin.hpp"
 
 #include <map>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

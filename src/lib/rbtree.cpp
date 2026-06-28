@@ -5,7 +5,7 @@
 // This translation unit pulls in the header so the compiler validates the
 // template definition's syntax as part of mytoydb_core.
 
-#include "mytoydb/lib/rbtree.hpp"
+#include "pgcpp/lib/rbtree.hpp"
 
 namespace mytoydb::lib {
 

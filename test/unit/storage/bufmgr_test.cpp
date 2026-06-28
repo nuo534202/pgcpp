@@ -4,7 +4,7 @@
 // eviction (clock sweep), and dirty page writeback. Uses a small buffer
 // pool to force eviction scenarios.
 
-#include "mytoydb/storage/bufmgr.hpp"
+#include "pgcpp/storage/bufmgr.hpp"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -13,12 +13,12 @@
 #include <cstring>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/storage/buf_internals.hpp"
-#include "mytoydb/storage/bufpage.hpp"
-#include "mytoydb/storage/smgr.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/storage/buf_internals.hpp"
+#include "pgcpp/storage/bufpage.hpp"
+#include "pgcpp/storage/smgr.hpp"
 
 using mytoydb::memory::AllocSetContext;
 using mytoydb::storage::BlockNumber;

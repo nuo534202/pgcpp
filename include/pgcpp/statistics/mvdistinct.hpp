@@ -18,7 +18,7 @@
 #include <string_view>
 #include <vector>
 
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::statistics {
 

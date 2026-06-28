@@ -1,13 +1,13 @@
-#include "mytoydb/common/containers/string_info.hpp"
+#include "pgcpp/common/containers/string_info.hpp"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <string>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace {
 

@@ -6,14 +6,14 @@
 // postmaster after a crash. It reads the WAL from the start (or from the
 // last checkpoint) and replays all records to restore the database to
 // a consistent state. MyToyDB wraps PerformCrashRecovery (xlogrecovery.h).
-#include "mytoydb/server/startup.hpp"
+#include "pgcpp/server/startup.hpp"
 
 #include <chrono>
 #include <cstdint>
 
-#include "mytoydb/server/interrupt.hpp"
-#include "mytoydb/transaction/xlog.hpp"
-#include "mytoydb/transaction/xlogrecovery.hpp"
+#include "pgcpp/server/interrupt.hpp"
+#include "pgcpp/transaction/xlog.hpp"
+#include "pgcpp/transaction/xlogrecovery.hpp"
 
 namespace mytoydb::server {
 

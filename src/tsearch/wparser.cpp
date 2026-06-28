@@ -4,7 +4,7 @@
 // treated as separators. Tokens are lowercased so that downstream
 // dictionaries see canonical input.
 
-#include "mytoydb/tsearch/wparser.hpp"
+#include "pgcpp/tsearch/wparser.hpp"
 
 #include <cctype>
 

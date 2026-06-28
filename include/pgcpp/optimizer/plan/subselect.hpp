@@ -18,8 +18,8 @@
 //   - EXISTS-sublinks are left as-is (skeleton).
 #pragma once
 
-#include "mytoydb/optimizer/path.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/optimizer/path.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 

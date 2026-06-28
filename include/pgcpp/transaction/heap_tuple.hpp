@@ -22,9 +22,9 @@
 
 #include <cstdint>
 
-#include "mytoydb/storage/block.hpp"        // BlockNumber
-#include "mytoydb/storage/bufpage.hpp"      // OffsetNumber, TransactionId
-#include "mytoydb/transaction/transam.hpp"  // TransactionId, MultiXactId
+#include "pgcpp/storage/block.hpp"        // BlockNumber
+#include "pgcpp/storage/bufpage.hpp"      // OffsetNumber, TransactionId
+#include "pgcpp/transaction/transam.hpp"  // TransactionId, MultiXactId
 
 namespace mytoydb::transaction {
 

@@ -30,8 +30,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/protocol/pqformat.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/protocol/pqformat.hpp"
 
 namespace mytoydb::parser {
 class Query;

@@ -9,7 +9,7 @@
 // REG_NEWLINE (set at compile time) is best-effort: std::regex has no exact
 // POSIX-newline mode, so the flag is recorded but not re-applied here.
 
-#include "mytoydb/regex/regexec.hpp"
+#include "pgcpp/regex/regexec.hpp"
 
 #include <regex>
 #include <string>

@@ -2,7 +2,7 @@
 //
 // Mirrors PostgreSQL's utils/adt/acl.c with a simplified in-memory AclData.
 
-#include "mytoydb/types/acl.hpp"
+#include "pgcpp/types/acl.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -12,8 +12,8 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

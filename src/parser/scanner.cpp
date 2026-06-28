@@ -9,8 +9,8 @@
 #include <string>
 
 #include "gram.tab.hpp"
-#include "mytoydb/parser/keywords.hpp"
-#include "mytoydb/parser/parser_driver.hpp"
+#include "pgcpp/parser/keywords.hpp"
+#include "pgcpp/parser/parser_driver.hpp"
 
 namespace mytoydb_parser {
 

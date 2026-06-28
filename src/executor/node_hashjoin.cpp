@@ -12,20 +12,20 @@
 //
 // Supports INNER and LEFT joins. For LEFT joins, unmatched outer tuples
 // produce a NULL-padded output row.
-#include "mytoydb/executor/node_hashjoin.hpp"
+#include "pgcpp/executor/node_hashjoin.hpp"
 
 #include <new>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/exec_expr.hpp"
-#include "mytoydb/executor/exec_utils.hpp"
-#include "mytoydb/executor/node_hash.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/executor/tupletable.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/exec_expr.hpp"
+#include "pgcpp/executor/exec_utils.hpp"
+#include "pgcpp/executor/node_hash.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/executor/tupletable.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::executor {
 

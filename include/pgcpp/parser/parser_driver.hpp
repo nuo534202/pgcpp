@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::parser {
 

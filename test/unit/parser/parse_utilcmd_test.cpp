@@ -8,29 +8,29 @@
 // column types are validated, column defaults and CHECK constraints are
 // cooked, and duplicate column/constraint names are rejected at parse time.
 
-#include "mytoydb/parser/parse_utilcmd.hpp"
+#include "pgcpp/parser/parse_utilcmd.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/bootstrap_catalog.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/catalog/syscache.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/parser/analyze.hpp"
-#include "mytoydb/parser/parse_node.hpp"
-#include "mytoydb/parser/parse_type.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
-#include "mytoydb/parser/parser.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/catalog/bootstrap_catalog.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/catalog/syscache.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/parser/analyze.hpp"
+#include "pgcpp/parser/parse_node.hpp"
+#include "pgcpp/parser/parse_type.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
+#include "pgcpp/parser/parser.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 using mytoydb::catalog::BootstrapCatalog;
 using mytoydb::catalog::Catalog;

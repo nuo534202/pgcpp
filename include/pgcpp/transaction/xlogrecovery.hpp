@@ -14,9 +14,9 @@
 #include <cstdint>
 #include <functional>
 
-#include "mytoydb/transaction/transam.hpp"
-#include "mytoydb/transaction/xlog.hpp"
-#include "mytoydb/transaction/xlogreader.hpp"
+#include "pgcpp/transaction/transam.hpp"
+#include "pgcpp/transaction/xlog.hpp"
+#include "pgcpp/transaction/xlogreader.hpp"
 
 namespace mytoydb::transaction {
 

@@ -6,14 +6,14 @@
 // For scan paths, builds the target list and extracts scan clauses from the
 // RelOptInfo's baserestrictinfo. For upper nodes (Agg/Sort), recursively
 // translates the subpath. Join paths are skeleton implementations.
-#include "mytoydb/optimizer/plan/create_plan.hpp"
+#include "pgcpp/optimizer/plan/create_plan.hpp"
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/util/pathnode.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/util/pathnode.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::catalog::GetCatalog;

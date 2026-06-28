@@ -1,7 +1,7 @@
 // deadlock.cpp — Deadlock detection via wait-for graph cycle search.
 //
 // Converted from PostgreSQL 15's src/backend/storage/lmgr/deadlock.c.
-#include "mytoydb/storage/ipc/deadlock.hpp"
+#include "pgcpp/storage/ipc/deadlock.hpp"
 
 #include <algorithm>
 #include <map>

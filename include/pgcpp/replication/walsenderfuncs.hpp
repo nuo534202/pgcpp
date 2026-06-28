@@ -13,8 +13,8 @@
 
 #include <cstdint>
 
-#include "mytoydb/replication/walsender.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/replication/walsender.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

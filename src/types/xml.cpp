@@ -1,6 +1,6 @@
 // xml.cpp — XML type implementation (PostgreSQL utils/adt/xml.c).
 
-#include "mytoydb/types/xml.hpp"
+#include "pgcpp/types/xml.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -9,9 +9,9 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/types/builtins.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/types/builtins.hpp"
 
 namespace mytoydb::types {
 

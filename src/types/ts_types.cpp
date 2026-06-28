@@ -1,6 +1,6 @@
 // ts_types.cpp — tsvector/tsquery implementations.
 
-#include "mytoydb/types/ts_types.hpp"
+#include "pgcpp/types/ts_types.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -12,8 +12,8 @@
 #include <string>
 #include <string_view>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

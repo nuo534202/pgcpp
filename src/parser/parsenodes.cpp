@@ -4,13 +4,13 @@
 // for the node allocation (matching the memory-context model) and deep-copies
 // all Node* and std::vector<Node*> fields. Each Equals() compares all fields.
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 #include <new>
 #include <utility>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::parser {
 using mytoydb::nodes::makePallocNode;

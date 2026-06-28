@@ -3,7 +3,7 @@
 // SimpleDict performs a small set of English suffix-stripping rules.
 // StopWordsDict returns is_stop=true for common English function words.
 
-#include "mytoydb/tsearch/dict.hpp"
+#include "pgcpp/tsearch/dict.hpp"
 
 #include <array>
 #include <cctype>

@@ -11,14 +11,14 @@
 // BgWriterFlushBuffers (with a large max to drain everything), then
 // calls XLogFlush to push WAL up to the current insert LSN. The new
 // checkpoint LSN is recorded for crash-recovery restart.
-#include "mytoydb/server/checkpointer.hpp"
+#include "pgcpp/server/checkpointer.hpp"
 
 #include <chrono>
 #include <cstdint>
 
-#include "mytoydb/server/bgwriter.hpp"
-#include "mytoydb/server/interrupt.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/server/bgwriter.hpp"
+#include "pgcpp/server/interrupt.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::server {
 

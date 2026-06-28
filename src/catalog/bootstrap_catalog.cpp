@@ -5,20 +5,20 @@
 // palloc-allocated and placement-constructed, then handed to the Catalog,
 // preserving PostgreSQL's "rows live in a long-lived memory context" model.
 
-#include "mytoydb/catalog/bootstrap_catalog.hpp"
+#include "pgcpp/catalog/bootstrap_catalog.hpp"
 
 #include <new>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_aggregate.hpp"
-#include "mytoydb/catalog/pg_cast.hpp"
-#include "mytoydb/catalog/pg_collation.hpp"
-#include "mytoydb/catalog/pg_operator.hpp"
-#include "mytoydb/catalog/pg_proc.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_aggregate.hpp"
+#include "pgcpp/catalog/pg_cast.hpp"
+#include "pgcpp/catalog/pg_collation.hpp"
+#include "pgcpp/catalog/pg_operator.hpp"
+#include "pgcpp/catalog/pg_proc.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::catalog {
 using mytoydb::nodes::makePallocNode;

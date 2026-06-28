@@ -19,8 +19,8 @@
 #include <sstream>
 #include <string>
 
-#include "mytoydb/tools/psql_client.hpp"
-#include "mytoydb/tools/psql_command.hpp"
+#include "pgcpp/tools/psql_client.hpp"
+#include "pgcpp/tools/psql_command.hpp"
 
 using mytoydb::tools::ExecuteMetaCommand;
 using mytoydb::tools::FormatQueryResult;

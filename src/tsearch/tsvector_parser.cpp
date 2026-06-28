@@ -8,11 +8,11 @@
 //   pos_entry   := digit+ weight?
 //   weight      := 'A' | 'B' | 'C' | 'D'
 
-#include "mytoydb/tsearch/tsvector_parser.hpp"
+#include "pgcpp/tsearch/tsvector_parser.hpp"
 
 #include <cctype>
 
-#include "mytoydb/common/error/elog.hpp"
+#include "pgcpp/common/error/elog.hpp"
 
 namespace mytoydb::tsearch {
 

@@ -8,14 +8,14 @@
 // multiple CteScanStates referencing the same CTE — each CteScan
 // independently materializes its copy. A future optimization could
 // share the cache via a CTE state map on the EState.
-#include "mytoydb/executor/node_ctescan.hpp"
+#include "pgcpp/executor/node_ctescan.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/exec_expr.hpp"
-#include "mytoydb/executor/exec_utils.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/executor/tupletable.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/exec_expr.hpp"
+#include "pgcpp/executor/exec_utils.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/executor/tupletable.hpp"
 
 namespace mytoydb::executor {
 

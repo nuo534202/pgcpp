@@ -3,11 +3,11 @@
 // Converted from PostgreSQL 15's src/backend/commands/analyze.c.
 // Updates pg_statistic for the planner. Currently a no-op stub since
 // MyToyDB's planner uses fixed cardinality estimates.
-#include "mytoydb/commands/analyze.hpp"
+#include "pgcpp/commands/analyze.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

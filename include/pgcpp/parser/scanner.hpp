@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/parser/keywords.hpp"
+#include "pgcpp/parser/keywords.hpp"
 
 namespace mytoydb::parser {
 

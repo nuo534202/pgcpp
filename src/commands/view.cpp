@@ -5,16 +5,16 @@
 // materializing data. MyToyDB stores the SELECT query text on the
 // view's pg_class entry so it can be retrieved for SELECT expansion
 // (parser substitution rule).
-#include "mytoydb/commands/view.hpp"
+#include "pgcpp/commands/view.hpp"
 
 #include <string>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

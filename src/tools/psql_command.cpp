@@ -11,7 +11,7 @@
 //
 // The function returns kQuit only for \q/\quit so the interactive loop can
 // exit cleanly. For all other commands it returns kContinue.
-#include "mytoydb/tools/psql_command.hpp"
+#include "pgcpp/tools/psql_command.hpp"
 
 #include <cctype>
 #include <fstream>
@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/tools/psql_client.hpp"
-#include "mytoydb/tools/psql_describe.hpp"
+#include "pgcpp/tools/psql_client.hpp"
+#include "pgcpp/tools/psql_describe.hpp"
 
 namespace mytoydb::tools {
 

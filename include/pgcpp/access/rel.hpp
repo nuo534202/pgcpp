@@ -18,12 +18,12 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/storage/relfilenode.hpp"
-#include "mytoydb/storage/smgr.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/storage/relfilenode.hpp"
+#include "pgcpp/storage/smgr.hpp"
 
 namespace mytoydb::access {
 

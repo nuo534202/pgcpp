@@ -14,10 +14,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/executor/tupletable.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/executor/tupletable.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::executor {
 

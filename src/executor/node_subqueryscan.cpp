@@ -3,14 +3,14 @@
 // Wraps a subquery's plan (stored as lefttree) and projects its
 // output through the parent query's target list. The child plan
 // is the subquery's plan, already initialized by ExecInitNode.
-#include "mytoydb/executor/node_subqueryscan.hpp"
+#include "pgcpp/executor/node_subqueryscan.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/exec_expr.hpp"
-#include "mytoydb/executor/exec_utils.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/executor/tupletable.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/exec_expr.hpp"
+#include "pgcpp/executor/exec_utils.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/executor/tupletable.hpp"
 
 namespace mytoydb::executor {
 

@@ -4,16 +4,16 @@
 //
 // MyToyDB has no schema concept yet; all relations live in a single implicit
 // "public" namespace. schemaname on RangeVar is ignored.
-#include "mytoydb/catalog/namespace.hpp"
+#include "pgcpp/catalog/namespace.hpp"
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::catalog {
 

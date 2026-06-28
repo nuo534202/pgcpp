@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/backend/replication/replutil.c (and
 // the message-type enum in libpq/pqformat.h). Network/IPC parts are
 // stubbed; only the type table and the wal_level accessor live here.
-#include "mytoydb/replication/replutil.hpp"
+#include "pgcpp/replication/replutil.hpp"
 
 namespace mytoydb::replication {
 

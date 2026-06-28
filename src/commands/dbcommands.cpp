@@ -5,11 +5,11 @@
 // acknowledge the request without actually creating/dropping a
 // database. (A real implementation would fork+exec initdb or copy a
 // template database.)
-#include "mytoydb/commands/dbcommands.hpp"
+#include "pgcpp/commands/dbcommands.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

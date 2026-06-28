@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "mytoydb/statistics/extended_stats.hpp"
-#include "mytoydb/statistics/mvdependencies.hpp"
-#include "mytoydb/statistics/mvdistinct.hpp"
-#include "mytoydb/statistics/mvdistinct_sample.hpp"
+#include "pgcpp/statistics/extended_stats.hpp"
+#include "pgcpp/statistics/mvdependencies.hpp"
+#include "pgcpp/statistics/mvdistinct.hpp"
+#include "pgcpp/statistics/mvdistinct_sample.hpp"

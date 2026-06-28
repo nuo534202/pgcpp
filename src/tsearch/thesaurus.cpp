@@ -2,7 +2,7 @@
 //
 // All words are stored lowercased. Lookups are case-insensitive.
 
-#include "mytoydb/tsearch/thesaurus.hpp"
+#include "pgcpp/tsearch/thesaurus.hpp"
 
 #include <algorithm>
 #include <cctype>

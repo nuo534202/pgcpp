@@ -6,10 +6,10 @@
 // PathType, links the parent RelOptInfo, and fills in default cost/width
 // from the relation. Cost estimation is left to the caller (or done inline
 // for SeqScan, matching the existing allpaths.cpp pattern).
-#include "mytoydb/optimizer/util/pathnode.hpp"
+#include "pgcpp/optimizer/util/pathnode.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/cost.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/cost.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

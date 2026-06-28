@@ -21,21 +21,21 @@
 #include <thread>
 #include <vector>
 
-#include "mytoydb/server/autovacuum.hpp"
-#include "mytoydb/server/auxprocess.hpp"
-#include "mytoydb/server/bgworker.hpp"
-#include "mytoydb/server/bgwriter.hpp"
-#include "mytoydb/server/checkpointer.hpp"
-#include "mytoydb/server/fork_process.hpp"
-#include "mytoydb/server/interrupt.hpp"
-#include "mytoydb/server/pgarch.hpp"
-#include "mytoydb/server/shell_archive.hpp"
-#include "mytoydb/server/startup.hpp"
-#include "mytoydb/server/syslogger.hpp"
-#include "mytoydb/server/walwriter.hpp"
-#include "mytoydb/transaction/xlog.hpp"
-#include "mytoydb/transaction/xloginsert.hpp"
-#include "mytoydb/transaction/xlogrecovery.hpp"
+#include "pgcpp/server/autovacuum.hpp"
+#include "pgcpp/server/auxprocess.hpp"
+#include "pgcpp/server/bgworker.hpp"
+#include "pgcpp/server/bgwriter.hpp"
+#include "pgcpp/server/checkpointer.hpp"
+#include "pgcpp/server/fork_process.hpp"
+#include "pgcpp/server/interrupt.hpp"
+#include "pgcpp/server/pgarch.hpp"
+#include "pgcpp/server/shell_archive.hpp"
+#include "pgcpp/server/startup.hpp"
+#include "pgcpp/server/syslogger.hpp"
+#include "pgcpp/server/walwriter.hpp"
+#include "pgcpp/transaction/xlog.hpp"
+#include "pgcpp/transaction/xloginsert.hpp"
+#include "pgcpp/transaction/xlogrecovery.hpp"
 
 using mytoydb::server::AutoVacuumStats;
 using mytoydb::server::AutoVacuumWorkItem;

@@ -3,10 +3,10 @@
 // Converted from PostgreSQL 15's src/backend/replication/logical/worker.c.
 // MyToyDB keeps a small in-process pool (std::vector<LogicalRepWorker>)
 // and runs workers synchronously in ApplyWorkerMain (no fork).
-#include "mytoydb/replication/worker.hpp"
+#include "pgcpp/replication/worker.hpp"
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

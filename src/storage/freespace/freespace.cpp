@@ -1,7 +1,7 @@
 // freespace.cpp — Free Space Map (FSM) per-relation cache.
 //
 // Converted from PostgreSQL 15's src/backend/storage/freespace/freespace.c.
-#include "mytoydb/storage/freespace/freespace.hpp"
+#include "pgcpp/storage/freespace/freespace.hpp"
 
 #include <map>
 

@@ -18,22 +18,22 @@
 // Aggregate detection: only Aggref nodes in the target list are
 // recognized (COUNT/SUM/AVG/MIN/MAX). ROW_NUMBER / RANK / LAG / LEAD
 // require a WindowFunc node type, which is not yet implemented.
-#include "mytoydb/executor/node_windowagg.hpp"
+#include "pgcpp/executor/node_windowagg.hpp"
 
 #include <cstring>
 #include <new>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_proc.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/exec_expr.hpp"
-#include "mytoydb/executor/exec_utils.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/executor/tupletable.hpp"
-#include "mytoydb/parser/parse_node.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_proc.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/exec_expr.hpp"
+#include "pgcpp/executor/exec_utils.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/executor/tupletable.hpp"
+#include "pgcpp/parser/parse_node.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::executor {
 

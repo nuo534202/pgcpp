@@ -5,18 +5,18 @@
 // Each function is a thin wrapper over the global Catalog (Catalog::GetCatalog),
 // returning default values (InvalidOid / nullptr / false) on miss and never
 // ereport(ERROR). String results are palloc'd in the current memory context.
-#include "mytoydb/catalog/lsyscache.hpp"
+#include "pgcpp/catalog/lsyscache.hpp"
 
 #include <cstring>
 #include <string>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_attribute.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/catalog/pg_operator.hpp"
-#include "mytoydb/catalog/pg_proc.hpp"
-#include "mytoydb/catalog/pg_type.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_attribute.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/catalog/pg_operator.hpp"
+#include "pgcpp/catalog/pg_proc.hpp"
+#include "pgcpp/catalog/pg_type.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::catalog {
 

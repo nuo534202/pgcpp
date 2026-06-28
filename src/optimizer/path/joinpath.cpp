@@ -13,18 +13,18 @@
 //     both children are wrapped in SortPaths if their existing pathkeys
 //     don't satisfy the merge clause's ordering.
 //   - No parallel-aware paths, no parameterized nestloop.
-#include "mytoydb/optimizer/path/joinpath.hpp"
+#include "pgcpp/optimizer/path/joinpath.hpp"
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/cost.hpp"
-#include "mytoydb/optimizer/path/equivclass.hpp"
-#include "mytoydb/optimizer/path/pathkeys.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/optimizer/util/pathnode.hpp"
-#include "mytoydb/optimizer/util/relnode.hpp"
-#include "mytoydb/optimizer/util/restrictinfo.hpp"
-#include "mytoydb/parser/primnodes.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/cost.hpp"
+#include "pgcpp/optimizer/path/equivclass.hpp"
+#include "pgcpp/optimizer/path/pathkeys.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/optimizer/util/pathnode.hpp"
+#include "pgcpp/optimizer/util/relnode.hpp"
+#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "pgcpp/parser/primnodes.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

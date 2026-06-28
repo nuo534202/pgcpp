@@ -2,7 +2,7 @@
 //
 // Mirrors PostgreSQL's utils/adt/enum.c with an in-memory registry.
 
-#include "mytoydb/types/enum_types.hpp"
+#include "pgcpp/types/enum_types.hpp"
 
 #include <cstdint>
 #include <map>
@@ -10,8 +10,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

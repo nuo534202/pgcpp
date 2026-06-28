@@ -15,7 +15,7 @@
 
 #include <cstdint>
 
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::server {
 

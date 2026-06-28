@@ -14,8 +14,8 @@
 
 #include <vector>
 
-#include "mytoydb/statistics/mvdistinct.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/statistics/mvdistinct.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::statistics {
 

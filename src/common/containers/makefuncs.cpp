@@ -5,11 +5,11 @@
 // field values come from the struct definitions in primnodes.hpp (e.g.
 // Var::vartypmod defaults to -1).
 
-#include "mytoydb/common/containers/makefuncs.hpp"
+#include "pgcpp/common/containers/makefuncs.hpp"
 
 #include <utility>
 
-#include "mytoydb/catalog/catalog.hpp"  // kInvalidOid
+#include "pgcpp/catalog/catalog.hpp"  // kInvalidOid
 
 namespace mytoydb::nodes {
 

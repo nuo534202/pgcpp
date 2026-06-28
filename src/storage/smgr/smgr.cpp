@@ -11,15 +11,15 @@
 // managers (md, etc.). MyToyDB only implements md, so the switch is
 // eliminated and md operations are called directly.
 
-#include "mytoydb/storage/smgr.hpp"
+#include "pgcpp/storage/smgr.hpp"
 
 #include <cstring>
 #include <unordered_map>
 #include <vector>
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::storage {
 using mytoydb::nodes::destroyPallocNode;

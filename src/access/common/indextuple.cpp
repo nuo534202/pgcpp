@@ -7,14 +7,14 @@
 // layout follows the same alignment rules as heap tuples, starting after the
 // 8-byte IndexTupleData header and optional null bitmap.
 
-#include "mytoydb/access/indextuple.hpp"
+#include "pgcpp/access/indextuple.hpp"
 
 #include <cstring>
 
-#include "mytoydb/access/heapam.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/access/heapam.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::access {
 using mytoydb::memory::palloc;

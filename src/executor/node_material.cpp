@@ -3,14 +3,14 @@
 // On first scan, drains the child into an in-memory tuple store.
 // Subsequent rescans replay the stored tuples without re-executing
 // the child.
-#include "mytoydb/executor/node_material.hpp"
+#include "pgcpp/executor/node_material.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/estate.hpp"
-#include "mytoydb/executor/exec_expr.hpp"
-#include "mytoydb/executor/exec_utils.hpp"
-#include "mytoydb/executor/plannodes.hpp"
-#include "mytoydb/executor/tupletable.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/estate.hpp"
+#include "pgcpp/executor/exec_expr.hpp"
+#include "pgcpp/executor/exec_utils.hpp"
+#include "pgcpp/executor/plannodes.hpp"
+#include "pgcpp/executor/tupletable.hpp"
 
 namespace mytoydb::executor {
 

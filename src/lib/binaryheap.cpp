@@ -6,7 +6,7 @@
 // header so the compiler validates the template definition's syntax as
 // part of mytoydb_core.
 
-#include "mytoydb/lib/binaryheap.hpp"
+#include "pgcpp/lib/binaryheap.hpp"
 
 namespace mytoydb::lib {
 

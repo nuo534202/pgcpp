@@ -20,14 +20,14 @@
 
 #include <cstdint>
 
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/storage/bufmgr.hpp"
-#include "mytoydb/storage/bufpage.hpp"
-#include "mytoydb/transaction/heap_tuple.hpp"
-#include "mytoydb/transaction/snapshot.hpp"
-#include "mytoydb/transaction/transam.hpp"
-#include "mytoydb/transaction/xact.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/storage/bufmgr.hpp"
+#include "pgcpp/storage/bufpage.hpp"
+#include "pgcpp/transaction/heap_tuple.hpp"
+#include "pgcpp/transaction/snapshot.hpp"
+#include "pgcpp/transaction/transam.hpp"
+#include "pgcpp/transaction/xact.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::access {
 

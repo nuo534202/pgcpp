@@ -15,11 +15,11 @@
 // increments usage_count (up to a max of 5), and the clock sweep must
 // decrement it to 0 before evicting.
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
-#include "mytoydb/storage/buf_internals.hpp"
-#include "mytoydb/storage/bufmgr.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
+#include "pgcpp/storage/buf_internals.hpp"
+#include "pgcpp/storage/bufmgr.hpp"
 
 namespace mytoydb::storage {
 

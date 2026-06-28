@@ -6,12 +6,12 @@
 // relations and frees the per-query memory context. QueryDesc ties together
 // a Query, its Plan, the EState, and the top-level PlanState; its destructor
 // tears down the PlanState and EState if still present.
-#include "mytoydb/executor/estate.hpp"
+#include "pgcpp/executor/estate.hpp"
 
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/executor/node_exec.hpp"
-#include "mytoydb/executor/tupletable.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/executor/node_exec.hpp"
+#include "pgcpp/executor/tupletable.hpp"
 
 namespace mytoydb::executor {
 

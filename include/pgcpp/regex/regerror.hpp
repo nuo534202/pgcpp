@@ -14,7 +14,7 @@
 
 #include <cstddef>
 
-#include "mytoydb/regex/regex_internal.hpp"
+#include "pgcpp/regex/regex_internal.hpp"
 
 namespace mytoydb::regex {
 

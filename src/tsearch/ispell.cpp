@@ -4,7 +4,7 @@
 // checking whether the remainder matches a stored stem. If a stem is found,
 // return it; otherwise return the lowercased word unchanged.
 
-#include "mytoydb/tsearch/ispell.hpp"
+#include "pgcpp/tsearch/ispell.hpp"
 
 #include <algorithm>
 #include <cctype>

@@ -5,7 +5,7 @@
 // module has no external hash dependency. The estimate follows Flajolet's
 // small/large-range bias corrections.
 
-#include "mytoydb/lib/hyperloglog.hpp"
+#include "pgcpp/lib/hyperloglog.hpp"
 
 #include <cmath>
 

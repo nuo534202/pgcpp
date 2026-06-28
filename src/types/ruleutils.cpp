@@ -1,14 +1,14 @@
 // ruleutils.cpp — rule utility display helpers.
 
-#include "mytoydb/types/ruleutils.hpp"
+#include "pgcpp/types/ruleutils.hpp"
 
 #include <cctype>
 #include <cstdint>
 #include <string>
 #include <string_view>
 
-#include "mytoydb/types/builtins.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/types/builtins.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::types {
 

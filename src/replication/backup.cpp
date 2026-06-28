@@ -3,15 +3,15 @@
 // Converted from PostgreSQL 15's src/backend/replication/backup.c.
 // File-copy work is stubbed: DoBackup just records entries on the
 // BackupHandle, no actual I/O happens.
-#include "mytoydb/replication/backup.hpp"
+#include "pgcpp/replication/backup.hpp"
 
 #include <cstddef>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/transaction/xlog.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/transaction/xlog.hpp"
 
 namespace mytoydb::replication {
 

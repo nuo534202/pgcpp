@@ -7,7 +7,7 @@
 // uses these estimates to select the cheapest access path.
 #pragma once
 
-#include "mytoydb/optimizer/path.hpp"
+#include "pgcpp/optimizer/path.hpp"
 
 namespace mytoydb::optimizer {
 

@@ -8,8 +8,8 @@
 
 #include <vector>
 
-#include "mytoydb/executor/node_agg.hpp"  // AggState for per-agg state reuse
-#include "mytoydb/executor/node_exec.hpp"
+#include "pgcpp/executor/node_agg.hpp"  // AggState for per-agg state reuse
+#include "pgcpp/executor/node_exec.hpp"
 
 namespace mytoydb::executor {
 

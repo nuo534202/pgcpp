@@ -7,14 +7,14 @@
 // The result mirrors PG's to_tsquery() when called with a list of words
 // separated by spaces — the implicit operator is AND.
 
-#include "mytoydb/tsearch/to_tsquery.hpp"
+#include "pgcpp/tsearch/to_tsquery.hpp"
 
 #include <string>
 #include <vector>
 
-#include "mytoydb/tsearch/dict.hpp"
-#include "mytoydb/tsearch/wparser.hpp"
-#include "mytoydb/types/ts_types.hpp"
+#include "pgcpp/tsearch/dict.hpp"
+#include "pgcpp/tsearch/wparser.hpp"
+#include "pgcpp/types/ts_types.hpp"
 
 namespace mytoydb::tsearch {
 

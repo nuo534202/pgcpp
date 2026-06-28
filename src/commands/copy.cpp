@@ -2,17 +2,17 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/copy.c.
 // Dispatches COPY FROM (CopyFromText) and COPY TO (CopyToText).
-#include "mytoydb/commands/copy.hpp"
+#include "pgcpp/commands/copy.hpp"
 
 #include <string>
 
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/catalog/pg_class.hpp"
-#include "mytoydb/commands/copy_from.hpp"
-#include "mytoydb/commands/copy_to.hpp"
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/catalog/pg_class.hpp"
+#include "pgcpp/commands/copy_from.hpp"
+#include "pgcpp/commands/copy_to.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

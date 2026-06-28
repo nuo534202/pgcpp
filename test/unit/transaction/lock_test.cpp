@@ -3,11 +3,11 @@
 // Tests lock acquisition/release, the compatibility matrix, session vs.
 // transaction locks, and relation-level lock helpers.
 
-#include "mytoydb/transaction/lock.hpp"
+#include "pgcpp/transaction/lock.hpp"
 
 #include <gtest/gtest.h>
 
-#include "mytoydb/transaction/lmgr.hpp"
+#include "pgcpp/transaction/lmgr.hpp"
 
 using mytoydb::catalog::Oid;
 using mytoydb::transaction::GetLockCount;

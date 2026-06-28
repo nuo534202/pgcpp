@@ -6,16 +6,16 @@
 // capture groups, case-insensitivity, REG_EXTENDED/REG_NEWLINE flags, error
 // reporting, prefix extraction, and safe teardown.
 
-#include "mytoydb/regex/regex.hpp"
+#include "pgcpp/regex/regex.hpp"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/alloc_set.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/alloc_set.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace {
 

@@ -6,6 +6,6 @@
 
 #pragma once
 
-#include "mytoydb/partitioning/partbounds.hpp"
-#include "mytoydb/partitioning/partdesc.hpp"
-#include "mytoydb/partitioning/partprune.hpp"
+#include "pgcpp/partitioning/partbounds.hpp"
+#include "pgcpp/partitioning/partdesc.hpp"
+#include "pgcpp/partitioning/partprune.hpp"

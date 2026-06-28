@@ -16,10 +16,10 @@
 
 #include <cstdint>
 
-#include "mytoydb/access/rel.hpp"
-#include "mytoydb/storage/bufpage.hpp"
-#include "mytoydb/transaction/heap_tuple.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/access/rel.hpp"
+#include "pgcpp/storage/bufpage.hpp"
+#include "pgcpp/transaction/heap_tuple.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::access {
 

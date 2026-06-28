@@ -8,13 +8,13 @@
 // manager's redo function. Records whose RMGR has no registered redo
 // function are counted as skipped (not an error). Recovery stops at
 // end-of-WAL.
-#include "mytoydb/transaction/xlogrecovery.hpp"
+#include "pgcpp/transaction/xlogrecovery.hpp"
 
 #include <array>
 #include <functional>
 
-#include "mytoydb/transaction/xlog.hpp"
-#include "mytoydb/transaction/xlogreader.hpp"
+#include "pgcpp/transaction/xlog.hpp"
+#include "pgcpp/transaction/xlogreader.hpp"
 
 namespace mytoydb::transaction {
 

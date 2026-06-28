@@ -26,9 +26,9 @@
 #include <string>
 #include <vector>
 
-#include "mytoydb/server/bootstrap.hpp"
-#include "mytoydb/server/main.hpp"
-#include "mytoydb/server/postmaster.hpp"
+#include "pgcpp/server/bootstrap.hpp"
+#include "pgcpp/server/main.hpp"
+#include "pgcpp/server/postmaster.hpp"
 
 using mytoydb::server::BootstrapCluster;
 using mytoydb::server::BootstrapResult;

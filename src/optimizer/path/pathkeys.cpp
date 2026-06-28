@@ -11,13 +11,13 @@
 //   - PathKey equality is by (eclass pointer, opno, descending, nulls_first).
 //   - No EC constancy tracking (we trust the EC pointer identity).
 //   - No subquery pathkey pushdown (subqueries are planned independently).
-#include "mytoydb/optimizer/path/pathkeys.hpp"
+#include "pgcpp/optimizer/path/pathkeys.hpp"
 
-#include "mytoydb/common/containers/node.hpp"
-#include "mytoydb/optimizer/path/equivclass.hpp"
-#include "mytoydb/optimizer/planner.hpp"
-#include "mytoydb/parser/primnodes.hpp"
-#include "mytoydb/types/datum.hpp"
+#include "pgcpp/common/containers/node.hpp"
+#include "pgcpp/optimizer/path/equivclass.hpp"
+#include "pgcpp/optimizer/planner.hpp"
+#include "pgcpp/parser/primnodes.hpp"
+#include "pgcpp/types/datum.hpp"
 
 namespace mytoydb::optimizer {
 using mytoydb::nodes::makePallocNode;

@@ -3,11 +3,11 @@
 // Converted from PostgreSQL 15's src/backend/commands/schemacmds.c.
 // MyToyDB currently uses a single "public" namespace (OID 2200); CREATE
 // SCHEMA is a stub that acknowledges the request.
-#include "mytoydb/commands/schemacmds.hpp"
+#include "pgcpp/commands/schemacmds.hpp"
 
 #include <string>
 
-#include "mytoydb/parser/parsenodes.hpp"
+#include "pgcpp/parser/parsenodes.hpp"
 
 namespace mytoydb::commands {
 

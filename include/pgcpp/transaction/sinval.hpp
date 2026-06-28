@@ -16,8 +16,8 @@
 #include <functional>
 #include <vector>
 
-#include "mytoydb/catalog/catalog.hpp"
-#include "mytoydb/transaction/transam.hpp"
+#include "pgcpp/catalog/catalog.hpp"
+#include "pgcpp/transaction/transam.hpp"
 
 namespace mytoydb::transaction {
 

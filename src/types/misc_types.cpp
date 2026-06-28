@@ -3,7 +3,7 @@
 // Mirrors PostgreSQL's utils/adt/char.c, name.c, xid.c, tid.c, pg_lsn.c, and
 // the bytea in/out routines in utils/adt/varlena.c.
 
-#include "mytoydb/types/misc_types.hpp"
+#include "pgcpp/types/misc_types.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -13,8 +13,8 @@
 #include <cstring>
 #include <string>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

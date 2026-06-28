@@ -3,7 +3,7 @@
 // Tests parsing of postgresql.conf-style configuration files into a GucConfig
 // and application of those values to a ServerConfig.
 
-#include "mytoydb/server/guc.hpp"
+#include "pgcpp/server/guc.hpp"
 
 #include <gtest/gtest.h>
 #include <sys/stat.h>
@@ -13,8 +13,8 @@
 #include <fstream>
 #include <string>
 
-#include "mytoydb/server/main.hpp"
-#include "mytoydb/server/postmaster.hpp"
+#include "pgcpp/server/main.hpp"
+#include "pgcpp/server/postmaster.hpp"
 
 using mytoydb::server::GucConfig;
 using mytoydb::server::LoadGucFromDataDir;

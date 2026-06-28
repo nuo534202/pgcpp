@@ -1,11 +1,11 @@
 // windowfunctions.cpp — implementations of window function helpers.
 
-#include "mytoydb/types/windowfunctions.hpp"
+#include "pgcpp/types/windowfunctions.hpp"
 
 #include <cstdint>
 
-#include "mytoydb/common/error/elog.hpp"
-#include "mytoydb/common/memory/memory_context.hpp"
+#include "pgcpp/common/error/elog.hpp"
+#include "pgcpp/common/memory/memory_context.hpp"
 
 namespace mytoydb::types {
 

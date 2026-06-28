@@ -24,8 +24,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "mytoydb/storage/block.hpp"
-#include "mytoydb/transaction/transam.hpp"
+#include "pgcpp/storage/block.hpp"
+#include "pgcpp/transaction/transam.hpp"
 
 namespace mytoydb::storage {
 
