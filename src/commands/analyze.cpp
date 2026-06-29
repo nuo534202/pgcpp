@@ -3,11 +3,11 @@
 // Converted from PostgreSQL 15's src/backend/commands/analyze.c.
 // Updates pg_statistic for the planner. Currently a no-op stub since
 // pgcpp's planner uses fixed cardinality estimates.
-#include "pgcpp/commands/analyze.hpp"
+#include "commands/analyze.hpp"
 
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

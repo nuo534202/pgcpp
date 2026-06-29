@@ -6,7 +6,7 @@
 // and the geqo_effort parameter. Larger joins get proportionally larger
 // populations; the number of generations is bounded so that very large
 // joins don't spend too long in the GA loop.
-#include "pgcpp/optimizer/geqo/geqo_params.hpp"
+#include "optimizer/geqo/geqo_params.hpp"
 
 #include <algorithm>
 

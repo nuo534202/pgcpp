@@ -6,12 +6,12 @@
 // to seed the initial population, and the identity initializer used to inject
 // one "natural order" chromosome into the pool (matching PostgreSQL's
 // behavior of always including the RT-order join as a candidate).
-#include "pgcpp/optimizer/geqo/geqo_recombination.hpp"
+#include "optimizer/geqo/geqo_recombination.hpp"
 
 #include <algorithm>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 namespace pgcpp::optimizer::geqo {
 using pgcpp::nodes::makePallocNode;

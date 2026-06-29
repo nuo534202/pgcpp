@@ -18,13 +18,13 @@
 //     compute_partition_hash_value, which mixes all key columns via their
 //     type-specific hash support functions.
 
-#include "pgcpp/partitioning/partbounds.hpp"
+#include "partitioning/partbounds.hpp"
 
 #include <algorithm>
 #include <cstdint>
 #include <utility>
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::partitioning {
 

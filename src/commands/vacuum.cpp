@@ -4,11 +4,11 @@
 // pgcpp's MVCC implementation currently reclaims dead tuples eagerly
 // during DML (heap_insert/heap_delete/heap_update), so VACUUM is a
 // no-op that simply returns the command tag.
-#include "pgcpp/commands/vacuum.hpp"
+#include "commands/vacuum.hpp"
 
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

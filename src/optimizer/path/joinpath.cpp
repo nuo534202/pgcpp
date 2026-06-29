@@ -13,18 +13,18 @@
 //     both children are wrapped in SortPaths if their existing pathkeys
 //     don't satisfy the merge clause's ordering.
 //   - No parallel-aware paths, no parameterized nestloop.
-#include "pgcpp/optimizer/path/joinpath.hpp"
+#include "optimizer/path/joinpath.hpp"
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/cost.hpp"
-#include "pgcpp/optimizer/path/equivclass.hpp"
-#include "pgcpp/optimizer/path/pathkeys.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/optimizer/util/pathnode.hpp"
-#include "pgcpp/optimizer/util/relnode.hpp"
-#include "pgcpp/optimizer/util/restrictinfo.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "catalog/catalog.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/cost.hpp"
+#include "optimizer/path/equivclass.hpp"
+#include "optimizer/path/pathkeys.hpp"
+#include "optimizer/planner.hpp"
+#include "optimizer/util/pathnode.hpp"
+#include "optimizer/util/relnode.hpp"
+#include "optimizer/util/restrictinfo.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

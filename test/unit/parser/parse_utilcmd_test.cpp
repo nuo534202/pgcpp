@@ -8,29 +8,29 @@
 // column types are validated, column defaults and CHECK constraints are
 // cooked, and duplicate column/constraint names are rejected at parse time.
 
-#include "pgcpp/parser/parse_utilcmd.hpp"
+#include "parser/parse_utilcmd.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/catalog/bootstrap_catalog.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/analyze.hpp"
-#include "pgcpp/parser/parse_node.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/parser.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/bootstrap_catalog.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
+#include "catalog/syscache.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/analyze.hpp"
+#include "parser/parse_node.hpp"
+#include "parser/parse_type.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/parser.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 using pgcpp::catalog::BootstrapCatalog;
 using pgcpp::catalog::Catalog;

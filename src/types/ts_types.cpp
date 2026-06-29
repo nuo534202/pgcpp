@@ -1,6 +1,6 @@
 // ts_types.cpp — tsvector/tsquery implementations.
 
-#include "pgcpp/types/ts_types.hpp"
+#include "types/ts_types.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -12,8 +12,8 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

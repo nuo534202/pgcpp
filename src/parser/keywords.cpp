@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/include/parser/kwlist.h.
 // All 460 keywords are listed in ASCII order for binary search.
 
-#include "pgcpp/parser/keywords.hpp"
+#include "parser/keywords.hpp"
 
 #include "gram.tab.hpp"
 

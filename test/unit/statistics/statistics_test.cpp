@@ -11,17 +11,17 @@
 //   - StatisticsProvider registry: register, lookup, unknown returns null.
 //   - EstimateNDistinct single-column estimator.
 
-#include "pgcpp/statistics/statistics.hpp"
+#include "statistics/statistics.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/datum.hpp"
 
 using pgcpp::error::ErrorData;
 using pgcpp::error::LogLevel;

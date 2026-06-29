@@ -20,11 +20,11 @@
 %code requires {
 #include <string>
 #include <vector>
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/parser/parser_driver.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
+#include "parser/parser_driver.hpp"
 
 using namespace pgcpp::nodes;
 using namespace pgcpp::parser;

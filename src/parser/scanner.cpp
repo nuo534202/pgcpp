@@ -9,8 +9,8 @@
 #include <string>
 
 #include "gram.tab.hpp"
-#include "pgcpp/parser/keywords.hpp"
-#include "pgcpp/parser/parser_driver.hpp"
+#include "parser/keywords.hpp"
+#include "parser/parser_driver.hpp"
 
 namespace pgcpp_parser {
 

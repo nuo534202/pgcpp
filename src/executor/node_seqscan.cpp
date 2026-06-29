@@ -5,22 +5,22 @@
 // SeqScan reads tuples from a heap relation in physical order, applies
 // the qual filter (WHERE clause), and projects the target list to
 // produce output tuples.
-#include "pgcpp/executor/node_seqscan.hpp"
+#include "executor/node_seqscan.hpp"
 
 #include <new>
 
-#include "pgcpp/access/heapam.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
+#include "access/heapam.hpp"
+#include "access/rel.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
+#include "parser/parsenodes.hpp"
+#include "transaction/heap_tuple.hpp"
 
 namespace pgcpp::executor {
 

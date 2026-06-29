@@ -6,7 +6,7 @@
 // AutoVacuumLauncherMain processes the queue by calling
 // AutoVacuumWorkerMain for each item. In pgcpp (single-process), the
 // worker executes synchronously rather than being forked.
-#include "pgcpp/server/autovacuum.hpp"
+#include "server/autovacuum.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-#include "pgcpp/server/interrupt.hpp"
+#include "server/interrupt.hpp"
 
 namespace pgcpp::server {
 

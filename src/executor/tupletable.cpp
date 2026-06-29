@@ -6,13 +6,13 @@
 // a tuple in deformed (Datum array) form and optionally owns the backing
 // HeapTuple. The slot is the primary vehicle for passing tuples between
 // plan nodes.
-#include "pgcpp/executor/tupletable.hpp"
+#include "executor/tupletable.hpp"
 
 #include <new>
 
-#include "pgcpp/access/heapam.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "access/heapam.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::executor {
 using pgcpp::nodes::makePallocNode;

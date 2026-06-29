@@ -4,17 +4,17 @@
 // Creates a relation of relkind 'S' (sequence). pgcpp doesn't yet
 // implement nextval()/currval() — this stub records the catalog entry
 // so CREATE SEQUENCE doesn't fail.
-#include "pgcpp/commands/sequence.hpp"
+#include "commands/sequence.hpp"
 
 #include <string>
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_class.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

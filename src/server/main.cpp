@@ -5,14 +5,14 @@
 // Parses command-line arguments and dispatches to the postmaster or
 // bootstrap mode. The argument parsing logic is in options.cpp (linked
 // into pgcpp_core) so it can be tested independently.
-#include "pgcpp/server/main.hpp"
+#include "server/main.hpp"
 
 #include <cstdio>
 #include <string>
 
-#include "pgcpp/server/bootstrap.hpp"
-#include "pgcpp/server/guc.hpp"
-#include "pgcpp/server/postmaster.hpp"
+#include "server/bootstrap.hpp"
+#include "server/guc.hpp"
+#include "server/postmaster.hpp"
 
 namespace pgcpp::server {
 

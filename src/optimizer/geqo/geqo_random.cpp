@@ -6,7 +6,7 @@
 // providing the deterministic randomness GEQO needs for crossover, mutation,
 // and selection. The generator is seeded once per query so that re-planning
 // the same query yields the same join order.
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 #include <cstdint>
 

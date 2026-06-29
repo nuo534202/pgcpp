@@ -7,14 +7,14 @@
 // pgcpp only implements the B-tree AM (kBTreeAmOid = 403); other AM OIDs
 // return nullptr from LookupAmRoutine and the generic entry points ereport.
 
-#include "pgcpp/access/indexam.hpp"
+#include "access/indexam.hpp"
 
 #include <string>
 
-#include "pgcpp/access/nbtree.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
+#include "access/nbtree.hpp"
+#include "catalog/catalog.hpp"
+#include "common/error/elog.hpp"
+#include "storage/bufmgr.hpp"
 
 namespace pgcpp::access {
 using pgcpp::catalog::kInvalidOid;

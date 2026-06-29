@@ -4,7 +4,7 @@
 // 0 to indicate "no data exported". A non-zero argument-status return is used
 // only for obviously invalid input.
 
-#include "pgcpp/regex/regexport.hpp"
+#include "regex/regexport.hpp"
 
 namespace pgcpp::regex {
 

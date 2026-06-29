@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 
-#include "pgcpp/tools/pg_dump.hpp"
+#include "tools/pg_dump.hpp"
 
 using pgcpp::tools::DumpDatabase;
 using pgcpp::tools::DumpOptions;

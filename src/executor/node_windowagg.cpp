@@ -18,22 +18,22 @@
 // Aggregate detection: only Aggref nodes in the target list are
 // recognized (COUNT/SUM/AVG/MIN/MAX). ROW_NUMBER / RANK / LAG / LEAD
 // require a WindowFunc node type, which is not yet implemented.
-#include "pgcpp/executor/node_windowagg.hpp"
+#include "executor/node_windowagg.hpp"
 
 #include <cstring>
 #include <new>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_proc.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/parser/parse_node.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_proc.hpp"
+#include "common/containers/node.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
+#include "parser/parse_node.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::executor {
 

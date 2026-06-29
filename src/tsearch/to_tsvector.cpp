@@ -7,16 +7,16 @@
 // 3. Build a TsVectorData with deduplicated lexemes and 1-based positions,
 //    sorted ascending by lexeme (matching PG's on-disk format).
 
-#include "pgcpp/tsearch/to_tsvector.hpp"
+#include "tsearch/to_tsvector.hpp"
 
 #include <algorithm>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "pgcpp/tsearch/dict.hpp"
-#include "pgcpp/tsearch/wparser.hpp"
-#include "pgcpp/types/ts_types.hpp"
+#include "tsearch/dict.hpp"
+#include "tsearch/wparser.hpp"
+#include "types/ts_types.hpp"
 
 namespace pgcpp::tsearch {
 

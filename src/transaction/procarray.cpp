@@ -10,12 +10,12 @@
 // In PostgreSQL, ProcArray is a shared-memory array of PGPROC entries, one
 // per backend process. pgcpp is single-process, so we keep an in-memory
 // vector of XIDs that grows/shrinks as transactions start/commit.
-#include "pgcpp/transaction/procarray.hpp"
+#include "transaction/procarray.hpp"
 
 #include <algorithm>
 #include <vector>
 
-#include "pgcpp/transaction/transam.hpp"
+#include "transaction/transam.hpp"
 
 namespace pgcpp::transaction {
 

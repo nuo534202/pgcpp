@@ -6,7 +6,7 @@
 // &head. For SList we use a self-pointing sentinel so end() is the head
 // pointer itself.
 
-#include "pgcpp/lib/ilist.hpp"
+#include "lib/ilist.hpp"
 
 namespace pgcpp::lib {
 

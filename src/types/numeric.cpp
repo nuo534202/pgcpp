@@ -4,7 +4,7 @@
 // Sufficient for ClickBench AVG/SUM aggregation where exact byte-for-byte
 // output is required for integer and simple-decimal results.
 
-#include "pgcpp/types/numeric.hpp"
+#include "types/numeric.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -12,8 +12,8 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

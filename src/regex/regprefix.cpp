@@ -7,13 +7,13 @@
 // first metacharacter. This covers the common index-optimization cases used by
 // pgcpp's planner (e.g. '^prefix.*', '^literal$').
 
-#include "pgcpp/regex/regprefix.hpp"
+#include "regex/regprefix.hpp"
 
 #include <cstring>
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::regex {
 

@@ -12,7 +12,7 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/server/bootstrap.hpp"
+#include "server/bootstrap.hpp"
 
 using pgcpp::server::BootstrapCluster;
 using pgcpp::server::BootstrapResult;

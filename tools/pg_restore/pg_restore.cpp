@@ -16,7 +16,7 @@
 #include <iostream>
 #include <string>
 
-#include "pgcpp/tools/pg_restore.hpp"
+#include "tools/pg_restore.hpp"
 
 using pgcpp::tools::PsqlClient;
 using pgcpp::tools::RestoreDump;

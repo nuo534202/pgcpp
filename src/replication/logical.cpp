@@ -2,14 +2,14 @@
 //
 // Converted from PostgreSQL 15's src/backend/replication/logical/ logical.c.
 // The actual decoding loop is stubbed.
-#include "pgcpp/replication/logical.hpp"
+#include "replication/logical.hpp"
 
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/replication/replutil.hpp"
-#include "pgcpp/replication/slot.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "common/error/elog.hpp"
+#include "replication/replutil.hpp"
+#include "replication/slot.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
 

@@ -1,7 +1,7 @@
 // psql_crosstabview.cpp — Cross-tabulation (crosstabview.c).
 //
 // Converted from PostgreSQL 15's src/bin/psql/crosstabview.c.
-#include "pgcpp/tools/psql_crosstabview.hpp"
+#include "tools/psql_crosstabview.hpp"
 
 #include <algorithm>
 #include <cctype>

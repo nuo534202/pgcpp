@@ -3,11 +3,11 @@
 // Converted from PostgreSQL 15's src/backend/commands/functioncmds.c.
 // pgcpp doesn't yet support user-defined functions; this stub
 // acknowledges the request without persisting a pg_proc row.
-#include "pgcpp/commands/functioncmds.hpp"
+#include "commands/functioncmds.hpp"
 
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

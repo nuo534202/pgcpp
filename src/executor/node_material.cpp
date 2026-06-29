@@ -3,14 +3,14 @@
 // On first scan, drains the child into an in-memory tuple store.
 // Subsequent rescans replay the stored tuples without re-executing
 // the child.
-#include "pgcpp/executor/node_material.hpp"
+#include "executor/node_material.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
+#include "common/containers/node.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
 
 namespace pgcpp::executor {
 

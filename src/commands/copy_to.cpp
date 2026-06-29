@@ -2,21 +2,21 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/copyto.c.
 // Scans a relation and writes rows as tab-delimited text to a file.
-#include "pgcpp/commands/copy_to.hpp"
+#include "commands/copy_to.hpp"
 
 #include <cstdint>
 #include <fstream>
 #include <string>
 
-#include "pgcpp/access/heapam.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
-#include "pgcpp/transaction/snapshot.hpp"
-#include "pgcpp/types/builtins.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "access/heapam.hpp"
+#include "access/rel.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/bufmgr.hpp"
+#include "transaction/heap_tuple.hpp"
+#include "transaction/snapshot.hpp"
+#include "types/builtins.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::commands {
 

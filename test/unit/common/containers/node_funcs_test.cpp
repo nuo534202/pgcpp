@@ -1,15 +1,15 @@
-#include "pgcpp/common/containers/node_funcs.hpp"
+#include "common/containers/node_funcs.hpp"
 
 #include <gtest/gtest.h>
 
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"  // makePallocNode
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"  // makePallocNode
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 namespace {
 

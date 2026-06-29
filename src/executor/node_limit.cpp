@@ -2,14 +2,14 @@
 //
 // Wraps a child plan and returns at most `limit_count` rows after
 // skipping `offset_count` rows. limit_count < 0 means no limit.
-#include "pgcpp/executor/node_limit.hpp"
+#include "executor/node_limit.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
+#include "common/containers/node.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
 
 namespace pgcpp::executor {
 

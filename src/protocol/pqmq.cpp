@@ -4,7 +4,7 @@
 // in a per-queue std::string. The leader backend calls pq_mq_attach() to
 // route pq_putmessage calls into the queue; a worker reads them via
 // pq_mq_read_bytes().
-#include "pgcpp/protocol/pqmq.hpp"
+#include "protocol/pqmq.hpp"
 
 #include <algorithm>
 #include <cstring>

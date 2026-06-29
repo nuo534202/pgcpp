@@ -1,7 +1,7 @@
 // shmem.cpp — Shared memory region management (in-process simulation).
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/shmem.c.
-#include "pgcpp/storage/ipc/shmem.hpp"
+#include "storage/ipc/shmem.hpp"
 
 #include <cstring>
 #include <map>

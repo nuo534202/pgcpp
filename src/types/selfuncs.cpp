@@ -1,6 +1,6 @@
 // selfuncs.cpp — simplified selectivity estimation helpers.
 
-#include "pgcpp/types/selfuncs.hpp"
+#include "types/selfuncs.hpp"
 
 #include <algorithm>
 #include <cstdint>

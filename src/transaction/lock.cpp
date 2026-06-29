@@ -11,9 +11,9 @@
 // In single-process mode, the same transaction can hold multiple locks on
 // the same object (upgrading is allowed). The matrix is preserved for
 // correctness and for future multi-process support.
-#include "pgcpp/transaction/lock.hpp"
+#include "transaction/lock.hpp"
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::transaction {
 

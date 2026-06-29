@@ -17,13 +17,13 @@
 // placed at the conflicting position). The chain terminates because dad is
 // a permutation: dad[k'] is unique, and the chain visits distinct dad genes
 // in the segment until one is not a mum gene in the segment.
-#include "pgcpp/optimizer/geqo/geqo_pmx.hpp"
+#include "optimizer/geqo/geqo_pmx.hpp"
 
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

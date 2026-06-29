@@ -2,11 +2,11 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/opclasscmds.c.
 // pgcpp has a fixed B-tree operator class; this is a stub.
-#include "pgcpp/commands/opclasscmds.hpp"
+#include "commands/opclasscmds.hpp"
 
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

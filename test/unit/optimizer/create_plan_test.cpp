@@ -4,21 +4,21 @@
 // create_agg_plan, create_sort_plan, create_result_plan). Verifies that
 // each Path subclass is correctly translated to the corresponding Plan.
 
-#include "pgcpp/optimizer/plan/create_plan.hpp"
+#include "optimizer/plan/create_plan.hpp"
 
 #include <gtest/gtest.h>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/optimizer/path.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/optimizer/util/pathnode.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "executor/plannodes.hpp"
+#include "optimizer/path.hpp"
+#include "optimizer/planner.hpp"
+#include "optimizer/util/pathnode.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 using pgcpp::executor::Agg;
 using pgcpp::executor::Plan;

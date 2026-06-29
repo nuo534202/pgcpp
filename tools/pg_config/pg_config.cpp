@@ -14,7 +14,7 @@
 #include <iostream>
 #include <string>
 
-#include "pgcpp/tools/pg_config.hpp"
+#include "tools/pg_config.hpp"
 
 using pgcpp::tools::PrintAllConfigEntries;
 using pgcpp::tools::PrintConfigEntry;

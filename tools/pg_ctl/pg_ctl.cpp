@@ -17,7 +17,7 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/tools/pg_ctl.hpp"
+#include "tools/pg_ctl.hpp"
 
 using pgcpp::tools::PgCtlAction;
 using pgcpp::tools::PgCtlMain;

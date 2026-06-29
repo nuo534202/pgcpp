@@ -8,26 +8,26 @@
 // explain, dbcommands, schemacmds, ...). Transaction control
 // (BEGIN/COMMIT/ROLLBACK) and GUC SET/RESET are handled inline since
 // they belong to the transaction and GUC modules respectively.
-#include "pgcpp/protocol/utility.hpp"
+#include "protocol/utility.hpp"
 
 #include <string>
 
-#include "pgcpp/commands/analyze.hpp"
-#include "pgcpp/commands/copy.hpp"
-#include "pgcpp/commands/dbcommands.hpp"
-#include "pgcpp/commands/explain.hpp"
-#include "pgcpp/commands/functioncmds.hpp"
-#include "pgcpp/commands/indexcmds.hpp"
-#include "pgcpp/commands/schemacmds.hpp"
-#include "pgcpp/commands/sequence.hpp"
-#include "pgcpp/commands/tablecmds.hpp"
-#include "pgcpp/commands/tablespace.hpp"
-#include "pgcpp/commands/trigger.hpp"
-#include "pgcpp/commands/vacuum.hpp"
-#include "pgcpp/commands/view.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/transaction/xact.hpp"
+#include "commands/analyze.hpp"
+#include "commands/copy.hpp"
+#include "commands/dbcommands.hpp"
+#include "commands/explain.hpp"
+#include "commands/functioncmds.hpp"
+#include "commands/indexcmds.hpp"
+#include "commands/schemacmds.hpp"
+#include "commands/sequence.hpp"
+#include "commands/tablecmds.hpp"
+#include "commands/tablespace.hpp"
+#include "commands/trigger.hpp"
+#include "commands/vacuum.hpp"
+#include "commands/view.hpp"
+#include "common/containers/node.hpp"
+#include "parser/parsenodes.hpp"
+#include "transaction/xact.hpp"
 
 namespace pgcpp::protocol {
 

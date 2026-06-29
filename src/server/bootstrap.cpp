@@ -4,7 +4,7 @@
 //
 // Creates the data directory structure and initializes the system catalog.
 // This is the pgcpp equivalent of PostgreSQL's `initdb` command.
-#include "pgcpp/server/bootstrap.hpp"
+#include "server/bootstrap.hpp"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -14,18 +14,18 @@
 #include <fstream>
 #include <string>
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/bootstrap_catalog.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/storage/smgr.hpp"
-#include "pgcpp/transaction/snapshot.hpp"
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
+#include "access/rel.hpp"
+#include "catalog/bootstrap_catalog.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/syscache.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/smgr.hpp"
+#include "transaction/snapshot.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
 
 namespace pgcpp::server {
 

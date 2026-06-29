@@ -1,10 +1,10 @@
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/memory/memory_context.hpp"
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
-#include "pgcpp/common/memory/alloc_set.hpp"
+#include "common/memory/alloc_set.hpp"
 
 namespace pgcpp::memory {
 

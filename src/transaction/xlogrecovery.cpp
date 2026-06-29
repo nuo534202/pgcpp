@@ -8,13 +8,13 @@
 // manager's redo function. Records whose RMGR has no registered redo
 // function are counted as skipped (not an error). Recovery stops at
 // end-of-WAL.
-#include "pgcpp/transaction/xlogrecovery.hpp"
+#include "transaction/xlogrecovery.hpp"
 
 #include <array>
 #include <functional>
 
-#include "pgcpp/transaction/xlog.hpp"
-#include "pgcpp/transaction/xlogreader.hpp"
+#include "transaction/xlog.hpp"
+#include "transaction/xlogreader.hpp"
 
 namespace pgcpp::transaction {
 

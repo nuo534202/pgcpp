@@ -8,12 +8,12 @@
 //   3. Fill remaining positions starting from position 0 with dad's genes in
 //      the order they appear in dad, skipping any gene already present.
 // The fill order starts from position 0 (no wrapping), unlike OX1.
-#include "pgcpp/optimizer/geqo/geqo_ox2.hpp"
+#include "optimizer/geqo/geqo_ox2.hpp"
 
 #include <algorithm>
 #include <unordered_set>
 
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

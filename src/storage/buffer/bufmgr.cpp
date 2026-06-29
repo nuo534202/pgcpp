@@ -19,13 +19,13 @@
 // plain fields and no locking. The refcount still matters (a pinned
 // buffer cannot be evicted).
 
-#include "pgcpp/storage/bufmgr.hpp"
+#include "storage/bufmgr.hpp"
 
 #include <cstring>
 #include <new>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::storage {
 

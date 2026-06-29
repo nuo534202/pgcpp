@@ -7,8 +7,8 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/server/guc.hpp"
-#include "pgcpp/server/main.hpp"
+#include "server/guc.hpp"
+#include "server/main.hpp"
 
 namespace pgcpp::server {
 

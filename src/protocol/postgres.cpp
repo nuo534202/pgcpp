@@ -7,7 +7,7 @@
 //
 // Errors from ereport(ERROR) are caught with PG_TRY/PG_CATCH and converted
 // to ErrorResponse messages sent to the client.
-#include "pgcpp/protocol/postgres.hpp"
+#include "protocol/postgres.hpp"
 
 #include <unistd.h>
 
@@ -17,32 +17,32 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_main.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/node_exec.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/parser/analyze.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/parser.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/protocol/utility.hpp"
-#include "pgcpp/server/postmaster.hpp"
-#include "pgcpp/transaction/xact.hpp"
-#include "pgcpp/types/builtins.hpp"
-#include "pgcpp/types/datetime.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_main.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/node_exec.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
+#include "optimizer/planner.hpp"
+#include "parser/analyze.hpp"
+#include "parser/parse_type.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/parser.hpp"
+#include "parser/primnodes.hpp"
+#include "protocol/utility.hpp"
+#include "server/postmaster.hpp"
+#include "transaction/xact.hpp"
+#include "types/builtins.hpp"
+#include "types/datetime.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::protocol {
 

@@ -2,17 +2,17 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/copy.c.
 // Dispatches COPY FROM (CopyFromText) and COPY TO (CopyToText).
-#include "pgcpp/commands/copy.hpp"
+#include "commands/copy.hpp"
 
 #include <string>
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/commands/copy_from.hpp"
-#include "pgcpp/commands/copy_to.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_class.hpp"
+#include "commands/copy_from.hpp"
+#include "commands/copy_to.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

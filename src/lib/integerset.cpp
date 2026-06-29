@@ -6,7 +6,7 @@
 // intset_begin_iterate / intset_iterate_next) but trades the original's
 // compressed bitmap batching for the simpler ordered-set representation.
 
-#include "pgcpp/lib/integerset.hpp"
+#include "lib/integerset.hpp"
 
 #include <utility>
 

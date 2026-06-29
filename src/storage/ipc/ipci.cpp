@@ -1,9 +1,9 @@
 // ipci.cpp — IPC initialization dispatcher.
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/ipci.c.
-#include "pgcpp/storage/ipc/ipci.hpp"
+#include "storage/ipc/ipci.hpp"
 
-#include "pgcpp/storage/ipc/shmem.hpp"
+#include "storage/ipc/shmem.hpp"
 
 namespace pgcpp::storage {
 

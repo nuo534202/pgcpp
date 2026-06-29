@@ -6,7 +6,7 @@
 // compiler validates template syntax even when no explicit instantiation is
 // requested by callers.
 
-#include "pgcpp/lib/dshash.hpp"
+#include "lib/dshash.hpp"
 
 namespace pgcpp::lib {
 

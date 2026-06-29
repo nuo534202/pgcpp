@@ -11,15 +11,15 @@
 // managers (md, etc.). pgcpp only implements md, so the switch is
 // eliminated and md operations are called directly.
 
-#include "pgcpp/storage/smgr.hpp"
+#include "storage/smgr.hpp"
 
 #include <cstring>
 #include <unordered_map>
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::storage {
 using pgcpp::nodes::destroyPallocNode;

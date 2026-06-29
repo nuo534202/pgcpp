@@ -3,9 +3,9 @@
 // Probes a pgcpp/PostgreSQL server by attempting a PsqlClient connection.
 // Returns a ReadyState describing whether the server is accepting connections,
 // rejecting them, not responding, or was not probed at all (bad arguments).
-#include "pgcpp/tools/pg_isready.hpp"
+#include "tools/pg_isready.hpp"
 
-#include "pgcpp/tools/psql_client.hpp"
+#include "tools/psql_client.hpp"
 
 namespace pgcpp::tools {
 

@@ -5,17 +5,17 @@
 // Initializes planner state for a query: builds the RTE array, constructs
 // RelOptInfo for each base relation, and distributes WHERE quals. For
 // pgcpp's single-table workload, the jointree handling is simplified.
-#include "pgcpp/optimizer/plan/init_splan.hpp"
+#include "optimizer/plan/init_splan.hpp"
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/cost.hpp"
-#include "pgcpp/optimizer/path/equivclass.hpp"
-#include "pgcpp/optimizer/util/pathnode.hpp"
-#include "pgcpp/optimizer/util/plancat.hpp"
-#include "pgcpp/optimizer/util/relnode.hpp"
-#include "pgcpp/optimizer/util/restrictinfo.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "catalog/catalog.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/cost.hpp"
+#include "optimizer/path/equivclass.hpp"
+#include "optimizer/util/pathnode.hpp"
+#include "optimizer/util/plancat.hpp"
+#include "optimizer/util/relnode.hpp"
+#include "optimizer/util/restrictinfo.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::catalog::GetCatalog;

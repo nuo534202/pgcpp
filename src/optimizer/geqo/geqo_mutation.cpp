@@ -6,11 +6,11 @@
 // positions in the chromosome at uniform random and exchange their genes.
 // This is the simplest mutation operator that preserves the permutation
 // invariant (each relation index appears exactly once).
-#include "pgcpp/optimizer/geqo/geqo_mutation.hpp"
+#include "optimizer/geqo/geqo_mutation.hpp"
 
 #include <algorithm>
 
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

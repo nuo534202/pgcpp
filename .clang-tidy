@@ -20,7 +20,7 @@ Checks: >
 
 WarningsAsErrors: ''
 
-HeaderFilterRegex: ".*pgcpp/.*"
+HeaderFilterRegex: ".*/include/.*"
 
 CheckOptions:
   - key:   readability-identifier-naming.ClassCase

@@ -12,24 +12,24 @@
 //   - Visible tuples are cached per-page to avoid repeated visibility checks
 //   - heap_insert extends the relation when no page has enough free space
 
-#include "pgcpp/access/heapam.hpp"
+#include "access/heapam.hpp"
 
 #include <cstring>
 #include <string>
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/storage/bufpage.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
-#include "pgcpp/transaction/snapshot.hpp"
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/visibility.hpp"
-#include "pgcpp/transaction/xact.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "access/rel.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/bufpage.hpp"
+#include "transaction/heap_tuple.hpp"
+#include "transaction/snapshot.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/visibility.hpp"
+#include "transaction/xact.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::access {
 using pgcpp::nodes::destroyPallocNode;

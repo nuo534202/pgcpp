@@ -1,7 +1,7 @@
 // shmqueue.cpp — Doubly-linked list in shared memory.
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/shmqueue.c.
-#include "pgcpp/storage/ipc/shmqueue.hpp"
+#include "storage/ipc/shmqueue.hpp"
 
 namespace pgcpp::storage {
 

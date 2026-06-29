@@ -4,23 +4,23 @@
 //
 // Implements ExecEvalExpr (dispatch on NodeTag), ExecQual (WHERE clause
 // evaluation), and ExecProject (target list evaluation).
-#include "pgcpp/executor/exec_expr.hpp"
+#include "executor/exec_expr.hpp"
 
 #include <cstring>
 #include <string>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_operator.hpp"
-#include "pgcpp/catalog/pg_proc.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datetime.hpp"
-#include "pgcpp/types/datum.hpp"
-#include "pgcpp/types/string_funcs.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_operator.hpp"
+#include "catalog/pg_proc.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datetime.hpp"
+#include "types/datum.hpp"
+#include "types/string_funcs.hpp"
 
 namespace pgcpp::executor {
 using pgcpp::nodes::destroyPallocNode;

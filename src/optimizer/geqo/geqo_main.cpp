@@ -24,22 +24,22 @@
 // actual Path tree is built only once, for the winner. This two-phase
 // strategy avoids the per-evaluation memory growth that PG pays for with
 // a per-evaluation memory context reset.
-#include "pgcpp/optimizer/geqo/geqo_main.hpp"
+#include "optimizer/geqo/geqo_main.hpp"
 
 #include <algorithm>
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/geqo/geqo_copy.hpp"
-#include "pgcpp/optimizer/geqo/geqo_cx.hpp"
-#include "pgcpp/optimizer/geqo/geqo_eval.hpp"
-#include "pgcpp/optimizer/geqo/geqo_misc.hpp"
-#include "pgcpp/optimizer/geqo/geqo_mutation.hpp"
-#include "pgcpp/optimizer/geqo/geqo_params.hpp"
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
-#include "pgcpp/optimizer/geqo/geqo_recombination.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/optimizer/util/relnode.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/geqo/geqo_copy.hpp"
+#include "optimizer/geqo/geqo_cx.hpp"
+#include "optimizer/geqo/geqo_eval.hpp"
+#include "optimizer/geqo/geqo_misc.hpp"
+#include "optimizer/geqo/geqo_mutation.hpp"
+#include "optimizer/geqo/geqo_params.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_recombination.hpp"
+#include "optimizer/planner.hpp"
+#include "optimizer/util/relnode.hpp"
 
 namespace pgcpp::optimizer::geqo {
 using pgcpp::nodes::makePallocNode;

@@ -11,14 +11,14 @@
 // BgWriterFlushBuffers (with a large max to drain everything), then
 // calls XLogFlush to push WAL up to the current insert LSN. The new
 // checkpoint LSN is recorded for crash-recovery restart.
-#include "pgcpp/server/checkpointer.hpp"
+#include "server/checkpointer.hpp"
 
 #include <chrono>
 #include <cstdint>
 
-#include "pgcpp/server/bgwriter.hpp"
-#include "pgcpp/server/interrupt.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "server/bgwriter.hpp"
+#include "server/interrupt.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::server {
 

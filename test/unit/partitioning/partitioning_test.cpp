@@ -10,7 +10,7 @@
 //   - Partition pruning: prune by list membership, prune by range bounds,
 //     combine AND/OR steps.
 
-#include "pgcpp/partitioning/partitioning.hpp"
+#include "partitioning/partitioning.hpp"
 
 #include <gtest/gtest.h>
 
@@ -18,10 +18,10 @@
 #include <memory>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/datum.hpp"
 
 namespace {
 

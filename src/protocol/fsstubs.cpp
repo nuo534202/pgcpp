@@ -4,13 +4,13 @@
 // small integers. Each lo_open returns the next free slot; lo_close frees
 // the slot; lo_read/lo_write/lo_lseek/lo_tell/lo_truncate dispatch to the
 // corresponding inv_api function on the descriptor stored in the slot.
-#include "pgcpp/protocol/fsstubs.hpp"
+#include "protocol/fsstubs.hpp"
 
 #include <cstdint>
 #include <cstring>
 #include <mutex>
 
-#include "pgcpp/storage/large_object/inv_api.hpp"
+#include "storage/large_object/inv_api.hpp"
 
 namespace pgcpp::protocol {
 

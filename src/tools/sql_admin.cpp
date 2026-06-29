@@ -4,11 +4,11 @@
 // Each tool builds a single SQL statement from its options struct, connects to
 // the server via PsqlClient, and executes the statement. Identifier and literal
 // quoting reuse the helpers from pg_dump.cpp.
-#include "pgcpp/tools/sql_admin.hpp"
+#include "tools/sql_admin.hpp"
 
 #include <string>
 
-#include "pgcpp/tools/pg_dump.hpp"
+#include "tools/pg_dump.hpp"
 
 namespace pgcpp::tools {
 

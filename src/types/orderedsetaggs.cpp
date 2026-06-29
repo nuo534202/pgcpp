@@ -1,15 +1,15 @@
 // orderedsetaggs.cpp — implementations of ordered-set aggregate helpers.
 
-#include "pgcpp/types/orderedsetaggs.hpp"
+#include "types/orderedsetaggs.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/builtins.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/builtins.hpp"
 
 namespace pgcpp::types {
 

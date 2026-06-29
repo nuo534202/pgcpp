@@ -4,7 +4,7 @@
 // eviction (clock sweep), and dirty page writeback. Uses a small buffer
 // pool to force eviction scenarios.
 
-#include "pgcpp/storage/bufmgr.hpp"
+#include "storage/bufmgr.hpp"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -13,12 +13,12 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/buf_internals.hpp"
-#include "pgcpp/storage/bufpage.hpp"
-#include "pgcpp/storage/smgr.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/buf_internals.hpp"
+#include "storage/bufpage.hpp"
+#include "storage/smgr.hpp"
 
 using pgcpp::memory::AllocSetContext;
 using pgcpp::storage::BlockNumber;

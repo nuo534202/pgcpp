@@ -3,7 +3,7 @@
 // Implements the simplified text-format dump: connect to a server, query the
 // system catalog for tables and columns, and emit DROP/CREATE/COPY/INSERT
 // statements that can be replayed by psql or pg_restore.
-#include "pgcpp/tools/pg_dump.hpp"
+#include "tools/pg_dump.hpp"
 
 #include <ostream>
 #include <sstream>

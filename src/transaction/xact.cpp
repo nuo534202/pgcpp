@@ -15,15 +15,15 @@
 //   - No resource owners (memory contexts handle cleanup)
 //   - No GUC nesting
 //   - No prepared transactions (2PC)
-#include "pgcpp/transaction/xact.hpp"
+#include "transaction/xact.hpp"
 
 #include <cstdio>
 #include <list>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/transaction/snapshot.hpp"
-#include "pgcpp/transaction/transam.hpp"
+#include "common/error/elog.hpp"
+#include "transaction/snapshot.hpp"
+#include "transaction/transam.hpp"
 
 namespace pgcpp::transaction {
 

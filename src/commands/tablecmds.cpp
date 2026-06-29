@@ -4,24 +4,24 @@
 // These handlers were previously inline in src/protocol/utility.cpp;
 // they have been moved here so utility.cpp can be a thin dispatcher
 // (matching PostgreSQL's tcop/utility.c + commands/* separation).
-#include "pgcpp/commands/tablecmds.hpp"
+#include "commands/tablecmds.hpp"
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include "pgcpp/access/heapam.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/storage/smgr.hpp"
-#include "pgcpp/types/builtins.hpp"
+#include "access/heapam.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/parse_type.hpp"
+#include "parser/parsenodes.hpp"
+#include "storage/smgr.hpp"
+#include "types/builtins.hpp"
 
 namespace pgcpp::commands {
 

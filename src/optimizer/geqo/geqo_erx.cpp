@@ -8,13 +8,13 @@
 // neighbors in both parents. The result is a valid permutation that
 // preserves parental adjacency — useful for join ordering, where adjacent
 // relations share join clauses.
-#include "pgcpp/optimizer/geqo/geqo_erx.hpp"
+#include "optimizer/geqo/geqo_erx.hpp"
 
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

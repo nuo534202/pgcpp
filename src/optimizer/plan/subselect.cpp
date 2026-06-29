@@ -11,14 +11,14 @@
 // a single-column inner query are unfolded. kExists / kAll / kRowcompare
 // are left as SubLink nodes (skeleton; the executor falls back to one-row-
 // at-a-time evaluation).
-#include "pgcpp/optimizer/plan/subselect.hpp"
+#include "optimizer/plan/subselect.hpp"
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/planner.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::catalog::Oid;

@@ -5,10 +5,10 @@
 // is removed from the owning MemoryContext (to avoid a double-destroy when the
 // context is later reset), and the block is pfree'd.
 
-#include "pgcpp/regex/regfree.hpp"
+#include "regex/regfree.hpp"
 
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::regex {
 

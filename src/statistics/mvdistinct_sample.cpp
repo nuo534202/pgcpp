@@ -5,7 +5,7 @@
 // of distinct values in a population from a uniform random sample using the
 // number of singletons (values appearing exactly once) in the sample.
 
-#include "pgcpp/statistics/mvdistinct_sample.hpp"
+#include "statistics/mvdistinct_sample.hpp"
 
 namespace pgcpp::statistics {
 

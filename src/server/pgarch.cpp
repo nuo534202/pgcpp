@@ -6,7 +6,7 @@
 // and archiving each via the configured archive_command (see
 // shell_archive.h). In pgcpp (single-process), the archiver maintains
 // a queue of pending archive requests; PgArchiverMain processes them.
-#include "pgcpp/server/pgarch.hpp"
+#include "server/pgarch.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -15,8 +15,8 @@
 #include <utility>
 #include <vector>
 
-#include "pgcpp/server/interrupt.hpp"
-#include "pgcpp/server/shell_archive.hpp"
+#include "server/interrupt.hpp"
+#include "server/shell_archive.hpp"
 
 namespace pgcpp::server {
 

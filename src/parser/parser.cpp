@@ -5,15 +5,15 @@
 // C++ parser. Also implements BisonParser::error() since the grammar
 // file (gram.yy) has an empty epilogue.
 
-#include "pgcpp/parser/parser.hpp"
+#include "parser/parser.hpp"
 
 #include <cstdio>
 #include <string>
 #include <vector>
 
+#include "common/error/elog.hpp"
 #include "gram.tab.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parser_driver.hpp"
+#include "parser/parser_driver.hpp"
 
 // BisonParser::error — called by the Bison parser on syntax errors.
 // We must NOT ereport(ERROR) here because the longjmp would skip the

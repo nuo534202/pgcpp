@@ -1,6 +1,6 @@
 // uuid.cpp — UUID type implementation (PostgreSQL utils/adt/uuid.c).
 
-#include "pgcpp/types/uuid.hpp"
+#include "types/uuid.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -8,8 +8,8 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

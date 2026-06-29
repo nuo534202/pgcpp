@@ -3,7 +3,7 @@
 // Tests parsing of postgresql.conf-style configuration files into a GucConfig
 // and application of those values to a ServerConfig.
 
-#include "pgcpp/server/guc.hpp"
+#include "server/guc.hpp"
 
 #include <gtest/gtest.h>
 #include <sys/stat.h>
@@ -13,8 +13,8 @@
 #include <fstream>
 #include <string>
 
-#include "pgcpp/server/main.hpp"
-#include "pgcpp/server/postmaster.hpp"
+#include "server/main.hpp"
+#include "server/postmaster.hpp"
 
 using pgcpp::server::GucConfig;
 using pgcpp::server::LoadGucFromDataDir;

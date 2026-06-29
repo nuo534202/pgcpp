@@ -5,7 +5,7 @@
 // are well-formed and contain the expected clauses. They do not require a
 // running server — the SQL is sent to the server at runtime, but the
 // generation logic is purely functional and can be unit-tested in isolation.
-#include "pgcpp/tools/psql_describe.hpp"
+#include "tools/psql_describe.hpp"
 
 #include <gtest/gtest.h>
 

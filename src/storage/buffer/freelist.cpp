@@ -15,11 +15,11 @@
 // increments usage_count (up to a max of 5), and the clock sweep must
 // decrement it to 0 before evicting.
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/buf_internals.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/buf_internals.hpp"
+#include "storage/bufmgr.hpp"
 
 namespace pgcpp::storage {
 

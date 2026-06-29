@@ -6,7 +6,7 @@
 // In PostgreSQL this is backed by an SLRU persisted to pg_commit_ts/.
 // pgcpp keeps an in-memory vector indexed by XID, which is sufficient for
 // single-process operation.
-#include "pgcpp/transaction/commit_ts.hpp"
+#include "transaction/commit_ts.hpp"
 
 #include <vector>
 

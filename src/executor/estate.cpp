@@ -6,12 +6,12 @@
 // relations and frees the per-query memory context. QueryDesc ties together
 // a Query, its Plan, the EState, and the top-level PlanState; its destructor
 // tears down the PlanState and EState if still present.
-#include "pgcpp/executor/estate.hpp"
+#include "executor/estate.hpp"
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/executor/node_exec.hpp"
-#include "pgcpp/executor/tupletable.hpp"
+#include "access/rel.hpp"
+#include "common/containers/node.hpp"
+#include "executor/node_exec.hpp"
+#include "executor/tupletable.hpp"
 
 namespace pgcpp::executor {
 

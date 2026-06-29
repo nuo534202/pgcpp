@@ -5,7 +5,7 @@
 // This translation unit pulls in the header so the compiler validates the
 // template definition's syntax as part of pgcpp_core.
 
-#include "pgcpp/lib/rbtree.hpp"
+#include "lib/rbtree.hpp"
 
 namespace pgcpp::lib {
 

@@ -7,14 +7,14 @@
 // The result mirrors PG's to_tsquery() when called with a list of words
 // separated by spaces — the implicit operator is AND.
 
-#include "pgcpp/tsearch/to_tsquery.hpp"
+#include "tsearch/to_tsquery.hpp"
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/tsearch/dict.hpp"
-#include "pgcpp/tsearch/wparser.hpp"
-#include "pgcpp/types/ts_types.hpp"
+#include "tsearch/dict.hpp"
+#include "tsearch/wparser.hpp"
+#include "types/ts_types.hpp"
 
 namespace pgcpp::tsearch {
 

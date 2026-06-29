@@ -5,11 +5,11 @@
 // acknowledge the request without actually creating/dropping a
 // database. (A real implementation would fork+exec initdb or copy a
 // template database.)
-#include "pgcpp/commands/dbcommands.hpp"
+#include "commands/dbcommands.hpp"
 
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

@@ -5,7 +5,7 @@
 // Wraps fork() with the standard post-fork cleanup: reset signal handlers,
 // detach from controlling terminal, redirect stdio to /dev/null. Records
 // the role name for diagnostics.
-#include "pgcpp/server/fork_process.hpp"
+#include "server/fork_process.hpp"
 
 #include <fcntl.h>
 #include <signal.h>
@@ -16,7 +16,7 @@
 #include <string>
 #include <utility>
 
-#include "pgcpp/server/interrupt.hpp"
+#include "server/interrupt.hpp"
 
 namespace pgcpp::server {
 

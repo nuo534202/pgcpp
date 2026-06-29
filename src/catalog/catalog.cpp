@@ -4,22 +4,22 @@
 // helpers to C++20. Row storage is a std::vector of palloc-allocated pointers,
 // preserving PostgreSQL's "rows live in a long-lived memory context" model.
 
-#include "pgcpp/catalog/catalog.hpp"
+#include "catalog/catalog.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <utility>
 
-#include "pgcpp/catalog/pg_aggregate.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_cast.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/catalog/pg_collation.hpp"
-#include "pgcpp/catalog/pg_operator.hpp"
-#include "pgcpp/catalog/pg_proc.hpp"
-#include "pgcpp/catalog/pg_type.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "catalog/pg_aggregate.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_cast.hpp"
+#include "catalog/pg_class.hpp"
+#include "catalog/pg_collation.hpp"
+#include "catalog/pg_operator.hpp"
+#include "catalog/pg_proc.hpp"
+#include "catalog/pg_type.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::catalog {
 

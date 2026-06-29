@@ -4,10 +4,10 @@
 // (the message-handling subset). Network I/O is stubbed; each call
 // records the LSN it "would have sent" on the targeted WalSnd and
 // returns a small struct describing what was sent.
-#include "pgcpp/replication/walsenderfuncs.hpp"
+#include "replication/walsenderfuncs.hpp"
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "common/error/elog.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
 

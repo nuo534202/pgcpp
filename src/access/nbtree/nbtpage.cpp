@@ -6,11 +6,11 @@
 // for B-tree pages. The B-tree uses the standard page layout with a
 // BTPageOpaqueData special area at the end of each page.
 
-#include "pgcpp/access/nbtpage.hpp"
+#include "access/nbtpage.hpp"
 
 #include <cstring>
 
-#include "pgcpp/storage/bufpage.hpp"
+#include "storage/bufpage.hpp"
 
 namespace pgcpp::access {
 

@@ -19,8 +19,8 @@
 #include <sstream>
 #include <string>
 
-#include "pgcpp/tools/psql_client.hpp"
-#include "pgcpp/tools/psql_command.hpp"
+#include "tools/psql_client.hpp"
+#include "tools/psql_command.hpp"
 
 using pgcpp::tools::ExecuteMetaCommand;
 using pgcpp::tools::FormatQueryResult;

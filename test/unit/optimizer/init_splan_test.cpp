@@ -4,20 +4,20 @@
 // distribute_quals_to_rels. Verifies that PlannerInfo is correctly populated
 // with simple_rte_array, simple_rel_array, and baserestrictinfo.
 
-#include "pgcpp/optimizer/plan/init_splan.hpp"
+#include "optimizer/plan/init_splan.hpp"
 
 #include <gtest/gtest.h>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/optimizer/path.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/optimizer/util/restrictinfo.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "optimizer/path.hpp"
+#include "optimizer/planner.hpp"
+#include "optimizer/util/restrictinfo.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 using pgcpp::nodes::makePallocNode;
 using pgcpp::nodes::NodeTag;

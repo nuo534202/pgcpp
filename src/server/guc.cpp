@@ -5,7 +5,7 @@
 // Parses a postgresql.conf-style file into a key-value map. The parser is
 // intentionally minimal: it handles comments, blank lines, `key = value`
 // lines, optional single-quoted values, and case-insensitive booleans.
-#include "pgcpp/server/guc.hpp"
+#include "server/guc.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -14,7 +14,7 @@
 #include <fstream>
 #include <string>
 
-#include "pgcpp/server/postmaster.hpp"
+#include "server/postmaster.hpp"
 
 namespace pgcpp::server {
 

@@ -4,13 +4,13 @@
 // PG stores origins in pg_replication_origin catalog; pgcpp keeps an
 // in-process std::map<uint16, CommitOrigin> and tracks the current
 // session's origin id and LSN.
-#include "pgcpp/replication/origin.hpp"
+#include "replication/origin.hpp"
 
 #include <map>
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "common/error/elog.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
 

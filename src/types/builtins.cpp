@@ -1,4 +1,4 @@
-#include "pgcpp/types/builtins.hpp"
+#include "types/builtins.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -11,9 +11,9 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/numutils.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/numutils.hpp"
 
 namespace pgcpp::types {
 

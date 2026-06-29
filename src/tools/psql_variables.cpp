@@ -4,7 +4,7 @@
 //
 // Maintains the map of psql string variables (\set NAME VALUE) and performs
 // `:NAME` / `:'NAME'` substitution in SQL and meta-command input.
-#include "pgcpp/tools/psql_variables.hpp"
+#include "tools/psql_variables.hpp"
 
 #include <cctype>
 #include <map>

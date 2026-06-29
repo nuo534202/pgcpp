@@ -7,16 +7,16 @@
 //   ExecutorRun    — fetch the next result tuple
 //   ExecutorFinish — post-run cleanup (no-op for SELECT)
 //   ExecutorEnd    — tear down plan tree and EState
-#include "pgcpp/executor/exec_main.hpp"
+#include "executor/exec_main.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/node_exec.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/transaction/snapshot.hpp"
-#include "pgcpp/transaction/xact.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "executor/estate.hpp"
+#include "executor/node_exec.hpp"
+#include "parser/parsenodes.hpp"
+#include "transaction/snapshot.hpp"
+#include "transaction/xact.hpp"
 
 namespace pgcpp::executor {
 

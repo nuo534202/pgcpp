@@ -7,14 +7,14 @@
 // layout follows the same alignment rules as heap tuples, starting after the
 // 8-byte IndexTupleData header and optional null bitmap.
 
-#include "pgcpp/access/indextuple.hpp"
+#include "access/indextuple.hpp"
 
 #include <cstring>
 
-#include "pgcpp/access/heapam.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "access/heapam.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::access {
 using pgcpp::memory::palloc;

@@ -14,7 +14,7 @@
 // touch the client filesystem where appropriate. Once the fastpath is
 // wired up, the placeholder queries can be replaced without changing the
 // public API.
-#include "pgcpp/tools/psql_large_obj.hpp"
+#include "tools/psql_large_obj.hpp"
 
 #include <fstream>
 #include <iomanip>
@@ -22,7 +22,7 @@
 #include <sstream>
 #include <string>
 
-#include "pgcpp/tools/psql_client.hpp"
+#include "tools/psql_client.hpp"
 
 namespace pgcpp::tools {
 

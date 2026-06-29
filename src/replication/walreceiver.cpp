@@ -3,9 +3,9 @@
 // Converted from PostgreSQL 15's src/backend/replication/walreceiver.c.
 // Network code is stubbed: WalRcvStart records the requested conninfo /
 // slotname / startpoint and transitions the state to kStreaming.
-#include "pgcpp/replication/walreceiver.hpp"
+#include "replication/walreceiver.hpp"
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::replication {
 

@@ -28,17 +28,17 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/lib/binaryheap.hpp"
-#include "pgcpp/lib/bloom.hpp"
-#include "pgcpp/lib/dshash.hpp"
-#include "pgcpp/lib/hyperloglog.hpp"
-#include "pgcpp/lib/ilist.hpp"
-#include "pgcpp/lib/integerset.hpp"
-#include "pgcpp/lib/pairingheap.hpp"
-#include "pgcpp/lib/rbtree.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "lib/binaryheap.hpp"
+#include "lib/bloom.hpp"
+#include "lib/dshash.hpp"
+#include "lib/hyperloglog.hpp"
+#include "lib/ilist.hpp"
+#include "lib/integerset.hpp"
+#include "lib/pairingheap.hpp"
+#include "lib/rbtree.hpp"
 
 namespace {
 

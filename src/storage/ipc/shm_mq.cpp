@@ -1,7 +1,7 @@
 // shm_mq.cpp — Shared-memory message queue (ring buffer).
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/shm_mq.c.
-#include "pgcpp/storage/ipc/shm_mq.hpp"
+#include "storage/ipc/shm_mq.hpp"
 
 #include <algorithm>
 #include <cstring>

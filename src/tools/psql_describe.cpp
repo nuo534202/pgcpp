@@ -3,7 +3,7 @@
 // Converted from PostgreSQL 15's src/bin/psql/describe.c. Each function
 // returns a SELECT statement against pg_catalog that the psql client sends
 // to the server via the simple query protocol.
-#include "pgcpp/tools/psql_describe.hpp"
+#include "tools/psql_describe.hpp"
 
 namespace pgcpp::tools {
 

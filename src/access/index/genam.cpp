@@ -7,7 +7,7 @@
 // during a scan. pgcpp extends ScanKeyData with sk_key_kind / sk_key_len
 // so the B-tree AM can compare without a function manager.
 
-#include "pgcpp/access/genam.hpp"
+#include "access/genam.hpp"
 
 namespace pgcpp::access {
 

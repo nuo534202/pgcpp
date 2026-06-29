@@ -24,9 +24,9 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/server/bootstrap.hpp"
-#include "pgcpp/server/postmaster.hpp"
-#include "pgcpp/tools/psql_client.hpp"
+#include "server/bootstrap.hpp"
+#include "server/postmaster.hpp"
+#include "tools/psql_client.hpp"
 
 using pgcpp::server::BootstrapCluster;
 using pgcpp::server::BootstrapResult;

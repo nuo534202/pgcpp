@@ -3,7 +3,7 @@
 // Mirrors PostgreSQL's utils/adt/varbit.c with a simplified in-memory VarBit
 // struct.
 
-#include "pgcpp/types/varbit.hpp"
+#include "types/varbit.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -11,8 +11,8 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

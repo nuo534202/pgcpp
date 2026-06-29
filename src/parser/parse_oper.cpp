@@ -16,17 +16,17 @@
 // All operator metadata is read from the Catalog (pg_operator rows
 // populated by BootstrapCatalog). No hardcoded operator table remains.
 
-#include "pgcpp/parser/parse_oper.hpp"
+#include "parser/parse_oper.hpp"
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_operator.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parse_coerce.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_operator.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parse_coerce.hpp"
+#include "parser/parse_type.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::parser {
 

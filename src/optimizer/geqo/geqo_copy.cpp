@@ -6,7 +6,7 @@
 // the copy is a straightforward member-wise assignment; the helper exists to
 // keep the PG file layout and to provide a single point where future
 // non-trivial deep-copy semantics (e.g., cached path trees) can be added.
-#include "pgcpp/optimizer/geqo/geqo_copy.hpp"
+#include "optimizer/geqo/geqo_copy.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

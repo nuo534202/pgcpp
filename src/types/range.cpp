@@ -3,7 +3,7 @@
 // Mirrors PostgreSQL's utils/adt/rangetypes.c with a simplified RangeDatum
 // struct that supports int4/int8/numeric/timestamp element types.
 
-#include "pgcpp/types/range.hpp"
+#include "types/range.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -11,11 +11,11 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/builtins.hpp"
-#include "pgcpp/types/datetime.hpp"
-#include "pgcpp/types/numeric.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/builtins.hpp"
+#include "types/datetime.hpp"
+#include "types/numeric.hpp"
 
 namespace pgcpp::types {
 

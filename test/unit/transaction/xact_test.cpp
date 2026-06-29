@@ -4,11 +4,11 @@
 // transaction state machine (BEGIN/COMMIT/ROLLBACK), savepoints, and
 // command counter increment.
 
-#include "pgcpp/transaction/xact.hpp"
+#include "transaction/xact.hpp"
 
 #include <gtest/gtest.h>
 
-#include "pgcpp/transaction/transam.hpp"
+#include "transaction/transam.hpp"
 
 using pgcpp::transaction::AbortCurrentTransaction;
 using pgcpp::transaction::AbortTransactionBlock;

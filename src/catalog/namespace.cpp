@@ -4,16 +4,16 @@
 //
 // pgcpp has no schema concept yet; all relations live in a single implicit
 // "public" namespace. schemaname on RangeVar is ignored.
-#include "pgcpp/catalog/namespace.hpp"
+#include "catalog/namespace.hpp"
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_class.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::catalog {
 

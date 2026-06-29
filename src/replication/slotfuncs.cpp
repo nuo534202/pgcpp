@@ -3,13 +3,13 @@
 // Converted from PostgreSQL 15's src/backend/replication/slotfuncs.c.
 // These mirror pg_create_replication_slot / pg_drop_replication_slot /
 // pg_replication_slot_advance. Errors go through ereport(ERROR).
-#include "pgcpp/replication/slotfuncs.hpp"
+#include "replication/slotfuncs.hpp"
 
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/replication/replutil.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "common/error/elog.hpp"
+#include "replication/replutil.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
 

@@ -3,7 +3,7 @@
 // Mirrors PostgreSQL's utils/adt/rowtypes.c. Parses a literal of the form
 // "(val1,val2,val3)" with the standard quoting rules.
 
-#include "pgcpp/types/rowtypes.hpp"
+#include "types/rowtypes.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -11,9 +11,9 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/builtins.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/builtins.hpp"
 
 namespace pgcpp::types {
 

@@ -3,22 +3,22 @@
 // Converted from PostgreSQL 15's src/backend/parser/parse_expr.c.
 // Transforms raw parse tree expressions (A_Expr, A_Const, ColumnRef, etc.)
 // into transformed expression nodes (OpExpr, Const, Var, etc.).
-#include "pgcpp/parser/parse_expr.hpp"
+#include "parser/parse_expr.hpp"
 
 #include <cstring>
 #include <string>
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/analyze.hpp"
-#include "pgcpp/parser/parse_clause.hpp"
-#include "pgcpp/parser/parse_coerce.hpp"
-#include "pgcpp/parser/parse_func.hpp"
-#include "pgcpp/parser/parse_oper.hpp"
-#include "pgcpp/parser/parse_relation.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "parser/analyze.hpp"
+#include "parser/parse_clause.hpp"
+#include "parser/parse_coerce.hpp"
+#include "parser/parse_func.hpp"
+#include "parser/parse_oper.hpp"
+#include "parser/parse_relation.hpp"
+#include "parser/parse_type.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::parser {
 

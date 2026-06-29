@@ -3,15 +3,15 @@
 // Parses 'F' (FunctionCall) messages, dispatches to a registered handler
 // keyed by function OID, and sends a 'V' (FunctionCallResponse) message
 // containing the result.
-#include "pgcpp/protocol/fastpath.hpp"
+#include "protocol/fastpath.hpp"
 
 #include <map>
 #include <mutex>
 #include <string>
 #include <vector>
 
-#include "pgcpp/protocol/auth.hpp"  // SendErrorResponse
-#include "pgcpp/protocol/pqformat.hpp"
+#include "protocol/auth.hpp"  // SendErrorResponse
+#include "protocol/pqformat.hpp"
 
 namespace pgcpp::protocol {
 

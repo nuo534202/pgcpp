@@ -5,18 +5,18 @@
 // Each function is a thin wrapper over the global Catalog (Catalog::GetCatalog),
 // returning default values (InvalidOid / nullptr / false) on miss and never
 // ereport(ERROR). String results are palloc'd in the current memory context.
-#include "pgcpp/catalog/lsyscache.hpp"
+#include "catalog/lsyscache.hpp"
 
 #include <cstring>
 #include <string>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/catalog/pg_operator.hpp"
-#include "pgcpp/catalog/pg_proc.hpp"
-#include "pgcpp/catalog/pg_type.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
+#include "catalog/pg_operator.hpp"
+#include "catalog/pg_proc.hpp"
+#include "catalog/pg_type.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::catalog {
 

@@ -3,7 +3,7 @@
 // pgcpp does not link libgssapi_krb5, so the GSSAPI auth handler is a stub
 // that always reports "GSS not available". The API is preserved so that
 // auth.c can dispatch to it for the "gss" pg_hba method.
-#include "pgcpp/protocol/gssapi.hpp"
+#include "protocol/gssapi.hpp"
 
 #include <mutex>
 #include <string>

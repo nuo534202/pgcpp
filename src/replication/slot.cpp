@@ -4,12 +4,12 @@
 //
 // PG stores slots in shared memory; pgcpp keeps an in-process
 // std::map<std::string, ReplicationSlot> keyed by slot name.
-#include "pgcpp/replication/slot.hpp"
+#include "replication/slot.hpp"
 
 #include <algorithm>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "common/error/elog.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
 

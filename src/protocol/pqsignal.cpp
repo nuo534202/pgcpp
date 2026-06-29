@@ -4,7 +4,7 @@
 // handlers (matching PG's behaviour for non-blocking sockets). The
 // `no_restart` variant is used for signals that must interrupt blocking
 // syscalls (SIGALRM, SIGINT).
-#include "pgcpp/protocol/pqsignal.hpp"
+#include "protocol/pqsignal.hpp"
 
 #include <csignal>
 #include <cstring>

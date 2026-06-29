@@ -1,12 +1,12 @@
 // predicate.cpp — Predicate locks for SERIALIZABLE isolation.
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/predicate.c.
-#include "pgcpp/storage/ipc/predicate.hpp"
+#include "storage/ipc/predicate.hpp"
 
 #include <algorithm>
 #include <vector>
 
-#include "pgcpp/storage/block.hpp"
+#include "storage/block.hpp"
 
 namespace pgcpp::storage {
 

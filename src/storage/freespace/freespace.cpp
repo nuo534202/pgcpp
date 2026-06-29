@@ -1,7 +1,7 @@
 // freespace.cpp — Free Space Map (FSM) per-relation cache.
 //
 // Converted from PostgreSQL 15's src/backend/storage/freespace/freespace.c.
-#include "pgcpp/storage/freespace/freespace.hpp"
+#include "storage/freespace/freespace.hpp"
 
 #include <map>
 

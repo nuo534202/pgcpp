@@ -5,10 +5,10 @@
 // Creates IndexPath candidates for relations that have B-tree indexes
 // matching the query's WHERE clause. For pgcpp's ClickBench workload,
 // index path generation is minimal — most queries use full table scans.
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/cost.hpp"
-#include "pgcpp/optimizer/path.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/cost.hpp"
+#include "optimizer/path.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::optimizer {
 

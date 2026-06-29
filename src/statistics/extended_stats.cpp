@@ -14,12 +14,12 @@
 //     (the parser would normally resolve names to attnums via the relation's
 //     attribute list).
 
-#include "pgcpp/statistics/extended_stats.hpp"
+#include "statistics/extended_stats.hpp"
 
 #include <map>
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::statistics {
 

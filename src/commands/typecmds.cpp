@@ -2,11 +2,11 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/typecmds.c.
 // pgcpp has no user-defined type system yet; this is a stub.
-#include "pgcpp/commands/typecmds.hpp"
+#include "commands/typecmds.hpp"
 
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

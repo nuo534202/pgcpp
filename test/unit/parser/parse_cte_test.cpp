@@ -10,25 +10,25 @@
 //   * End-to-end: "WITH cte AS (SELECT ...) SELECT ... FROM cte" must
 //     produce a Query whose range table contains a subquery RTE for cte.
 
-#include "pgcpp/parser/parse_cte.hpp"
+#include "parser/parse_cte.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/catalog/bootstrap_catalog.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/analyze.hpp"
-#include "pgcpp/parser/parse_node.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/parser.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "catalog/bootstrap_catalog.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/syscache.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/analyze.hpp"
+#include "parser/parse_node.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/parser.hpp"
+#include "parser/primnodes.hpp"
 
 using pgcpp::catalog::BootstrapCatalog;
 using pgcpp::catalog::Catalog;

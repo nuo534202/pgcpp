@@ -5,19 +5,19 @@
 // add_path, and cheapest_path. Verifies that each Path subclass is correctly
 // initialized with its type, parent_rel, and cost estimates.
 
-#include "pgcpp/optimizer/util/pathnode.hpp"
+#include "optimizer/util/pathnode.hpp"
 
 #include <gtest/gtest.h>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/optimizer/path.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "executor/plannodes.hpp"
+#include "optimizer/path.hpp"
+#include "optimizer/planner.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
 
 using pgcpp::executor::Agg;
 using pgcpp::nodes::makePallocNode;

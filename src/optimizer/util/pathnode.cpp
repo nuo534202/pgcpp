@@ -6,10 +6,10 @@
 // PathType, links the parent RelOptInfo, and fills in default cost/width
 // from the relation. Cost estimation is left to the caller (or done inline
 // for SeqScan, matching the existing allpaths.cpp pattern).
-#include "pgcpp/optimizer/util/pathnode.hpp"
+#include "optimizer/util/pathnode.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/cost.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/cost.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

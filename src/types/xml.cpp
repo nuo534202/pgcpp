@@ -1,6 +1,6 @@
 // xml.cpp — XML type implementation (PostgreSQL utils/adt/xml.c).
 
-#include "pgcpp/types/xml.hpp"
+#include "types/xml.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -9,9 +9,9 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/builtins.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/builtins.hpp"
 
 namespace pgcpp::types {
 

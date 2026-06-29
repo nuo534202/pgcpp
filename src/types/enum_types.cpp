@@ -2,7 +2,7 @@
 //
 // Mirrors PostgreSQL's utils/adt/enum.c with an in-memory registry.
 
-#include "pgcpp/types/enum_types.hpp"
+#include "types/enum_types.hpp"
 
 #include <cstdint>
 #include <map>
@@ -10,8 +10,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

@@ -6,7 +6,7 @@
 //     std::to_chars, with PG-style special values ("Infinity", "NaN") and
 //     PG-style scientific notation ("1e+20" instead of "1e20").
 
-#include "pgcpp/types/numutils.hpp"
+#include "types/numutils.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -20,8 +20,8 @@
 #include <string_view>
 #include <system_error>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

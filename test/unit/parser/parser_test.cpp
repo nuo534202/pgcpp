@@ -4,7 +4,7 @@
 // RawStmt parse trees. Verifies that ClickBench-relevant SQL constructs
 // parse correctly and produce the expected AST node types.
 
-#include "pgcpp/parser/parser.hpp"
+#include "parser/parser.hpp"
 
 #include <gtest/gtest.h>
 
@@ -12,11 +12,11 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/parsenodes.hpp"
 
 using pgcpp::memory::AllocSetContext;
 using pgcpp::nodes::Node;

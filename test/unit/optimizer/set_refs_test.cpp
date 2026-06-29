@@ -4,20 +4,20 @@
 // rtoffset=0, the fixup is mostly a no-op: Var.varno is already correct.
 // These tests verify that set_plan_references does not corrupt the plan tree.
 
-#include "pgcpp/optimizer/plan/set_refs.hpp"
+#include "optimizer/plan/set_refs.hpp"
 
 #include <gtest/gtest.h>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/optimizer/path.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "executor/plannodes.hpp"
+#include "optimizer/path.hpp"
+#include "optimizer/planner.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 using pgcpp::executor::Agg;
 using pgcpp::executor::Plan;

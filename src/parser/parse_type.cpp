@@ -3,21 +3,21 @@
 // Converted from PostgreSQL 15's src/backend/parser/parse_type.c.
 // Provides typenameTypeId() and related helpers to resolve type names
 // to OIDs during parse analysis.
-#include "pgcpp/parser/parse_type.hpp"
+#include "parser/parse_type.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <string>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_type.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parse_node.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_type.hpp"
+#include "catalog/syscache.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parse_node.hpp"
+#include "parser/parsenodes.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::parser {
 

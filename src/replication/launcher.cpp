@@ -2,7 +2,7 @@
 //
 // Converted from PostgreSQL 15's src/backend/replication/logical/launcher.c.
 // Stubbed: ApplyLauncherMain just records the cycle count and returns 0.
-#include "pgcpp/replication/launcher.hpp"
+#include "replication/launcher.hpp"
 
 #include <chrono>
 #include <cstdint>

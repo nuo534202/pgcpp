@@ -5,7 +5,7 @@
 // ts_headline — extract a window of words around the first match.
 // ts_rewrite  — substitute leaf lexemes with replacement subtrees.
 
-#include "pgcpp/tsearch/ts_utils.hpp"
+#include "tsearch/ts_utils.hpp"
 
 #include <algorithm>
 #include <cctype>

@@ -6,16 +6,16 @@
 // its child to the parent HashJoin, which builds the hash table. The
 // Hash node itself is mostly a pass-through; the hash table is stored
 // in the HashState and managed by the HashJoin.
-#include "pgcpp/executor/node_hash.hpp"
+#include "executor/node_hash.hpp"
 
 #include <new>
 
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::executor {
 

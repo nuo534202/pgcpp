@@ -4,12 +4,12 @@
 // pgcpp's EXPLAIN currently prints a placeholder plan description
 // to stdout; full plan-tree dumping is deferred until the executor
 // exposes an ExplainState API.
-#include "pgcpp/commands/explain.hpp"
+#include "commands/explain.hpp"
 
 #include <iostream>
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

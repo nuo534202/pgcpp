@@ -3,11 +3,11 @@
 // Tests lock acquisition/release, the compatibility matrix, session vs.
 // transaction locks, and relation-level lock helpers.
 
-#include "pgcpp/transaction/lock.hpp"
+#include "transaction/lock.hpp"
 
 #include <gtest/gtest.h>
 
-#include "pgcpp/transaction/lmgr.hpp"
+#include "transaction/lmgr.hpp"
 
 using pgcpp::catalog::Oid;
 using pgcpp::transaction::GetLockCount;

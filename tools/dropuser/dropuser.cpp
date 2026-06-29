@@ -11,7 +11,7 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/tools/sql_admin.hpp"
+#include "tools/sql_admin.hpp"
 
 using pgcpp::tools::AdminResult;
 using pgcpp::tools::DropRole;

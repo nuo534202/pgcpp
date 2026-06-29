@@ -7,18 +7,18 @@
 //
 // Supports INNER and LEFT joins. For LEFT joins, unmatched outer
 // tuples produce a NULL-padded output row.
-#include "pgcpp/executor/node_mergejoin.hpp"
+#include "executor/node_mergejoin.hpp"
 
 #include <new>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "common/containers/node.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::executor {
 

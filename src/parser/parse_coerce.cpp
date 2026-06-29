@@ -4,15 +4,15 @@
 // Implements type coercion between compatible types (e.g., int4 -> float8,
 // unknown -> text). For ClickBench, we need numeric promotions and
 // string type resolution.
-#include "pgcpp/parser/parse_coerce.hpp"
+#include "parser/parse_coerce.hpp"
 
 #include <cstring>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/types/builtins.hpp"
-#include "pgcpp/types/datetime.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parse_type.hpp"
+#include "types/builtins.hpp"
+#include "types/datetime.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::parser {
 

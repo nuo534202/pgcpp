@@ -3,14 +3,14 @@
 // Deduplicates a sorted input. Assumes the child produces tuples
 // already sorted on uniq_colIdx columns so duplicates are adjacent.
 // Returns a tuple only when it differs from the previously returned one.
-#include "pgcpp/executor/node_unique.hpp"
+#include "executor/node_unique.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
+#include "common/containers/node.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
 
 namespace pgcpp::executor {
 

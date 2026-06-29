@@ -1,12 +1,12 @@
 // exec_utils.cpp — Shared executor utility helpers.
-#include "pgcpp/executor/exec_utils.hpp"
+#include "executor/exec_utils.hpp"
 
 #include <cstring>
 #include <new>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::executor {
 using pgcpp::nodes::makePallocNode;

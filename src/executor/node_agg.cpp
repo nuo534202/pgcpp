@@ -9,23 +9,23 @@
 // Execution is two-phase:
 //   1. Consume all child tuples, accumulating per-group state.
 //   2. Output one tuple per group (or a single tuple for plain agg).
-#include "pgcpp/executor/node_agg.hpp"
+#include "executor/node_agg.hpp"
 
 #include <cstring>
 #include <new>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_proc.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/parser/parse_node.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_proc.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
+#include "parser/parse_node.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::executor {
 

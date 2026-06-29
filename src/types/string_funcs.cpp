@@ -5,7 +5,7 @@
 // implemented with a direct state machine (matching PostgreSQL's approach);
 // regexp_replace/substring use C++ <regex>.
 
-#include "pgcpp/types/string_funcs.hpp"
+#include "types/string_funcs.hpp"
 
 #include <cctype>
 #include <cstring>
@@ -13,9 +13,9 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/builtins.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/builtins.hpp"
 
 namespace pgcpp::types {
 

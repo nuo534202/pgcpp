@@ -1,12 +1,12 @@
-#include "pgcpp/common/containers/string_info.hpp"
+#include "common/containers/string_info.hpp"
 
 #include <cstdarg>
 #include <cstdio>
 #include <new>
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::containers {
 using pgcpp::nodes::makePallocNode;

@@ -8,11 +8,11 @@
 //   pos_entry   := digit+ weight?
 //   weight      := 'A' | 'B' | 'C' | 'D'
 
-#include "pgcpp/tsearch/tsvector_parser.hpp"
+#include "tsearch/tsvector_parser.hpp"
 
 #include <cctype>
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::tsearch {
 

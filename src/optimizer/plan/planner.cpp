@@ -10,20 +10,20 @@
 // subquery_planner → grouping_planner → query_planner) exercised by the
 // new unit tests. The existing planner()/subplanner() entry points remain
 // unchanged for ClickBench compatibility.
-#include "pgcpp/optimizer/planner.hpp"
+#include "optimizer/planner.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/optimizer/geqo/geqo_main.hpp"
-#include "pgcpp/optimizer/plan/create_plan.hpp"
-#include "pgcpp/optimizer/plan/init_splan.hpp"
-#include "pgcpp/optimizer/plan/set_refs.hpp"
-#include "pgcpp/optimizer/util/pathnode.hpp"
-#include "pgcpp/optimizer/util/relnode.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "executor/plannodes.hpp"
+#include "optimizer/geqo/geqo_main.hpp"
+#include "optimizer/plan/create_plan.hpp"
+#include "optimizer/plan/init_splan.hpp"
+#include "optimizer/plan/set_refs.hpp"
+#include "optimizer/util/pathnode.hpp"
+#include "optimizer/util/relnode.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

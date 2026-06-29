@@ -13,14 +13,14 @@
 //   - No outer-join barrier tracking (treat all ECs as below-inner-join).
 //   - No volatile-expression rejection (callers must guard).
 //   - Member equality is structural (same NodeTag + same Var fields).
-#include "pgcpp/optimizer/path/equivclass.hpp"
+#include "optimizer/path/equivclass.hpp"
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_operator.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/optimizer/util/restrictinfo.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_operator.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/planner.hpp"
+#include "optimizer/util/restrictinfo.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

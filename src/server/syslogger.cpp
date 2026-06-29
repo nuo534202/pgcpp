@@ -6,7 +6,7 @@
 // processes' stderr and writes them to a log file (or syslog). In pgcpp
 // (single-process), the syslogger is a stateful API: SysLoggerWrite
 // queues a message; SysLoggerMain processes the queue.
-#include "pgcpp/server/syslogger.hpp"
+#include "server/syslogger.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/server/interrupt.hpp"
+#include "server/interrupt.hpp"
 
 namespace pgcpp::server {
 

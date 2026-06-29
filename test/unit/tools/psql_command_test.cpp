@@ -5,7 +5,7 @@
 // commands, and the SQL-generating commands (\dt, \dv, \l, \du, \d) which
 // are verified by checking that a query was sent to a fake client and
 // that the result was printed to the injected output stream.
-#include "pgcpp/tools/psql_command.hpp"
+#include "tools/psql_command.hpp"
 
 #include <gtest/gtest.h>
 
@@ -13,7 +13,7 @@
 #include <sstream>
 #include <string>
 
-#include "pgcpp/tools/psql_client.hpp"
+#include "tools/psql_client.hpp"
 
 using pgcpp::tools::ExecuteMetaCommand;
 using pgcpp::tools::MetaCommandResult;

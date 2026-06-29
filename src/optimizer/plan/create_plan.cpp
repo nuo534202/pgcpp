@@ -6,14 +6,14 @@
 // For scan paths, builds the target list and extracts scan clauses from the
 // RelOptInfo's baserestrictinfo. For upper nodes (Agg/Sort), recursively
 // translates the subpath. Join paths are skeleton implementations.
-#include "pgcpp/optimizer/plan/create_plan.hpp"
+#include "optimizer/plan/create_plan.hpp"
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/util/pathnode.hpp"
-#include "pgcpp/optimizer/util/restrictinfo.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/util/pathnode.hpp"
+#include "optimizer/util/restrictinfo.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::catalog::GetCatalog;

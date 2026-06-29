@@ -9,7 +9,7 @@
 // catalog + syscache, transaction system, buffer pool, storage directory,
 // and relcache. Each test creates a fresh relation with a known schema.
 
-#include "pgcpp/access/heapam.hpp"
+#include "access/heapam.hpp"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -18,22 +18,22 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/storage/smgr.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
-#include "pgcpp/transaction/snapshot.hpp"
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
+#include "catalog/syscache.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/smgr.hpp"
+#include "transaction/heap_tuple.hpp"
+#include "transaction/snapshot.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
+#include "types/datum.hpp"
 
 using pgcpp::access::att_align;
 using pgcpp::access::att_align_max;

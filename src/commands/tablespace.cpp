@@ -2,11 +2,11 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/tablespace.c.
 // pgcpp uses a single storage directory; this is a stub.
-#include "pgcpp/commands/tablespace.hpp"
+#include "commands/tablespace.hpp"
 
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

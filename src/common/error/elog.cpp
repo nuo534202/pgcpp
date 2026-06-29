@@ -1,11 +1,11 @@
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::error {
 

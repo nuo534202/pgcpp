@@ -1,7 +1,7 @@
 // fd.cpp — Virtual File Descriptor (VFD) cache.
 //
 // Converted from PostgreSQL 15's src/backend/storage/file/fd.c.
-#include "pgcpp/storage/file/fd.hpp"
+#include "storage/file/fd.hpp"
 
 #include <fcntl.h>
 #include <sys/stat.h>

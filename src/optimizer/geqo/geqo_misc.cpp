@@ -5,12 +5,12 @@
 // Implements the small utilities used by geqo_main.cpp: counting base rels,
 // collecting their RT indexes, validating permutation invariants, and
 // extracting the fittest chromosome from a population.
-#include "pgcpp/optimizer/geqo/geqo_misc.hpp"
+#include "optimizer/geqo/geqo_misc.hpp"
 
 #include <algorithm>
 #include <unordered_set>
 
-#include "pgcpp/optimizer/planner.hpp"
+#include "optimizer/planner.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

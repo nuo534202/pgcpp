@@ -8,7 +8,7 @@
 //   3. The child calls BackendMain() which runs the protocol loop.
 //   4. The parent reaps children via SIGCHLD.
 //   5. SIGTERM/SIGINT trigger graceful shutdown.
-#include "pgcpp/server/postmaster.hpp"
+#include "server/postmaster.hpp"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -25,20 +25,20 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/bootstrap_catalog.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/protocol/postgres.hpp"
-#include "pgcpp/protocol/pqformat.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/storage/smgr.hpp"
-#include "pgcpp/transaction/snapshot.hpp"
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
+#include "access/rel.hpp"
+#include "catalog/bootstrap_catalog.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/syscache.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "protocol/postgres.hpp"
+#include "protocol/pqformat.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/smgr.hpp"
+#include "transaction/snapshot.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
 
 namespace pgcpp::server {
 

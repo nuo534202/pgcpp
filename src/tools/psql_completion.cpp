@@ -1,5 +1,5 @@
 // psql_completion.cpp — Tab-completion for psql.
-#include "pgcpp/tools/psql_completion.hpp"
+#include "tools/psql_completion.hpp"
 
 #include <algorithm>
 #include <cctype>

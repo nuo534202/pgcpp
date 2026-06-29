@@ -5,15 +5,15 @@
 // Creates candidate access paths for each base relation in the query.
 // For pgcpp, this generates SeqScan paths (and optionally IndexPath when
 // suitable indexes exist). The cheapest path is selected for each relation.
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/optimizer/cost.hpp"
-#include "pgcpp/optimizer/path.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "catalog/catalog.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "optimizer/cost.hpp"
+#include "optimizer/path.hpp"
+#include "optimizer/planner.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

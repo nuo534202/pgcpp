@@ -4,14 +4,14 @@
 // pgcpp doesn't execute triggers at runtime yet; this stub records
 // the trigger definition by setting relhastriggers on the target
 // relation's pg_class entry so \d and dump can report it.
-#include "pgcpp/commands/trigger.hpp"
+#include "commands/trigger.hpp"
 
 #include <string>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_class.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

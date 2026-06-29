@@ -1,14 +1,14 @@
 // ruleutils.cpp — rule utility display helpers.
 
-#include "pgcpp/types/ruleutils.hpp"
+#include "types/ruleutils.hpp"
 
 #include <cctype>
 #include <cstdint>
 #include <string>
 #include <string_view>
 
-#include "pgcpp/types/builtins.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "types/builtins.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::types {
 

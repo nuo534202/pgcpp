@@ -1,5 +1,5 @@
 // psql_print.cpp — Query-result output formatting (print.c).
-#include "pgcpp/tools/psql_print.hpp"
+#include "tools/psql_print.hpp"
 
 #include <algorithm>
 #include <iomanip>

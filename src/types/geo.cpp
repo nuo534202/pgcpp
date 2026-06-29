@@ -2,7 +2,7 @@
 //
 // Mirrors PostgreSQL's utils/adt/geo_ops.c with simplified storage.
 
-#include "pgcpp/types/geo.hpp"
+#include "types/geo.hpp"
 
 #include <cctype>
 #include <cmath>
@@ -13,8 +13,8 @@
 #include <string_view>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

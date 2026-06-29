@@ -4,7 +4,7 @@
 // treated as separators. Tokens are lowercased so that downstream
 // dictionaries see canonical input.
 
-#include "pgcpp/tsearch/wparser.hpp"
+#include "tsearch/wparser.hpp"
 
 #include <cctype>
 

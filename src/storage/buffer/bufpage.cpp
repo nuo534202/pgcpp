@@ -6,14 +6,14 @@
 // pointer array growing downward, and tuple data growing upward from the
 // end of the page.
 
-#include "pgcpp/storage/bufpage.hpp"
+#include "storage/bufpage.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::storage {
 

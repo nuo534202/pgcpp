@@ -1,12 +1,12 @@
-#include "pgcpp/common/containers/bitmapset.hpp"
+#include "common/containers/bitmapset.hpp"
 
 #include <gtest/gtest.h>
 
 #include <memory>
 #include <string>
 
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace {
 

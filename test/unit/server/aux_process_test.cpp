@@ -21,21 +21,21 @@
 #include <thread>
 #include <vector>
 
-#include "pgcpp/server/autovacuum.hpp"
-#include "pgcpp/server/auxprocess.hpp"
-#include "pgcpp/server/bgworker.hpp"
-#include "pgcpp/server/bgwriter.hpp"
-#include "pgcpp/server/checkpointer.hpp"
-#include "pgcpp/server/fork_process.hpp"
-#include "pgcpp/server/interrupt.hpp"
-#include "pgcpp/server/pgarch.hpp"
-#include "pgcpp/server/shell_archive.hpp"
-#include "pgcpp/server/startup.hpp"
-#include "pgcpp/server/syslogger.hpp"
-#include "pgcpp/server/walwriter.hpp"
-#include "pgcpp/transaction/xlog.hpp"
-#include "pgcpp/transaction/xloginsert.hpp"
-#include "pgcpp/transaction/xlogrecovery.hpp"
+#include "server/autovacuum.hpp"
+#include "server/auxprocess.hpp"
+#include "server/bgworker.hpp"
+#include "server/bgwriter.hpp"
+#include "server/checkpointer.hpp"
+#include "server/fork_process.hpp"
+#include "server/interrupt.hpp"
+#include "server/pgarch.hpp"
+#include "server/shell_archive.hpp"
+#include "server/startup.hpp"
+#include "server/syslogger.hpp"
+#include "server/walwriter.hpp"
+#include "transaction/xlog.hpp"
+#include "transaction/xloginsert.hpp"
+#include "transaction/xlogrecovery.hpp"
 
 using pgcpp::server::AutoVacuumStats;
 using pgcpp::server::AutoVacuumWorkItem;

@@ -8,14 +8,14 @@
 // multiple CteScanStates referencing the same CTE — each CteScan
 // independently materializes its copy. A future optimization could
 // share the cache via a CTE state map on the EState.
-#include "pgcpp/executor/node_ctescan.hpp"
+#include "executor/node_ctescan.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
+#include "common/containers/node.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
 
 namespace pgcpp::executor {
 

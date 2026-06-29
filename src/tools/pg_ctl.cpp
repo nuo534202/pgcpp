@@ -9,7 +9,7 @@
 //
 // The project forbids std::thread, so polling waits use usleep(3) from
 // <unistd.h> rather than std::this_thread::sleep_for.
-#include "pgcpp/tools/pg_ctl.hpp"
+#include "tools/pg_ctl.hpp"
 
 #include <sys/types.h>
 #include <sys/wait.h>

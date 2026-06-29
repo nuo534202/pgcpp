@@ -3,7 +3,7 @@
 // Uses getifaddrs(3) on Linux to list interface (addr, netmask) pairs.
 // Provides IsSameHost/IsSameNet matchers for the "samehost" and "samenet"
 // keywords in pg_hba.conf, plus CheckIpMatch used by hba.c.
-#include "pgcpp/protocol/ifaddr.hpp"
+#include "protocol/ifaddr.hpp"
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>

@@ -6,7 +6,7 @@
 // and %f (file basename) placeholders substituted. The command is run via
 // the system shell; exit status 0 means success, anything else is a failure
 // that will be retried.
-#include "pgcpp/server/shell_archive.hpp"
+#include "server/shell_archive.hpp"
 
 #include <chrono>
 #include <cstdlib>

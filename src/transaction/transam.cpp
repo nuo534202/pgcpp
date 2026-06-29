@@ -7,11 +7,11 @@
 // aborted) of every normal transaction ID. In PostgreSQL this is a set of
 // shared-memory pages persisted to pg_xact/. pgcpp keeps an in-memory
 // vector indexed by XID, which is sufficient for single-process operation.
-#include "pgcpp/transaction/transam.hpp"
+#include "transaction/transam.hpp"
 
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::transaction {
 

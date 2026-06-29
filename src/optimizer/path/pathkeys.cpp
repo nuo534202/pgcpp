@@ -11,13 +11,13 @@
 //   - PathKey equality is by (eclass pointer, opno, descending, nulls_first).
 //   - No EC constancy tracking (we trust the EC pointer identity).
 //   - No subquery pathkey pushdown (subqueries are planned independently).
-#include "pgcpp/optimizer/path/pathkeys.hpp"
+#include "optimizer/path/pathkeys.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/path/equivclass.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/path/equivclass.hpp"
+#include "optimizer/planner.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

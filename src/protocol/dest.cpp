@@ -8,22 +8,22 @@
 //   RemoteReceiver      — sends RowDescription + DataRow via OutputSink
 //   TuplestoreReceiver  — collects slots into a vector
 //   IntoRelReceiver     — inserts tuples into a relation
-#include "pgcpp/protocol/dest.hpp"
+#include "protocol/dest.hpp"
 
 #include <cstdio>
 #include <string>
 #include <vector>
 
-#include "pgcpp/access/heapam.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
-#include "pgcpp/types/builtins.hpp"
-#include "pgcpp/types/datetime.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "access/heapam.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "common/error/elog.hpp"
+#include "executor/estate.hpp"
+#include "executor/tupletable.hpp"
+#include "transaction/heap_tuple.hpp"
+#include "types/builtins.hpp"
+#include "types/datetime.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::protocol {
 

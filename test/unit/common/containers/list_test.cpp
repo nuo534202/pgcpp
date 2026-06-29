@@ -1,12 +1,12 @@
-#include "pgcpp/common/containers/list.hpp"
+#include "common/containers/list.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace {
 

@@ -2,7 +2,7 @@
 //
 // Mirrors PostgreSQL's utils/adt/oid.c and regproc.c.
 
-#include "pgcpp/types/oid_types.hpp"
+#include "types/oid_types.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -15,8 +15,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

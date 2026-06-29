@@ -3,21 +3,21 @@
 // Converted from PostgreSQL 15's src/backend/parser/parse_relation.c.
 // Implements addRangeTableEntry (for relations), column resolution
 // (scanRTEForColumn, colNameToVar), and star expansion (expandRTE).
-#include "pgcpp/parser/parse_relation.hpp"
+#include "parser/parse_relation.hpp"
 
 #include <cstring>
 #include <string>
 #include <vector>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parse_coerce.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
+#include "catalog/syscache.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parse_coerce.hpp"
+#include "parser/parse_type.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::parser {
 

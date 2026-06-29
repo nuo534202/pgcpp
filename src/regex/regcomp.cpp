@@ -11,14 +11,14 @@
 //   REG_EXTENDED-> treated as the default (ECMAScript syntax is used, which is a
 //                  superset of ERE for the constructs pgcpp exercises)
 
-#include "pgcpp/regex/regcomp.hpp"
+#include "regex/regcomp.hpp"
 
 #include <regex>
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::regex {
 

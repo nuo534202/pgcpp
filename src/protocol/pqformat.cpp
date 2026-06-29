@@ -4,11 +4,11 @@
 //
 // Implements the MessageWriter/MessageReader classes and the convenience
 // message builder functions declared in pqformat.h.
-#include "pgcpp/protocol/pqformat.hpp"
+#include "protocol/pqformat.hpp"
 
 #include <cstring>
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::protocol {
 

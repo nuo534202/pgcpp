@@ -7,14 +7,14 @@
 // Quoted strings (with backslash escapes) are supported per PG's lexer.
 // Continuation lines (backslash at end of line) are not supported (pgcpp
 // uses a simplified parser).
-#include "pgcpp/protocol/hba.hpp"
+#include "protocol/hba.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <sstream>
 #include <string>
 
-#include "pgcpp/protocol/ifaddr.hpp"
+#include "protocol/ifaddr.hpp"
 
 namespace pgcpp::protocol {
 

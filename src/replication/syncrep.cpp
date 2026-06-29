@@ -3,15 +3,15 @@
 // Converted from PostgreSQL 15's src/backend/replication/syncrep.c.
 // SyncRepConfigUpdate / SyncRepConfigParse manipulate the active
 // SyncRepConfig; SyncRepWaitForLSN is a stub that returns immediately.
-#include "pgcpp/replication/syncrep.hpp"
+#include "replication/syncrep.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <string>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "common/error/elog.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
 

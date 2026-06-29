@@ -11,20 +11,20 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/tsearch/dict.hpp"
-#include "pgcpp/tsearch/ispell.hpp"
-#include "pgcpp/tsearch/thesaurus.hpp"
-#include "pgcpp/tsearch/to_tsquery.hpp"
-#include "pgcpp/tsearch/to_tsvector.hpp"
-#include "pgcpp/tsearch/ts_typanalyze.hpp"
-#include "pgcpp/tsearch/ts_utils.hpp"
-#include "pgcpp/tsearch/tsquery_parser.hpp"
-#include "pgcpp/tsearch/tsvector_parser.hpp"
-#include "pgcpp/tsearch/wparser.hpp"
-#include "pgcpp/types/ts_types.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "tsearch/dict.hpp"
+#include "tsearch/ispell.hpp"
+#include "tsearch/thesaurus.hpp"
+#include "tsearch/to_tsquery.hpp"
+#include "tsearch/to_tsvector.hpp"
+#include "tsearch/ts_typanalyze.hpp"
+#include "tsearch/ts_utils.hpp"
+#include "tsearch/tsquery_parser.hpp"
+#include "tsearch/tsvector_parser.hpp"
+#include "tsearch/wparser.hpp"
+#include "types/ts_types.hpp"
 
 namespace {
 

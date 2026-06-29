@@ -4,18 +4,18 @@
 // add_join_rel. Verifies that RelOptInfo objects are correctly constructed
 // and cached in the planner's simple_rel_array.
 
-#include "pgcpp/optimizer/util/relnode.hpp"
+#include "optimizer/util/relnode.hpp"
 
 #include <gtest/gtest.h>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/optimizer/path.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "optimizer/path.hpp"
+#include "optimizer/planner.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
 
 using pgcpp::nodes::makePallocNode;
 using pgcpp::optimizer::add_join_rel;

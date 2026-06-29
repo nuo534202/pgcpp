@@ -4,10 +4,10 @@
 //
 // Builds RelOptInfo objects for base relations and (skeleton) join relations.
 // For pgcpp's single-table workload, the join-rel machinery is minimal.
-#include "pgcpp/optimizer/util/relnode.hpp"
+#include "optimizer/util/relnode.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/planner.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/planner.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

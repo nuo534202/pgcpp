@@ -26,9 +26,9 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/server/bootstrap.hpp"
-#include "pgcpp/server/main.hpp"
-#include "pgcpp/server/postmaster.hpp"
+#include "server/bootstrap.hpp"
+#include "server/main.hpp"
+#include "server/postmaster.hpp"
 
 using pgcpp::server::BootstrapCluster;
 using pgcpp::server::BootstrapResult;

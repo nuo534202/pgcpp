@@ -4,17 +4,17 @@
 // Provides make_parsestate, free_parsestate, make_const, and boolean
 // expression constructors.
 
-#include "pgcpp/parser/parse_node.hpp"
+#include "parser/parse_node.hpp"
 
 #include <cerrno>
 #include <cstdlib>
 #include <new>
 #include <string>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::parser {
 using pgcpp::nodes::destroyPallocNode;

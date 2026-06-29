@@ -5,11 +5,11 @@
 // field values come from the struct definitions in primnodes.hpp (e.g.
 // Var::vartypmod defaults to -1).
 
-#include "pgcpp/common/containers/makefuncs.hpp"
+#include "common/containers/makefuncs.hpp"
 
 #include <utility>
 
-#include "pgcpp/catalog/catalog.hpp"  // kInvalidOid
+#include "catalog/catalog.hpp"  // kInvalidOid
 
 namespace pgcpp::nodes {
 

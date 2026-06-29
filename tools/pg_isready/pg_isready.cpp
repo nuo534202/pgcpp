@@ -11,7 +11,7 @@
 #include <cstring>
 #include <string>
 
-#include "pgcpp/tools/pg_isready.hpp"
+#include "tools/pg_isready.hpp"
 
 using pgcpp::tools::CheckServerReady;
 using pgcpp::tools::IsReadyOptions;

@@ -1,14 +1,14 @@
-#include "pgcpp/common/containers/makefuncs.hpp"
+#include "common/containers/makefuncs.hpp"
 
 #include <gtest/gtest.h>
 
 #include <vector>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/primnodes.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/primnodes.hpp"
+#include "types/datum.hpp"
 
 namespace {
 

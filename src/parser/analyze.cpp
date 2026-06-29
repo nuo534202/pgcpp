@@ -3,25 +3,25 @@
 // Converted from PostgreSQL 15's src/backend/parser/analyze.c.
 // Provides parse_analyze(), the public entry point that transforms
 // RawStmt parse trees into Query nodes.
-#include "pgcpp/parser/analyze.hpp"
+#include "parser/analyze.hpp"
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parse_agg.hpp"
-#include "pgcpp/parser/parse_clause.hpp"
-#include "pgcpp/parser/parse_coerce.hpp"
-#include "pgcpp/parser/parse_cte.hpp"
-#include "pgcpp/parser/parse_expr.hpp"
-#include "pgcpp/parser/parse_relation.hpp"
-#include "pgcpp/parser/parse_target.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parse_agg.hpp"
+#include "parser/parse_clause.hpp"
+#include "parser/parse_coerce.hpp"
+#include "parser/parse_cte.hpp"
+#include "parser/parse_expr.hpp"
+#include "parser/parse_relation.hpp"
+#include "parser/parse_target.hpp"
+#include "parser/parse_type.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::parser {
 

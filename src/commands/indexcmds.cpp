@@ -2,22 +2,22 @@
 //
 // Converted from PostgreSQL 15's src/backend/commands/indexcmds.c.
 // Extracted from src/protocol/utility.cpp to the commands/ module.
-#include "pgcpp/commands/indexcmds.hpp"
+#include "commands/indexcmds.hpp"
 
 #include <cstdint>
 #include <string>
 
-#include "pgcpp/access/nbtree.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/types/builtins.hpp"
+#include "access/nbtree.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/parse_type.hpp"
+#include "parser/parsenodes.hpp"
+#include "types/builtins.hpp"
 
 namespace pgcpp::commands {
 

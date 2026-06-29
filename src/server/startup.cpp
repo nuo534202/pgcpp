@@ -6,14 +6,14 @@
 // postmaster after a crash. It reads the WAL from the start (or from the
 // last checkpoint) and replays all records to restore the database to
 // a consistent state. pgcpp wraps PerformCrashRecovery (xlogrecovery.h).
-#include "pgcpp/server/startup.hpp"
+#include "server/startup.hpp"
 
 #include <chrono>
 #include <cstdint>
 
-#include "pgcpp/server/interrupt.hpp"
-#include "pgcpp/transaction/xlog.hpp"
-#include "pgcpp/transaction/xlogrecovery.hpp"
+#include "server/interrupt.hpp"
+#include "transaction/xlog.hpp"
+#include "transaction/xlogrecovery.hpp"
 
 namespace pgcpp::server {
 

@@ -16,13 +16,13 @@
 // This is sufficient for two-table queries (the minimum required by Task
 // 15.15's verification criteria). N-way joins require chaining joinrels,
 // which is left as a TODO.
-#include "pgcpp/optimizer/path/joinrels.hpp"
+#include "optimizer/path/joinrels.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/path/joinpath.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/optimizer/util/relnode.hpp"
-#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/path/joinpath.hpp"
+#include "optimizer/planner.hpp"
+#include "optimizer/util/relnode.hpp"
+#include "optimizer/util/restrictinfo.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

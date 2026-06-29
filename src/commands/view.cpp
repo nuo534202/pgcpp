@@ -5,16 +5,16 @@
 // materializing data. pgcpp stores the SELECT query text on the
 // view's pg_class entry so it can be retrieved for SELECT expansion
 // (parser substitution rule).
-#include "pgcpp/commands/view.hpp"
+#include "commands/view.hpp"
 
 #include <string>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_class.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

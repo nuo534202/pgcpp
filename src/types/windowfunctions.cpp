@@ -1,11 +1,11 @@
 // windowfunctions.cpp — implementations of window function helpers.
 
-#include "pgcpp/types/windowfunctions.hpp"
+#include "types/windowfunctions.hpp"
 
 #include <cstdint>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

@@ -14,21 +14,21 @@
 // All function metadata is read from the Catalog (pg_proc rows populated
 // by BootstrapCatalog). No hardcoded function table remains.
 
-#include "pgcpp/parser/parse_func.hpp"
+#include "parser/parse_func.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <string>
 #include <vector>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_proc.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/parse_coerce.hpp"
-#include "pgcpp/parser/parse_expr.hpp"
-#include "pgcpp/parser/parse_type.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_proc.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "parser/parse_coerce.hpp"
+#include "parser/parse_expr.hpp"
+#include "parser/parse_type.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::parser {
 

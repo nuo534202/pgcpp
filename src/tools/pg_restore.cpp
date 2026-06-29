@@ -3,7 +3,7 @@
 // Reads a plain SQL dump (produced by pg_dump), splits it into statements
 // (respecting single-quoted strings, dollar-quoted blocks, and COPY ... FROM
 // stdin data sections), and replays each statement via PsqlClient.
-#include "pgcpp/tools/pg_restore.hpp"
+#include "tools/pg_restore.hpp"
 
 #include <cctype>
 #include <fstream>

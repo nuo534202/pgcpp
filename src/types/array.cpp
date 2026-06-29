@@ -3,7 +3,7 @@
 // Simplified in-memory representation. Parses PostgreSQL array literals of the
 // form '{e1,e2,e3}' (1-D) and '{{1,2},{3,4}}' (n-D).
 
-#include "pgcpp/types/array.hpp"
+#include "types/array.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -11,9 +11,9 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/types/builtins.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "types/builtins.hpp"
 
 namespace pgcpp::types {
 

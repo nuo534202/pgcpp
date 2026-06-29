@@ -12,10 +12,10 @@
 //   4. If t_xmax is visible (committed before snapshot), the tuple is
 //      invisible (it was deleted). Otherwise it's visible.
 //   5. Set hint flags to accelerate future checks.
-#include "pgcpp/transaction/visibility.hpp"
+#include "transaction/visibility.hpp"
 
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
 
 namespace pgcpp::transaction {
 

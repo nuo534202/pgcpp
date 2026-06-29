@@ -1,7 +1,7 @@
 // sync.cpp — Pending fsync queue (checkpointer integration).
 //
 // Converted from PostgreSQL 15's src/backend/storage/sync/sync.c.
-#include "pgcpp/storage/sync/sync.hpp"
+#include "storage/sync/sync.hpp"
 
 #include <unordered_map>
 

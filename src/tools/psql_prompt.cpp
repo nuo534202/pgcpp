@@ -5,11 +5,11 @@
 // Expands a prompt template string by substituting `%`-escapes with runtime
 // state (database, user, host, port, ...) and `:VAR` / `:'VAR'` references
 // with psql variable values.
-#include "pgcpp/tools/psql_prompt.hpp"
+#include "tools/psql_prompt.hpp"
 
 #include <string>
 
-#include "pgcpp/tools/psql_variables.hpp"
+#include "tools/psql_variables.hpp"
 
 namespace pgcpp::tools {
 

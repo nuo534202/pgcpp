@@ -6,16 +6,16 @@
 // capture groups, case-insensitivity, REG_EXTENDED/REG_NEWLINE flags, error
 // reporting, prefix extraction, and safe teardown.
 
-#include "pgcpp/regex/regex.hpp"
+#include "regex/regex.hpp"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace {
 

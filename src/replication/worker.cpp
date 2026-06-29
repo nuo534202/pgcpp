@@ -3,10 +3,10 @@
 // Converted from PostgreSQL 15's src/backend/replication/logical/worker.c.
 // pgcpp keeps a small in-process pool (std::vector<LogicalRepWorker>)
 // and runs workers synchronously in ApplyWorkerMain (no fork).
-#include "pgcpp/replication/worker.hpp"
+#include "replication/worker.hpp"
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "common/error/elog.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
 

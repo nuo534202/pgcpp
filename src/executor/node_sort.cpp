@@ -5,21 +5,21 @@
 // The Sort node collects all tuples from its child, sorts them by the
 // specified sort keys, and returns them one at a time. When a limit is
 // specified, only the top N tuples are kept (Top-N heapsort optimization).
-#include "pgcpp/executor/node_sort.hpp"
+#include "executor/node_sort.hpp"
 
 #include <algorithm>
 #include <new>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_operator.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_operator.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::executor {
 

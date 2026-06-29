@@ -3,7 +3,7 @@
 // pgcpp does not link OpenSSL, so the secure layer is a pass-through that
 // calls plain read(2)/write(2). The API is preserved so callers can use the
 // same call sites as PG.
-#include "pgcpp/protocol/secure.hpp"
+#include "protocol/secure.hpp"
 
 #include <unistd.h>
 

@@ -12,13 +12,13 @@
 // The "pending dirty count" is a simplified stand-in for PG's buffer pool
 // scan: tests can increment it via BgWriterScheduleFlush to simulate
 // dirty buffers accumulating, then verify that FlushBuffers drains it.
-#include "pgcpp/server/bgwriter.hpp"
+#include "server/bgwriter.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
 
-#include "pgcpp/server/interrupt.hpp"
+#include "server/interrupt.hpp"
 
 namespace pgcpp::server {
 

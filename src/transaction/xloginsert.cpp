@@ -7,13 +7,13 @@
 // XLogInsert finalizes the XLogRecord header (xl_tot_len, xl_xid, xl_prev,
 // xl_info, xl_rmid) and writes header+payload to the WAL buffer via
 // XLogWriteRaw. xl_prev chains records back to the previous record's LSN.
-#include "pgcpp/transaction/xloginsert.hpp"
+#include "transaction/xloginsert.hpp"
 
 #include <vector>
 
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::transaction {
 

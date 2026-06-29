@@ -9,12 +9,12 @@
 //      with dad's genes in the order they appear in dad, wrapping around and
 //      skipping any gene already present in the child.
 // This preserves the relative order of dad's genes outside the segment.
-#include "pgcpp/optimizer/geqo/geqo_ox1.hpp"
+#include "optimizer/geqo/geqo_ox1.hpp"
 
 #include <algorithm>
 #include <unordered_set>
 
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

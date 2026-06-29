@@ -3,18 +3,18 @@
 // Converted from PostgreSQL 15's src/backend/parser/parse_clause.c.
 // Transforms FROM clauses (including JOINs and subqueries), WHERE clauses,
 // and LIMIT/OFFSET clauses.
-#include "pgcpp/parser/parse_clause.hpp"
+#include "parser/parse_clause.hpp"
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/parser/analyze.hpp"
-#include "pgcpp/parser/parse_coerce.hpp"
-#include "pgcpp/parser/parse_expr.hpp"
-#include "pgcpp/parser/parse_relation.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "parser/analyze.hpp"
+#include "parser/parse_coerce.hpp"
+#include "parser/parse_expr.hpp"
+#include "parser/parse_relation.hpp"
+#include "types/datum.hpp"
 
 namespace pgcpp::parser {
 

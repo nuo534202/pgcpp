@@ -1,12 +1,12 @@
-#include "pgcpp/types/numeric.hpp"
+#include "types/numeric.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace {
 

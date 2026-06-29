@@ -7,14 +7,14 @@
 // Each operator is implemented in its own translation unit (geqo_erx.cpp,
 // geqo_pmx.cpp, geqo_ox1.cpp, geqo_ox2.cpp, geqo_px.cpp) to mirror the PG
 // file layout.
-#include "pgcpp/optimizer/geqo/geqo_cx.hpp"
+#include "optimizer/geqo/geqo_cx.hpp"
 
-#include "pgcpp/optimizer/geqo/geqo_erx.hpp"
-#include "pgcpp/optimizer/geqo/geqo_ox1.hpp"
-#include "pgcpp/optimizer/geqo/geqo_ox2.hpp"
-#include "pgcpp/optimizer/geqo/geqo_pmx.hpp"
-#include "pgcpp/optimizer/geqo/geqo_px.hpp"
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_erx.hpp"
+#include "optimizer/geqo/geqo_ox1.hpp"
+#include "optimizer/geqo/geqo_ox2.hpp"
+#include "optimizer/geqo/geqo_pmx.hpp"
+#include "optimizer/geqo/geqo_px.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

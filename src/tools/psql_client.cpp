@@ -2,7 +2,7 @@
 //
 // Implements the TCP connection, startup handshake, and simple query
 // protocol for the pgcpp client.
-#include "pgcpp/tools/psql_client.hpp"
+#include "tools/psql_client.hpp"
 
 #include <arpa/inet.h>
 #include <errno.h>

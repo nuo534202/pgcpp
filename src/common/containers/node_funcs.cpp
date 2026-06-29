@@ -5,11 +5,11 @@
 // traversal short-circuits. Children are then recursed in declaration
 // order for the supported container node types.
 
-#include "pgcpp/common/containers/node_funcs.hpp"
+#include "common/containers/node_funcs.hpp"
 
 #include <utility>
 
-#include "pgcpp/types/datum.hpp"  // kBoolOid, kInvalidOid
+#include "types/datum.hpp"  // kBoolOid, kInvalidOid
 
 namespace pgcpp::nodes {
 

@@ -9,11 +9,11 @@
 //      gene already placed from dad.
 // This preserves the "positions" of roughly half of parent 2's genes and
 // fills the rest with parent 1's ordering.
-#include "pgcpp/optimizer/geqo/geqo_px.hpp"
+#include "optimizer/geqo/geqo_px.hpp"
 
 #include <unordered_set>
 
-#include "pgcpp/optimizer/geqo/geqo_random.hpp"
+#include "optimizer/geqo/geqo_random.hpp"
 
 namespace pgcpp::optimizer::geqo {
 

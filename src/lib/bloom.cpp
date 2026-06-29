@@ -4,7 +4,7 @@
 // of 64-bit words; each Add/Test invocation computes (h1, h2) via two
 // salted FNV-1a passes and derives k bit positions via double hashing.
 
-#include "pgcpp/lib/bloom.hpp"
+#include "lib/bloom.hpp"
 
 #include <cstring>
 

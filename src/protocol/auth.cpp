@@ -4,7 +4,7 @@
 // the appropriate method-specific handler. Each handler may send an auth
 // request to the client (via OutputSink) and consume a response (from the
 // per-thread mock queue).
-#include "pgcpp/protocol/auth.hpp"
+#include "protocol/auth.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -13,8 +13,8 @@
 #include <mutex>
 #include <string>
 
-#include "pgcpp/protocol/crypt.hpp"
-#include "pgcpp/protocol/pqformat.hpp"
+#include "protocol/crypt.hpp"
+#include "protocol/pqformat.hpp"
 
 namespace pgcpp::protocol {
 

@@ -25,8 +25,8 @@
 #include <cstdio>
 #include <cstring>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/storage/smgr.hpp"
+#include "common/error/elog.hpp"
+#include "storage/smgr.hpp"
 
 namespace pgcpp::storage {
 

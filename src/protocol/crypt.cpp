@@ -8,7 +8,7 @@
 //   * md5:        "md5" + 32 lowercase hex chars of MD5(password + username)
 //   * scram:      "SCRAM-SHA-256$<iter>:<salt-b64>$<stored-key-b64>:<server-key-b64>"
 //   * plain:      the cleartext password
-#include "pgcpp/protocol/crypt.hpp"
+#include "protocol/crypt.hpp"
 
 #include <algorithm>
 #include <array>

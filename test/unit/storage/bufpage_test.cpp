@@ -4,16 +4,16 @@
 // Verifies that the page layout matches PostgreSQL's design: header,
 // line pointer array, free space, and tuple data.
 
-#include "pgcpp/storage/bufpage.hpp"
+#include "storage/bufpage.hpp"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <memory>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
 
 using pgcpp::memory::AllocSetContext;
 using pgcpp::storage::BlockNumber;

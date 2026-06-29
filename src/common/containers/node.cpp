@@ -1,9 +1,9 @@
-#include "pgcpp/common/containers/node.hpp"
+#include "common/containers/node.hpp"
 
 #include <new>
 #include <utility>
 
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::nodes {
 

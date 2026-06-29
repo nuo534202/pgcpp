@@ -9,7 +9,7 @@
 // then dispatched to ProcessUtility directly, exercising the full
 // parse → utility dispatch path.
 
-#include "pgcpp/protocol/utility.hpp"
+#include "protocol/utility.hpp"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -18,26 +18,26 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/access/heapam.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/bootstrap_catalog.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/parser/analyze.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/parser.hpp"
-#include "pgcpp/protocol/pqformat.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/storage/smgr.hpp"
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "access/heapam.hpp"
+#include "access/rel.hpp"
+#include "catalog/bootstrap_catalog.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
+#include "catalog/syscache.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "parser/analyze.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/parser.hpp"
+#include "protocol/pqformat.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/smgr.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
+#include "types/datum.hpp"
 
 using pgcpp::access::InitializeRelcache;
 using pgcpp::access::ResetRelcache;

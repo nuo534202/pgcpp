@@ -6,7 +6,7 @@
 // header so the compiler validates the template definition's syntax as
 // part of pgcpp_core.
 
-#include "pgcpp/lib/binaryheap.hpp"
+#include "lib/binaryheap.hpp"
 
 namespace pgcpp::lib {
 

@@ -2,7 +2,7 @@
 //
 // Returns compiled-in defaults describing how the pgcpp installation was built:
 // bindir, libdir, includedir, version, configure flags, compiler flags, etc.
-#include "pgcpp/tools/pg_config.hpp"
+#include "tools/pg_config.hpp"
 
 #include <ostream>
 #include <string>

@@ -11,12 +11,12 @@
 // children (left-associative chain folded into a single node). NOT nodes
 // have exactly one child.
 
-#include "pgcpp/tsearch/tsquery_parser.hpp"
+#include "tsearch/tsquery_parser.hpp"
 
 #include <cctype>
 #include <string>
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::tsearch {
 

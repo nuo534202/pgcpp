@@ -2,13 +2,13 @@
 //
 // Converted from PostgreSQL 15's src/backend/parser/parse_agg.c.
 // Handles aggregate function placement checks and query flag setting.
-#include "pgcpp/parser/parse_agg.hpp"
+#include "parser/parse_agg.hpp"
 
 #include <string>
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::parser {
 

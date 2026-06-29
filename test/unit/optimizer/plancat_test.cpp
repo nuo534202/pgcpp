@@ -4,19 +4,19 @@
 // statistics (pages, tuples, width) are correctly populated from pg_class
 // and pg_attribute, with conservative defaults when the catalog has no data.
 
-#include "pgcpp/optimizer/util/plancat.hpp"
+#include "optimizer/util/plancat.hpp"
 
 #include <gtest/gtest.h>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/optimizer/path.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "catalog/catalog.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "optimizer/path.hpp"
+#include "optimizer/planner.hpp"
+#include "parser/parsenodes.hpp"
+#include "parser/primnodes.hpp"
 
 using pgcpp::catalog::Oid;
 using pgcpp::nodes::makePallocNode;

@@ -10,11 +10,11 @@
 // pointers returned to callers remain stable across map mutations
 // (std::map is node-based).
 
-#include "pgcpp/partitioning/partdesc.hpp"
+#include "partitioning/partdesc.hpp"
 
 #include <utility>
 
-#include "pgcpp/common/error/elog.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::partitioning {
 

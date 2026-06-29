@@ -9,16 +9,16 @@
 //   - Tuple inserted/deleted by current transaction (depends on CID)
 //   - Hint flag setting and reuse
 
-#include "pgcpp/transaction/visibility.hpp"
+#include "transaction/visibility.hpp"
 
 #include <gtest/gtest.h>
 
 #include <vector>
 
-#include "pgcpp/transaction/heap_tuple.hpp"
-#include "pgcpp/transaction/snapshot.hpp"
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
+#include "transaction/heap_tuple.hpp"
+#include "transaction/snapshot.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
 
 using pgcpp::transaction::AllocateNextTransactionId;
 using pgcpp::transaction::CommandId;

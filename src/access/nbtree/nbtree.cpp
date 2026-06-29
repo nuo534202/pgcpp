@@ -11,21 +11,21 @@
 //   - No VACUUM, no deduplication, no page deletion
 //   - Supports int32, int64, and text keys
 
-#include "pgcpp/access/nbtree.hpp"
+#include "access/nbtree.hpp"
 
 #include <cstring>
 #include <string>
 #include <vector>
 
-#include "pgcpp/access/nbtpage.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/storage/bufpage.hpp"
-#include "pgcpp/storage/smgr.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
+#include "access/nbtpage.hpp"
+#include "access/rel.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/bufpage.hpp"
+#include "storage/smgr.hpp"
+#include "transaction/heap_tuple.hpp"
 
 namespace pgcpp::access {
 using pgcpp::nodes::destroyPallocNode;

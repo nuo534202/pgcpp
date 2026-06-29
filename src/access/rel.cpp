@@ -11,17 +11,17 @@
 //   - No catalog index lookups (direct catalog scan)
 //   - Reference counting is manual (no automatic eviction)
 
-#include "pgcpp/access/rel.hpp"
+#include "access/rel.hpp"
 
 #include <string>
 #include <unordered_map>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/storage/smgr.hpp"
+#include "catalog/catalog.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/smgr.hpp"
 
 namespace pgcpp::access {
 using pgcpp::nodes::destroyPallocNode;

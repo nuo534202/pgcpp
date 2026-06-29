@@ -3,7 +3,7 @@
 // A small recursive-descent parser/builder for JSON values. The same tree is
 // used for both `json` and `jsonb` types; only display differs slightly.
 
-#include "pgcpp/types/json.hpp"
+#include "types/json.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -13,8 +13,8 @@
 #include <string>
 #include <string_view>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::types {
 

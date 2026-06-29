@@ -7,12 +7,12 @@
 // single-process, so we hold a file-static WalSndCtlData singleton.
 // Network I/O is stubbed: the LSN accessors and state machine are the
 // meaningful surface area.
-#include "pgcpp/replication/walsender.hpp"
+#include "replication/walsender.hpp"
 
 #include <algorithm>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "common/error/elog.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
 

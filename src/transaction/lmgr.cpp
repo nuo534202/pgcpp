@@ -4,7 +4,7 @@
 //
 // Thin wrappers around the lock manager that build a LockTag from a
 // relation OID and call LockAcquire/LockRelease.
-#include "pgcpp/transaction/lmgr.hpp"
+#include "transaction/lmgr.hpp"
 
 namespace pgcpp::transaction {
 

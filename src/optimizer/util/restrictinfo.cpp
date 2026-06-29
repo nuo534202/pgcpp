@@ -5,10 +5,10 @@
 // Wraps qual clauses (WHERE conditions) in RestrictInfo structs carrying
 // optimizer metadata. For pgcpp's single-table workload, the metadata is
 // minimal: the wrapped clause and the relations it references.
-#include "pgcpp/optimizer/util/restrictinfo.hpp"
+#include "optimizer/util/restrictinfo.hpp"
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/memory_context.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;

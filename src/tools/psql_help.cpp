@@ -5,7 +5,7 @@
 //
 // Provides a hand-curated help table for the common SQL statements exposed
 // via psql's `\h <topic>` meta-command.
-#include "pgcpp/tools/psql_help.hpp"
+#include "tools/psql_help.hpp"
 
 #include <cctype>
 #include <ostream>

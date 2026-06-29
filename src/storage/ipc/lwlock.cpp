@@ -1,7 +1,7 @@
 // lwlock.cpp — Lightweight reader/writer locks (in-process simulation).
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/lwlock.c.
-#include "pgcpp/storage/ipc/lwlock.hpp"
+#include "storage/ipc/lwlock.hpp"
 
 #include <map>
 #include <vector>

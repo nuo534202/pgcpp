@@ -4,20 +4,20 @@
 // CopyIndexTuple, and index_compute_data_size. These are tuple-level
 // operations that only need a memory context.
 
-#include "pgcpp/access/indextuple.hpp"
+#include "access/indextuple.hpp"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <string>
 
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
-#include "pgcpp/types/datum.hpp"
+#include "access/rel.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "transaction/heap_tuple.hpp"
+#include "types/datum.hpp"
 
 using pgcpp::access::CopyIndexTuple;
 using pgcpp::access::CreateTupleDesc;

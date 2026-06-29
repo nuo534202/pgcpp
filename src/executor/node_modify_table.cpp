@@ -13,21 +13,21 @@
 //   tuple's TID is used to delete via heap_delete.
 // For UPDATE: the child produces new tuple values; each is used to
 //   update the corresponding row via heap_update.
-#include "pgcpp/executor/node_modify_table.hpp"
+#include "executor/node_modify_table.hpp"
 
 #include <new>
 
-#include "pgcpp/access/heapam.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/executor/estate.hpp"
-#include "pgcpp/executor/exec_expr.hpp"
-#include "pgcpp/executor/exec_utils.hpp"
-#include "pgcpp/executor/plannodes.hpp"
-#include "pgcpp/executor/tupletable.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
+#include "access/heapam.hpp"
+#include "access/rel.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "executor/estate.hpp"
+#include "executor/exec_expr.hpp"
+#include "executor/exec_utils.hpp"
+#include "executor/plannodes.hpp"
+#include "executor/tupletable.hpp"
+#include "parser/parsenodes.hpp"
+#include "transaction/heap_tuple.hpp"
 
 namespace pgcpp::executor {
 

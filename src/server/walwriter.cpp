@@ -6,13 +6,13 @@
 // WAL buffer contents to disk. In pgcpp (in-memory WAL buffer, always
 // "durable"), XLogFlush is a no-op; the WAL writer tracks the current
 // insert position and counts any new bytes as "flushed".
-#include "pgcpp/server/walwriter.hpp"
+#include "server/walwriter.hpp"
 
 #include <chrono>
 #include <cstdint>
 
-#include "pgcpp/server/interrupt.hpp"
-#include "pgcpp/transaction/xlog.hpp"
+#include "server/interrupt.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::server {
 

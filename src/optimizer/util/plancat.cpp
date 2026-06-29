@@ -5,11 +5,11 @@
 // Reads pg_class (relpages, reltuples) and pg_attribute (column count/width)
 // to populate a RelOptInfo's size estimates. When the catalog has no data
 // (e.g., synthetic OIDs in unit tests), conservative defaults are used.
-#include "pgcpp/optimizer/util/plancat.hpp"
+#include "optimizer/util/plancat.hpp"
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
 
 namespace pgcpp::optimizer {
 using pgcpp::catalog::Catalog;

@@ -7,7 +7,7 @@
 // The fixture mirrors nbtree_test.cpp: full stack with catalog, storage,
 // buffer pool, and relcache.
 
-#include "pgcpp/access/indexam.hpp"
+#include "access/indexam.hpp"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -17,21 +17,21 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/access/genam.hpp"
-#include "pgcpp/access/nbtree.hpp"
-#include "pgcpp/access/rel.hpp"
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/catalog/syscache.hpp"
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/bufmgr.hpp"
-#include "pgcpp/storage/smgr.hpp"
-#include "pgcpp/transaction/heap_tuple.hpp"
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
+#include "access/genam.hpp"
+#include "access/nbtree.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_class.hpp"
+#include "catalog/syscache.hpp"
+#include "common/containers/node.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/smgr.hpp"
+#include "transaction/heap_tuple.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
 
 using pgcpp::access::btbeginscan;
 using pgcpp::access::btbuild;

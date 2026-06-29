@@ -4,19 +4,19 @@
 // hash table is replaced with std::unordered_map; the public API
 // (SearchSysCache / ReleaseSysCache) is preserved.
 
-#include "pgcpp/catalog/syscache.hpp"
+#include "catalog/syscache.hpp"
 
 #include <functional>
 #include <utility>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/catalog/pg_attribute.hpp"
-#include "pgcpp/catalog/pg_cast.hpp"
-#include "pgcpp/catalog/pg_class.hpp"
-#include "pgcpp/catalog/pg_operator.hpp"
-#include "pgcpp/catalog/pg_proc.hpp"
-#include "pgcpp/catalog/pg_type.hpp"
-#include "pgcpp/common/error/elog.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
+#include "catalog/pg_cast.hpp"
+#include "catalog/pg_class.hpp"
+#include "catalog/pg_operator.hpp"
+#include "catalog/pg_proc.hpp"
+#include "catalog/pg_type.hpp"
+#include "common/error/elog.hpp"
 
 namespace pgcpp::catalog {
 

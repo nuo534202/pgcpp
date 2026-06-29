@@ -5,19 +5,19 @@
 // In PostgreSQL, auxprocess.c provides the AuxiliaryProcessMain entry point
 // that dispatches to the specific auxiliary process's main loop based on
 // the AuxiliaryProcessType argument. pgcpp preserves this dispatch table.
-#include "pgcpp/server/auxprocess.hpp"
+#include "server/auxprocess.hpp"
 
 #include <string>
 #include <string_view>
 
-#include "pgcpp/server/autovacuum.hpp"
-#include "pgcpp/server/bgwriter.hpp"
-#include "pgcpp/server/checkpointer.hpp"
-#include "pgcpp/server/interrupt.hpp"
-#include "pgcpp/server/pgarch.hpp"
-#include "pgcpp/server/startup.hpp"
-#include "pgcpp/server/syslogger.hpp"
-#include "pgcpp/server/walwriter.hpp"
+#include "server/autovacuum.hpp"
+#include "server/bgwriter.hpp"
+#include "server/checkpointer.hpp"
+#include "server/interrupt.hpp"
+#include "server/pgarch.hpp"
+#include "server/startup.hpp"
+#include "server/syslogger.hpp"
+#include "server/walwriter.hpp"
 
 namespace pgcpp::server {
 

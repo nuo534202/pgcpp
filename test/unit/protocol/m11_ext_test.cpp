@@ -19,18 +19,18 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/protocol/auth.hpp"
-#include "pgcpp/protocol/crypt.hpp"
-#include "pgcpp/protocol/fastpath.hpp"
-#include "pgcpp/protocol/fsstubs.hpp"
-#include "pgcpp/protocol/gssapi.hpp"
-#include "pgcpp/protocol/hba.hpp"
-#include "pgcpp/protocol/ifaddr.hpp"
-#include "pgcpp/protocol/pqformat.hpp"
-#include "pgcpp/protocol/pqmq.hpp"
-#include "pgcpp/protocol/pqsignal.hpp"
-#include "pgcpp/protocol/secure.hpp"
-#include "pgcpp/storage/large_object/inv_api.hpp"
+#include "protocol/auth.hpp"
+#include "protocol/crypt.hpp"
+#include "protocol/fastpath.hpp"
+#include "protocol/fsstubs.hpp"
+#include "protocol/gssapi.hpp"
+#include "protocol/hba.hpp"
+#include "protocol/ifaddr.hpp"
+#include "protocol/pqformat.hpp"
+#include "protocol/pqmq.hpp"
+#include "protocol/pqsignal.hpp"
+#include "protocol/secure.hpp"
+#include "storage/large_object/inv_api.hpp"
 
 using pgcpp::protocol::AuthContext;
 using pgcpp::protocol::AuthRequest;

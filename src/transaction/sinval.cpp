@@ -13,15 +13,15 @@
 // single-process, so we keep a local queue and dispatch to locally
 // registered handlers at AcceptInvalidationMessages time. This preserves
 // the API and the invalidation-driven cache-refresh pattern.
-#include "pgcpp/transaction/sinval.hpp"
+#include "transaction/sinval.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <utility>
 #include <vector>
 
-#include "pgcpp/catalog/catalog.hpp"
-#include "pgcpp/transaction/transam.hpp"
+#include "catalog/catalog.hpp"
+#include "transaction/transam.hpp"
 
 namespace pgcpp::transaction {
 

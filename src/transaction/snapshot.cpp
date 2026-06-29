@@ -15,14 +15,14 @@
 // The current transaction sees its own changes via the command ID (curcid),
 // not via the xip list. A tuple inserted by the current transaction is
 // visible if its t_cid <= snapshot.curcid.
-#include "pgcpp/transaction/snapshot.hpp"
+#include "transaction/snapshot.hpp"
 
 #include <vector>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/transaction/transam.hpp"
-#include "pgcpp/transaction/xact.hpp"
+#include "common/containers/node.hpp"
+#include "common/memory/memory_context.hpp"
+#include "transaction/transam.hpp"
+#include "transaction/xact.hpp"
 
 namespace pgcpp::transaction {
 using pgcpp::nodes::makePallocNode;

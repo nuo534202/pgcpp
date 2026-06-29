@@ -12,18 +12,18 @@
 // row count is (outer_rows * inner_rows * selectivity). Selectivity is
 // kGeqoDefaultSelectivity (0.1) when a join clause connects the two sides,
 // 1.0 otherwise (cross product — heavily penalized by the row explosion).
-#include "pgcpp/optimizer/geqo/geqo_eval.hpp"
+#include "optimizer/geqo/geqo_eval.hpp"
 
 #include <algorithm>
 #include <unordered_set>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/cost.hpp"
-#include "pgcpp/optimizer/path/joinpath.hpp"
-#include "pgcpp/optimizer/planner.hpp"
-#include "pgcpp/optimizer/util/relnode.hpp"
-#include "pgcpp/optimizer/util/restrictinfo.hpp"
-#include "pgcpp/parser/parsenodes.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/cost.hpp"
+#include "optimizer/path/joinpath.hpp"
+#include "optimizer/planner.hpp"
+#include "optimizer/util/relnode.hpp"
+#include "optimizer/util/restrictinfo.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::optimizer::geqo {
 using pgcpp::nodes::makePallocNode;

@@ -8,9 +8,9 @@
 #include <algorithm>
 #include <cmath>
 
-#include "pgcpp/common/containers/node.hpp"
-#include "pgcpp/optimizer/cost.hpp"
-#include "pgcpp/parser/primnodes.hpp"
+#include "common/containers/node.hpp"
+#include "optimizer/cost.hpp"
+#include "parser/primnodes.hpp"
 
 namespace pgcpp::optimizer {
 

@@ -7,7 +7,7 @@
 // and cooperate on query execution. pgcpp is single-process and does not
 // implement parallel workers, but we provide the API surface so that
 // higher-level modules (executor, planner) can compile against it.
-#include "pgcpp/transaction/parallel.hpp"
+#include "transaction/parallel.hpp"
 
 namespace pgcpp::transaction {
 

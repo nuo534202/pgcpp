@@ -5,7 +5,7 @@
 // ignored — messages depend only on `errcode`, matching PostgreSQL's behavior
 // where pg_regerror produces a generic message per code.
 
-#include "pgcpp/regex/regerror.hpp"
+#include "regex/regerror.hpp"
 
 #include <cstring>
 #include <string_view>

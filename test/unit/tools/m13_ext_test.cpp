@@ -31,20 +31,20 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/tools/pg_config.hpp"
-#include "pgcpp/tools/pg_ctl.hpp"
-#include "pgcpp/tools/pg_dump.hpp"
-#include "pgcpp/tools/pg_isready.hpp"
-#include "pgcpp/tools/pg_restore.hpp"
-#include "pgcpp/tools/psql_client.hpp"
-#include "pgcpp/tools/psql_completion.hpp"
-#include "pgcpp/tools/psql_crosstabview.hpp"
-#include "pgcpp/tools/psql_help.hpp"
-#include "pgcpp/tools/psql_large_obj.hpp"
-#include "pgcpp/tools/psql_print.hpp"
-#include "pgcpp/tools/psql_prompt.hpp"
-#include "pgcpp/tools/psql_variables.hpp"
-#include "pgcpp/tools/sql_admin.hpp"
+#include "tools/pg_config.hpp"
+#include "tools/pg_ctl.hpp"
+#include "tools/pg_dump.hpp"
+#include "tools/pg_isready.hpp"
+#include "tools/pg_restore.hpp"
+#include "tools/psql_client.hpp"
+#include "tools/psql_completion.hpp"
+#include "tools/psql_crosstabview.hpp"
+#include "tools/psql_help.hpp"
+#include "tools/psql_large_obj.hpp"
+#include "tools/psql_print.hpp"
+#include "tools/psql_prompt.hpp"
+#include "tools/psql_variables.hpp"
+#include "tools/sql_admin.hpp"
 
 using pgcpp::tools::AdminResult;
 using pgcpp::tools::BuildClusterSql;

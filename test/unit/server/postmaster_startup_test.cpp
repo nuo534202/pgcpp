@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "pgcpp/server/postmaster.hpp"
+#include "server/postmaster.hpp"
 
 using pgcpp::server::ProcessStartupPacket;
 using pgcpp::server::StartupPacketResult;

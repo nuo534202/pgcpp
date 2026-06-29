@@ -3,11 +3,11 @@
 // Converted from PostgreSQL 15's src/backend/commands/aggregatecmds.c.
 // pgcpp has fixed built-in aggregates (count, sum, avg, min, max);
 // this is a stub for user-defined aggregates.
-#include "pgcpp/commands/aggregatecmds.hpp"
+#include "commands/aggregatecmds.hpp"
 
 #include <string>
 
-#include "pgcpp/parser/parsenodes.hpp"
+#include "parser/parsenodes.hpp"
 
 namespace pgcpp::commands {
 

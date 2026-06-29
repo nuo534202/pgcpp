@@ -1,7 +1,7 @@
 // proc.cpp — PGPROC struct (per-backend state) and process array helpers.
 //
 // Converted from PostgreSQL 15's src/backend/storage/ipc/proc.c.
-#include "pgcpp/storage/ipc/proc.hpp"
+#include "storage/ipc/proc.hpp"
 
 #include <unistd.h>
 

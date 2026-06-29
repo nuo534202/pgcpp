@@ -12,10 +12,10 @@
 #include <cstring>
 #include <memory>
 
-#include "pgcpp/common/error/elog.hpp"
-#include "pgcpp/common/memory/alloc_set.hpp"
-#include "pgcpp/common/memory/memory_context.hpp"
-#include "pgcpp/storage/bufpage.hpp"
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
+#include "storage/bufpage.hpp"
 
 using pgcpp::memory::AllocSetContext;
 using pgcpp::storage::ItemIdData;

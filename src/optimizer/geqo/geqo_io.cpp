@@ -6,7 +6,7 @@
 // output. The format mirrors PostgreSQL's:
 //   "{g1,g2,...,gN} (cost=NNN.NN)"
 // where the cost is shown only when the chromosome has been evaluated.
-#include "pgcpp/optimizer/geqo/geqo_io.hpp"
+#include "optimizer/geqo/geqo_io.hpp"
 
 #include <sstream>
 
