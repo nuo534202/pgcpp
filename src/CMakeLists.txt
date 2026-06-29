@@ -236,6 +236,20 @@ set(PGCPP_CORE_SOURCES
     tools/psql_client.cpp
     tools/psql_command.cpp
     tools/psql_describe.cpp
+    # Phase 15.23 (M13: psql completionization + admin toolchain)
+    tools/psql_print.cpp
+    tools/psql_completion.cpp
+    tools/psql_help.cpp
+    tools/psql_variables.cpp
+    tools/psql_prompt.cpp
+    tools/psql_crosstabview.cpp
+    tools/psql_large_obj.cpp
+    tools/pg_ctl.cpp
+    tools/pg_dump.cpp
+    tools/pg_restore.cpp
+    tools/sql_admin.cpp
+    tools/pg_isready.cpp
+    tools/pg_config.cpp
     # Phase 15.20 (P2 top-level directories: lib/partitioning/regex/replication/statistics/tsearch)
     lib/dshash.cpp
     lib/ilist.cpp

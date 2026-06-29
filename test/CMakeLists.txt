@@ -130,6 +130,9 @@ pgcpp_add_test(tools_test unit/tools/tools_test.cpp)
 pgcpp_add_test(psql_describe_test unit/tools/psql_describe_test.cpp)
 pgcpp_add_test(psql_command_test unit/tools/psql_command_test.cpp)
 
+# Phase 15.23 tests (M13: psql completionization + admin toolchain)
+pgcpp_add_test(m13_ext_test unit/tools/m13_ext_test.cpp)
+
 # Phase 15.13 tests (M14: commands module — sequence/view/trigger/explain/
 # dbcommands/schemacmds/tablespace/functioncmds)
 pgcpp_add_test(commands_test unit/commands/commands_test.cpp)
