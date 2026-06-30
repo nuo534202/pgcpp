@@ -28,5 +28,9 @@ function(pgcpp_enable_sanitizers)
             -fno-omit-frame-pointer
             -fno-sanitize-recover=undefined)
         add_link_options(-fsanitize=undefined)
+        # Unlike __SANITIZE_ADDRESS__ and __SANITIZE_THREAD__, GCC does not
+        # predefine a macro for -fsanitize=undefined. Define our own so that
+        # sanitizer-validation tests can detect UBSan at compile time.
+        add_compile_definitions(__SANITIZE_UNDEFINED__=1)
     endif()
 endfunction()
