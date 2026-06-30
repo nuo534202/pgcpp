@@ -102,26 +102,52 @@ TupleTableSlot* ModifyTableState::ExecProcNode() {
                 return ps_ResultTupleSlot;
             }
             case CmdType::kDelete: {
-                // The child slot should have a backing tuple with a TID.
-                if (child_slot->tts_tuple == nullptr) {
+                // The TID of the row to delete comes from the backing heap
+                // tuple. The child's result slot is typically a virtual
+                // (projected) tuple with tts_tuple == nullptr (ExecProject
+                // clears it); in that case, fall back to the child's scan
+                // tuple slot, which holds the original heap tuple read from
+                // the table and therefore carries the TID in t_self.
+                HeapTuple scan_tuple = child_slot->tts_tuple;
+                if (scan_tuple == nullptr && leftps->ps_ExprContext != nullptr) {
+                    TupleTableSlot* scan_slot = leftps->ps_ExprContext->ecxt_scantuple;
+                    if (scan_slot != nullptr) {
+                        scan_tuple = scan_slot->tts_tuple;
+                    }
+                }
+                if (scan_tuple == nullptr) {
                     continue;  // no TID available
                 }
-                ItemPointerData tid = child_slot->tts_tuple->t_self;
+                ItemPointerData tid = scan_tuple->t_self;
                 heap_delete(mt_relation, tid);
-                return nullptr;  // DELETE doesn't return tuples (unless RETURNING)
+                // DELETE without RETURNING produces no output row; continue
+                // to the next child tuple. Returning nullptr here would
+                // prematurely signal "no more tuples" to ExecutorRun, which
+                // would stop after deleting only the first row.
+                continue;
             }
             case CmdType::kUpdate: {
                 // The child slot has the new values; the old TID comes from
-                // the backing tuple.
-                if (child_slot->tts_tuple == nullptr) {
+                // the backing heap tuple. As with DELETE, fall back to the
+                // child's scan tuple slot when the result slot is virtual.
+                HeapTuple scan_tuple = child_slot->tts_tuple;
+                if (scan_tuple == nullptr && leftps->ps_ExprContext != nullptr) {
+                    TupleTableSlot* scan_slot = leftps->ps_ExprContext->ecxt_scantuple;
+                    if (scan_slot != nullptr) {
+                        scan_tuple = scan_slot->tts_tuple;
+                    }
+                }
+                if (scan_tuple == nullptr) {
                     continue;
                 }
-                ItemPointerData otid = child_slot->tts_tuple->t_self;
+                ItemPointerData otid = scan_tuple->t_self;
                 HeapTuple new_tup =
                     heap_form_tuple(mt_tupDesc, child_slot->tts_values, child_slot->tts_isnull);
                 heap_update(mt_relation, otid, new_tup);
                 heap_freetuple(new_tup);
-                return nullptr;  // UPDATE doesn't return tuples (unless RETURNING)
+                // UPDATE without RETURNING produces no output row; continue
+                // to the next child tuple (see DELETE comment above).
+                continue;
             }
             default:
                 return nullptr;

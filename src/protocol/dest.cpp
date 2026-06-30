@@ -17,6 +17,7 @@
 #include "access/heapam.hpp"
 #include "access/rel.hpp"
 #include "catalog/catalog.hpp"
+#include "common/containers/node.hpp"
 #include "common/error/elog.hpp"
 #include "executor/estate.hpp"
 #include "executor/tupletable.hpp"
@@ -238,7 +239,11 @@ public:
 private:
     void FreeSlots() {
         for (TupleTableSlot* s : slots_) {
-            delete s;
+            // Slots are allocated via TupleTableSlot::Make() (makePallocNode),
+            // so they must be freed via destroyPallocNode rather than `delete`
+            // (which would be a bad-free under ASan since the memory lives in
+            // a palloc'd chunk, not a malloc'd one).
+            pgcpp::nodes::destroyPallocNode(s);
         }
         slots_.clear();
     }

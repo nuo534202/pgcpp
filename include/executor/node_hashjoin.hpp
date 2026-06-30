@@ -30,6 +30,11 @@ public:
     // Probe side: the outer (left) child.
     TupleTableSlot* hj_OuterTupleSlot = nullptr;
     bool hj_NeedNewOuter = true;
+    // true if the current outer tuple has produced at least one output row
+    // (i.e. found a matching inner tuple that passed the join qual). Used by
+    // LEFT JOIN to decide whether to emit a NULL-padded row when the bucket
+    // is exhausted.
+    bool hj_MatchedOuter = false;
 
     // Current bucket iterator for matching tuples.
     typename std::unordered_multimap<uint64_t, HashEntry>::iterator hj_curBucket;

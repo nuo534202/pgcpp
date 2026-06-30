@@ -6,7 +6,9 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "executor/node_exec.hpp"
@@ -30,6 +32,7 @@ struct AggStateInfo {
     pgcpp::catalog::Oid restype = 0;     // type of the aggregate's result
     int aggno = -1;                      // index into the state arrays
     bool isstar = false;                 // COUNT(*) vs COUNT(expr)
+    bool distinct = false;               // DISTINCT flag (Aggref::aggdistinct non-empty)
     pgcpp::parser::Node* arg = nullptr;  // argument expression (nullptr for COUNT(*))
 };
 
@@ -64,6 +67,16 @@ struct AggGroupKeyHash {
     }
 };
 
+// DistinctSet — per-aggregate set of seen values for DISTINCT aggregates.
+// Pass-by-value types (int2/4/8, float4/8, date, timestamp) use the Datum
+// bits directly via `int_values`. Pass-by-reference types (text, varchar)
+// use the serialized string content via `str_values` so that two rows with
+// identical text at different buffer addresses compare equal.
+struct DistinctSet {
+    std::unordered_set<int64_t> int_values;
+    std::unordered_set<std::string> str_values;
+};
+
 // AggGroupState — per-group aggregate state.
 struct AggGroupState {
     std::vector<int64_t> count;                // count per aggregate
@@ -73,6 +86,7 @@ struct AggGroupState {
     std::vector<pgcpp::types::Datum> max_val;  // max per aggregate
     std::vector<bool> minmax_init;             // has min/max been initialized?
     std::vector<bool> minmax_null;             // is min/max currently null?
+    std::vector<DistinctSet> distinct_sets;    // per-aggregate seen-values set
 };
 
 class AggState : public PlanState {

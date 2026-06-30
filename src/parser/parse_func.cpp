@@ -28,6 +28,7 @@
 #include "parser/parse_coerce.hpp"
 #include "parser/parse_expr.hpp"
 #include "parser/parse_type.hpp"
+#include "parser/parsenodes.hpp"
 #include "types/datum.hpp"
 
 namespace pgcpp::parser {
@@ -338,6 +339,20 @@ Node* transformFuncCall(ParseState* pstate, FuncCall* fn, int location) {
                                     transformExpr(pstate, sortnode, ParseExprKind::kOrderBy);
                                 agg->aggorder.push_back(transformed);
                             }
+                        }
+
+                        // Handle DISTINCT within aggregate (COUNT(DISTINCT col),
+                        // SUM(DISTINCT col), etc.). The executor checks
+                        // aggdistinct.non_empty() to activate per-group
+                        // deduplication.
+                        if (fn->agg_distinct) {
+                            auto* sgc = makeNode<SortGroupClause>();
+                            sgc->tle_sort_group_ref = 1;
+                            sgc->eqop = 0;
+                            sgc->sortop = 0;
+                            sgc->nulls_first = false;
+                            sgc->hashable = true;
+                            agg->aggdistinct.push_back(sgc);
                         }
 
                         pstate->p_has_aggs = true;

@@ -256,7 +256,10 @@ TEST_F(DestTest, NoneReceiver_DiscardsSlots) {
     r->rShutdown(nullptr);
     r->rDestroy();
     delete r;
-    delete slot;
+    // NOTE: `slot` is allocated via TupleTableSlot::Make() which uses
+    // makePallocNode (palloc). It is freed when the per-test memory
+    // context is destroyed in TearDown; calling `delete` on it would
+    // be a bad-free (detected by ASan).
 }
 
 // --- RemoteReceiver ---
@@ -291,7 +294,10 @@ TEST_F(DestTest, RemoteReceiver_SendsRowDescriptionAndDataRow) {
     r->rShutdown(nullptr);
     r->rDestroy();
     delete r;
-    delete slot;
+    // NOTE: `slot` is allocated via TupleTableSlot::Make() which uses
+    // makePallocNode (palloc). It is freed when the per-test memory
+    // context is destroyed in TearDown; calling `delete` on it would
+    // be a bad-free (detected by ASan).
 }
 
 TEST_F(DestTest, RemoteReceiver_NoRowDescriptionWhenDisabled) {
@@ -315,7 +321,10 @@ TEST_F(DestTest, RemoteReceiver_NoRowDescriptionWhenDisabled) {
 
     r->rDestroy();
     delete r;
-    delete slot;
+    // NOTE: `slot` is allocated via TupleTableSlot::Make() which uses
+    // makePallocNode (palloc). It is freed when the per-test memory
+    // context is destroyed in TearDown; calling `delete` on it would
+    // be a bad-free (detected by ASan).
 }
 
 // --- TuplestoreReceiver ---
@@ -343,7 +352,10 @@ TEST_F(DestTest, TuplestoreReceiver_CollectsSlots) {
 
     r->rDestroy();
     delete r;
-    delete slot;
+    // NOTE: `slot` is allocated via TupleTableSlot::Make() which uses
+    // makePallocNode (palloc). It is freed when the per-test memory
+    // context is destroyed in TearDown; calling `delete` on it would
+    // be a bad-free (detected by ASan).
 }
 
 TEST_F(DestTest, GetTuplestoreSlots_EmptyForNonTuplestoreReceiver) {
@@ -376,7 +388,10 @@ TEST_F(DestTest, IntoRelReceiver_InsertsTuplesIntoRelation) {
     r->rShutdown(nullptr);
     r->rDestroy();
     delete r;
-    delete slot;
+    // NOTE: `slot` is allocated via TupleTableSlot::Make() which uses
+    // makePallocNode (palloc). It is freed when the per-test memory
+    // context is destroyed in TearDown; calling `delete` on it would
+    // be a bad-free (detected by ASan).
 
     // Verify the tuples were inserted by scanning the relation.
     CommitAndStartNew();

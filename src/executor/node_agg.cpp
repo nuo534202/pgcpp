@@ -56,6 +56,7 @@ using pgcpp::types::kInt4Oid;
 using pgcpp::types::kInt8Oid;
 using pgcpp::types::kTextOid;
 using pgcpp::types::kTimestampOid;
+using pgcpp::types::kVarcharOid;
 using pgcpp::types::TextPGetDatum;
 using pgcpp::types::VARDATA;
 using pgcpp::types::VARSIZE_DATA;
@@ -98,6 +99,20 @@ int CompareTextValues(Datum a, Datum b) {
     return 0;
 }
 
+// Returns true if `val` of type `argtype` is newly seen in `ds` (and records
+// it). Returns false if the value was already seen. Pass-by-value types use
+// the Datum bits directly; pass-by-reference text/varchar use the string
+// content so that identical strings at different addresses match.
+bool MarkDistinct(DistinctSet& ds, pgcpp::catalog::Oid argtype, Datum val) {
+    if (argtype == kTextOid || argtype == kVarcharOid) {
+        const char* text = DatumGetTextP(val);
+        int len = VARSIZE_DATA(text);
+        std::string s(VARDATA(text), len);
+        return ds.str_values.insert(s).second;
+    }
+    return ds.int_values.insert(static_cast<int64_t>(val)).second;
+}
+
 }  // namespace
 
 // Recursively find all Aggref nodes in an expression tree and register them.
@@ -119,6 +134,7 @@ static void CollectAggrefsRecursive(pgcpp::parser::Node* node, std::vector<AggSt
             info.restype = agg->aggtype;
             info.aggno = agg->aggno;
             info.isstar = agg->aggstar;
+            info.distinct = !agg->aggdistinct.empty();
             if (!agg->aggstar && !agg->args.empty()) {
                 pgcpp::parser::Node* arg = agg->args[0];
                 if (arg != nullptr && arg->GetTag() == NodeTag::kTargetEntry) {
@@ -181,6 +197,7 @@ void AggState::CollectAggrefs() {
             info.restype = agg->aggtype;
             info.aggno = agg->aggno;
             info.isstar = agg->aggstar;
+            info.distinct = !agg->aggdistinct.empty();
             // The argument is the first element of agg->args (if any).
             // agg->args is a list of TargetEntry wrapping the real arg.
             if (!agg->aggstar && !agg->args.empty()) {
@@ -216,6 +233,7 @@ void AggState::InitGroupState(AggGroupState& gs) {
     gs.max_val.assign(n, 0);
     gs.minmax_init.assign(n, false);
     gs.minmax_null.assign(n, true);
+    gs.distinct_sets.assign(n, DistinctSet{});
 }
 
 void AggState::Accumulate(AggGroupState& gs, ExprContext* econtext) {
@@ -228,17 +246,22 @@ void AggState::Accumulate(AggGroupState& gs, ExprContext* econtext) {
             val = ExecEvalExpr(info.arg, econtext, &isnull);
         }
 
-        // COUNT(*) always counts; COUNT(expr) skips nulls.
-        if (info.kind == AggKind::kCount) {
-            if (info.isstar || !isnull) {
-                gs.count[i]++;
-            }
+        // COUNT(*) always counts every row (no DISTINCT possible).
+        if (info.kind == AggKind::kCount && info.isstar) {
+            gs.count[i]++;
             continue;
         }
 
-        // Other aggregates skip null inputs.
+        // All other aggregates (including COUNT(expr)) skip null inputs.
         if (isnull)
             continue;
+
+        // For DISTINCT aggregates, skip values already seen in this group.
+        if (info.distinct) {
+            if (!MarkDistinct(gs.distinct_sets[i], info.argtype, val)) {
+                continue;
+            }
+        }
 
         gs.count[i]++;
 

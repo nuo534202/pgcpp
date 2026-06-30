@@ -204,6 +204,7 @@ TupleTableSlot* HashJoinState::ExecProcNode() {
 
                 ResetExprContext(ps_ExprContext);
                 if (ExecQual(plan->qual, ps_ExprContext)) {
+                    hj_MatchedOuter = true;
                     ExecProject(plan->targetlist, ps_ExprContext, ps_ResultTupleSlot);
                     return ps_ResultTupleSlot;
                 }
@@ -223,6 +224,7 @@ TupleTableSlot* HashJoinState::ExecProcNode() {
                 }
                 hj_OuterTupleSlot->StoreVirtual(outer->tts_values, outer->tts_isnull);
                 hj_NeedNewOuter = true;
+                hj_MatchedOuter = false;
 
                 // Compute hash of the outer join keys.
                 ps_ExprContext->ecxt_outertuple = hj_OuterTupleSlot;
@@ -263,6 +265,10 @@ TupleTableSlot* HashJoinState::ExecProcNode() {
                         ps_ExprContext->ecxt_innertuple->tts_isempty = false;
                         ResetExprContext(ps_ExprContext);
                         ExecProject(plan->targetlist, ps_ExprContext, ps_ResultTupleSlot);
+                        // Mark this outer as handled so the "no more matches"
+                        // path below does not emit a duplicate NULL-padded row.
+                        hj_NeedNewOuter = true;
+                        hj_MatchedOuter = true;
                         return ps_ResultTupleSlot;
                     }
                     continue;
@@ -279,12 +285,27 @@ TupleTableSlot* HashJoinState::ExecProcNode() {
 
             // No more matches for this outer tuple.
             hj_NeedNewOuter = true;
-            // For LEFT JOIN: if no match was found, output a NULL-padded row.
-            // (This is handled when the bucket is empty — we'd loop back and
-            // get a new outer. But we need to detect the "no match" case.)
-            // For simplicity, we skip the LEFT JOIN NULL-padding here when
-            // the bucket was empty. A full implementation would track
-            // whether any match was found.
+            // For LEFT JOIN: if no match was found for this outer tuple,
+            // emit a NULL-padded row (outer columns from hj_OuterTupleSlot,
+            // inner columns NULL). This mirrors PostgreSQL's ExecHashJoin
+            // "no match" path. hj_MatchedOuter is reset to false whenever a
+            // new outer tuple is fetched and set to true whenever a bucket
+            // entry passes the join qual.
+            if (hj_jointype == JoinType::kLeft && !hj_MatchedOuter) {
+                // Ensure the outer tuple is available to ExecProject.
+                ps_ExprContext->ecxt_outertuple = hj_OuterTupleSlot;
+                ps_ExprContext->ecxt_scantuple = hj_OuterTupleSlot;
+                // Null out the inner slot.
+                for (int i = 0; i < ps_ExprContext->ecxt_innertuple->Natts(); i++) {
+                    ps_ExprContext->ecxt_innertuple->tts_values[i] = 0;
+                    ps_ExprContext->ecxt_innertuple->tts_isnull[i] = true;
+                }
+                ps_ExprContext->ecxt_innertuple->tts_nvalid = true;
+                ps_ExprContext->ecxt_innertuple->tts_isempty = false;
+                ResetExprContext(ps_ExprContext);
+                ExecProject(plan->targetlist, ps_ExprContext, ps_ResultTupleSlot);
+                return ps_ResultTupleSlot;
+            }
             continue;
         }
 
