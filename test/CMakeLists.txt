@@ -25,122 +25,14 @@ function(pgcpp_add_test name source)
     gtest_discover_tests(${name} DISCOVERY_MODE PRE_TEST)
 endfunction()
 
-# Phase 1 tests (M1: memory and error)
-pgcpp_add_test(memory_context_test unit/common/memory/memory_context_test.cpp)
-pgcpp_add_test(elog_test unit/common/error/elog_test.cpp)
-
-# Phase 2 tests (M2: containers)
-pgcpp_add_test(node_test unit/common/containers/node_test.cpp)
-pgcpp_add_test(list_test unit/common/containers/list_test.cpp)
-pgcpp_add_test(string_info_test unit/common/containers/string_info_test.cpp)
-pgcpp_add_test(bitmapset_test unit/common/containers/bitmapset_test.cpp)
-pgcpp_add_test(node_funcs_test unit/common/containers/node_funcs_test.cpp)
-pgcpp_add_test(makefuncs_test unit/common/containers/makefuncs_test.cpp)
-
-# Phase 3 tests (M3: catalog)
-pgcpp_add_test(catalog_test unit/catalog/catalog_test.cpp)
-pgcpp_add_test(lsyscache_test unit/catalog/lsyscache_test.cpp)
-pgcpp_add_test(namespace_test unit/catalog/namespace_test.cpp)
-pgcpp_add_test(relcache_test unit/catalog/relcache_test.cpp)
-
-# Phase 4 tests (M4: types)
-pgcpp_add_test(builtins_test unit/types/builtins_test.cpp)
-pgcpp_add_test(datetime_test unit/types/datetime_test.cpp)
-pgcpp_add_test(numeric_test unit/types/numeric_test.cpp)
-pgcpp_add_test(numutils_test unit/types/numutils_test.cpp)
-pgcpp_add_test(string_funcs_test unit/types/string_funcs_test.cpp)
-
-# Phase 15.19 tests (M4: extended types — acl/array/json/jsonb/uuid/network/range/geo etc.)
-pgcpp_add_test(extended_types_test unit/types/extended_types_test.cpp)
-
-# Phase 5 tests (M5: parser)
-pgcpp_add_test(parser_test unit/parser/parser_test.cpp)
-pgcpp_add_test(parse_analysis_test unit/parser/parse_analysis_test.cpp)
-pgcpp_add_test(parse_utilcmd_test unit/parser/parse_utilcmd_test.cpp)
-pgcpp_add_test(parse_cte_test unit/parser/parse_cte_test.cpp)
-pgcpp_add_test(parse_type_ext_test unit/parser/parse_type_ext_test.cpp)
-
-# Phase 6 tests (M6: storage / buffer manager)
-pgcpp_add_test(bufpage_test unit/storage/bufpage_test.cpp)
-pgcpp_add_test(bufpage_delete_test unit/storage/bufpage_delete_test.cpp)
-pgcpp_add_test(smgr_test unit/storage/smgr_test.cpp)
-pgcpp_add_test(bufmgr_test unit/storage/bufmgr_test.cpp)
-
-# Phase 15.18 tests (M6: shared buffers + IPC subsystems)
-pgcpp_add_test(ipc_test unit/storage/ipc_test.cpp)
-
-# Phase 7 tests (M7: transaction & MVCC)
-pgcpp_add_test(xact_test unit/transaction/xact_test.cpp)
-pgcpp_add_test(visibility_test unit/transaction/visibility_test.cpp)
-pgcpp_add_test(lock_test unit/transaction/lock_test.cpp)
-pgcpp_add_test(snapmgr_test unit/transaction/snapmgr_test.cpp)
-
-# Phase 15.16 tests (M7: WAL + multiversion subsystem)
-pgcpp_add_test(wal_multiversion_test unit/transaction/wal_multiversion_test.cpp)
-
-# Phase 8 tests (M8: access methods)
-pgcpp_add_test(heapam_test unit/access/heapam_test.cpp)
-pgcpp_add_test(heaptuple_test unit/access/heaptuple_test.cpp)
-pgcpp_add_test(tupdesc_test unit/access/tupdesc_test.cpp)
-pgcpp_add_test(indextuple_test unit/access/indextuple_test.cpp)
-pgcpp_add_test(indexam_test unit/access/indexam_test.cpp)
-pgcpp_add_test(nbtree_test unit/access/nbtree_test.cpp)
-
-# Phase 9 tests (M9: executor)
-pgcpp_add_test(executor_test unit/executor/executor_test.cpp)
-
-# Phase 10 tests (M10: optimizer / planner)
-pgcpp_add_test(optimizer_test unit/optimizer/optimizer_test.cpp)
-
-# Phase 15.3 tests (M10: PG-style planner pipeline — Path→Plan translation)
-pgcpp_add_test(restrictinfo_test unit/optimizer/restrictinfo_test.cpp)
-pgcpp_add_test(pathnode_test unit/optimizer/pathnode_test.cpp)
-pgcpp_add_test(relnode_test unit/optimizer/relnode_test.cpp)
-pgcpp_add_test(plancat_test unit/optimizer/plancat_test.cpp)
-pgcpp_add_test(init_splan_test unit/optimizer/init_splan_test.cpp)
-pgcpp_add_test(create_plan_test unit/optimizer/create_plan_test.cpp)
-pgcpp_add_test(set_refs_test unit/optimizer/set_refs_test.cpp)
-pgcpp_add_test(query_planner_test unit/optimizer/query_planner_test.cpp)
-
-# Phase 15.15 tests (M10: join path + subquery planning)
-pgcpp_add_test(join_planning_test unit/optimizer/join_planning_test.cpp)
-
-# Phase 15.21 tests (M10: GEQO genetic query optimizer)
-pgcpp_add_test(geqo_test unit/optimizer/geqo_test.cpp)
-
-# Phase 11 tests (M11: frontend protocol)
-pgcpp_add_test(protocol_test unit/protocol/protocol_test.cpp)
-pgcpp_add_test(dest_test unit/protocol/dest_test.cpp)
-pgcpp_add_test(utility_test unit/protocol/utility_test.cpp)
-pgcpp_add_test(postgres_main_test unit/protocol/postgres_main_test.cpp)
-
-# Phase 15.22 tests (M11: SSL/GSS/HBA/Large Object/Fastpath)
-pgcpp_add_test(m11_ext_test unit/protocol/m11_ext_test.cpp)
-
-# Phase 12 tests (M12: postmaster / bootstrap)
-pgcpp_add_test(server_test unit/server/server_test.cpp)
-pgcpp_add_test(guc_test unit/server/guc_test.cpp)
-pgcpp_add_test(postmaster_startup_test unit/server/postmaster_startup_test.cpp)
-
-# Phase 15.17 tests (M12: auxiliary processes)
-pgcpp_add_test(aux_process_test unit/server/aux_process_test.cpp)
-
-# Phase 13 tests (M13: client tools)
-pgcpp_add_test(tools_test unit/tools/tools_test.cpp)
-pgcpp_add_test(psql_describe_test unit/tools/psql_describe_test.cpp)
-pgcpp_add_test(psql_command_test unit/tools/psql_command_test.cpp)
-
-# Phase 15.23 tests (M13: psql completionization + admin toolchain)
-pgcpp_add_test(m13_ext_test unit/tools/m13_ext_test.cpp)
-
-# Phase 15.13 tests (M14: commands module — sequence/view/trigger/explain/
-# dbcommands/schemacmds/tablespace/functioncmds)
-pgcpp_add_test(commands_test unit/commands/commands_test.cpp)
-
-# Phase 15.20 tests (P2 top-level directories: lib/partitioning/regex/replication/statistics/tsearch)
-pgcpp_add_test(lib_test unit/lib/lib_test.cpp)
-pgcpp_add_test(partitioning_test unit/partitioning/partitioning_test.cpp)
-pgcpp_add_test(regex_test unit/regex/regex_test.cpp)
-pgcpp_add_test(replication_test unit/replication/replication_test.cpp)
-pgcpp_add_test(statistics_test unit/statistics/statistics_test.cpp)
-pgcpp_add_test(tsearch_test unit/tsearch/tsearch_test.cpp)
+# Glob all *_test.cpp under test/unit/ (CONFIGURE_DEPENDS so CMake
+# re-checks at build time and picks up newly added test files). The test
+# target name is derived from the file's basename (e.g.
+# unit/common/memory/memory_context_test.cpp -> memory_context_test).
+file(GLOB_RECURSE PGCPP_TEST_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/unit/*_test.cpp"
+)
+foreach(src ${PGCPP_TEST_SOURCES})
+    get_filename_component(test_name ${src} NAME_WE)
+    pgcpp_add_test(${test_name} ${src})
+endforeach()

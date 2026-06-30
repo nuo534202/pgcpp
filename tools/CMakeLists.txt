@@ -10,22 +10,13 @@ function(pgcpp_add_tool name source)
     target_include_directories(${name} PRIVATE ${CMAKE_SOURCE_DIR}/include)
 endfunction()
 
-# psql — interactive query client
-pgcpp_add_tool(pgcpp_psql psql/psql.cpp)
-
-# initdb — cluster initialization tool
-pgcpp_add_tool(pgcpp_initdb initdb/initdb.cpp)
-
-# Phase 15.23: psql completionization + admin toolchain
-pgcpp_add_tool(pgcpp_pg_ctl      pg_ctl/pg_ctl.cpp)
-pgcpp_add_tool(pgcpp_pg_dump     pg_dump/pg_dump.cpp)
-pgcpp_add_tool(pgcpp_pg_restore  pg_restore/pg_restore.cpp)
-pgcpp_add_tool(pgcpp_vacuumdb    vacuumdb/vacuumdb.cpp)
-pgcpp_add_tool(pgcpp_reindexdb   reindexdb/reindexdb.cpp)
-pgcpp_add_tool(pgcpp_clusterdb   clusterdb/clusterdb.cpp)
-pgcpp_add_tool(pgcpp_createdb    createdb/createdb.cpp)
-pgcpp_add_tool(pgcpp_dropdb      dropdb/dropdb.cpp)
-pgcpp_add_tool(pgcpp_createuser  createuser/createuser.cpp)
-pgcpp_add_tool(pgcpp_dropuser    dropuser/dropuser.cpp)
-pgcpp_add_tool(pgcpp_pg_isready  pg_isready/pg_isready.cpp)
-pgcpp_add_tool(pgcpp_pg_config   pg_config/pg_config.cpp)
+# Glob each tool's .cpp under tools/<name>/<name>.cpp (CONFIGURE_DEPENDS so
+# CMake re-checks at build time and picks up newly added tools). The tool
+# target name is pgcpp_<basename> (e.g. psql/psql.cpp -> pgcpp_psql).
+file(GLOB PGCPP_TOOL_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/*/*.cpp"
+)
+foreach(src ${PGCPP_TOOL_SOURCES})
+    get_filename_component(tool_basename ${src} NAME_WE)
+    pgcpp_add_tool(pgcpp_${tool_basename} ${src})
+endforeach()
