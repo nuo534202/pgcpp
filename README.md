@@ -99,4 +99,4 @@ Both live in `tools/` and link against `pgcpp_core`:
 
 ## License
 
-Released under the [MIT License](LICENSE).
+pgcpp is distributed under the PostgreSQL License, with additional pgcpp copyright and disclaimer notices. See [LICENSE](LICENSE) for details. pgcpp is not affiliated with, endorsed by, sponsored by, or approved by the PostgreSQL Global Development Group, the PostgreSQL Project, the PostgreSQL Core Team, or the PostgreSQL Community.
