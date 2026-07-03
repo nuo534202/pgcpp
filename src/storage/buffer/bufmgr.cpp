@@ -71,9 +71,16 @@ BufferPool::BufferPool(int n_buffers, BufferDesc* descriptors, char* blocks_base
 }
 
 BufferPool::~BufferPool() {
-    // Flush dirty buffers before destroying. The descriptors/blocks memory
-    // is owned by the shm framework (mmap segment or test-mode std::map),
-    // not by this object, so we don't free it here.
+    // Destructor is a no-op. Dirty buffer flushing is done explicitly via
+    // FlushAllDirtyBuffers() before destruction (called from
+    // ShutdownBufferPool / InitBufferPool re-init). This avoids calling
+    // ereport(kError) from a destructor — after exception-ization, throwing
+    // during stack unwinding would call std::terminate.
+}
+
+void BufferPool::FlushAllDirtyBuffers() {
+    // Flush all dirty+valid buffers. Called explicitly before pool destruction
+    // so errors propagate normally (not from a destructor).
     for (int i = 0; i < n_buffers_; ++i) {
         if (descriptors_[i].IsDirty() && descriptors_[i].IsValid()) {
             FlushBuffer(i, false);
@@ -402,6 +409,9 @@ std::size_t BufferPoolShmemSize(int n_buffers) {
 
 void InitBufferPool(int n_buffers) {
     if (g_buffer_pool != nullptr) {
+        // Flush dirty buffers before re-initializing (preserves data).
+        // Done here, not in the destructor, to avoid ereport from a destructor.
+        g_buffer_pool->FlushAllDirtyBuffers();
         delete g_buffer_pool;
         g_buffer_pool = nullptr;
     }
@@ -434,6 +444,9 @@ void InitBufferPool(int n_buffers) {
 
 void ShutdownBufferPool() {
     if (g_buffer_pool != nullptr) {
+        // Flush dirty buffers before destroying. Done here, not in the
+        // destructor, to avoid ereport from a destructor.
+        g_buffer_pool->FlushAllDirtyBuffers();
         delete g_buffer_pool;
         g_buffer_pool = nullptr;
     }

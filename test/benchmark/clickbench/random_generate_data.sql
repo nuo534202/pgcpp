@@ -1,6 +1,15 @@
+-- Fix C-1: pin the RNG seed so the dataset is reproducible across runs and
+-- across engines (pgcpp vs stock PostgreSQL). Both must implement setseed()
+-- with the same RNG algorithm for byte-identical output; until pgcpp does,
+-- this at least makes runs on stock PG deterministic for golden-file capture.
+SELECT setseed(0.42);
+
 INSERT INTO hits
 SELECT
-    (random() * 9223372036854775807)::BIGINT AS WatchID,
+    -- Fix C-2: random()*2^63-1 can round up to exactly 2^63 in double when
+    -- random() approaches 1, overflowing BIGINT. Use 2^62 (exactly
+    -- representable) then double via integer multiply; max is 2^63-2.
+    (random() * 4611686018427387904)::BIGINT * 2 AS WatchID,
     (floor(random() * 2))::SMALLINT AS JavaEnable,
     (CASE WHEN random() < 0.2 THEN'Google Search Results' ELSE'Page Title ' || i END) AS Title,
     (floor(random() * 2))::SMALLINT AS GoodEvent,
@@ -10,11 +19,11 @@ SELECT
     (floor(random() * 2000000000))::INTEGER AS ClientIP,
     (floor(random() * 100))::INTEGER AS RegionID,
     -- 特意埋入 queries.sql 中点名查询的特定 UserID: 435090932899640449
-    (CASE WHEN random() < 0.0001 THEN 435090932899640449 ELSE (random() * 9223372036854775807)::BIGINT END) AS UserID,
+    (CASE WHEN random() < 0.0001 THEN 435090932899640449 ELSE (random() * 4611686018427387904)::BIGINT * 2 END) AS UserID,
     (floor(random() * 5))::SMALLINT AS CounterClass,
     (floor(random() * 10))::SMALLINT AS OS,
     (floor(random() * 100))::SMALLINT AS UserAgent,
-    (CASE WHEN random() < 0.15 THEN 'ttps://www.google.com/search?q=test' ELSE'https://example.com/page/' || i END) AS URL,
+    (CASE WHEN random() < 0.15 THEN 'https://www.google.com/search?q=test' ELSE'https://example.com/page/' || i END) AS URL,
     (CASE WHEN random() < 0.3 THEN'https://www.google.com/' ELSE'https://referer.com/link/' || i END) AS Referer,
     (floor(random() * 2))::SMALLINT AS IsRefresh,
     (floor(random() * 10))::SMALLINT AS RefererCategoryID,
@@ -35,7 +44,10 @@ SELECT
     (floor(random() * 2))::SMALLINT AS JavascriptEnable,
     (floor(random() * 2))::SMALLINT AS IsMobile,
     (floor(random() * 10))::SMALLINT AS MobilePhone,
-    (CASE WHEN random() < 0.2 THEN'iPhone' WHEN random() < 0.4 THEN'Android' ELSE '' END) AS MobilePhoneModel,
+    -- Fix C-2: two independent random() calls broke the intended 20/20/60
+    -- split (original P(Android)=0.8*0.4=32%). Second threshold 0.25 gives
+    -- P(Android)=0.8*0.25=0.2, restoring 20/20/60.
+    (CASE WHEN random() < 0.2 THEN 'iPhone' WHEN random() < 0.25 THEN 'Android' ELSE '' END) AS MobilePhoneModel,
     'param=val_' || i AS Params,
     (floor(random() * 500))::INTEGER AS IPNetworkID,
     (floor(random() * 10))::SMALLINT AS TraficSourceID,
@@ -56,7 +68,7 @@ SELECT
     (floor(random() * 2))::SMALLINT AS IsLink,
     (floor(random() * 2))::SMALLINT AS IsDownload,
     (floor(random() * 2))::SMALLINT AS IsNotBounce,
-    (random() * 9223372036854775807)::BIGINT AS FUniqID,
+    (random() * 4611686018427387904)::BIGINT * 2 AS FUniqID,
     'https://example.com/orig/' || i AS OriginalURL,
     (floor(random() * 100000))::INTEGER AS HID,
     (floor(random() * 2))::SMALLINT AS IsOldCounter,
@@ -104,8 +116,8 @@ SELECT
     '' AS FromTag,
     (floor(random() * 2))::SMALLINT AS HasGCLID,
     -- 针对特定的 RefererHash 过滤埋点：3594120000172545465
-    (CASE WHEN random() < 0.1 THEN 3594120000172545465 ELSE (random() * 9223372036854775807)::BIGINT END) AS RefererHash,
+    (CASE WHEN random() < 0.1 THEN 3594120000172545465 ELSE (random() * 4611686018427387904)::BIGINT * 2 END) AS RefererHash,
     -- 针对特定的 URLHash 过滤埋点：2868770270353813622
-    (CASE WHEN random() < 0.1 THEN 2868770270353813622 ELSE (random() * 9223372036854775807)::BIGINT END) AS URLHash,
+    (CASE WHEN random() < 0.1 THEN 2868770270353813622 ELSE (random() * 4611686018427387904)::BIGINT * 2 END) AS URLHash,
     (floor(random() * 10000))::INTEGER AS CLID
 FROM generate_series(1, 10000000) AS i;

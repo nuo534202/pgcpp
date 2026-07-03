@@ -1,6 +1,7 @@
 #include "catalog/catalog.hpp"
 
 #include <gtest/gtest.h>
+#include <unistd.h>
 
 #include <cstring>
 #include <string>
@@ -660,6 +661,128 @@ TEST_F(CatalogTest, EndToEndCreateTableWithAttributes) {
     const FormData_pg_attribute* attr = syscache_->SearchAttributeByName(rel->oid, "url");
     ASSERT_NE(attr, nullptr);
     EXPECT_EQ(attr->atttypid, 25u);  // text OID
+}
+
+// ===========================================================================
+// A-3: persistence (Save / Load round-trip)
+// ===========================================================================
+
+// A-3: Saving a catalog with user rows, then loading into a fresh catalog
+// restores the rows with full field fidelity and restores next_oid_.
+TEST_F(CatalogTest, SaveLoadRoundTripPreservesUserRows) {
+    // Build a user table: one pg_class row (auto-OID), two pg_attribute rows,
+    // and a pg_type row (auto-OID). Set several non-default fields to verify
+    // they survive the round-trip.
+    auto* class_row = MakeClassRow("mytable");  // oid auto-assigned -> 16384
+    class_row->relnatts = 2;
+    class_row->relkind = RelKind::kRelation;
+    class_row->relpersistence = RelPersistence::kPermanent;
+    class_row->relhasindex = true;
+    class_row->relispopulated = true;
+    class_row->relfilenode = 16390;
+    Oid class_oid = catalog_->InsertClass(class_row);
+    EXPECT_EQ(class_oid, kFirstNormalObjectId);
+
+    auto* attr1 = MakeAttributeRow(class_oid, "id", 1, 23);
+    attr1->attlen = 4;
+    attr1->attbyval = true;
+    attr1->attnotnull = true;
+    catalog_->InsertAttribute(attr1);
+    auto* attr2 = MakeAttributeRow(class_oid, "name", 2, 25);
+    attr2->attisdropped = true;  // exercise a bool field
+    catalog_->InsertAttribute(attr2);
+
+    auto* type_row = MakeTypeRow("mytype");  // oid auto-assigned -> 16385
+    type_row->typlen = 4;
+    type_row->typbyval = true;
+    type_row->typdefault = "0";
+    Oid type_oid = catalog_->InsertType(type_row);
+    EXPECT_EQ(type_oid, kFirstNormalObjectId + 1);
+
+    // next_oid_ is now 16386 after two allocations.
+    std::string path = "/tmp/pgcpp_catalog_test_" + std::to_string(getpid()) + ".tsv";
+    ASSERT_TRUE(catalog_->Save(path));
+
+    // Load into a fresh catalog (still in the same memory context so palloc'd
+    // rows are tracked).
+    Catalog catalog2;
+    ASSERT_TRUE(catalog2.Load(path));
+
+    // pg_class restored with field fidelity.
+    const FormData_pg_class* restored_class = catalog2.GetClassByName("mytable");
+    ASSERT_NE(restored_class, nullptr);
+    EXPECT_EQ(restored_class->oid, class_oid);
+    EXPECT_EQ(restored_class->relnatts, 2);
+    EXPECT_EQ(restored_class->relkind, RelKind::kRelation);
+    EXPECT_EQ(restored_class->relpersistence, RelPersistence::kPermanent);
+    EXPECT_TRUE(restored_class->relhasindex);
+    EXPECT_TRUE(restored_class->relispopulated);
+    EXPECT_EQ(restored_class->relfilenode, 16390u);
+
+    // pg_attribute restored (both rows).
+    auto attrs = catalog2.GetAttributes(class_oid);
+    ASSERT_EQ(attrs.size(), 2u);
+    EXPECT_EQ(attrs[0]->attname, "id");
+    EXPECT_EQ(attrs[0]->attnum, 1);
+    EXPECT_EQ(attrs[0]->atttypid, 23u);
+    EXPECT_EQ(attrs[0]->attlen, 4);
+    EXPECT_TRUE(attrs[0]->attbyval);
+    EXPECT_TRUE(attrs[0]->attnotnull);
+    EXPECT_EQ(attrs[1]->attname, "name");
+    EXPECT_TRUE(attrs[1]->attisdropped);
+
+    // pg_type restored.
+    const FormData_pg_type* restored_type = catalog2.GetTypeByOid(type_oid);
+    ASSERT_NE(restored_type, nullptr);
+    EXPECT_EQ(restored_type->typname, "mytype");
+    EXPECT_EQ(restored_type->typlen, 4);
+    EXPECT_TRUE(restored_type->typbyval);
+    EXPECT_EQ(restored_type->typdefault, "0");
+
+    // next_oid_ restored: the next allocation continues past loaded rows.
+    EXPECT_EQ(catalog2.AllocateOid(), kFirstNormalObjectId + 2);
+
+    std::remove(path.c_str());
+}
+
+// A-3: built-in rows (oid < kFirstNormalObjectId) are NOT persisted — only
+// user-created rows survive a round-trip.
+TEST_F(CatalogTest, SaveOmitsBuiltinRows) {
+    auto* builtin_row = MakeClassRow("builtin_rel", 100);
+    catalog_->InsertClass(builtin_row);
+    auto* user_row = MakeClassRow("user_rel", 20000);
+    catalog_->InsertClass(user_row);
+
+    std::string path = "/tmp/pgcpp_catalog_test_" + std::to_string(getpid()) + ".tsv";
+    ASSERT_TRUE(catalog_->Save(path));
+
+    Catalog catalog2;
+    ASSERT_TRUE(catalog2.Load(path));
+
+    EXPECT_EQ(catalog2.GetClassByOid(100), nullptr);  // builtin not restored
+    ASSERT_NE(catalog2.GetClassByOid(20000), nullptr);
+    EXPECT_EQ(catalog2.GetClassByName("user_rel")->oid, 20000u);
+
+    std::remove(path.c_str());
+}
+
+// A-3: Loading a non-existent file is not an error (fresh initdb path).
+TEST_F(CatalogTest, LoadMissingFileReturnsFalse) {
+    Catalog catalog2;
+    EXPECT_FALSE(catalog2.Load("/tmp/pgcpp_does_not_exist_12345.tsv"));
+}
+
+// A-3: an empty catalog (no user rows) still saves/loads cleanly.
+TEST_F(CatalogTest, SaveLoadEmptyCatalog) {
+    std::string path = "/tmp/pgcpp_catalog_test_" + std::to_string(getpid()) + ".tsv";
+    ASSERT_TRUE(catalog_->Save(path));
+
+    Catalog catalog2;
+    ASSERT_TRUE(catalog2.Load(path));
+    EXPECT_EQ(catalog2.ClassCount(), 0u);
+    EXPECT_EQ(catalog2.AllocateOid(), kFirstNormalObjectId);
+
+    std::remove(path.c_str());
 }
 
 }  // namespace

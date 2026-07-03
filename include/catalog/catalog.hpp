@@ -130,6 +130,18 @@ public:
     // Allocate the next OID (PostgreSQL GetNewOid equivalent for catalog).
     Oid AllocateOid();
 
+    // --- Persistence (A-3) ---
+    //
+    // Save serializes user-created catalog rows (oid >= kFirstNormalObjectId)
+    // and next_oid_ to a TSV file at `path`. Returns false on I/O error.
+    // Load restores them, merging on top of BootstrapCatalog's built-in rows.
+    // A missing file is not an error (returns false silently — fresh initdb).
+    bool Save(const std::string& path) const;
+    bool Load(const std::string& path);
+
+    // Restore the OID counter after Load (avoids OID collisions).
+    void SetNextOid(Oid oid) { next_oid_ = oid; }
+
 private:
     std::vector<FormData_pg_class*> pg_class_rows_;
     std::vector<FormData_pg_attribute*> pg_attribute_rows_;

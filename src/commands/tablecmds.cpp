@@ -13,6 +13,7 @@
 #include "access/heapam.hpp"
 #include "access/rel.hpp"
 #include "catalog/catalog.hpp"
+#include "catalog/lsyscache.hpp"
 #include "catalog/pg_attribute.hpp"
 #include "catalog/pg_class.hpp"
 #include "common/containers/node.hpp"
@@ -20,6 +21,7 @@
 #include "common/memory/memory_context.hpp"
 #include "parser/parse_type.hpp"
 #include "parser/parsenodes.hpp"
+#include "storage/bufmgr.hpp"
 #include "storage/smgr.hpp"
 #include "types/builtins.hpp"
 
@@ -36,6 +38,7 @@ using pgcpp::catalog::Catalog;
 using pgcpp::catalog::FormData_pg_attribute;
 using pgcpp::catalog::FormData_pg_class;
 using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::get_typalign;
 using pgcpp::catalog::Oid;
 using pgcpp::catalog::RelKind;
 using pgcpp::catalog::RelPersistence;
@@ -72,19 +75,6 @@ std::string ExtractTypeName(TypeName* type_name) {
     return "";
 }
 
-// Determine the alignment for a type based on typlen.
-AttAlign TypeAlignForLen(int16_t typlen) {
-    if (typlen == 1)
-        return AttAlign::kChar;
-    if (typlen == 2)
-        return AttAlign::kShort;
-    if (typlen == 4)
-        return AttAlign::kInt;
-    if (typlen == 8 || typlen > 0)
-        return AttAlign::kDouble;
-    return AttAlign::kInt;  // varlena types
-}
-
 }  // namespace
 
 std::string DefineRelation(CreateStmt* stmt) {
@@ -110,6 +100,7 @@ std::string DefineRelation(CreateStmt* stmt) {
         Oid type_oid;
         int16_t typlen;
         bool typbyval;
+        bool is_not_null;
     };
     std::vector<ColInfo> columns;
 
@@ -120,6 +111,7 @@ std::string DefineRelation(CreateStmt* stmt) {
 
         ColInfo ci;
         ci.name = coldef->colname;
+        ci.is_not_null = coldef->is_not_null;
         std::string type_name = ExtractTypeName(coldef->type_name);
         ci.type_oid = typenameTypeId(type_name);
         if (ci.type_oid == pgcpp::types::kInvalidOid) {
@@ -154,8 +146,8 @@ std::string DefineRelation(CreateStmt* stmt) {
         attr_row->attnum = attnum;
         attr_row->attbyval = ci.typbyval;
         attr_row->attstorage = AttStorage::kPlain;
-        attr_row->attalign = TypeAlignForLen(ci.typlen);
-        attr_row->attnotnull = false;
+        attr_row->attalign = static_cast<AttAlign>(get_typalign(ci.type_oid));
+        attr_row->attnotnull = ci.is_not_null;
         attr_row->attislocal = true;
         cat->InsertAttribute(attr_row);
         attnum++;
@@ -258,8 +250,8 @@ std::string AlterTable(AlterTableStmt* stmt) {
                 attr_row->attnum = attnum;
                 attr_row->attbyval = get_typbyval(type_oid);
                 attr_row->attstorage = AttStorage::kPlain;
-                attr_row->attalign = TypeAlignForLen(get_typlen(type_oid));
-                attr_row->attnotnull = false;
+                attr_row->attalign = static_cast<AttAlign>(get_typalign(type_oid));
+                attr_row->attnotnull = coldef->is_not_null;
                 attr_row->attislocal = true;
                 cat->InsertAttribute(attr_row);
 
@@ -358,12 +350,30 @@ std::string ExecuteTruncate(TruncateStmt* stmt) {
         Oid relid = class_row->oid;
         Relation rel = RelationOpen(relid);
         if (rel != nullptr) {
-            auto srel = pgcpp::access::RelationGetSmgr(rel);
-            if (srel != nullptr) {
-                smgrdounlinkall(srel, false);
-                rel->rd_smgr = nullptr;
+            // A-6 fix: assign a NEW relfilenode instead of unlinking and
+            // recreating the old one. The new (empty) storage file is
+            // created BEFORE the old file is removed, so there is never a
+            // window where the relation has no storage (crash-safe). This
+            // mirrors PostgreSQL's TRUNCATE architecture (new relfilenode
+            // per TRUNCATE). PostgreSQL queues the old relfilenode for
+            // post-commit deletion; pgcpp lacks deferred delete, so the old
+            // file is unlinked now — ROLLBACK safety requires deferred
+            // delete + catalog undo (future work).
+            auto old_srel = pgcpp::access::RelationGetSmgr(rel);
+
+            Oid new_relfilenode = cat->AllocateOid();
+            auto* mut = const_cast<FormData_pg_class*>(class_row);
+            mut->relfilenode = new_relfilenode;
+
+            // Create the new (empty) storage file first.
+            RelationCreateStorage(new_relfilenode, false);
+
+            // Now drop buffers and unlink the old storage file.
+            if (old_srel != nullptr) {
+                pgcpp::storage::DropRelationBuffers(old_srel->smgr_rnode.node);
+                smgrdounlinkall(old_srel, false);
+                rel->rd_smgr = nullptr;  // next RelationGetSmgr opens new relfilenode
             }
-            RelationCreateStorage(class_row->relfilenode, false);
             RelationClose(rel);
         }
     }

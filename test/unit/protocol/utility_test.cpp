@@ -44,6 +44,8 @@ using pgcpp::access::ResetRelcache;
 using pgcpp::catalog::BootstrapCatalog;
 using pgcpp::catalog::Catalog;
 using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::kInvalidOid;
+using pgcpp::catalog::Oid;
 using pgcpp::catalog::SetCatalog;
 using pgcpp::catalog::SetSysCache;
 using pgcpp::catalog::SysCache;
@@ -267,6 +269,30 @@ TEST_F(UtilityTest, CreateIndexReturnsTagAndCreatesIndexEntry) {
 TEST_F(UtilityTest, TruncateTableReturnsTag) {
     RunUtility("CREATE TABLE t1 (a int4);");
     EXPECT_EQ(RunUtility("TRUNCATE TABLE t1;"), "TRUNCATE TABLE");
+}
+
+// A-6 fix: TRUNCATE must assign a new relfilenode (matching PostgreSQL's
+// architecture) rather than unlinking and recreating the old one. This makes
+// TRUNCATE crash-safe — the new empty storage exists before the old file is
+// removed, so there is never a window where the relation has no storage.
+TEST_F(UtilityTest, TruncateSwitchesRelfilenode) {
+    RunUtility("CREATE TABLE t1 (a int4);");
+    auto* cat = GetCatalog();
+    ASSERT_NE(cat, nullptr);
+    auto* class_row = cat->GetClassByName("t1");
+    ASSERT_NE(class_row, nullptr);
+    Oid relfilenode_before = class_row->relfilenode;
+    EXPECT_NE(relfilenode_before, pgcpp::catalog::kInvalidOid);
+
+    EXPECT_EQ(RunUtility("TRUNCATE TABLE t1;"), "TRUNCATE TABLE");
+
+    // Refresh the pointer (catalog rows are stable, but be explicit).
+    class_row = cat->GetClassByName("t1");
+    ASSERT_NE(class_row, nullptr);
+    Oid relfilenode_after = class_row->relfilenode;
+    EXPECT_NE(relfilenode_after, relfilenode_before)
+        << "TRUNCATE must assign a new relfilenode";
+    EXPECT_NE(relfilenode_after, pgcpp::catalog::kInvalidOid);
 }
 
 // --- VariableSetStmt ---

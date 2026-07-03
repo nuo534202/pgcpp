@@ -178,6 +178,10 @@ public:
     // Flush all dirty buffers for a relation.
     void FlushRelationBuffers(RelFileNode rnode);
 
+    // Flush all dirty+valid buffers. Called explicitly before pool
+    // destruction (not from the destructor) so errors propagate normally.
+    void FlushAllDirtyBuffers();
+
     // Invalidate a buffer: flush if dirty, clear the tag, and reset the
     // descriptor to the free state. Used by the Drop* family.
     // The buffer must not be pinned (caller's responsibility).

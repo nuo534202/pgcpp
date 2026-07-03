@@ -275,6 +275,10 @@ void InitializeServerSubsystems(const std::string& data_dir) {
     g_state.catalog = new Catalog();
     SetCatalog(g_state.catalog);
     BootstrapCatalog(g_state.catalog);
+    // A-3: restore user-created catalog rows from the previous run, layered
+    // on top of BootstrapCatalog's built-in rows. A missing file is not an
+    // error (fresh initdb).
+    g_state.catalog->Load(data_dir + "/pgcpp_catalog.tsv");
 
     g_state.syscache = new SysCache();
     SetSysCache(g_state.syscache);
@@ -310,6 +314,10 @@ void ShutdownServerSubsystems() {
     SetCatalog(nullptr);
     delete g_state.syscache;
     g_state.syscache = nullptr;
+    // A-3: persist user-created catalog rows so DDL survives a restart.
+    if (g_state.catalog != nullptr && !g_state.data_dir.empty()) {
+        g_state.catalog->Save(g_state.data_dir + "/pgcpp_catalog.tsv");
+    }
     delete g_state.catalog;
     g_state.catalog = nullptr;
 

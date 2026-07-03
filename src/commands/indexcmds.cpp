@@ -10,6 +10,7 @@
 #include "access/nbtree.hpp"
 #include "access/rel.hpp"
 #include "catalog/catalog.hpp"
+#include "catalog/lsyscache.hpp"
 #include "catalog/pg_attribute.hpp"
 #include "catalog/pg_class.hpp"
 #include "common/containers/node.hpp"
@@ -33,6 +34,7 @@ using pgcpp::catalog::Catalog;
 using pgcpp::catalog::FormData_pg_attribute;
 using pgcpp::catalog::FormData_pg_class;
 using pgcpp::catalog::GetCatalog;
+using pgcpp::catalog::get_typalign;
 using pgcpp::catalog::Oid;
 using pgcpp::catalog::RelKind;
 using pgcpp::catalog::RelPersistence;
@@ -44,18 +46,6 @@ using pgcpp::parser::Node;
 using pgcpp::types::kInt4Oid;
 
 namespace {
-
-AttAlign TypeAlignForLen(int16_t typlen) {
-    if (typlen == 1)
-        return AttAlign::kChar;
-    if (typlen == 2)
-        return AttAlign::kShort;
-    if (typlen == 4)
-        return AttAlign::kInt;
-    if (typlen == 8 || typlen > 0)
-        return AttAlign::kDouble;
-    return AttAlign::kInt;
-}
 
 BTKeyKind BtKeyKindForType(Oid type_oid) {
     switch (type_oid) {
@@ -152,7 +142,7 @@ std::string DefineIndex(IndexStmt* stmt) {
         attr_row->attnum = attnum;
         attr_row->attbyval = col_byval;
         attr_row->attstorage = AttStorage::kPlain;
-        attr_row->attalign = TypeAlignForLen(col_len);
+        attr_row->attalign = static_cast<AttAlign>(get_typalign(col_type));
         attr_row->attnotnull = false;
         attr_row->attislocal = true;
         cat->InsertAttribute(attr_row);

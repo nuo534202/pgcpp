@@ -68,6 +68,15 @@ random time-range generation
 
 These are used to generate test values for each field in the `hits` table.
 
+### Reproducibility (C-1 fix)
+
+The script begins with `SELECT setseed(0.42);` to pin the RNG seed, so the
+generated dataset is byte-identical across runs on the same engine. For
+cross-engine comparison (pgcpp vs stock PostgreSQL) both engines must
+implement `setseed()` with the same underlying RNG algorithm; until pgcpp
+implements `setseed()`, running the script on stock PG still produces a
+deterministic dataset suitable for golden-file capture and import into pgcpp.
+
 ### Characteristics of the Synthetic Data
 
 This synthetic dataset has the following characteristics:

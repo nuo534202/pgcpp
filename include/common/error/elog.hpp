@@ -1,7 +1,7 @@
 #pragma once
 
-#include <csetjmp>
 #include <cstddef>
+#include <exception>
 #include <string>
 #include <string_view>
 
@@ -44,23 +44,21 @@ struct ErrorData {
     bool IsError() const { return static_cast<int>(elevel) >= static_cast<int>(LogLevel::kError); }
 };
 
+// PgException — the exception type thrown by ereport(ERROR/FATAL/PANIC).
+// Inherits std::exception so it can be caught by generic catch handlers.
+// The error data is available via GetErrorData() inside a PG_CATCH block.
+class PgException : public std::exception {
+public:
+    PgException() = default;
+    const char* what() const noexcept override { return "pgcpp ereport error"; }
+};
+
 // Get the last recorded ErrorData (valid inside a PG_CATCH block).
 ErrorData* GetErrorData();
 
 // Set up the error subsystem. Creates the ErrorContext used to hold error
-// data across longjmp. Must be called once before any ereport(ERROR).
+// data across exception throws. Must be called once before any ereport(ERROR).
 void InitErrorSubsystem();
-
-// The setjmp/longjmp-based error recovery mechanism.
-struct JmpBufEntry {
-    std::jmp_buf buf;
-    bool rethrow = false;
-};
-
-// Push a jump buffer onto the exception stack. Returns a pointer to the entry.
-JmpBufEntry* PushExceptionStack();
-// Pop a jump buffer from the exception stack.
-void PopExceptionStack(JmpBufEntry* entry);
 
 // ereport macro: the primary error reporting mechanism.
 // Usage: ereport(LogLevel::kError, "error message");
@@ -72,18 +70,17 @@ void PopExceptionStack(JmpBufEntry* entry);
     pgcpp::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 // Implementation function (do not call directly; use ereport/elog macros).
-// For ERROR/FATAL/PANIC: never returns (longjmps to nearest PG_CATCH).
+// For ERROR/FATAL/PANIC: never returns (throws PgException to nearest PG_CATCH).
 // For lower levels: records the message and returns normally.
 //
 // Takes std::string by value (not string_view) so that temporary strings
 // constructed at call sites (e.g. "msg: " + name) are moved into the
-// parameter. For error levels, the parameter's destructor is called
-// explicitly before longjmp (since longjmp bypasses C++ destructors, the
-// automatic destructor call is skipped — no double-free).
+// parameter. With C++ exceptions, the parameter's destructor runs normally
+// during stack unwinding — no explicit destructor call or manual cleanup needed.
 void EreportImpl(LogLevel elevel, const char* filename, const char* funcname, int lineno,
                  std::string message);
 
-// PG_TRY / PG_CATCH / PG_END_TRY — setjmp-based error recovery.
+// PG_TRY / PG_CATCH / PG_END_TRY — exception-based error recovery.
 //
 // Usage:
 //   PG_TRY() {
@@ -92,23 +89,19 @@ void EreportImpl(LogLevel elevel, const char* filename, const char* funcname, in
 //       ... handle the error ...
 //   } PG_END_TRY();
 //
-// NOTE: A C++ RAII wrapper (PgErrorScope) is fundamentally incompatible with
-// setjmp/longjmp because the constructor returns before any error occurs,
-// invalidating the jump buffer's stack frame. Use the PG_TRY/PG_CATCH macros
-// instead. This is the same constraint as PostgreSQL's C code.
-#define PG_TRY()                                                                          \
-    do {                                                                                  \
-        pgcpp::error::JmpBufEntry* _pgcpp_jmp_entry = pgcpp::error::PushExceptionStack(); \
-        if (setjmp(_pgcpp_jmp_entry->buf) == 0) {
-#define PG_CATCH()                                     \
-    pgcpp::error::PopExceptionStack(_pgcpp_jmp_entry); \
-    }                                                  \
-    else {                                             \
-        pgcpp::error::PopExceptionStack(_pgcpp_jmp_entry);
+// PG_CATCH is required — a try block without a catch is ill-formed.
+// To re-throw from PG_CATCH, use PG_RE_THROW().
+//
+// NOTE: C++ exceptions now power this mechanism. The macros expand to
+// try/catch blocks. Stack unwinding automatically calls destructors for
+// std::string/std::vector locals, fixing the longjmp UB/leak issue.
+#define PG_TRY() try {
 
-#define PG_END_TRY() \
-    }                \
-    }                \
-    while (0)
+#define PG_CATCH() } catch (const pgcpp::error::PgException&) {
+
+#define PG_END_TRY() }
+
+// PG_RE_THROW — re-throw the current error (use inside PG_CATCH).
+#define PG_RE_THROW() throw pgcpp::error::PgException()
 
 }  // namespace pgcpp::error
