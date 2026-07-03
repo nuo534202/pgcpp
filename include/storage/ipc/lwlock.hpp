@@ -9,11 +9,14 @@
 // regular lock manager (lmgr) because they don't have a deadlock detector
 // and use a small fixed-size lock array.
 //
-// pgcpp is single-process, so LWLocks never actually block: Acquire
-// succeeds immediately and just tracks the held count for assertions.
-// The API is preserved for architectural fidelity.
+// pgcpp uses std::atomic for the lock state so it works correctly across
+// fork'd processes sharing memory via MAP_SHARED. The lock array is
+// allocated in shared memory (via ShmemInitStruct). A spin-then-yield
+// strategy is used for contention; in single-process/test mode there is
+// never contention so the spin loop exits immediately.
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -50,23 +53,35 @@ enum class LWLockId : int {
     kPredicateLockManagerLock,
     kOldSerXidLock,
     kWrapLimitsVacuumLock,
+    kBufferMappingLock,
     kBufferIOCount,
 };
 
+// Total number of builtin named LWLocks.
+constexpr int kNumNamedLWLocks = static_cast<int>(LWLockId::kBufferIOCount) + 1;
+
 // LWLock — a single read/write lock instance.
+//
+// The state is packed into a single atomic word:
+//   bit 31: exclusive held
+//   bits 0-30: shared holder count
+// This allows atomic CAS operations for both acquire modes.
 struct LWLock {
-    int shared_holders = 0;       // count of SHARED holders
-    bool exclusive_held = false;  // true if EXCLUSIVE held
-    LWLockId id;                  // lock id (for debugging)
-    int tranche = 0;              // tranche id (PG's per-tranche arrays)
+    std::atomic<uint32_t> state{0};
+    LWLockId id = LWLockId::kShmemIndexLock;
+    int tranche = 0;
+
+    // Accessors for the packed state (for tests/inspection).
+    int SharedHolders() const { return static_cast<int>(state.load() & 0x7FFFFFFF); }
+    bool ExclusiveHeld() const { return (state.load() & 0x80000000u) != 0; }
 };
 
 // LWLockInitialize — create a new LWLock with the given id/tranche.
 void LWLockInitialize(LWLock* lock, LWLockId id, int tranche = 0);
 
 // LWLockAcquire — acquire a lock in the given mode.
-// In pgcpp (single-process) this never blocks; it asserts invariants and
-// updates bookkeeping. Returns true on success.
+// Spins (with sched_yield) until the lock is available. Returns true on
+// success (always succeeds eventually unless a deadlock occurs).
 bool LWLockAcquire(LWLock* lock, LWLockMode mode);
 
 // LWLockRelease — release a previously-acquired lock.
@@ -79,21 +94,28 @@ bool LWLockHeldByMe(const LWLock* lock);
 // specified mode.
 bool LWLockHeldByMeInMode(const LWLock* lock, LWLockMode mode);
 
-// LWLockConditionalAcquire — try to acquire without blocking (always succeeds
-// in single-process pgcpp if no other holder exists).
+// LWLockConditionalAcquire — try to acquire without blocking. Returns true
+// on success, false if the lock is held by another mode.
 bool LWLockConditionalAcquire(LWLock* lock, LWLockMode mode);
 
 // --- Named lock table (builtin tranche) ---
 
-// LookupNamedLock — return the LWLock for a builtin id, creating it if needed.
+// LookupNamedLock — return the LWLock for a builtin id. The lock array is
+// allocated in shared memory (via ShmemInitStruct) so it is shared across
+// fork'd processes.
 LWLock* LookupNamedLock(LWLockId id);
 
-// InitializeAllLWLocks — allocate and initialize the builtin lock array.
-// Idempotent.
+// InitializeAllLWLocks — allocate and initialize the builtin lock array
+// in shared memory. Idempotent.
 void InitializeAllLWLocks();
 
 // ResetAllLWLocks — drop all LWLock state (used by tests).
 void ResetAllLWLocks();
+
+// ResetHeldLWLocks — clear this backend's per-process held-lock tracking.
+// Called by a fork'd child after fork to avoid inheriting the parent's
+// held-lock list.
+void ResetHeldLWLocks();
 
 // NumHeldLWLocks — total number of LWLocks currently held by this backend.
 int NumHeldLWLocks();

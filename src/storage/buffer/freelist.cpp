@@ -115,10 +115,11 @@ void FreeAccessStrategy(BufferAccessStrategyHandle strategy) {
 }
 
 void StrategyFreeBuffer(Buffer /*buffer*/) {
-    // pgcpp is single-process: there is no shared freelist to return the
-    // buffer to. The clock sweep will reclaim the slot on the next victim
-    // search. PostgreSQL uses this hook to push the buffer back onto the
-    // shared free list for fast reuse by InvalidateBuffer.
+    // The shared free list (first_free_, protected by mapping_lock_) is
+    // managed by InvalidateBuffer, which pushes evicted buffers back onto
+    // it for fast reuse. This strategy-ring hook is a no-op: the clock
+    // sweep reclaims the slot on the next victim search if the free list
+    // is empty.
 }
 
 }  // namespace pgcpp::storage

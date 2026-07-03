@@ -488,10 +488,10 @@ TEST_F(IpcTest, AllProcsReturnsEveryProc) {
 
 TEST_F(IpcTest, SetMyProcOverridesMyProcPointer) {
     PGPROC proc;
-    proc.backend_id = "test";
+    std::strncpy(proc.backend_id, "test", sizeof(proc.backend_id));
     SetMyProc(&proc);
     EXPECT_EQ(GetMyProc(), &proc);
-    EXPECT_EQ(GetMyProc()->backend_id, "test");
+    EXPECT_STREQ(GetMyProc()->backend_id, "test");
 }
 
 // =============================================================================

@@ -35,7 +35,11 @@
 #include "protocol/postgres.hpp"
 #include "protocol/pqformat.hpp"
 #include "storage/bufmgr.hpp"
+#include "storage/ipc/lwlock.hpp"
+#include "storage/ipc/proc.hpp"
+#include "storage/ipc/shmem.hpp"
 #include "storage/smgr.hpp"
+#include "transaction/procarray.hpp"
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
 #include "transaction/xact.hpp"
@@ -61,12 +65,25 @@ using pgcpp::protocol::Message;
 using pgcpp::protocol::MessageReader;
 using pgcpp::protocol::MessageType;
 using pgcpp::protocol::TransactionStatus;
+using pgcpp::storage::BufferPoolShmemSize;
 using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::InitializeAllLWLocks;
+using pgcpp::storage::InitProcess;
+using pgcpp::storage::kNumNamedLWLocks;
+using pgcpp::storage::LWLock;
+using pgcpp::storage::ProcGlobalInit;
+using pgcpp::storage::ResetHeldLWLocks;
 using pgcpp::storage::SetStorageBaseDir;
 using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::ShmemAttach;
+using pgcpp::storage::ShmemInit;
 using pgcpp::storage::smgrcloseall;
+using pgcpp::transaction::CLogShmemSize;
+using pgcpp::transaction::InitializeCommitLog;
+using pgcpp::transaction::InitializeProcArray;
 using pgcpp::transaction::InitializeSnapshotManager;
 using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ProcArrayShmemSize;
 using pgcpp::transaction::ResetTransactionState;
 
 // ---------------------------------------------------------------------------
@@ -234,6 +251,21 @@ void InitializeServerSubsystems(const std::string& data_dir) {
 
     // Error subsystem.
     InitErrorSubsystem();
+
+    // Shared memory: allocate a single mmap'd segment (inherited across
+    // fork) large enough for the BufferPool, PGPROC pool, ProcArray xids,
+    // CLOG, VariableCache, LWLock array, plus 1MB of slack.
+    std::size_t shm_size = BufferPoolShmemSize(4096)
+                         + pgcpp::storage::ProcArrayShmemSize()  // PGPROC pool
+                         + ProcArrayShmemSize()                  // ProcArray xids
+                         + CLogShmemSize()
+                         + sizeof(LWLock) * kNumNamedLWLocks
+                         + (1 << 20);  // 1MB slack
+    ShmemInit(shm_size);
+    InitializeAllLWLocks();
+    ProcGlobalInit();
+    InitializeProcArray();
+    InitializeCommitLog();
 
     // Top-level memory context.
     g_state.top_context = AllocSetContext::Create("ServerContext");
@@ -688,6 +720,17 @@ int Postmaster::AcceptAndFork() {
         close(listen_fd_);
         listen_fd_ = -1;
         g_postmaster = nullptr;
+
+        // Attach to the inherited shared-memory segment (verifies the magic;
+        // the MAP_ANONYMOUS|MAP_SHARED mapping is inherited automatically via
+        // fork, so no re-mmap is needed).
+        ShmemAttach();
+        // The child must not inherit the parent's held-LWLock list (per-process
+        // state); reset it so the child starts with an empty lock set.
+        ResetHeldLWLocks();
+        // Claim a PGPROC slot from the shared freelist for this backend.
+        InitProcess();
+
         BackendMain(client_fd);
         _exit(0);
     }

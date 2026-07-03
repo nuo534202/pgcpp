@@ -16,14 +16,21 @@
 // The commit log (CLOG) records the status of each normal XID:
 //   IN_PROGRESS, COMMITTED, ABORTED, or SUB_COMMITTED (for subtransactions).
 //
-// In PostgreSQL, CLOG is stored in shared memory and on disk in pg_xact/.
-// pgcpp is single-process, so we keep an in-memory status table.
+// pgcpp allocates the CLOG and VariableCache in shared memory (via
+// ShmemInitStruct) so fork'd backends share the same transaction state.
+// kCLogControlLock serializes all mutations. In test mode (no ShmemInit
+// called), ShmemInitStruct falls back to process-local allocation.
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
 namespace pgcpp::transaction {
+
+// MaxXids — upper bound on the number of XIDs the CLOG can hold.
+// 16M XIDs × 1 byte = 16MB. Plenty for pgcpp's target workload.
+constexpr int kMaxXids = 1 << 24;
 
 // TransactionId — the fundamental transaction identifier.
 // PostgreSQL typedefs this globally; pgcpp keeps it in the transaction
@@ -56,6 +63,13 @@ constexpr TransactionId kFrozenTransactionId = 2;
 
 // FirstNormalTransactionId — the first XID assigned to a user transaction.
 constexpr TransactionId kFirstNormalTransactionId = 3;
+
+// VariableCacheData — shared cache of transaction ID limits (PostgreSQL's
+// ShmemVariableCache). Lives in shared memory; protected by kXactGenLock.
+struct VariableCacheData {
+    TransactionId nextXid = kFirstNormalTransactionId;
+    TransactionId oldestXid = kFirstNormalTransactionId;
+};
 
 // FirstBootstrapObjectId — first OID assigned during bootstrap (matches
 // PostgreSQL's FirstBootstrapObjectId). Kept here for catalog init.
@@ -174,5 +188,8 @@ TransactionId GetNextTransactionId();
 
 // Reset the transaction ID counter and commit log (for testing).
 void ResetTransactionState();
+
+// CLogShmemSize — shared-memory bytes needed for the CLOG + VariableCache.
+std::size_t CLogShmemSize();
 
 }  // namespace pgcpp::transaction

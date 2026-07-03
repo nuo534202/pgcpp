@@ -5,22 +5,22 @@
 // Defines the core structures of the buffer pool:
 //   - BufferTag: identifies a page by (relation, fork, block number)
 //   - BufferDesc: per-buffer metadata (tag, state, refcount, usage count)
-//   - BufferPool: the array of descriptors + page data + lookup hash table
+//   - BufferPool: the array of descriptors + page data
 //
 // In PostgreSQL, these structures are shared across processes in shared
-// memory and protected by spinlocks. pgcpp is single-process, so:
-//   - No spinlocks or atomics needed (plain int fields suffice)
-//   - No shared memory (the buffer pool lives in a regular heap allocation)
-//   - Refcount still matters (can't evict a pinned buffer)
-//   - Usage count drives the clock sweep replacement algorithm
+// memory and protected by spinlocks. pgcpp allocates the descriptor array
+// and page block memory in shared memory (via ShmemInitStruct) so fork'd
+// backends share the same pool. A coarse LWLock (kBufferMappingLock)
+// serializes all state transitions. In test mode (no ShmemInit called),
+// ShmemInitStruct falls back to process-local std::map allocation, so the
+// buffer pool works identically in single-process unit tests.
 #pragma once
 
 #include <cstdint>
-#include <unordered_map>
-#include <vector>
 
 #include "storage/block.hpp"
 #include "storage/bufpage.hpp"
+#include "storage/ipc/lwlock.hpp"
 #include "storage/relfilenode.hpp"
 
 namespace pgcpp::storage {
@@ -100,22 +100,30 @@ struct BufferDesc {
 //
 // Manages a fixed-size array of buffer descriptors and their associated
 // page data. Provides:
-//   - Hash table lookup: BufferTag → buffer index
+//   - Linear-scan lookup: BufferTag → buffer index
 //   - Clock sweep replacement: find a victim buffer to evict
 //   - Page read/write through the storage manager
 //
-// In PostgreSQL, the buffer pool is allocated in shared memory at server
-// startup. In pgcpp, it's a heap-allocated object owned by the storage
-// layer, created at initialization time.
+// The descriptor array and page block memory are allocated in shared memory
+// (via ShmemInitStruct) so fork'd backends share the same pool. A coarse
+// LWLock (kBufferMappingLock) serializes all state transitions. In test
+// mode (no ShmemInit called), ShmemInitStruct falls back to process-local
+// allocation, so the buffer pool works identically in single-process tests.
+//
+// Lookup is a linear scan over the descriptor array (O(n_buffers)). For the
+// expected pool sizes (64–4096) this is L1-cache-resident and negligible,
+// and avoids the complexity of placing a hash table in shared memory.
 class BufferPool {
 public:
-    // Create a buffer pool with `n_buffers` slots.
-    // Each slot holds one 8KB page. The pool allocates all page memory
-    // up front (matching PostgreSQL's shared_buffers model).
-    explicit BufferPool(int n_buffers);
+    // Create a buffer pool with `n_buffers` slots using the given
+    // shm-allocated arrays. If `init` is true, zero the blocks and
+    // initialize descriptors/free list (postmaster first init). If false,
+    // the pool is being attached to existing shm (fork'd child).
+    BufferPool(int n_buffers, BufferDesc* descriptors, char* blocks_base,
+               LWLock* mapping_lock, bool init);
     ~BufferPool();
 
-    // Non-copyable, non-movable (owns raw page memory).
+    // Non-copyable, non-movable (references shm-allocated arrays).
     BufferPool(const BufferPool&) = delete;
     BufferPool& operator=(const BufferPool&) = delete;
 
@@ -130,8 +138,9 @@ public:
 
     // --- Lookup and pinning ---
 
-    // Look up a page in the buffer pool. If found, pin it and return the
-    // buffer. If not found, return kInvalidBuffer.
+    // Look up a page in the buffer pool. If found, return the buffer
+    // handle (pinned by caller). If not found, return kInvalidBuffer.
+    // Caller must hold mapping_lock_.
     Buffer LookupBuffer(const BufferTag& tag);
 
     // Pin a buffer (increment refcount). The buffer must already be in the pool.
@@ -147,6 +156,7 @@ public:
     // Find a victim buffer to evict. The victim must have refcount == 0.
     // If the victim is dirty, it is flushed to disk first.
     // Returns the buffer index, or -1 if all buffers are pinned.
+    // Caller must hold mapping_lock_.
     int FindVictimBuffer();
 
     // --- Insertion ---
@@ -154,7 +164,7 @@ public:
     // Insert a new page into the buffer pool. The victim buffer must have
     // been selected by FindVictimBuffer() and its old content flushed.
     // Sets the tag, marks as valid, and pins the buffer.
-    // Returns the buffer handle.
+    // Returns the buffer handle. Caller must hold mapping_lock_.
     Buffer InsertBuffer(const BufferTag& tag, int victim_id);
 
     // --- Dirty management ---
@@ -168,8 +178,8 @@ public:
     // Flush all dirty buffers for a relation.
     void FlushRelationBuffers(RelFileNode rnode);
 
-    // Invalidate a buffer: flush if dirty, erase from the hash table, and
-    // reset the descriptor to the free state. Used by the Drop* family.
+    // Invalidate a buffer: flush if dirty, clear the tag, and reset the
+    // descriptor to the free state. Used by the Drop* family.
     // The buffer must not be pinned (caller's responsibility).
     void InvalidateBuffer(int buf_id);
 
@@ -179,19 +189,26 @@ public:
     int NumPinned() const;
     int NumDirty() const;
 
+    // --- Lock access (for public API functions in bufmgr.cpp) ---
+
+    LWLock* mapping_lock() { return mapping_lock_; }
+
 private:
     int n_buffers_;
 
-    // Array of buffer descriptors.
-    std::vector<BufferDesc> descriptors_;
+    // Array of buffer descriptors (shm-allocated, not owned by this object).
+    BufferDesc* descriptors_;
 
-    // Array of page data (each is kBlckSz bytes, palloc'd).
-    std::vector<char*> blocks_;
+    // Contiguous page block memory (shm-allocated, not owned by this object).
+    // Page i is at blocks_base_ + i * kBlckSz.
+    char* blocks_base_;
 
-    // Hash table: BufferTag → buffer index (0-based).
-    std::unordered_map<BufferTag, int, BufferTagHash> hash_table_;
+    // Coarse lock protecting all state transitions (tag changes, refcount,
+    // clock sweep, free list). Acquired exclusive for state-modifying ops,
+    // shared for lookups/stats.
+    LWLock* mapping_lock_;
 
-    // Clock sweep state.
+    // Clock sweep state (protected by mapping_lock_).
     int clock_hand_ = 0;
 
     // Free list head (index of first free buffer, or -1 if none).

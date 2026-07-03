@@ -14,8 +14,10 @@
 
 #include "access/heapam.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "access/rel.hpp"
 #include "catalog/pg_attribute.hpp"
@@ -78,6 +80,7 @@ using pgcpp::transaction::ItemPointerData;
 using pgcpp::transaction::kHeapHasNull;
 using pgcpp::transaction::kHeapHasVarWidth;
 using pgcpp::transaction::kHeapTupleHeaderSize;
+using pgcpp::transaction::kInvalidCommandId;
 using pgcpp::transaction::kInvalidTransactionId;
 using pgcpp::transaction::Snapshot;
 using pgcpp::transaction::SnapshotData;
@@ -94,6 +97,14 @@ Buffer CreateAndReadNewPage(Relation relation, BlockNumber block_num) {
     relation->rd_smgr = RelationGetSmgr(relation);
     pgcpp::storage::smgrextend(relation->rd_smgr, ForkNumber::kMain, block_num, pagebuf, false);
     return ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
+}
+
+// Per-backend list of active heap scans. Used by InvalidateAllVisibilityCaches
+// to mark all scans' visibility caches stale on CommandCounterIncrement.
+// Scans are per-process (not in shared memory), so this is process-local.
+std::vector<HeapScanDesc>& ActiveScans() {
+    static std::vector<HeapScanDesc> scans;
+    return scans;
 }
 
 }  // namespace
@@ -466,6 +477,11 @@ HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot) {
     scan->rs_inited = false;
     scan->rs_ntuples = 0;
     scan->rs_vistuple_index = 0;
+    scan->rs_cached_cnum = kInvalidCommandId;
+    scan->rs_cached_snapshot = nullptr;
+
+    // Register the scan so InvalidateAllVisibilityCaches can find it.
+    ActiveScans().push_back(scan);
 
     return scan;
 }
@@ -507,9 +523,23 @@ static void heap_scan_page(HeapScanDesc scan, BlockNumber block_num) {
             }
         }
     }
+
+    // Record the command ID and snapshot under which the cache was populated
+    // so heap_getnext can detect when the cache is stale.
+    scan->rs_cached_cnum = GetCurrentCommandId(false);
+    scan->rs_cached_snapshot = pgcpp::transaction::GetActiveSnapshot();
 }
 
 HeapTuple heap_getnext(HeapScanDesc scan) {
+    // Note: we do NOT rebuild the per-page visibility cache here when a CCI
+    // has invalidated it. Rebuilding mid-iteration and resetting the consumer
+    // index causes already-returned tuples to be re-processed, which infinite
+    // loops in ModifyTable scans (UPDATE creates new versions that get
+    // re-scanned). Instead, the cache is rebuilt lazily when the scan
+    // advances to a new page via the while loop below, and the active
+    // snapshot's curcid is updated by CommandCounterIncrement so tuples
+    // inserted by earlier commands become visible on those subsequent pages.
+
     // If we have cached visible tuples, return the next one.
     while (scan->rs_vistuple_index >= scan->rs_ntuples) {
         // Need to advance to the next page.
@@ -554,6 +584,14 @@ void heap_endscan(HeapScanDesc scan) {
     if (scan == nullptr)
         return;
 
+    // Unregister from the active-scan list (swap-remove for O(1)).
+    auto& scans = ActiveScans();
+    auto it = std::find(scans.begin(), scans.end(), scan);
+    if (it != scans.end()) {
+        *it = scans.back();
+        scans.pop_back();
+    }
+
     if (scan->rs_cbuf != kInvalidBuffer) {
         ReleaseBuffer(scan->rs_cbuf);
         scan->rs_cbuf = kInvalidBuffer;
@@ -574,6 +612,22 @@ void heap_rescan(HeapScanDesc scan) {
     scan->rs_inited = false;
     scan->rs_ntuples = 0;
     scan->rs_vistuple_index = 0;
+    // Force a cache rebuild on the next heap_getnext.
+    scan->rs_cached_cnum = kInvalidCommandId;
+    scan->rs_cached_snapshot = nullptr;
+}
+
+void InvalidateAllVisibilityCaches() {
+    // Mark every active scan's visibility cache as stale. The next
+    // heap_getnext call will detect the mismatch and rebuild the cache
+    // via heap_scan_page. Per-backend (scans are per-process).
+    for (HeapScanDesc scan : ActiveScans()) {
+        if (scan != nullptr) {
+            scan->rs_cached_cnum = kInvalidCommandId;
+            // rs_cached_snapshot is left as-is; rs_cached_cnum mismatch alone
+            // triggers a rebuild.
+        }
+    }
 }
 
 // --- heaptuple.c P0 extensions (Task 15.8.1) ---

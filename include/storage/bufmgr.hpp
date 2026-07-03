@@ -100,6 +100,10 @@ void InitBufferPool(int n_buffers);
 // Shutdown the buffer pool (flush all dirty buffers and free memory).
 void ShutdownBufferPool();
 
+// BufferPoolShmemSize — shared-memory bytes needed for n_buffers
+// (descriptors + page blocks). Used by postmaster to size the shm segment.
+std::size_t BufferPoolShmemSize(int n_buffers);
+
 // --- M6 P0 extensions (Task 15.7.1) ---
 //
 // These functions extend the buffer manager to cover the remaining P0 API
@@ -170,8 +174,9 @@ BufferAccessStrategyHandle GetAccessStrategy(BufferAccessStrategy btype);
 // FreeAccessStrategy — release a strategy allocated by GetAccessStrategy.
 void FreeAccessStrategy(BufferAccessStrategyHandle strategy);
 
-// StrategyFreeBuffer — return a buffer to the freelist. pgcpp is
-// single-process, so this is a no-op (the clock sweep reclaims the slot).
+// StrategyFreeBuffer — strategy-ring hook to return a buffer to the freelist.
+// The shared free list (first_free_) is managed by InvalidateBuffer; this
+// hook is a no-op (the clock sweep reclaims the slot if the free list is empty).
 void StrategyFreeBuffer(Buffer buffer);
 
 }  // namespace pgcpp::storage

@@ -83,6 +83,12 @@ struct HeapScanDescData {
     int rs_ntuples = 0;
     int rs_vistuple_index = 0;
 
+    // Cache invalidation: when the command ID advances or the active snapshot
+    // changes, the per-page visibility cache must be rebuilt. Set to
+    // kInvalidCommandId to force a rebuild on the next heap_getnext.
+    pgcpp::transaction::CommandId rs_cached_cnum = pgcpp::transaction::kInvalidCommandId;
+    pgcpp::transaction::Snapshot rs_cached_snapshot = nullptr;
+
     // The current tuple being returned to the caller. Points into the
     // buffer page (valid until the next heap_getnext call).
     pgcpp::transaction::HeapTupleData rs_ctup;
@@ -255,5 +261,12 @@ pgcpp::transaction::HeapTuple heap_tuple_from_minimal_tuple(pgcpp::transaction::
 // unsupported system columns.
 pgcpp::types::Datum heap_tuple_buffer_getsysattr(pgcpp::transaction::HeapTuple tuple, int attnum,
                                                  TupleDesc tupdesc, bool* isnull);
+
+// InvalidateAllVisibilityCaches — mark all active scans' visibility caches
+// as stale so the next heap_getnext rebuilds them. Called by
+// CommandCounterIncrement so that subsequent scans see tuples
+// inserted/deleted by the previous command in the same transaction.
+// Per-backend (scans are per-process; no shared memory involved).
+void InvalidateAllVisibilityCaches();
 
 }  // namespace pgcpp::access

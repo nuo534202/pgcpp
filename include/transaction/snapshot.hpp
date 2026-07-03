@@ -92,12 +92,10 @@ using Snapshot = SnapshotData*;
 
 // GetSnapshotData — compute a snapshot for the current transaction.
 //
-// Scans the transaction state to determine which XIDs are in-progress.
-// In pgcpp (single-process), the only in-progress transaction is the
-// current one, so xip is typically empty (the current transaction sees
-// its own changes via curcid, not via the xip list).
-//
-// The snapshot is stored in the provided SnapshotData struct.
+// Scans the ProcArray (the shared-memory array of running backend XIDs)
+// to determine which XIDs are in-progress. The result is stored in the
+// provided SnapshotData struct (xip, xmin, xmax). The current transaction
+// sees its own changes via curcid, not via the xip list.
 void GetSnapshotData(SnapshotData* snapshot);
 
 // GetLatestSnapshot — return a fresh snapshot for the current transaction.

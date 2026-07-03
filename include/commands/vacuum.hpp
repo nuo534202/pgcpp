@@ -1,8 +1,10 @@
 // vacuum.h — VACUUM command (M14 commands module).
 //
 // Converted from PostgreSQL 15's src/backend/commands/vacuum.c.
-// pgcpp's MVCC implementation currently reclaims dead tuples eagerly
-// during DML, so VACUUM is a no-op that returns the command tag.
+// pgcpp's MVCC implementation marks dead tuples in-place during DML
+// (heap_delete sets t_xmax; heap_update sets t_xmax + inserts a new
+// version). VACUUM reclaims physical space by compacting pages whose
+// dead tuples are no longer visible to any running transaction.
 #pragma once
 
 #include <string>

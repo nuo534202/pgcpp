@@ -14,10 +14,10 @@
 //   MarkBufferDirty — mark a buffer as needing write-back.
 //   FlushBuffer — write a dirty buffer's page to disk.
 //
-// In PostgreSQL, these operations involve spinlocks, LWLocks, and
-// inter-process coordination. pgcpp is single-process, so we use
-// plain fields and no locking. The refcount still matters (a pinned
-// buffer cannot be evicted).
+// The descriptor array and page block memory are allocated in shared memory
+// (via ShmemInitStruct) so fork'd backends share the same pool. A coarse
+// LWLock (kBufferMappingLock) serializes all state transitions. In test
+// mode, ShmemInitStruct falls back to process-local allocation.
 
 #include "storage/bufmgr.hpp"
 
@@ -26,6 +26,8 @@
 
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
+#include "storage/ipc/lwlock.hpp"
+#include "storage/ipc/shmem.hpp"
 
 namespace pgcpp::storage {
 
@@ -47,35 +49,34 @@ void SetBufferPool(BufferPool* pool) {
 
 // --- BufferPool construction/destruction ---
 
-BufferPool::BufferPool(int n_buffers)
-    : n_buffers_(n_buffers), descriptors_(n_buffers), blocks_(n_buffers, nullptr) {
-    // Allocate page memory for each buffer slot.
-    for (int i = 0; i < n_buffers; ++i) {
-        blocks_[i] = static_cast<char*>(pgcpp::memory::palloc(kBlckSz));
-        std::memset(blocks_[i], 0, kBlckSz);
-
-        descriptors_[i].buf_id = i;
-        descriptors_[i].state = 0;
-        descriptors_[i].refcount = 0;
-        descriptors_[i].usage_count = 0;
-        descriptors_[i].free_next = -1;
+BufferPool::BufferPool(int n_buffers, BufferDesc* descriptors, char* blocks_base,
+                       LWLock* mapping_lock, bool init)
+    : n_buffers_(n_buffers),
+      descriptors_(descriptors),
+      blocks_base_(blocks_base),
+      mapping_lock_(mapping_lock) {
+    if (init) {
+        // Zero the page block memory.
+        std::memset(blocks_base_, 0, static_cast<std::size_t>(kBlckSz) * n_buffers_);
+        // Initialize descriptors.
+        for (int i = 0; i < n_buffers_; ++i) {
+            descriptors_[i].buf_id = i;
+            descriptors_[i].state = 0;
+            descriptors_[i].refcount = 0;
+            descriptors_[i].usage_count = 0;
+            descriptors_[i].free_next = -1;
+        }
+        InitFreeList();
     }
-
-    InitFreeList();
 }
 
 BufferPool::~BufferPool() {
-    // Flush all dirty buffers before destroying.
+    // Flush dirty buffers before destroying. The descriptors/blocks memory
+    // is owned by the shm framework (mmap segment or test-mode std::map),
+    // not by this object, so we don't free it here.
     for (int i = 0; i < n_buffers_; ++i) {
         if (descriptors_[i].IsDirty() && descriptors_[i].IsValid()) {
             FlushBuffer(i, false);
-        }
-    }
-
-    // Free page memory.
-    for (int i = 0; i < n_buffers_; ++i) {
-        if (blocks_[i] != nullptr) {
-            pgcpp::memory::pfree(blocks_[i]);
         }
     }
 }
@@ -87,7 +88,7 @@ Page BufferPool::GetBufferPage(Buffer buffer) {
     if (buf_id < 0 || buf_id >= n_buffers_) {
         ereport(pgcpp::error::LogLevel::kError, "invalid buffer handle");
     }
-    return blocks_[buf_id];
+    return blocks_base_ + static_cast<std::size_t>(buf_id) * kBlckSz;
 }
 
 BufferDesc* BufferPool::GetBufferDesc(Buffer buffer) {
@@ -101,11 +102,14 @@ BufferDesc* BufferPool::GetBufferDesc(Buffer buffer) {
 // --- Lookup and pinning ---
 
 Buffer BufferPool::LookupBuffer(const BufferTag& tag) {
-    auto it = hash_table_.find(tag);
-    if (it == hash_table_.end()) {
-        return kInvalidBuffer;
+    // Linear scan over all descriptors. For n_buffers ≤ 4096 this is
+    // L1-cache-resident and negligible. Caller must hold mapping_lock_.
+    for (int i = 0; i < n_buffers_; ++i) {
+        if (descriptors_[i].IsTagged() && descriptors_[i].tag == tag) {
+            return i + 1;  // 0-based → 1-based
+        }
     }
-    return it->second + 1;  // 0-based → 1-based
+    return kInvalidBuffer;
 }
 
 void BufferPool::PinBuffer(Buffer buffer) {
@@ -133,21 +137,15 @@ void BufferPool::UnpinBuffer(Buffer buffer) {
 Buffer BufferPool::InsertBuffer(const BufferTag& tag, int victim_id) {
     BufferDesc& desc = descriptors_[victim_id];
 
-    // If the victim was tagged (had a valid tag), remove it from the hash.
-    if (desc.IsTagged()) {
-        hash_table_.erase(desc.tag);
-        desc.ClearTagged();
-    }
-
-    // Set up the new tag.
+    // The victim's old tag is simply overwritten. With linear-scan lookup,
+    // there is no hash table to update — the old tag disappears and the new
+    // tag becomes visible. The victim was already flushed by the caller.
     desc.tag = tag;
     desc.SetTagged();
     desc.state &= ~kBMValid;  // not valid until data is read
     desc.refcount = 1;        // pin it for the caller
     desc.usage_count = 1;     // recently used
-
-    // Insert into hash table.
-    hash_table_[tag] = victim_id;
+    desc.free_next = -1;      // remove from free list
 
     return victim_id + 1;  // 0-based → 1-based
 }
@@ -176,7 +174,8 @@ void BufferPool::FlushBuffer(int buf_id, bool release) {
 
     // Write the page to disk via the storage manager.
     SmgrRelation reln = smgropen(RelFileNodeBackend{desc.tag.rnode, 0});
-    smgrwrite(reln, desc.tag.fork_num, desc.tag.block_num, blocks_[buf_id], false);
+    Page page = blocks_base_ + static_cast<std::size_t>(buf_id) * kBlckSz;
+    smgrwrite(reln, desc.tag.fork_num, desc.tag.block_num, page, false);
 
     desc.ClearDirty();
 
@@ -206,14 +205,8 @@ void BufferPool::InvalidateBuffer(int buf_id) {
         FlushBuffer(buf_id, false);
     }
 
-    // Remove from the hash table (only if still tagged — FlushBuffer does
-    // not clear the tag).
-    if (desc.IsTagged()) {
-        hash_table_.erase(desc.tag);
-        desc.ClearTagged();
-    }
-
-    // Reset the descriptor to the free state.
+    // Clear the tag (no hash table to update with linear-scan lookup).
+    desc.ClearTagged();
     desc.ClearValid();
     desc.ClearDirty();
     desc.tag = BufferTag{};
@@ -225,8 +218,8 @@ void BufferPool::InvalidateBuffer(int buf_id) {
 
 int BufferPool::NumPinned() const {
     int count = 0;
-    for (const auto& d : descriptors_) {
-        if (d.refcount > 0)
+    for (int i = 0; i < n_buffers_; ++i) {
+        if (descriptors_[i].refcount > 0)
             ++count;
     }
     return count;
@@ -234,8 +227,8 @@ int BufferPool::NumPinned() const {
 
 int BufferPool::NumDirty() const {
     int count = 0;
-    for (const auto& d : descriptors_) {
-        if (d.IsDirty())
+    for (int i = 0; i < n_buffers_; ++i) {
+        if (descriptors_[i].IsDirty())
             ++count;
     }
     return count;
@@ -256,16 +249,25 @@ Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block
     tag.fork_num = fork_num;
     tag.block_num = block_num;
 
+    // Acquire the buffer mapping lock for the entire operation. This
+    // serializes lookup + victim selection + insertion, preventing races
+    // between concurrent ReadBuffer calls for the same tag. Disk I/O
+    // (smgrread) happens under the lock — acceptable for pgcpp's
+    // low-concurrency target.
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
+
     // Step 1: check if the page is already in the pool (buffer hit).
     Buffer buffer = pool->LookupBuffer(tag);
     if (buffer != kInvalidBuffer) {
         pool->PinBuffer(buffer);
+        LWLockRelease(pool->mapping_lock());
         return buffer;
     }
 
     // Step 2: buffer miss — find a victim.
     int victim_id = pool->FindVictimBuffer();
     if (victim_id < 0) {
+        LWLockRelease(pool->mapping_lock());
         ereport(pgcpp::error::LogLevel::kError, "no buffer available in buffer pool (all pinned)");
     }
 
@@ -294,6 +296,7 @@ Buffer ReadBuffer(SmgrRelation smgr_reln, ForkNumber fork_num, BlockNumber block
     victim = pool->GetBufferDesc(buffer);
     victim->SetValid();
 
+    LWLockRelease(pool->mapping_lock());
     return buffer;
 }
 
@@ -306,20 +309,25 @@ void ReleaseBuffer(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr)
         return;
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     pool->UnpinBuffer(buffer);
+    LWLockRelease(pool->mapping_lock());
 }
 
 void MarkBufferDirty(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr)
         return;
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     pool->MarkBufferDirty(buffer);
+    LWLockRelease(pool->mapping_lock());
 }
 
 Page BufferGetPage(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr)
         return nullptr;
+    // No lock needed — the caller must hold a pin, which prevents eviction.
     return pool->GetBufferPage(buffer);
 }
 
@@ -330,6 +338,7 @@ BlockNumber BufferGetBlockNumber(Buffer buffer) {
     BufferDesc* desc = pool->GetBufferDesc(buffer);
     if (desc == nullptr)
         return kInvalidBlockNumber;
+    // No lock — tag is stable while pinned.
     return desc->tag.block_num;
 }
 
@@ -338,14 +347,18 @@ void FlushBuffer(Buffer buffer) {
     if (pool == nullptr)
         return;
     int buf_id = buffer - 1;
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     pool->FlushBuffer(buf_id, false);
+    LWLockRelease(pool->mapping_lock());
 }
 
 void FlushRelationBuffers(SmgrRelation smgr_reln) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr)
         return;
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     pool->FlushRelationBuffers(smgr_reln->smgr_rnode.node);
+    LWLockRelease(pool->mapping_lock());
 }
 
 void DropRelationBuffers(RelFileNode rnode) {
@@ -353,52 +366,83 @@ void DropRelationBuffers(RelFileNode rnode) {
     if (pool == nullptr)
         return;
 
-    // Iterate through all buffers and remove matching ones.
-    // We need to access the hash table and descriptors directly.
-    // Since DropRelationBuffers is less performance-critical, we
-    // scan all descriptors.
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     for (int i = 0; i < pool->NumBuffers(); ++i) {
         BufferDesc* desc = pool->GetBufferDesc(i + 1);
         if (desc->IsTagged() && desc->tag.rnode == rnode) {
-            // Flush if dirty.
             if (desc->IsDirty() && desc->IsValid()) {
                 pool->FlushBuffer(i, false);
             }
-            // Remove from hash table.
-            // We need to clear the tag and mark as untagged.
-            // The buffer goes back to the free list.
             desc->ClearTagged();
             desc->ClearValid();
             desc->ClearDirty();
             desc->tag = BufferTag{};
             desc->usage_count = 0;
-            // Add to free list.
-            desc->free_next = -1;  // simplified: just mark as free
+            desc->free_next = -1;
         }
     }
+    LWLockRelease(pool->mapping_lock());
 }
 
 bool BufferIsPinned(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr)
         return false;
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kShared);
     BufferDesc* desc = pool->GetBufferDesc(buffer);
-    if (desc == nullptr)
-        return false;
-    return desc->refcount > 0;
+    bool pinned = (desc != nullptr && desc->refcount > 0);
+    LWLockRelease(pool->mapping_lock());
+    return pinned;
+}
+
+std::size_t BufferPoolShmemSize(int n_buffers) {
+    return sizeof(BufferDesc) * static_cast<std::size_t>(n_buffers) +
+           static_cast<std::size_t>(kBlckSz) * static_cast<std::size_t>(n_buffers);
 }
 
 void InitBufferPool(int n_buffers) {
     if (g_buffer_pool != nullptr) {
         delete g_buffer_pool;
+        g_buffer_pool = nullptr;
     }
-    g_buffer_pool = new BufferPool(n_buffers);
+
+    // Allocate descriptors and page blocks via ShmemInitStruct. In
+    // multi-process mode this draws from the mmap'd shared segment; in
+    // test mode (no ShmemInit called) it falls back to process-local
+    // std::map allocation.
+    bool found_desc = false;
+    bool found_blocks = false;
+    auto* descriptors = static_cast<BufferDesc*>(
+        ShmemInitStruct("BufferPoolDescriptors",
+                        sizeof(BufferDesc) * static_cast<std::size_t>(n_buffers),
+                        &found_desc));
+    auto* blocks_base = static_cast<char*>(
+        ShmemInitStruct("BufferPoolBlocks",
+                        static_cast<std::size_t>(kBlckSz) * static_cast<std::size_t>(n_buffers),
+                        &found_blocks));
+
+    // The mapping lock is a named LWLock allocated in shm (or test-mode
+    // fallback). LookupNamedLock initializes the array on first call.
+    LWLock* mapping_lock = LookupNamedLock(LWLockId::kBufferMappingLock);
+
+    // Create the BufferPool controller object on the heap. The object is
+    // small (just pointers + ints); the heavy data (descriptors, blocks)
+    // lives in shm. `init` controls whether to zero/init the arrays.
+    bool init = !found_desc;
+    g_buffer_pool = new BufferPool(n_buffers, descriptors, blocks_base, mapping_lock, init);
 }
 
 void ShutdownBufferPool() {
     if (g_buffer_pool != nullptr) {
         delete g_buffer_pool;
         g_buffer_pool = nullptr;
+    }
+    // In test mode, clear shm regions so the next InitBufferPool gets
+    // fresh allocations (test isolation). In multi-process mode, shm is
+    // freed by ShmemDetach on server shutdown.
+    if (!IsShmemActive()) {
+        ResetShmem();
+        ResetAllLWLocks();
     }
 }
 
@@ -409,16 +453,19 @@ void MarkBufferDirtyHint(Buffer buffer, bool release) {
     if (pool == nullptr)
         return;
     // pgcpp has no WAL, so a hint dirty is equivalent to a normal dirty.
-    // If the buffer is already dirty, this is a no-op.
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     BufferDesc* desc = pool->GetBufferDesc(buffer);
-    if (desc == nullptr)
+    if (desc == nullptr) {
+        LWLockRelease(pool->mapping_lock());
         return;
+    }
     if (!desc->IsDirty()) {
         pool->MarkBufferDirty(buffer);
     }
     if (release) {
         pool->UnpinBuffer(buffer);
     }
+    LWLockRelease(pool->mapping_lock());
 }
 
 Buffer ReleaseAndReadBuffer(Buffer buffer, SmgrRelation reln, ForkNumber forknum,
@@ -430,13 +477,20 @@ Buffer ReleaseAndReadBuffer(Buffer buffer, SmgrRelation reln, ForkNumber forknum
 
     // Optimization: if the old buffer's tag matches the new (reln, forknum,
     // blocknum), reuse it without releasing.
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kShared);
     BufferDesc* desc = pool->GetBufferDesc(buffer);
-    if (desc != nullptr && desc->IsTagged() && desc->tag.rnode == reln->smgr_rnode.node &&
-        desc->tag.fork_num == forknum && desc->tag.block_num == blocknum) {
+    bool reuse = (desc != nullptr && desc->IsTagged() &&
+                  desc->tag.rnode == reln->smgr_rnode.node &&
+                  desc->tag.fork_num == forknum &&
+                  desc->tag.block_num == blocknum);
+    LWLockRelease(pool->mapping_lock());
+
+    if (reuse) {
         return buffer;
     }
 
     // Different page: release the old buffer and read the new one.
+    // ReleaseBuffer and ReadBuffer acquire the lock themselves.
     ReleaseBuffer(buffer);
     return ReadBuffer(reln, forknum, blocknum, mode, BufferAccessStrategy::kNormal);
 }
@@ -445,22 +499,26 @@ void IncrBufferRefCount(Buffer buffer) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr)
         return;
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     pool->PinBuffer(buffer);
+    LWLockRelease(pool->mapping_lock());
 }
 
 void BufferGetTag(Buffer buffer, RelFileNode* rnode, ForkNumber* forknum, BlockNumber* blocknum) {
     BufferPool* pool = GetBufferPool();
     if (pool == nullptr)
         return;
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kShared);
     BufferDesc* desc = pool->GetBufferDesc(buffer);
-    if (desc == nullptr)
-        return;
-    if (rnode != nullptr)
-        *rnode = desc->tag.rnode;
-    if (forknum != nullptr)
-        *forknum = desc->tag.fork_num;
-    if (blocknum != nullptr)
-        *blocknum = desc->tag.block_num;
+    if (desc != nullptr) {
+        if (rnode != nullptr)
+            *rnode = desc->tag.rnode;
+        if (forknum != nullptr)
+            *forknum = desc->tag.fork_num;
+        if (blocknum != nullptr)
+            *blocknum = desc->tag.block_num;
+    }
+    LWLockRelease(pool->mapping_lock());
 }
 
 void DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forknum) {
@@ -468,21 +526,20 @@ void DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forknum) {
     if (pool == nullptr)
         return;
 
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     for (int i = 0; i < pool->NumBuffers(); ++i) {
         BufferDesc* desc = pool->GetBufferDesc(i + 1);
         if (!desc->IsTagged())
             continue;
-        // Match on RelFileNode + forknum. rnode.backend is ignored (pgcpp
-        // has no temp-table local buffers).
         if (desc->tag.rnode != rnode.node)
             continue;
         if (desc->tag.fork_num != forknum)
             continue;
-        // Pinned buffers cannot be invalidated — skip them (PG also skips).
         if (desc->refcount > 0)
             continue;
         pool->InvalidateBuffer(i);
     }
+    LWLockRelease(pool->mapping_lock());
 }
 
 void DropDatabaseBuffers(Oid dbid) {
@@ -490,6 +547,7 @@ void DropDatabaseBuffers(Oid dbid) {
     if (pool == nullptr)
         return;
 
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     for (int i = 0; i < pool->NumBuffers(); ++i) {
         BufferDesc* desc = pool->GetBufferDesc(i + 1);
         if (!desc->IsTagged())
@@ -500,6 +558,7 @@ void DropDatabaseBuffers(Oid dbid) {
             continue;
         pool->InvalidateBuffer(i);
     }
+    LWLockRelease(pool->mapping_lock());
 }
 
 void FlushDatabaseBuffers(Oid dbid) {
@@ -507,6 +566,7 @@ void FlushDatabaseBuffers(Oid dbid) {
     if (pool == nullptr)
         return;
 
+    LWLockAcquire(pool->mapping_lock(), LWLockMode::kExclusive);
     for (int i = 0; i < pool->NumBuffers(); ++i) {
         BufferDesc* desc = pool->GetBufferDesc(i + 1);
         if (!desc->IsTagged())
@@ -517,6 +577,7 @@ void FlushDatabaseBuffers(Oid dbid) {
             pool->FlushBuffer(i, false);
         }
     }
+    LWLockRelease(pool->mapping_lock());
 }
 
 Buffer ReadBufferWithoutRelcache(RelFileNodeBackend rnode, ForkNumber forknum, BlockNumber blocknum,

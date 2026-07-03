@@ -21,6 +21,7 @@
 #include <list>
 #include <vector>
 
+#include "access/heapam.hpp"
 #include "common/error/elog.hpp"
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
@@ -305,6 +306,21 @@ void CommandCounterIncrement() {
     if (s->command_id < kInvalidCommandId - 1) {
         s->command_id++;
     }
+    // Update the active snapshot's curcid so subsequent scans see tuples
+    // inserted by the previous command. pgcpp caches the transaction
+    // snapshot (GetTransactionSnapshot pushes it once), so we must keep
+    // its curcid in sync with the command counter — PostgreSQL sets
+    // curcid at snapshot creation but its scans re-evaluate visibility
+    // against the live transaction state; here we mirror that effect.
+    pgcpp::transaction::Snapshot snap = pgcpp::transaction::GetActiveSnapshot();
+    if (snap != nullptr) {
+        snap->curcid = s->command_id;
+    }
+    // Invalidate per-backend visibility caches so subsequent scans see
+    // tuples inserted/deleted by the previous command. (PG semantics:
+    // a new command can see all changes from prior commands in the
+    // same transaction.)
+    pgcpp::access::InvalidateAllVisibilityCaches();
 }
 
 bool BeginTransactionBlock() {

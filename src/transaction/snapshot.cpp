@@ -3,14 +3,12 @@
 // Converted from PostgreSQL 15's src/backend/utils/time/snapmgr.cpp and
 // src/backend/storage/ipc/procarray.cpp (GetSnapshotData).
 //
-// In PostgreSQL, GetSnapshotData scans the ProcArray (the array of all
-// backend processes) to find in-progress transactions. In pgcpp
-// (single-process), there is only one transaction active at a time, so
-// the snapshot is simpler:
-//   - xmin = oldest XID that might still be in progress (typically the
-//     current transaction's XID, or FirstNormalTransactionId if idle)
+// GetSnapshotData scans the ProcArray (the shared-memory array of all
+// backend XIDs) to find in-progress transactions and builds a snapshot:
+//   - xmin = oldest XID that might still be in progress (or FrozenXid
+//     if no transactions are running)
 //   - xmax = next XID to be assigned (XIDs >= xmax don't exist yet)
-//   - xip = empty (no concurrent transactions in single-process mode)
+//   - xip = list of in-progress XIDs in [xmin, xmax)
 //
 // The current transaction sees its own changes via the command ID (curcid),
 // not via the xip list. A tuple inserted by the current transaction is
@@ -21,6 +19,7 @@
 
 #include "common/containers/node.hpp"
 #include "common/memory/memory_context.hpp"
+#include "transaction/procarray.hpp"
 #include "transaction/transam.hpp"
 #include "transaction/xact.hpp"
 
@@ -54,29 +53,13 @@ void GetSnapshotData(SnapshotData* snapshot) {
 
     snapshot->snapshot_type = SnapshotType::kMVCC;
 
-    // The current transaction's XID (if any).
-    TransactionId current_xid = GetCurrentTransactionIdIfAny();
-
-    // xmax = the next XID to be assigned (XIDs >= xmax don't exist yet).
-    snapshot->xmax = GetNextTransactionId() + 1;
-
-    // xmin = the oldest XID that might still be in progress.
-    // In single-process mode, this is either the current XID (if a
-    // transaction is active) or the next XID (if idle).
-    if (TransactionIdIsValid(current_xid)) {
-        snapshot->xmin = current_xid;
-    } else {
-        // No active transaction — all existing XIDs are finished.
-        snapshot->xmin = snapshot->xmax;
-    }
-
-    // xip = list of in-progress XIDs in [xmin, xmax).
-    // In single-process mode, the only in-progress transaction is the
-    // current one, which is handled via curcid (not xip). So xip is empty.
-    snapshot->xip.clear();
+    // Collect the running XIDs from the ProcArray. This fills xip with the
+    // in-progress XIDs, sets xmax = nextXid + 1, and sets xmin = oldest
+    // running XID (or FrozenTransactionId if none are running).
+    GetRunningTransactionData(snapshot->xip, &snapshot->xmax, &snapshot->xmin);
 
     // Record the current transaction's XID and command ID.
-    snapshot->snapshot_xid = current_xid;
+    snapshot->snapshot_xid = GetCurrentTransactionIdIfAny();
     snapshot->curcid = GetCurrentCommandId(false);
 
     snapshot->taken_during_recovery = false;
