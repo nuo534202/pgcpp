@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  # -----------------------------------------------------------------------
+  # Job 1: format-check + build + unit tests
+  # -----------------------------------------------------------------------
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake bison gcc-11 g++-11
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+      - name: Format check
+        run: cmake --build build --target format-check
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # -----------------------------------------------------------------------
+  # Job 2: AddressSanitizer
+  # -----------------------------------------------------------------------
+  asan:
+    name: ASan
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake bison gcc-11 g++-11
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+
+      - name: Configure (ASan)
+        run: cmake -S . -B build-asan -DENABLE_ASAN=ON -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+      - name: Build (ASan)
+        run: cmake --build build-asan -j$(nproc)
+
+      - name: Test (ASan)
+        run: ctest --test-dir build-asan --output-on-failure
+
+  # -----------------------------------------------------------------------
+  # Job 3: UndefinedBehaviorSanitizer
+  # -----------------------------------------------------------------------
+  ubsan:
+    name: UBSan
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake bison gcc-11 g++-11
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+
+      - name: Configure (UBSan)
+        run: cmake -S . -B build-ubsan -DENABLE_UBSAN=ON -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+      - name: Build (UBSan)
+        run: cmake --build build-ubsan -j$(nproc)
+
+      - name: Test (UBSan)
+        run: ctest --test-dir build-ubsan --output-on-failure

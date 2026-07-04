@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <string>
 
 #include "protocol/crypt.hpp"
@@ -29,17 +30,24 @@ namespace pgcpp::protocol {
 // (type 'R', payload: int32 code [+ optional extra data]).
 // Mirrors PG's AUTH_REQ_* constants.
 enum class AuthRequest : int32_t {
-    kOk = 0,            // AuthenticationOk — authentication complete
-    kKrb4 = 1,          // (obsolete)
-    kKrb5 = 2,          // (obsolete)
-    kPassword = 3,      // cleartext password required
-    kCrypt = 4,         // (obsolete)
-    kMd5 = 5,           // md5(password+salt) required
-    kScramSha256 = 10,  // SCRAM-SHA-256 SASL
-    kGss = 7,           // GSSAPI required
-    kGssCont = 8,       // GSSAPI continuation (payload)
-    kSspi = 9,          // (Windows only)
+    kOk = 0,             // AuthenticationOk — authentication complete
+    kKrb4 = 1,           // (obsolete)
+    kKrb5 = 2,           // (obsolete)
+    kPassword = 3,       // cleartext password required
+    kCrypt = 4,          // (obsolete)
+    kMd5 = 5,            // md5(password+salt) required
+    kScramSha256 = 10,   // SCRAM-SHA-256 SASL (advertise mechanisms)
+    kGss = 7,            // GSSAPI required
+    kGssCont = 8,        // GSSAPI continuation (payload)
+    kSspi = 9,           // (Windows only)
+    kSaslContinue = 11,  // AuthenticationSASLContinue — server-first message
+    kSaslFinal = 12,     // AuthenticationSASLFinal — server-final message
 };
+
+// ResponseReader — function that reads one client response (PasswordMessage
+// or SASLResponse) for the auth exchange. In production this reads from the
+// client socket; in tests it's typically TakeMockClientResponse.
+using ResponseReader = std::function<std::string()>;
 
 // AuthResult — outcome of an authentication attempt.
 enum class AuthResult {
@@ -93,9 +101,10 @@ AuthResult CheckPasswordAuth(OutputSink* sink, const std::string& user,
 AuthResult CheckMd5Auth(OutputSink* sink, const std::string& user,
                         const std::string& stored_password, uint32_t salt);
 
-// CheckScramAuth — send AuthenticationSASL, run SCRAM-SHA-256.
-// Returns kMethodUnsupported in the simplified pgcpp port (no full SASL
-// state machine — only the password-hash side is implemented).
+// CheckScramAuth — send AuthenticationSASL, run the SCRAM-SHA-256 exchange.
+// Implements RFC 5802: client-first → server-first → client-final →
+// server-final. The stored password must be a SCRAM-SHA-256 hash
+// (produced by EncryptPassword with kScramSha256).
 AuthResult CheckScramAuth(OutputSink* sink, const std::string& user,
                           const std::string& stored_password);
 
@@ -118,5 +127,12 @@ std::string TakeMockClientResponse();
 
 // ClearMockClientResponses — discard all queued responses.
 void ClearMockClientResponses();
+
+// SetGlobalResponseReader — install a process-wide response reader used by
+// the auth handlers' internal ReadPasswordMessage. In production
+// (BackendMain) this is set to a lambda that reads from the client socket.
+// Pass a default-constructed (empty) ResponseReader to clear, which makes
+// the handlers fall back to the mock queue (test mode).
+void SetGlobalResponseReader(ResponseReader reader);
 
 }  // namespace pgcpp::protocol

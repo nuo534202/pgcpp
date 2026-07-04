@@ -101,7 +101,7 @@ BootstrapResult BootstrapCluster(const std::string& data_dir) {
     // Create subdirectories.
     // base/ — per-database storage (relation files).
     // global/ — cluster-wide storage.
-    // pg_wal/ — write-ahead log (not yet used, but created for structure).
+    // pg_wal/ — write-ahead log (A-2: WAL is persisted to pg_wal/wal.log).
     std::string base_dir = data_dir + "/base";
     std::string global_dir = data_dir + "/global";
     std::string wal_dir = data_dir + "/pg_wal";

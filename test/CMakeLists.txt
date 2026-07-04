@@ -13,7 +13,9 @@ include(GoogleTest)
 function(pgcpp_add_test name source)
     add_executable(${name} ${source})
     target_compile_features(${name} PRIVATE cxx_std_20)
-    target_link_libraries(${name} PRIVATE pgcpp_core gtest gtest_main)
+    # Link pgcpp_client (transitively provides pgcpp_core via PUBLIC linkage)
+    # so that tests in test/unit/tools/ can access client tool functions.
+    target_link_libraries(${name} PRIVATE pgcpp_client gtest gtest_main)
     target_include_directories(${name} PRIVATE
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/src

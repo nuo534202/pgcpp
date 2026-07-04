@@ -114,7 +114,7 @@ std::string ProcessVariableSetStmt(VariableSetStmt* stmt) {
 
 // --- Public API ---
 
-std::string ProcessUtility(Node* stmt, OutputSink* /*sink*/) {
+std::string ProcessUtility(Node* stmt, OutputSink* sink) {
     if (stmt == nullptr)
         return "";
 
@@ -159,7 +159,7 @@ std::string ProcessUtility(Node* stmt, OutputSink* /*sink*/) {
 
         // --- EXPLAIN (commands/explain) -------------------------------
         case NodeTag::kExplainStmt:
-            return ExplainQuery(static_cast<ExplainStmt*>(stmt));
+            return ExplainQuery(static_cast<ExplainStmt*>(stmt), sink);
 
         // --- Database / Schema / Tablespace (commands/*) -------------
         case NodeTag::kCreatedbStmt:
@@ -266,9 +266,10 @@ std::string CreateCommandTag(Node* stmt) {
     }
 }
 
-bool UtilityReturnsTuples(Node* /*stmt*/) {
-    // EXPLAIN and VACUUM VERBOSE return tuples in PostgreSQL; pgcpp's
-    // EXPLAIN stub prints to stdout instead of returning rows.
+bool UtilityReturnsTuples(Node* stmt) {
+    // EXPLAIN returns tuples (a single "QUERY PLAN" text column).
+    if (stmt != nullptr && stmt->GetTag() == NodeTag::kExplainStmt)
+        return true;
     return false;
 }
 

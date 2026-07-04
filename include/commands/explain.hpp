@@ -5,14 +5,19 @@
 
 #include <string>
 
+namespace pgcpp::protocol {
+class OutputSink;
+}  // namespace pgcpp::protocol
+
 namespace pgcpp::parser {
 class ExplainStmt;
 }  // namespace pgcpp::parser
 
 namespace pgcpp::commands {
 
-// ExplainQuery — execute EXPLAIN. Currently a stub that prints a
-// placeholder plan description to stdout. Returns "EXPLAIN".
-std::string ExplainQuery(parser::ExplainStmt* stmt);
+// ExplainQuery — execute EXPLAIN. Sends a RowDescription + DataRow stream
+// to the client sink so the output appears in the client (psql) instead of
+// the server's stdout. Returns "EXPLAIN" as the command tag.
+std::string ExplainQuery(parser::ExplainStmt* stmt, protocol::OutputSink* sink);
 
 }  // namespace pgcpp::commands

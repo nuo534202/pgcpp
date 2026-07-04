@@ -278,18 +278,18 @@ std::array<uint8_t, 32> Sha256Final(Sha256Ctx& c) {
     return out;
 }
 
-std::array<uint8_t, 32> Sha256(const uint8_t* data, size_t len) {
+std::array<uint8_t, 32> Sha256Raw(const uint8_t* data, size_t len) {
     Sha256Ctx c;
     Sha256Init(c);
     Sha256Update(c, data, len);
     return Sha256Final(c);
 }
 
-std::array<uint8_t, 32> HmacSha256(const uint8_t* key, size_t key_len, const uint8_t* msg,
-                                   size_t msg_len) {
+std::array<uint8_t, 32> HmacSha256Raw(const uint8_t* key, size_t key_len, const uint8_t* msg,
+                                      size_t msg_len) {
     uint8_t k[64] = {0};
     if (key_len > 64) {
-        auto h = Sha256(key, key_len);
+        auto h = Sha256Raw(key, key_len);
         std::memcpy(k, h.data(), 32);
     } else {
         std::memcpy(k, key, key_len);
@@ -311,8 +311,8 @@ std::array<uint8_t, 32> HmacSha256(const uint8_t* key, size_t key_len, const uin
     return Sha256Final(c);
 }
 
-std::array<uint8_t, 32> Pbkdf2HmacSha256(const std::string& password, const uint8_t* salt,
-                                         size_t salt_len, int iterations) {
+std::array<uint8_t, 32> Pbkdf2HmacSha256Raw(const std::string& password, const uint8_t* salt,
+                                            size_t salt_len, int iterations) {
     std::array<uint8_t, 32> out{};
     std::array<uint8_t, 32> u;
     std::array<uint8_t, 32> t;
@@ -323,12 +323,12 @@ std::array<uint8_t, 32> Pbkdf2HmacSha256(const std::string& password, const uint
     salt_block[salt_len + 1] = 0;
     salt_block[salt_len + 2] = 0;
     salt_block[salt_len + 3] = 1;
-    u = HmacSha256(reinterpret_cast<const uint8_t*>(password.data()), password.size(),
-                   salt_block.data(), salt_block.size());
+    u = HmacSha256Raw(reinterpret_cast<const uint8_t*>(password.data()), password.size(),
+                      salt_block.data(), salt_block.size());
     t = u;
     for (int i = 1; i < iterations; ++i) {
-        u = HmacSha256(reinterpret_cast<const uint8_t*>(password.data()), password.size(), u.data(),
-                       u.size());
+        u = HmacSha256Raw(reinterpret_cast<const uint8_t*>(password.data()), password.size(),
+                          u.data(), u.size());
         for (size_t j = 0; j < 32; ++j) {
             t[j] ^= u[j];
         }
@@ -373,13 +373,13 @@ int B64Index(char c) {
 // HMAC-SHA-256 for SCRAM ClientKey (used by ScramSha256ClientKey).
 std::array<uint8_t, 32> HmacSha256Key(const std::vector<uint8_t>& key, const uint8_t* msg,
                                       size_t msg_len) {
-    return HmacSha256(key.data(), key.size(), msg, msg_len);
+    return HmacSha256Raw(key.data(), key.size(), msg, msg_len);
 }
 
 // SaltedPassword = PBKDF2(password, salt, iterations).
 std::array<uint8_t, 32> ScramSaltedPassword(const std::string& password,
                                             const std::vector<uint8_t>& salt, int iterations) {
-    return Pbkdf2HmacSha256(password, salt.data(), salt.size(), iterations);
+    return Pbkdf2HmacSha256Raw(password, salt.data(), salt.size(), iterations);
 }
 
 // Per RFC 5802:
@@ -390,13 +390,13 @@ constexpr const char* kClientKeyStr = "Client Key";
 constexpr const char* kServerKeyStr = "Server Key";
 
 std::array<uint8_t, 32> ScramClientKey(const std::array<uint8_t, 32>& salted) {
-    return HmacSha256(salted.data(), 32, reinterpret_cast<const uint8_t*>(kClientKeyStr),
-                      std::strlen(kClientKeyStr));
+    return HmacSha256Raw(salted.data(), 32, reinterpret_cast<const uint8_t*>(kClientKeyStr),
+                         std::strlen(kClientKeyStr));
 }
 
 std::array<uint8_t, 32> ScramServerKey(const std::array<uint8_t, 32>& salted) {
-    return HmacSha256(salted.data(), 32, reinterpret_cast<const uint8_t*>(kServerKeyStr),
-                      std::strlen(kServerKeyStr));
+    return HmacSha256Raw(salted.data(), 32, reinterpret_cast<const uint8_t*>(kServerKeyStr),
+                         std::strlen(kServerKeyStr));
 }
 
 }  // namespace
@@ -476,12 +476,34 @@ std::string Md5Encrypt(const std::string& passwd, const std::string& username) {
     return "md5" + ToHex(digest.data(), 16);
 }
 
+std::string Md5Hex(const std::string& data) {
+    auto digest = Md5(reinterpret_cast<const uint8_t*>(data.data()), data.size());
+    return ToHex(digest.data(), 16);
+}
+
+std::vector<uint8_t> Sha256(const std::string& data) {
+    auto digest = Sha256Raw(reinterpret_cast<const uint8_t*>(data.data()), data.size());
+    return std::vector<uint8_t>(digest.begin(), digest.end());
+}
+
+std::vector<uint8_t> HmacSha256(const std::vector<uint8_t>& key, const std::string& msg) {
+    auto digest = HmacSha256Raw(key.data(), key.size(),
+                                reinterpret_cast<const uint8_t*>(msg.data()), msg.size());
+    return std::vector<uint8_t>(digest.begin(), digest.end());
+}
+
+std::vector<uint8_t> Pbkdf2HmacSha256(const std::string& password,
+                                      const std::vector<uint8_t>& salt, int iterations) {
+    auto digest = Pbkdf2HmacSha256Raw(password, salt.data(), salt.size(), iterations);
+    return std::vector<uint8_t>(digest.begin(), digest.end());
+}
+
 void ScramSha256Hash(const std::string& password, const std::string& salt, int iterations,
                      std::string& stored_key_b64, std::string& server_key_b64) {
     std::vector<uint8_t> salt_bytes(salt.begin(), salt.end());
     auto salted = ScramSaltedPassword(password, salt_bytes, iterations);
     auto client_key = ScramClientKey(salted);
-    auto stored_key = Sha256(client_key.data(), 32);
+    auto stored_key = Sha256Raw(client_key.data(), 32);
     auto server_key = ScramServerKey(salted);
     std::vector<uint8_t> sk(stored_key.begin(), stored_key.end());
     std::vector<uint8_t> svk(server_key.begin(), server_key.end());
@@ -571,7 +593,7 @@ bool CryptVerify(const PasswordHash& hash, const std::string& password,
                 return false;
             auto salted = ScramSaltedPassword(password, salt, hash.scram_iterations);
             auto client_key = ScramClientKey(salted);
-            auto stored_key = Sha256(client_key.data(), 32);
+            auto stored_key = Sha256Raw(client_key.data(), 32);
             std::vector<uint8_t> sk(stored_key.begin(), stored_key.end());
             std::string computed_b64 = Base64Encode(sk);
             return computed_b64 == hash.scram_storedkey_b64;

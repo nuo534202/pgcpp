@@ -22,6 +22,7 @@
 #include <unistd.h>
 
 #include <cstring>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -32,6 +33,8 @@
 #include "common/error/elog.hpp"
 #include "common/memory/alloc_set.hpp"
 #include "common/memory/memory_context.hpp"
+#include "protocol/auth.hpp"
+#include "protocol/hba.hpp"
 #include "protocol/postgres.hpp"
 #include "protocol/pqformat.hpp"
 #include "storage/bufmgr.hpp"
@@ -43,6 +46,7 @@
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
 #include "transaction/xact.hpp"
+#include "transaction/xlog.hpp"
 
 namespace pgcpp::server {
 
@@ -59,11 +63,22 @@ using pgcpp::error::LogLevel;
 using pgcpp::memory::AllocSetContext;
 using pgcpp::memory::MemoryContext;
 using pgcpp::memory::SetCurrentMemoryContext;
+using pgcpp::protocol::AuthContext;
+using pgcpp::protocol::AuthRequest;
+using pgcpp::protocol::AuthResult;
 using pgcpp::protocol::Backend;
+using pgcpp::protocol::ClientAuthentication;
 using pgcpp::protocol::DescribeKind;
+using pgcpp::protocol::HbaConfig;
+using pgcpp::protocol::HbaLine;
+using pgcpp::protocol::HbaMethod;
 using pgcpp::protocol::Message;
 using pgcpp::protocol::MessageReader;
 using pgcpp::protocol::MessageType;
+using pgcpp::protocol::SelectHbaLine;
+using pgcpp::protocol::SendAuthRequest;
+using pgcpp::protocol::SendErrorResponse;
+using pgcpp::protocol::SetGlobalResponseReader;
 using pgcpp::protocol::TransactionStatus;
 using pgcpp::storage::BufferPoolShmemSize;
 using pgcpp::storage::InitBufferPool;
@@ -83,8 +98,11 @@ using pgcpp::transaction::InitializeCommitLog;
 using pgcpp::transaction::InitializeProcArray;
 using pgcpp::transaction::InitializeSnapshotManager;
 using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::InitializeWal;
 using pgcpp::transaction::ProcArrayShmemSize;
 using pgcpp::transaction::ResetTransactionState;
+using pgcpp::transaction::SetWalDirectory;
+using pgcpp::transaction::ShutdownWal;
 
 // ---------------------------------------------------------------------------
 // Signal handling
@@ -240,9 +258,56 @@ struct ServerGlobalState {
     SysCache* syscache = nullptr;
     bool buffer_pool_initialized = false;
     std::string data_dir;
+    // pg_hba.conf loaded at startup (empty if no file → default trust).
+    pgcpp::protocol::HbaConfig hba_config;
+    // pg_authid: username → stored password hash. Empty if no file.
+    std::map<std::string, std::string> password_store;
 };
 
 ServerGlobalState g_state;
+
+// Load a text file into a string. Returns empty string on failure.
+std::string ReadTextFile(const std::string& path) {
+    int fd = open(path.c_str(), O_RDONLY);
+    if (fd < 0) return "";
+    std::string out;
+    char buf[4096];
+    while (true) {
+        ssize_t n = read(fd, buf, sizeof(buf));
+        if (n <= 0) break;
+        out.append(buf, static_cast<size_t>(n));
+    }
+    close(fd);
+    return out;
+}
+
+// Load pg_hba.conf from <data_dir>/pg_hba.conf into g_state.hba_config.
+// A missing file is not an error — leaves the config empty, which the
+// auth path treats as "trust" (preserving the pre-B-2 default).
+void LoadHbaConfig(const std::string& data_dir) {
+    std::string text = ReadTextFile(data_dir + "/pg_hba.conf");
+    if (text.empty()) return;
+    g_state.hba_config = pgcpp::protocol::ParseHbaConfig(text);
+}
+
+// Load <data_dir>/global/pg_authid.tsv into g_state.password_store.
+// Format: one record per line, "<username>\t<stored_hash>". Lines starting
+// with '#' are comments. A missing file is not an error (no users with
+// stored passwords → only trust/reject methods work).
+void LoadPasswordStore(const std::string& data_dir) {
+    std::string text = ReadTextFile(data_dir + "/global/pg_authid.tsv");
+    if (text.empty()) return;
+    std::istringstream iss(text);
+    std::string line;
+    while (std::getline(iss, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        auto tab = line.find('\t');
+        if (tab == std::string::npos) continue;
+        std::string user = line.substr(0, tab);
+        std::string hash = line.substr(tab + 1);
+        g_state.password_store[user] = hash;
+    }
+}
 
 }  // namespace
 
@@ -288,6 +353,11 @@ void InitializeServerSubsystems(const std::string& data_dir) {
     InitializeTransactionSystem();
     InitializeSnapshotManager();
 
+    // A-2: WAL — load existing WAL from <data_dir>/pg_wal/wal.log so crash
+    // recovery works across process restarts. XLogFlush now fsyncs the file.
+    SetWalDirectory(data_dir + "/pg_wal");
+    InitializeWal();
+
     // Storage.
     SetStorageBaseDir(data_dir);
     InitBufferPool(4096);
@@ -295,6 +365,11 @@ void InitializeServerSubsystems(const std::string& data_dir) {
 
     // Relcache.
     InitializeRelcache();
+
+    // B-2: load pg_hba.conf and pg_authid for client authentication.
+    // Missing files are not errors (default to trust / empty store).
+    LoadHbaConfig(data_dir);
+    LoadPasswordStore(data_dir);
 }
 
 void ShutdownServerSubsystems() {
@@ -305,6 +380,9 @@ void ShutdownServerSubsystems() {
         smgrcloseall();
         g_state.buffer_pool_initialized = false;
     }
+
+    // A-2: close the WAL file (flushes pending appends to the OS).
+    ShutdownWal();
 
     ResetTransactionState();
     InitializeTransactionSystem();
@@ -460,16 +538,99 @@ void BackendMain(int client_fd) {
         return;
     }
 
-    // Send AuthenticationOk (type 'R', payload: int32 0).
-    {
-        char auth_msg[9];
-        auth_msg[0] = 'R';
-        int32_t auth_len = htonl(8);
-        std::memcpy(&auth_msg[1], &auth_len, 4);
-        int32_t auth_type = 0;  // AuthenticationOk
-        std::memcpy(&auth_msg[5], &auth_type, 4);
-        WriteAll(client_fd, auth_msg, 9);
+    // B-2: Create the SocketSink early so auth can use it. The sink owns
+    // the fd from here on (its destructor closes the fd).
+    SocketSink sink(client_fd);
+
+    // Install a response reader that reads 'p' (PasswordMessage /
+    // SASLResponse) messages from the client socket. The reader normalises
+    // the wire payload to the form the auth handlers expect (matching the
+    // mock queue used in tests):
+    //   - PasswordMessage: strip the trailing NUL.
+    //   - SASLInitialResponse: parse mechanism\0 + int32 len + data and
+    //     return just the initial response body.
+    //   - SASLResponse: return the body as-is.
+    SetGlobalResponseReader([client_fd]() -> std::string {
+        char type;
+        std::string payload;
+        if (!ReadMessage(client_fd, &type, payload)) return "";
+        if (type != 'p') return "";  // protocol error
+        // SASLInitialResponse starts with the mechanism name + NUL.
+        if (payload.size() > 14 && payload.substr(0, 14) == "SCRAM-SHA-256" &&
+            payload[14] == '\0') {
+            if (payload.size() < 19) return "";
+            int32_t len = static_cast<int32_t>(
+                (static_cast<uint8_t>(payload[15]) << 24) |
+                (static_cast<uint8_t>(payload[16]) << 16) |
+                (static_cast<uint8_t>(payload[17]) << 8) |
+                static_cast<uint8_t>(payload[18]));
+            if (len < 0 || static_cast<size_t>(len) > payload.size() - 19)
+                return "";
+            return payload.substr(19, static_cast<size_t>(len));
+        }
+        // PasswordMessage or SASLResponse: strip a single trailing NUL.
+        if (!payload.empty() && payload.back() == '\0') {
+            payload.pop_back();
+        }
+        return payload;
+    });
+
+    // Build the AuthContext. Select the matching pg_hba.conf line; if no
+    // pg_hba.conf was loaded (or no line matches), default to trust —
+    // preserving the pre-B-2 behaviour so existing clients/tests keep
+    // working.
+    AuthContext auth_ctx{};
+    auth_ctx.user = startup.user;
+    auth_ctx.sink = &sink;
+    const HbaLine* hba = nullptr;
+    if (g_state.hba_config.valid && !g_state.hba_config.lines.empty()) {
+        hba = SelectHbaLine(g_state.hba_config, startup.database, startup.user,
+                            /*addr=*/"", /*ssl_in_use=*/false);
     }
+    if (hba != nullptr) {
+        auth_ctx.hba_line = *hba;
+    } else {
+        auth_ctx.hba_line.method = HbaMethod::kTrust;
+    }
+    // Look up the stored password hash (empty if user not found).
+    auto it = g_state.password_store.find(startup.user);
+    if (it != g_state.password_store.end()) {
+        auth_ctx.stored_password = it->second;
+    }
+
+    AuthResult auth_result = ClientAuthentication(auth_ctx);
+    SetGlobalResponseReader({});  // clear reader; main loop uses ReadMessage
+
+    if (auth_result != AuthResult::kSuccess) {
+        // Authentication failed — send ErrorResponse and close.
+        std::string msg;
+        switch (auth_result) {
+            case AuthResult::kWrongPassword:
+                msg = "password authentication failed for user \"" +
+                      startup.user + "\"";
+                break;
+            case AuthResult::kNoSuchUser:
+                msg = "role \"" + startup.user + "\" does not exist";
+                break;
+            case AuthResult::kRejected:
+                msg = "pg_hba.conf rejects connection for user \"" +
+                      startup.user + "\"";
+                break;
+            case AuthResult::kMethodUnsupported:
+                msg = "authentication method not supported";
+                break;
+            default:
+                msg = "authentication failed";
+                break;
+        }
+        SendErrorResponse(&sink, "28P01", msg);
+        return;  // sink destructor closes the fd
+    }
+
+    // Authentication succeeded — send AuthenticationOk (type 'R', code 0).
+    // For methods like SCRAM, the handler already sent SASLFinal; this
+    // AuthenticationOk signals that the exchange is complete.
+    SendAuthRequest(&sink, AuthRequest::kOk);
 
     // Send ParameterStatus messages.
     auto send_param_status = [&](const std::string& key, const std::string& value) {
@@ -516,8 +677,8 @@ void BackendMain(int client_fd) {
         WriteAll(client_fd, rfq_msg, 6);
     }
 
-    // Create the protocol backend with a SocketSink.
-    SocketSink sink(client_fd);
+    // Create the protocol backend. The SocketSink was created earlier
+    // (before auth) and owns the client fd.
     Backend backend(&sink);
 
     // Main protocol loop: read messages and dispatch.

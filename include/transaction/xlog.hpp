@@ -9,11 +9,13 @@
 // recovery.
 //
 // In PostgreSQL, WAL is stored in pg_wal/ as a series of segment files. pgcpp
-// is single-process, so we keep an in-memory byte buffer for testability; the
-// LSN semantics and record framing are identical.
+// stores WAL in a single append-only file (<data_dir>/pg_wal/wal.log) backed
+// by an in-memory buffer for fast reads during recovery. When no WAL directory
+// is configured (test mode), WAL is purely in-memory.
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "transaction/transam.hpp"
@@ -88,27 +90,40 @@ constexpr uint32_t kMaxXlogRecordLength = 1024 * 1024;
 // --- WAL buffer state ---
 //
 // In PostgreSQL, WAL is buffered in shared memory (wal_buffers, default 3MB)
-// and flushed to disk by the WAL writer or at commit. pgcpp uses a single
-// in-memory vector as the "WAL stream"; LSNs are byte offsets into it.
+// and flushed to disk by the WAL writer or at commit. pgcpp uses an in-memory
+// vector as the "WAL stream" (LSNs are byte offsets into it) that is also
+// mirrored to <wal_dir>/wal.log when a WAL directory is configured.
 
-// Initialize the WAL subsystem (clear the buffer, reset the insert pointer).
-// Must be called once at startup before any XLogInsert.
+// Set the WAL directory (e.g. <data_dir>/pg_wal). When set, InitializeWal
+// loads existing WAL from <dir>/wal.log and XLogWriteRaw appends to it.
+// When empty (the default), WAL is purely in-memory (test mode).
+void SetWalDirectory(const std::string& dir);
+
+// Initialize the WAL subsystem. Resets the in-memory buffer. If a WAL
+// directory has been set, loads existing WAL from <dir>/wal.log into the
+// buffer (so crash recovery works across process restarts) and opens the
+// file for appending. Must be called once at startup before any XLogInsert.
 void InitializeWal();
 
-// Reset the WAL to an empty state (for testing).
+// Reset the WAL to an empty state (for testing). Closes any open WAL file,
+// clears the in-memory buffer, and truncates the on-disk file if a directory
+// is configured.
 void ResetWal();
+
+// Shut down the WAL subsystem (close the WAL file if open). Called at server
+// shutdown.
+void ShutdownWal();
 
 // Get the current insert position (the LSN where the next record will go).
 XLogRecPtr GetXLogInsertRecPtr();
 
 // Get the current flush position (the LSN up to which WAL is durable).
-// In pgcpp, all inserted records are immediately "flushed", so this
-// equals GetXLogInsertRecPtr.
 XLogRecPtr GetXLogWriteRecPtr();
 
 // Write raw bytes into the WAL buffer at the current insert position.
 // Returns the LSN of the start of the written data. Advances the insert
-// pointer. Called by XLogInsert after assembling a record.
+// pointer. Called by XLogInsert after assembling a record. If a WAL
+// directory is configured, also appends to <dir>/wal.log.
 XLogRecPtr XLogWriteRaw(const void* data, std::size_t len);
 
 // Read raw bytes from the WAL buffer at a given LSN.
@@ -122,8 +137,9 @@ std::size_t GetWalBufferSize();
 // Get a read-only pointer to the WAL buffer (for testing/diagnostics).
 const std::vector<uint8_t>& GetWalBuffer();
 
-// XLogFlush — flush WAL up to the given LSN. In pgcpp this is a no-op
-// (the in-memory buffer is always "durable"), but it matches the PG API.
+// XLogFlush — flush WAL up to the given LSN. If a WAL directory is
+// configured, fsyncs the WAL file so the records up to `upto` survive a
+// crash. If no directory is configured (test mode), this is a no-op.
 void XLogFlush(XLogRecPtr upto);
 
 }  // namespace pgcpp::transaction

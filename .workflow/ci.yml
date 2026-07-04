@@ -1,0 +1,84 @@
+name: ci
+displayName: 'CI'
+
+# Pipeline-level variables (equivalent to GitHub Actions 'env:')
+variables:
+  BUILD_TYPE: Release
+
+# Triggers: push & PR on main/dev (mirrors .github/workflows/ci.yml)
+triggers:
+  push:
+    branches:
+      precise:
+        - main
+        - dev
+  pull_request:
+    branches:
+      precise:
+        - main
+        - dev
+
+# Single stage with 3 parallel steps (strategy: naturally keeps them
+# independent, matching GitHub Actions' parallel jobs). Each step uses
+# build@gcc and installs its own deps so they don't share state.
+stages:
+  - stage:
+      name: ci
+      displayName: 'CI'
+      strategy: naturally
+      trigger: auto
+      steps:
+        # -----------------------------------------------------------------
+        # Step 1: format-check + build + unit tests
+        # (equivalent to GitHub Actions job: build-and-test)
+        # -----------------------------------------------------------------
+        - step: build@gcc
+          name: build_and_test
+          displayName: 'Build & Test'
+          gccVersion: 11
+          commands:
+            - set -e
+            - apt-get update
+            - apt-get install -y build-essential cmake bison gcc-11 g++-11 clang-format
+            - update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+            - update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+            - cmake -S . -B build -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+            - cmake --build build --target format-check
+            - cmake --build build -j$(nproc)
+            - ctest --test-dir build --output-on-failure
+
+        # -----------------------------------------------------------------
+        # Step 2: AddressSanitizer
+        # (equivalent to GitHub Actions job: asan)
+        # -----------------------------------------------------------------
+        - step: build@gcc
+          name: asan
+          displayName: 'ASan'
+          gccVersion: 11
+          commands:
+            - set -e
+            - apt-get update
+            - apt-get install -y build-essential cmake bison gcc-11 g++-11
+            - update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+            - update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+            - cmake -S . -B build-asan -DENABLE_ASAN=ON -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+            - cmake --build build-asan -j$(nproc)
+            - ctest --test-dir build-asan --output-on-failure
+
+        # -----------------------------------------------------------------
+        # Step 3: UndefinedBehaviorSanitizer
+        # (equivalent to GitHub Actions job: ubsan)
+        # -----------------------------------------------------------------
+        - step: build@gcc
+          name: ubsan
+          displayName: 'UBSan'
+          gccVersion: 11
+          commands:
+            - set -e
+            - apt-get update
+            - apt-get install -y build-essential cmake bison gcc-11 g++-11
+            - update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+            - update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+            - cmake -S . -B build-ubsan -DENABLE_UBSAN=ON -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+            - cmake --build build-ubsan -j$(nproc)
+            - ctest --test-dir build-ubsan --output-on-failure

@@ -84,6 +84,10 @@ using pgcpp::protocol::MaskBitsToIPv4;
 using pgcpp::protocol::MatchCidr;
 using pgcpp::protocol::MatchDatabaseOrUser;
 using pgcpp::protocol::Md5Encrypt;
+using pgcpp::protocol::Md5Hex;
+using pgcpp::protocol::HmacSha256;
+using pgcpp::protocol::Pbkdf2HmacSha256;
+using pgcpp::protocol::Sha256;
 using pgcpp::protocol::Message;
 using pgcpp::protocol::MessageReader;
 using pgcpp::protocol::MessageType;
@@ -123,6 +127,7 @@ using pgcpp::protocol::secure_read;
 using pgcpp::protocol::secure_write;
 using pgcpp::protocol::SelectHbaLine;
 using pgcpp::protocol::SendAuthRequest;
+using pgcpp::protocol::SetGlobalResponseReader;
 using pgcpp::protocol::SetMockClientResponse;
 using pgcpp::protocol::StringSink;
 using pgcpp::storage::kInvalidLargeObjectOid;
@@ -158,6 +163,45 @@ TEST(CryptTest, Md5Encrypt_EmptyInputs) {
     EXPECT_EQ(h.size(), 35u);
     // MD5("") = d41d8cd98f00b204e9800998ecf8427e
     EXPECT_EQ(h, "md5d41d8cd98f00b204e9800998ecf8427e");
+}
+
+TEST(CryptTest, Md5Hex_Returns32LowercaseHexChars) {
+    // Md5Hex returns the raw 32-char hex digest (no "md5" prefix).
+    std::string h = Md5Hex("");
+    EXPECT_EQ(h.size(), 32u);
+    EXPECT_EQ(h, "d41d8cd98f00b204e9800998ecf8427e");
+    // Md5Hex(data) must equal Md5Encrypt("","").substr(3) for the same input
+    // when the username is empty (since Md5Encrypt computes md5(pass+user)).
+    std::string enc = Md5Encrypt("pgtest", "alice");
+    EXPECT_EQ(Md5Hex("pgtestalice"), enc.substr(3));
+}
+
+TEST(CryptTest, Sha256_KnownVector) {
+    // SHA-256("") = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    auto h = Sha256("");
+    EXPECT_EQ(h.size(), 32u);
+    EXPECT_EQ(h[0], 0xe3);
+    EXPECT_EQ(h[31], 0x55);
+}
+
+TEST(CryptTest, HmacSha256_KnownVector) {
+    // HMAC-SHA-256(key="key", msg="The quick brown fox jumps over the lazy dog")
+    // = f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8
+    std::vector<uint8_t> key{'k', 'e', 'y'};
+    auto h = HmacSha256(key, "The quick brown fox jumps over the lazy dog");
+    EXPECT_EQ(h.size(), 32u);
+    EXPECT_EQ(h[0], 0xf7);
+    EXPECT_EQ(h[31], 0xd8);
+}
+
+TEST(CryptTest, Pbkdf2HmacSha256_Rfc6070Vector) {
+    // RFC 6070 PBKDF2-HMAC-SHA1 not directly applicable to SHA-256, but
+    // verify determinism and output length.
+    std::vector<uint8_t> salt{'s', 'a', 'l', 't'};
+    auto h1 = Pbkdf2HmacSha256("password", salt, 1);
+    auto h2 = Pbkdf2HmacSha256("password", salt, 1);
+    EXPECT_EQ(h1.size(), 32u);
+    EXPECT_EQ(h1, h2);
 }
 
 TEST(CryptTest, Base64_RoundTrip) {
@@ -593,8 +637,9 @@ TEST(AuthTest, CheckMd5Auth_SendsSalt) {
     salt_str.push_back(static_cast<char>(0x34));
     salt_str.push_back(static_cast<char>(0x12));
     std::string md5_hex = Md5Encrypt("secret", "alice").substr(3);
-    std::string inner_input = md5_hex + salt_str;
-    std::string expected = Md5Encrypt(inner_input, "").substr(3);
+    // Inner = MD5(md5_hex + salt) — computed via Md5Hex (no "md5" prefix,
+    // no empty-username hack).
+    std::string expected = Md5Hex(md5_hex + salt_str);
     SetMockClientResponse(expected);
     EXPECT_EQ(CheckMd5Auth(&sink, "alice", stored, 0x12345678), AuthResult::kSuccess);
     ClearMockClientResponses();
@@ -608,9 +653,75 @@ TEST(AuthTest, CheckMd5Auth_WrongResponse) {
     ClearMockClientResponses();
 }
 
-TEST(AuthTest, CheckScramAuth_Unsupported) {
+TEST(AuthTest, CheckScramAuth_InvalidStoredHash) {
+    // "stored" is not a valid SCRAM-SHA-256 hash, so the exchange fails
+    // before any message is sent to the client.
     StringSink sink;
-    EXPECT_EQ(CheckScramAuth(&sink, "alice", "stored"), AuthResult::kMethodUnsupported);
+    EXPECT_EQ(CheckScramAuth(&sink, "alice", "stored"), AuthResult::kWrongPassword);
+}
+
+// Full SCRAM-SHA-256 exchange: server-side CheckScramAuth driven by a
+// stateful global response reader that plays the role of a real SCRAM
+// client. The reader returns client-first on the first call; on the
+// second call it inspects the server-first message already captured in
+// the sink, computes the ClientProof, and returns client-final.
+TEST(AuthTest, CheckScramAuth_FullExchange) {
+    StringSink sink;
+
+    // Server-side stored hash for password "hunter2" with salt "salt" iter 4096.
+    const std::string password = "hunter2";
+    const std::string salt_str = "salt";
+    const int iterations = 4096;
+    std::string stored_key_b64, server_key_b64;
+    ScramSha256Hash(password, salt_str, iterations, stored_key_b64, server_key_b64);
+    std::string stored_hash = "SCRAM-SHA-256$" + std::to_string(iterations) + ":" +
+                              Base64Encode(std::vector<uint8_t>(salt_str.begin(), salt_str.end())) +
+                              "$" + stored_key_b64 + ":" + server_key_b64;
+
+    // --- Mock client side: precompute SCRAM key material. ---
+    std::vector<uint8_t> salt_bytes(salt_str.begin(), salt_str.end());
+    auto salted = Pbkdf2HmacSha256(password, salt_bytes, iterations);
+    auto client_key = HmacSha256(salted, "Client Key");
+    std::string ck_str(client_key.begin(), client_key.end());
+    auto stored_key = Sha256(ck_str);
+
+    const std::string client_nonce = "clientnonce12345";
+    const std::string client_first = "n,,n=alice,r=" + client_nonce;
+    const std::string client_first_bare = "n=alice,r=" + client_nonce;
+
+    // Stateful reader: first call returns client-first; second call
+    // inspects the sink, derives the proof, returns client-final.
+    int call_count = 0;
+    SetGlobalResponseReader([&]() -> std::string {
+        if (call_count == 0) {
+            ++call_count;
+            return client_first;
+        }
+        ++call_count;
+        // sink.messages() = [0] SASL, [1] SASLContinue.
+        const auto& continue_payload = sink.messages().at(1).payload;
+        std::string server_first(continue_payload.begin() + 4,
+                                 continue_payload.end());
+        auto r_pos = server_first.find("r=");
+        auto s_pos = server_first.find(",s=");
+        std::string combined_nonce =
+            server_first.substr(r_pos + 2, s_pos - (r_pos + 2));
+        std::string client_final_without_proof = "c=biws,r=" + combined_nonce;
+        std::string auth_message = client_first_bare + "," + server_first +
+                                   "," + client_final_without_proof;
+        auto client_sig = HmacSha256(stored_key, auth_message);
+        std::vector<uint8_t> proof(32);
+        for (size_t i = 0; i < 32; ++i) {
+            proof[i] = client_key[i] ^ client_sig[i];
+        }
+        return client_final_without_proof + ",p=" + Base64Encode(proof);
+    });
+
+    EXPECT_EQ(CheckScramAuth(&sink, "alice", stored_hash), AuthResult::kSuccess);
+    // The sink should contain: SASL, SASLContinue, SASLFinal.
+    ASSERT_GE(sink.messages().size(), 3u);
+    EXPECT_EQ(sink.messages().at(2).type, MessageType::kAuthentication);
+    SetGlobalResponseReader({});  // clear the reader
 }
 
 TEST(AuthTest, SendAuthRequest_BuildsCorrectMessage) {

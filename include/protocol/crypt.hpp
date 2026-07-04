@@ -57,6 +57,12 @@ bool ParsePasswordHash(const std::string& shadow_pass, PasswordHash& out);
 // "md5". Returns the 35-char string ("md5" + 32 hex).
 std::string Md5Encrypt(const std::string& passwd, const std::string& username);
 
+// Md5Hex — compute the MD5 hash of `data` and return the 32 lowercase hex
+// chars (no "md5" prefix). Used by the md5 auth handler to compute the
+// inner hash md5(md5(password+username) + salt) without the empty-username
+// hack that Md5Encrypt required.
+std::string Md5Hex(const std::string& data);
+
 // ScramSha256Hash — compute SCRAM-SHA-256 StoredKey and ServerKey from a
 // plaintext password and salt. Uses PBKDF2 with the given iteration count.
 // Outputs base64-encoded strings (matching PG's storage format).
@@ -81,5 +87,22 @@ bool CryptVerify(const PasswordHash& hash, const std::string& password,
 // Base64Encode / Base64Decode — helpers used by SCRAM password storage.
 std::string Base64Encode(const std::vector<uint8_t>& data);
 std::vector<uint8_t> Base64Decode(const std::string& s);
+
+// Sha256 — compute SHA-256 of `data` and return the 32 raw digest bytes.
+// Exposed for the SCRAM-SHA-256 SASL exchange (auth.cpp) which needs to
+// hash the recovered ClientKey during proof verification.
+std::vector<uint8_t> Sha256(const std::string& data);
+
+// HmacSha256 — compute HMAC-SHA-256 of `msg` under `key`. Returns the 32
+// raw bytes. Used by the SCRAM exchange to compute ClientSignature and
+// ServerSignature.
+std::vector<uint8_t> HmacSha256(const std::vector<uint8_t>& key, const std::string& msg);
+
+// Pbkdf2HmacSha256 — PBKDF2 key derivation using HMAC-SHA-256 (RFC 2898).
+// Derives a 32-byte key from `password` and `salt` over `iterations`
+// rounds. Exposed so tests acting as the SCRAM client can derive the
+// SaltedPassword and compute the ClientProof.
+std::vector<uint8_t> Pbkdf2HmacSha256(const std::string& password,
+                                      const std::vector<uint8_t>& salt, int iterations);
 
 }  // namespace pgcpp::protocol

@@ -4,10 +4,12 @@
 # files are added here as modules are converted from PostgreSQL C to C++20.
 
 # ---------------------------------------------------------------------------
-# Flex / Bison — generate scanner and parser for the SQL parser (M5)
+# Bison — generate parser for the SQL parser (M5)
 # ---------------------------------------------------------------------------
 find_package(BISON 3.0 REQUIRED)
-find_package(FLEX 2.6 REQUIRED)
+
+# Ensure the parser output directory exists (BISON_TARGET does not create it).
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/parser)
 
 # Bison generates parser.cpp and parser.hpp from gram.yy
 # Use C++ skeleton (lalr1.cc) for clean C++ integration.
@@ -17,15 +19,6 @@ BISON_TARGET(
     ${CMAKE_CURRENT_BINARY_DIR}/parser/gram.tab.cpp
     DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser/gram.tab.hpp
     COMPILE_FLAGS "-Wno-conflicts-sr -Wno-conflicts-rr"
-)
-
-# Flex generates scanner.cpp from scan.ll
-# Use C++ mode for clean C++ integration.
-FLEX_TARGET(
-    pgcpp_scanner
-    ${CMAKE_CURRENT_SOURCE_DIR}/parser/scan.ll
-    ${CMAKE_CURRENT_BINARY_DIR}/parser/lex.yy.cpp
-    COMPILE_FLAGS "--c++"
 )
 
 # Glob all C++ sources under src/ (CONFIGURE_DEPENDS so CMake re-checks
@@ -39,10 +32,16 @@ file(GLOB_RECURSE PGCPP_CORE_SOURCES CONFIGURE_DEPENDS
 list(REMOVE_ITEM PGCPP_CORE_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/server/main.cpp"
 )
-# Append Flex/Bison generated sources (live in the build tree, not src/).
+# src/tools/*.cpp are client-side tool library functions (psql, pg_dump,
+# etc.). They are excluded from pgcpp_core (server library) and built into
+# a separate pgcpp_client static library below (D-4 layering fix).
+file(GLOB PGCPP_CLIENT_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/*.cpp"
+)
+list(REMOVE_ITEM PGCPP_CORE_SOURCES ${PGCPP_CLIENT_SOURCES})
+# Append Bison generated source (lives in the build tree, not src/).
 list(APPEND PGCPP_CORE_SOURCES
     ${BISON_pgcpp_parser_OUTPUTS}
-    ${FLEX_pgcpp_scanner_OUTPUTS}
 )
 
 add_library(pgcpp_core STATIC ${PGCPP_CORE_SOURCES})
@@ -59,13 +58,26 @@ target_include_directories(pgcpp_core
 # Apply warning flags from the root CMakeLists.txt
 target_compile_options(pgcpp_core PRIVATE -Wall -Wextra -Wpedantic)
 
-# Generated Flex/Bison code triggers various warnings; suppress them.
+# Generated Bison code triggers various warnings; suppress them.
 set_source_files_properties(
     ${BISON_pgcpp_parser_OUTPUTS}
-    ${FLEX_pgcpp_scanner_OUTPUTS}
     PROPERTIES
         COMPILE_OPTIONS "-Wno-unused;-Wno-sign-compare;-Wno-old-style-cast"
 )
+
+# ---------------------------------------------------------------------------
+# pgcpp_client — client-side tool library (M13)
+#
+# Contains the library functions for psql, pg_dump, pg_isready, etc.
+# (located in src/tools/*.cpp). These are linked into the thin CLI
+# executables in tools/<name>/<name>.cpp. Kept separate from pgcpp_core
+# so the server library does not carry client-side code (D-4 fix).
+# ---------------------------------------------------------------------------
+add_library(pgcpp_client STATIC ${PGCPP_CLIENT_SOURCES})
+target_compile_features(pgcpp_client PUBLIC cxx_std_20)
+target_include_directories(pgcpp_client PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(pgcpp_client PUBLIC pgcpp_core)
+target_compile_options(pgcpp_client PRIVATE -Wall -Wextra -Wpedantic)
 
 # ---------------------------------------------------------------------------
 # pgcpp_server — the standalone server executable (M12)

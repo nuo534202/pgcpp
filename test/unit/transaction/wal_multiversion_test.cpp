@@ -11,7 +11,9 @@
 
 #include <gtest/gtest.h>
 
+#include <cstdio>
 #include <cstring>
+#include <sys/stat.h>
 #include <vector>
 
 #include "common/error/elog.hpp"
@@ -90,6 +92,8 @@ using pgcpp::transaction::ResetTransactionState;
 using pgcpp::transaction::ResetWal;
 using pgcpp::transaction::ResetXlogInsertState;
 using pgcpp::transaction::RmgrId;
+using pgcpp::transaction::SetWalDirectory;
+using pgcpp::transaction::ShutdownWal;
 using pgcpp::transaction::SendSharedInvalidationMessages;
 using pgcpp::transaction::SharedInvalCmdType;
 using pgcpp::transaction::SharedInvalidationMessage;
@@ -139,6 +143,9 @@ protected:
 
         ResetTransactionState();
         InitializeTransactionSystem();
+        // A-2: ensure tests run in in-memory mode by default so a previous
+        // persistence test's SetWalDirectory() does not leak file I/O here.
+        SetWalDirectory("");
         InitializeWal();
         InitializeCommitTs();
         InitializeMultiXact();
@@ -149,6 +156,8 @@ protected:
     void TearDown() override {
         ResetTransactionState();
         ResetWal();
+        // A-2: clear any directory a test set so subsequent tests are isolated.
+        SetWalDirectory("");
         ResetXlogInsertState();
         ResetCommitTs();
         ResetMultiXact();
@@ -201,11 +210,67 @@ TEST_F(WalMultiversionTest, XLogReadRaw_ReturnsZeroPastEnd) {
     EXPECT_EQ(n, 0u);
 }
 
-// XLogFlush is a no-op in pgcpp (in-memory buffer is always durable).
-TEST_F(WalMultiversionTest, XLogFlush_NoOp) {
+// XLogFlush without a WAL directory does no I/O (in-memory mode). WritePtr
+// only advances to InsertPtr, which is already equal right after init.
+TEST_F(WalMultiversionTest, XLogFlush_NoOpWithoutDir) {
     XLogRecPtr before = GetXLogWriteRecPtr();
     XLogFlush(GetXLogInsertRecPtr());
     EXPECT_EQ(GetXLogWriteRecPtr(), before);
+}
+
+// A-2: XLogFlush with a WAL directory fsyncs the WAL file. We verify that
+// records persisted to disk survive a simulated crash (InitializeWal reloads
+// the file), and that PerformCrashRecovery replays them.
+TEST_F(WalMultiversionTest, WalPersistsAcrossRestart) {
+    const std::string wal_dir = "/tmp/pgcpp_wal_persist_test";
+    const std::string wal_path = wal_dir + "/wal.log";
+    // Clean slate: remove leftover file/dir from prior runs.
+    std::remove(wal_path.c_str());
+    rmdir(wal_dir.c_str());
+    ASSERT_EQ(mkdir(wal_dir.c_str(), 0700), 0) << "mkdir failed";
+
+    SetWalDirectory(wal_dir);
+    InitializeWal();  // creates empty wal.log
+
+    // Write 3 WAL records.
+    std::vector<uint32_t> written;
+    for (int i = 0; i < 3; i++) {
+        uint32_t val = static_cast<uint32_t>(1000 + i);
+        XLogBeginInsert();
+        XLogRegisterData(&val, sizeof(val));
+        XLogInsert(kRmgrHeapId, 0);
+        written.push_back(val);
+    }
+    XLogFlush(GetXLogInsertRecPtr());
+
+    // Simulate a crash: close the file, clear in-memory buffer, reload.
+    ShutdownWal();
+    InitializeWal();
+    EXPECT_GT(GetWalBufferSize(),
+              static_cast<std::size_t>(kSizeofXlogRecord));
+
+    // Replay and verify each record's payload matches what we wrote.
+    std::vector<uint32_t> replayed_vals;
+    RegisterRmgrRedo(kRmgrHeapId,
+                     [&](const XLogRecord&, const uint8_t* data, std::size_t len,
+                         XLogRecPtr) {
+                         ASSERT_EQ(len, sizeof(uint32_t));
+                         uint32_t v = 0;
+                         std::memcpy(&v, data, sizeof(v));
+                         replayed_vals.push_back(v);
+                     });
+    RecoveryStats stats = PerformCrashRecovery();
+    EXPECT_EQ(stats.records_replayed, 3u);
+    ASSERT_EQ(replayed_vals.size(), written.size());
+    for (std::size_t i = 0; i < written.size(); i++) {
+        EXPECT_EQ(replayed_vals[i], written[i]);
+    }
+
+    // Cleanup.
+    ShutdownWal();
+    SetWalDirectory("");
+    std::remove(wal_path.c_str());
+    rmdir(wal_dir.c_str());
 }
 
 // LSN comparison helpers.
