@@ -103,7 +103,7 @@ All tools live in `tools/` and link against `pgcpp_client` (which transitively p
 
 | Path | Purpose |
 | --- | --- |
-| `include/pgcpp/<module>/` | Public headers, per module |
+| `include/<module>/` | Public headers, per module |
 | `src/<module>/` | Implementation, per module |
 | `test/unit/<module>/` | Unit tests, per module |
 | `test/benchmark/clickbench/` | ClickBench correctness suite (data + 43 queries) |
