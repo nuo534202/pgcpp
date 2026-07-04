@@ -38,3 +38,11 @@ foreach(src ${PGCPP_TEST_SOURCES})
     get_filename_component(test_name ${src} NAME_WE)
     pgcpp_add_test(${test_name} ${src})
 endforeach()
+
+# SQL regression tests (end-to-end via pgcpp_psql against a live server).
+# Registered as a standalone target `regression-test` (not part of ctest's
+# default run) so it can be invoked explicitly:
+#   cmake --build build --target regression-test
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/regression/CMakeLists.txt")
+    add_subdirectory(regression)
+endif()

@@ -1,0 +1,28 @@
+ ?column?
+---------
+ 1       
+(1 row)
+ sum
+----
+ 3  
+(1 row)
+ diff
+-----
+ 7   
+(1 row)
+ product
+--------
+ 20     
+(1 row)
+ quotient
+---------
+ 25      
+(1 row)
+ ?column? | ?column? | ?column?
+----------+----------+---------
+ 1        | 2        | 3       
+(1 row)
+ a | answer
+---+-------
+ 1 | 42    
+(1 row)
