@@ -35,7 +35,7 @@ Two checks gate every change: all 43 ClickBench queries must match stock Postgre
 
 ## Build
 
-Requires GCC 11.4.0+, CMake 3.22.1+, and Make 4.3+ (CMake enforces the compiler version at configure time). All commands run from the project root.
+Requires GCC 11.4.0+ (primary), CMake 3.22.1+, and Make 4.3+ (CMake enforces the GCC version at configure time). Clang is also accepted by CMake but is not covered by CI. All commands run from the project root.
 
 ```bash
 cmake -S . -B build
@@ -80,12 +80,24 @@ cmake --build build --target tidy          # clang-tidy static checks
 
 ## Command-Line Tools
 
-Both live in `tools/` and link against `pgcpp_core`:
+All tools live in `tools/` and link against `pgcpp_client` (which transitively provides `pgcpp_core`):
 
 | Binary | PostgreSQL equivalent | Purpose |
 | --- | --- | --- |
 | `pgcpp_initdb` | `initdb` | Initialize a new database cluster |
 | `pgcpp_psql` | `psql` | Interactive query client |
+| `pgcpp_pg_ctl` | `pg_ctl` | Start/stop the server |
+| `pgcpp_pg_dump` | `pg_dump` | Database dump utility |
+| `pgcpp_pg_restore` | `pg_restore` | Restore from a dump |
+| `pgcpp_pg_config` | `pg_config` | Show build configuration |
+| `pgcpp_pg_isready` | `pg_isready` | Check server readiness |
+| `pgcpp_createdb` | `createdb` | Create a database |
+| `pgcpp_dropdb` | `dropdb` | Drop a database |
+| `pgcpp_createuser` | `createuser` | Create a user |
+| `pgcpp_dropuser` | `dropuser` | Drop a user |
+| `pgcpp_clusterdb` | `clusterdb` | Cluster a database |
+| `pgcpp_vacuumdb` | `vacuumdb` | Vacuum a database |
+| `pgcpp_reindexdb` | `reindexdb` | Reindex a database |
 
 ## Project Layout
 

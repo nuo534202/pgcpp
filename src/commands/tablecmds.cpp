@@ -282,7 +282,10 @@ std::string AlterTable(AlterTableStmt* stmt) {
                 break;
             }
             default:
-                // Other ALTER TABLE subcommands not yet supported.
+                // F-4f: Unsupported ALTER TABLE subcommands — fail
+                // explicitly rather than silently succeeding.
+                ereport(pgcpp::error::LogLevel::kError,
+                        "ALTER TABLE subcommand is not supported");
                 break;
         }
     }

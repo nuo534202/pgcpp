@@ -570,24 +570,24 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
 
         case NodeTag::kCaseExpr: {
             auto* ce = static_cast<CaseExpr*>(expr);
-            if (ce->arg == nullptr) {
-                // Searched form: CASE WHEN cond THEN result [WHEN ...]
-                // [ELSE defresult] END. Each CaseWhen::expr is a boolean
-                // condition.
-                for (Node* when_node : ce->args) {
-                    auto* cw = static_cast<CaseWhen*>(when_node);
-                    bool cond_null = false;
-                    Datum cond_val = ExecEvalExpr(cw->expr, econtext, &cond_null);
-                    if (!cond_null && DatumGetBool(cond_val)) {
-                        return ExecEvalExpr(cw->result, econtext, isNull);
-                    }
+            // F-4d: simple CASE form (CASE arg WHEN v THEN r ...) is not
+            // implemented — fail explicitly rather than silently returning
+            // the ELSE clause for every row.
+            if (ce->arg != nullptr) {
+                ereport(pgcpp::error::LogLevel::kError,
+                        "simple CASE form (CASE arg WHEN v THEN r) is not supported");
+            }
+            // Searched form: CASE WHEN cond THEN result [WHEN ...]
+            // [ELSE defresult] END. Each CaseWhen::expr is a boolean
+            // condition.
+            for (Node* when_node : ce->args) {
+                auto* cw = static_cast<CaseWhen*>(when_node);
+                bool cond_null = false;
+                Datum cond_val = ExecEvalExpr(cw->expr, econtext, &cond_null);
+                if (!cond_null && DatumGetBool(cond_val)) {
+                    return ExecEvalExpr(cw->result, econtext, isNull);
                 }
             }
-            // TODO(Task 15.2): simple CASE form (arg != nullptr, i.e.
-            // CASE arg WHEN v THEN r ...) needs exprType() to resolve the
-            // equality operator comparing arg against each CaseWhen::expr.
-            // ClickBench Q40 uses the searched form only.
-            //
             // No WHEN matched — return defresult (ELSE clause), or NULL.
             if (ce->defresult != nullptr) {
                 return ExecEvalExpr(ce->defresult, econtext, isNull);
@@ -609,7 +609,10 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
         }
 
         default:
-            // Unsupported expression type.
+            // F-4e: Unsupported expression type — fail explicitly rather
+            // than silently returning NULL (which produces wrong results).
+            ereport(pgcpp::error::LogLevel::kError,
+                    "unsupported expression type in ExecEvalExpr");
             *isNull = true;
             return 0;
     }

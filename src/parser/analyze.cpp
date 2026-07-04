@@ -224,6 +224,14 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
     qry->command_type = CmdType::kInsert;
     qry->can_set_tag = true;
 
+    // F-4b: ON CONFLICT is parsed but not implemented — fail explicitly
+    // rather than silently ignoring the clause (which would cause unique
+    // violations to error instead of being handled).
+    if (stmt->on_conflict_clause != nullptr) {
+        ereport(pgcpp::error::LogLevel::kError,
+                "ON CONFLICT is not supported");
+    }
+
     // Process the WITH clause first, so CTEs are visible to the source query.
     if (stmt->with_clause != nullptr) {
         transformWithClause(pstate, stmt->with_clause);
@@ -244,10 +252,15 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
         if (nodeTag(stmt->select_stmt) == NodeTag::kSelectStmt) {
             auto* sel = static_cast<SelectStmt*>(stmt->select_stmt);
             if (!sel->values_lists.empty()) {
+                // F-4c: Multi-row INSERT (INSERT INTO t VALUES (1), (2), ...)
+                // is not yet supported — fail explicitly rather than silently
+                // dropping all rows except the first (data loss).
+                if (sel->values_lists.size() > 1) {
+                    ereport(pgcpp::error::LogLevel::kError,
+                            "multi-row INSERT is not supported");
+                }
                 // INSERT ... VALUES — convert the first row's expressions
                 // into ResTarget nodes and transform them into a target list.
-                // (Multi-row INSERT is not yet supported; only the first row
-                // is used.)
                 const auto& first_row = sel->values_lists[0];
                 std::vector<Node*> target_list;
                 for (Node* expr : first_row) {
@@ -321,6 +334,13 @@ static Query* transformUpdateStmt(ParseState* pstate, UpdateStmt* stmt) {
     qry->command_type = CmdType::kUpdate;
     qry->can_set_tag = true;
 
+    // F-4g: RETURNING on UPDATE is not implemented — the executor silently
+    // returns zero rows. Fail explicitly rather than producing wrong results.
+    if (!stmt->returning_list.empty()) {
+        ereport(pgcpp::error::LogLevel::kError,
+                "RETURNING is not supported on UPDATE");
+    }
+
     // Process the WITH clause first, so CTEs are visible to SET/FROM/WHERE.
     if (stmt->with_clause != nullptr) {
         transformWithClause(pstate, stmt->with_clause);
@@ -383,6 +403,13 @@ static Query* transformDeleteStmt(ParseState* pstate, DeleteStmt* stmt) {
     auto* qry = makeNode<Query>();
     qry->command_type = CmdType::kDelete;
     qry->can_set_tag = true;
+
+    // F-4g: RETURNING on DELETE is not implemented — the executor silently
+    // returns zero rows. Fail explicitly rather than producing wrong results.
+    if (!stmt->returning_list.empty()) {
+        ereport(pgcpp::error::LogLevel::kError,
+                "RETURNING is not supported on DELETE");
+    }
 
     // Process the WITH clause first, so CTEs are visible to USING/WHERE.
     if (stmt->with_clause != nullptr) {

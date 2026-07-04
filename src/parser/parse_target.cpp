@@ -470,6 +470,10 @@ std::vector<Node*> transformGroupClause(ParseState* pstate, const std::vector<No
     std::vector<Node*> groupclauses;
 
     for (Node* node : grouplist) {
+        if (nodeTag(node) == NodeTag::kGroupingSet) {
+            ereport(pgcpp::error::LogLevel::kError,
+                    "GROUPING SETS / ROLLUP / CUBE are not supported");
+        }
         if (nodeTag(node) != NodeTag::kSortBy)
             continue;
         auto* sortby = static_cast<SortBy*>(node);
