@@ -15,14 +15,15 @@
 // set (test mode), WAL is purely in-memory.
 #include "transaction/xlog.hpp"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <errno.h>
-#include <fcntl.h>
 #include <string>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <vector>
 
 namespace pgcpp::transaction {
@@ -67,10 +68,12 @@ bool WriteAllToFd(int fd, const uint8_t* data, std::size_t len) {
     while (written < len) {
         ssize_t n = write(fd, data + written, len - written);
         if (n < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR)
+                continue;
             return false;
         }
-        if (n == 0) return false;
+        if (n == 0)
+            return false;
         written += static_cast<std::size_t>(n);
     }
     return true;
@@ -107,8 +110,7 @@ void InitializeWal() {
             WritePtr() = InsertPtr();
         }
         // Open for appending (creates the file if it doesn't exist).
-        WalFileFd() = open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
-                           S_IRUSR | S_IWUSR);
+        WalFileFd() = open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
     }
 }
 
@@ -124,12 +126,11 @@ void ResetWal() {
     if (!WalDirectory().empty()) {
         std::string path = WalDirectory() + "/wal.log";
         // Truncate the file (clean slate for tests).
-        int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-                      S_IRUSR | S_IWUSR);
-        if (fd >= 0) close(fd);
+        int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+        if (fd >= 0)
+            close(fd);
         // Reopen for appending.
-        WalFileFd() = open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
-                           S_IRUSR | S_IWUSR);
+        WalFileFd() = open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
     }
 }
 

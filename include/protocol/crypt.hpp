@@ -102,7 +102,7 @@ std::vector<uint8_t> HmacSha256(const std::vector<uint8_t>& key, const std::stri
 // Derives a 32-byte key from `password` and `salt` over `iterations`
 // rounds. Exposed so tests acting as the SCRAM client can derive the
 // SaltedPassword and compute the ClientProof.
-std::vector<uint8_t> Pbkdf2HmacSha256(const std::string& password,
-                                      const std::vector<uint8_t>& salt, int iterations);
+std::vector<uint8_t> Pbkdf2HmacSha256(const std::string& password, const std::vector<uint8_t>& salt,
+                                      int iterations);
 
 }  // namespace pgcpp::protocol

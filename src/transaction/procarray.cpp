@@ -25,13 +25,13 @@ namespace pgcpp::transaction {
 
 namespace {
 
+using pgcpp::storage::kMaxBackends;
+using pgcpp::storage::LookupNamedLock;
 using pgcpp::storage::LWLock;
 using pgcpp::storage::LWLockAcquire;
 using pgcpp::storage::LWLockId;
 using pgcpp::storage::LWLockMode;
 using pgcpp::storage::LWLockRelease;
-using pgcpp::storage::LookupNamedLock;
-using pgcpp::storage::kMaxBackends;
 using pgcpp::storage::ShmemInitStruct;
 
 // Pointer to the shm-allocated ProcArray (kMaxBackends entries).
@@ -49,10 +49,8 @@ void InitializeProcArray() {
     // found=true if the name still exists, or allocates fresh with found=false).
     // This mirrors the InitializeCommitLog() defensive pattern.
     bool found = false;
-    g_procarray_xids = static_cast<TransactionId*>(
-        ShmemInitStruct("ProcArrayXids",
-                        sizeof(TransactionId) * static_cast<std::size_t>(kMaxBackends),
-                        &found));
+    g_procarray_xids = static_cast<TransactionId*>(ShmemInitStruct(
+        "ProcArrayXids", sizeof(TransactionId) * static_cast<std::size_t>(kMaxBackends), &found));
 
     if (!found && g_procarray_xids != nullptr) {
         g_procarray_count = 0;
@@ -149,14 +147,15 @@ std::vector<TransactionId> GetRunningTransactionData() {
     return result;
 }
 
-void GetRunningTransactionData(std::vector<TransactionId>& xip_out,
-                               TransactionId* xmax_out,
+void GetRunningTransactionData(std::vector<TransactionId>& xip_out, TransactionId* xmax_out,
                                TransactionId* xmin_out) {
     xip_out.clear();
 
     if (g_procarray_xids == nullptr) {
-        if (xmax_out != nullptr) *xmax_out = GetNextTransactionId() + 1;
-        if (xmin_out != nullptr) *xmin_out = kFrozenTransactionId;
+        if (xmax_out != nullptr)
+            *xmax_out = GetNextTransactionId() + 1;
+        if (xmin_out != nullptr)
+            *xmin_out = kFrozenTransactionId;
         return;
     }
 

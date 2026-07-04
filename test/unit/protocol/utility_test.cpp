@@ -290,8 +290,7 @@ TEST_F(UtilityTest, TruncateSwitchesRelfilenode) {
     class_row = cat->GetClassByName("t1");
     ASSERT_NE(class_row, nullptr);
     Oid relfilenode_after = class_row->relfilenode;
-    EXPECT_NE(relfilenode_after, relfilenode_before)
-        << "TRUNCATE must assign a new relfilenode";
+    EXPECT_NE(relfilenode_after, relfilenode_before) << "TRUNCATE must assign a new relfilenode";
     EXPECT_NE(relfilenode_after, pgcpp::catalog::kInvalidOid);
 }
 

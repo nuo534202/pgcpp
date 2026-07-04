@@ -33,14 +33,13 @@ std::string ExplainQuery(ExplainStmt* stmt, OutputSink* sink) {
         field.type_oid = 25;   // TEXTOID
         field.type_size = -1;  // variable-length
         field.type_mod = -1;
-        field.format = 0;      // text
+        field.format = 0;  // text
         sink->SendMessage(BuildRowDescription({field}));
 
         // Send the plan lines as DataRows. Until a real plan-tree dumper
         // exists, emit a placeholder line so the client sees a well-formed
         // EXPLAIN result set.
-        sink->SendMessage(BuildDataRow({"(explain output not yet implemented)"},
-                                       {false}));
+        sink->SendMessage(BuildDataRow({"(explain output not yet implemented)"}, {false}));
     }
     return "EXPLAIN";
 }

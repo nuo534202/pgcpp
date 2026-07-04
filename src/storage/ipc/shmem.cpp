@@ -7,14 +7,14 @@
 // ShmemInit() has not been called (unit-test mode).
 #include "storage/ipc/shmem.hpp"
 
+#include <sys/mman.h>
+#include <unistd.h>
+
 #include <atomic>
 #include <cstring>
 #include <map>
 #include <string>
 #include <vector>
-
-#include <sys/mman.h>
-#include <unistd.h>
 
 namespace pgcpp::storage {
 
@@ -60,8 +60,8 @@ bool ShmemInit(std::size_t total_size) {
     }
     total_size = AlignUp(total_size, static_cast<std::size_t>(page_size));
 
-    void* addr = mmap(nullptr, total_size, PROT_READ | PROT_WRITE,
-                       MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    void* addr =
+        mmap(nullptr, total_size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     if (addr == MAP_FAILED) {
         return false;
     }

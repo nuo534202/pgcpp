@@ -47,7 +47,8 @@ ResponseReader& GlobalReader() {
 // drains the mock queue (tests).
 std::string ReadPasswordMessage() {
     ResponseReader& r = GlobalReader();
-    if (r) return r();
+    if (r)
+        return r();
     return TakeMockClientResponse();
 }
 
@@ -243,8 +244,7 @@ AuthResult CheckScramAuth(OutputSink* sink, const std::string& user,
     }
 
     // Step 1: advertise the mechanism list (single mechanism).
-    SendAuthRequest(sink, AuthRequest::kScramSha256,
-                    std::string("SCRAM-SHA-256", 13) + "\0");
+    SendAuthRequest(sink, AuthRequest::kScramSha256, std::string("SCRAM-SHA-256", 13) + "\0");
 
     // Step 2: read the client-first message.
     std::string client_first_full = ReadPasswordMessage();
@@ -278,9 +278,8 @@ AuthResult CheckScramAuth(OutputSink* sink, const std::string& user,
     // Generate the server-first message.
     std::string server_nonce = RandomNonce();
     std::string combined_nonce = client_nonce + server_nonce;
-    std::string server_first = "r=" + combined_nonce + ",s=" +
-                               hash.scram_salt_b64 + ",i=" +
-                               std::to_string(hash.scram_iterations);
+    std::string server_first = "r=" + combined_nonce + ",s=" + hash.scram_salt_b64 +
+                               ",i=" + std::to_string(hash.scram_iterations);
     SendAuthRequest(sink, AuthRequest::kSaslContinue, server_first);
 
     // Step 4: read the client-final message.
@@ -317,10 +316,9 @@ AuthResult CheckScramAuth(OutputSink* sink, const std::string& user,
 
     // Reconstruct the AuthMessage:
     //   client-first-bare + "," + server-first + "," + client-final-without-proof
-    std::string client_final_without_proof =
-        "c=" + cb + ",r=" + nonce_recv;
-    std::string auth_message = client_first_bare + "," + server_first + "," +
-                               client_final_without_proof;
+    std::string client_final_without_proof = "c=" + cb + ",r=" + nonce_recv;
+    std::string auth_message =
+        client_first_bare + "," + server_first + "," + client_final_without_proof;
 
     // Recover the ClientKey from the ClientProof:
     //   ClientSignature = HMAC(StoredKey, AuthMessage)

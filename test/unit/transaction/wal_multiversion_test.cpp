@@ -10,10 +10,10 @@
 //   - Shared cache invalidation (enqueue/dispatch/handlers)
 
 #include <gtest/gtest.h>
+#include <sys/stat.h>
 
 #include <cstdio>
 #include <cstring>
-#include <sys/stat.h>
 #include <vector>
 
 #include "common/error/elog.hpp"
@@ -92,11 +92,11 @@ using pgcpp::transaction::ResetTransactionState;
 using pgcpp::transaction::ResetWal;
 using pgcpp::transaction::ResetXlogInsertState;
 using pgcpp::transaction::RmgrId;
-using pgcpp::transaction::SetWalDirectory;
-using pgcpp::transaction::ShutdownWal;
 using pgcpp::transaction::SendSharedInvalidationMessages;
+using pgcpp::transaction::SetWalDirectory;
 using pgcpp::transaction::SharedInvalCmdType;
 using pgcpp::transaction::SharedInvalidationMessage;
+using pgcpp::transaction::ShutdownWal;
 using pgcpp::transaction::SimpleLruFlush;
 using pgcpp::transaction::SimpleLruFree;
 using pgcpp::transaction::SimpleLruInit;
@@ -246,14 +246,12 @@ TEST_F(WalMultiversionTest, WalPersistsAcrossRestart) {
     // Simulate a crash: close the file, clear in-memory buffer, reload.
     ShutdownWal();
     InitializeWal();
-    EXPECT_GT(GetWalBufferSize(),
-              static_cast<std::size_t>(kSizeofXlogRecord));
+    EXPECT_GT(GetWalBufferSize(), static_cast<std::size_t>(kSizeofXlogRecord));
 
     // Replay and verify each record's payload matches what we wrote.
     std::vector<uint32_t> replayed_vals;
     RegisterRmgrRedo(kRmgrHeapId,
-                     [&](const XLogRecord&, const uint8_t* data, std::size_t len,
-                         XLogRecPtr) {
+                     [&](const XLogRecord&, const uint8_t* data, std::size_t len, XLogRecPtr) {
                          ASSERT_EQ(len, sizeof(uint32_t));
                          uint32_t v = 0;
                          std::memcpy(&v, data, sizeof(v));

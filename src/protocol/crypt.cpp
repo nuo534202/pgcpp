@@ -492,8 +492,8 @@ std::vector<uint8_t> HmacSha256(const std::vector<uint8_t>& key, const std::stri
     return std::vector<uint8_t>(digest.begin(), digest.end());
 }
 
-std::vector<uint8_t> Pbkdf2HmacSha256(const std::string& password,
-                                      const std::vector<uint8_t>& salt, int iterations) {
+std::vector<uint8_t> Pbkdf2HmacSha256(const std::string& password, const std::vector<uint8_t>& salt,
+                                      int iterations) {
     auto digest = Pbkdf2HmacSha256Raw(password, salt.data(), salt.size(), iterations);
     return std::vector<uint8_t>(digest.begin(), digest.end());
 }

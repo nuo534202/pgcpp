@@ -9,8 +9,6 @@
 // convention): error subsystem, memory context, catalog, syscache, transaction
 // state, buffer pool, storage dir, relcache.
 
-#include "access/heapam.hpp"
-
 #include <gtest/gtest.h>
 #include <unistd.h>
 
@@ -19,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include "access/heapam.hpp"
 #include "access/rel.hpp"
 #include "catalog/catalog.hpp"
 #include "catalog/pg_attribute.hpp"
@@ -36,6 +35,7 @@
 #include "transaction/xact.hpp"
 #include "types/datum.hpp"
 
+using pgcpp::access::CreateTupleDesc;
 using pgcpp::access::heap_beginscan;
 using pgcpp::access::heap_delete;
 using pgcpp::access::heap_endscan;
@@ -53,7 +53,6 @@ using pgcpp::access::RelationCreateStorage;
 using pgcpp::access::RelationOpen;
 using pgcpp::access::ResetRelcache;
 using pgcpp::access::TupleDesc;
-using pgcpp::access::CreateTupleDesc;
 using pgcpp::catalog::AttAlign;
 using pgcpp::catalog::AttStorage;
 using pgcpp::catalog::Catalog;

@@ -9,6 +9,7 @@
 #include "storage/ipc/proc.hpp"
 
 #include <unistd.h>
+
 #include <vector>
 
 #include "storage/ipc/lwlock.hpp"
@@ -99,8 +100,8 @@ void ProcGlobalInit() {
     }
 
     bool found = false;
-    g_proc_base = static_cast<PGPROC*>(
-        ShmemInitStruct("ProcPool", sizeof(PGPROC) * kMaxBackends, &found));
+    g_proc_base =
+        static_cast<PGPROC*>(ShmemInitStruct("ProcPool", sizeof(PGPROC) * kMaxBackends, &found));
 
     if (!found) {
         // Build the freelist: link all slots in order.

@@ -63,6 +63,7 @@ using pgcpp::protocol::HbaConnType;
 using pgcpp::protocol::HbaLine;
 using pgcpp::protocol::HbaMethod;
 using pgcpp::protocol::HbaMethodToString;
+using pgcpp::protocol::HmacSha256;
 using pgcpp::protocol::IsGssEnabled;
 using pgcpp::protocol::IsSameHost;
 using pgcpp::protocol::IsSameNet;
@@ -85,9 +86,6 @@ using pgcpp::protocol::MatchCidr;
 using pgcpp::protocol::MatchDatabaseOrUser;
 using pgcpp::protocol::Md5Encrypt;
 using pgcpp::protocol::Md5Hex;
-using pgcpp::protocol::HmacSha256;
-using pgcpp::protocol::Pbkdf2HmacSha256;
-using pgcpp::protocol::Sha256;
 using pgcpp::protocol::Message;
 using pgcpp::protocol::MessageReader;
 using pgcpp::protocol::MessageType;
@@ -99,6 +97,7 @@ using pgcpp::protocol::ParseIPv4;
 using pgcpp::protocol::ParsePasswordHash;
 using pgcpp::protocol::PasswordEncryptionAlgorithm;
 using pgcpp::protocol::PasswordHash;
+using pgcpp::protocol::Pbkdf2HmacSha256;
 using pgcpp::protocol::pg_GSS_recvauth;
 using pgcpp::protocol::pq_block_sigalrm;
 using pgcpp::protocol::pq_mq_attach;
@@ -129,6 +128,7 @@ using pgcpp::protocol::SelectHbaLine;
 using pgcpp::protocol::SendAuthRequest;
 using pgcpp::protocol::SetGlobalResponseReader;
 using pgcpp::protocol::SetMockClientResponse;
+using pgcpp::protocol::Sha256;
 using pgcpp::protocol::StringSink;
 using pgcpp::storage::kInvalidLargeObjectOid;
 using pgcpp::storage::kInvRdwr;
@@ -700,15 +700,13 @@ TEST(AuthTest, CheckScramAuth_FullExchange) {
         ++call_count;
         // sink.messages() = [0] SASL, [1] SASLContinue.
         const auto& continue_payload = sink.messages().at(1).payload;
-        std::string server_first(continue_payload.begin() + 4,
-                                 continue_payload.end());
+        std::string server_first(continue_payload.begin() + 4, continue_payload.end());
         auto r_pos = server_first.find("r=");
         auto s_pos = server_first.find(",s=");
-        std::string combined_nonce =
-            server_first.substr(r_pos + 2, s_pos - (r_pos + 2));
+        std::string combined_nonce = server_first.substr(r_pos + 2, s_pos - (r_pos + 2));
         std::string client_final_without_proof = "c=biws,r=" + combined_nonce;
-        std::string auth_message = client_first_bare + "," + server_first +
-                                   "," + client_final_without_proof;
+        std::string auth_message =
+            client_first_bare + "," + server_first + "," + client_final_without_proof;
         auto client_sig = HmacSha256(stored_key, auth_message);
         std::vector<uint8_t> proof(32);
         for (size_t i = 0; i < 32; ++i) {

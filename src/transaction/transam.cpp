@@ -23,12 +23,12 @@ namespace pgcpp::transaction {
 
 namespace {
 
+using pgcpp::storage::LookupNamedLock;
 using pgcpp::storage::LWLock;
 using pgcpp::storage::LWLockAcquire;
 using pgcpp::storage::LWLockId;
 using pgcpp::storage::LWLockMode;
 using pgcpp::storage::LWLockRelease;
-using pgcpp::storage::LookupNamedLock;
 using pgcpp::storage::ShmemInitStruct;
 
 // Pointer to the shm-allocated CLOG (kMaxXids entries, indexed by XID).
@@ -62,10 +62,8 @@ void InitializeCommitLog() {
     // dangling. ShmemInitStruct is idempotent (returns existing region with
     // found=true if the name still exists, or allocates fresh with found=false).
     bool found_clog = false;
-    g_clog_base = static_cast<XidStatus*>(
-        ShmemInitStruct("CommitLog",
-                        sizeof(XidStatus) * static_cast<std::size_t>(kMaxXids),
-                        &found_clog));
+    g_clog_base = static_cast<XidStatus*>(ShmemInitStruct(
+        "CommitLog", sizeof(XidStatus) * static_cast<std::size_t>(kMaxXids), &found_clog));
 
     bool found_vc = false;
     g_variable_cache = static_cast<VariableCacheData*>(
@@ -74,9 +72,12 @@ void InitializeCommitLog() {
     // Only zero/init if this is a fresh allocation (not yet initialized).
     if (!found_clog && g_clog_base != nullptr) {
         std::memset(g_clog_base, 0, sizeof(XidStatus) * static_cast<std::size_t>(kMaxXids));
-        if (kMaxXids > 0) g_clog_base[kInvalidTransactionId] = XidStatus::kCommitted;
-        if (kMaxXids > 1) g_clog_base[kBootstrapTransactionId] = XidStatus::kCommitted;
-        if (kMaxXids > 2) g_clog_base[kFrozenTransactionId] = XidStatus::kCommitted;
+        if (kMaxXids > 0)
+            g_clog_base[kInvalidTransactionId] = XidStatus::kCommitted;
+        if (kMaxXids > 1)
+            g_clog_base[kBootstrapTransactionId] = XidStatus::kCommitted;
+        if (kMaxXids > 2)
+            g_clog_base[kFrozenTransactionId] = XidStatus::kCommitted;
     }
 
     if (!found_vc && g_variable_cache != nullptr) {
@@ -206,9 +207,8 @@ TransactionId AllocateNextTransactionId() {
 TransactionId GetNextTransactionId() {
     LWLock* lock = LookupNamedLock(LWLockId::kXactGenLock);
     LWLockAcquire(lock, LWLockMode::kShared);
-    TransactionId next = (g_variable_cache != nullptr)
-                              ? g_variable_cache->nextXid
-                              : kFirstNormalTransactionId;
+    TransactionId next =
+        (g_variable_cache != nullptr) ? g_variable_cache->nextXid : kFirstNormalTransactionId;
     LWLockRelease(lock);
     return next - 1;
 }
@@ -223,8 +223,7 @@ void ResetTransactionState() {
 }
 
 std::size_t CLogShmemSize() {
-    return sizeof(XidStatus) * static_cast<std::size_t>(kMaxXids) +
-           sizeof(VariableCacheData);
+    return sizeof(XidStatus) * static_cast<std::size_t>(kMaxXids) + sizeof(VariableCacheData);
 }
 
 }  // namespace pgcpp::transaction

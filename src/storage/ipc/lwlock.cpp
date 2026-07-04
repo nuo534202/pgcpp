@@ -7,10 +7,11 @@
 // the same lock instances. A spin-then-yield strategy handles contention.
 #include "storage/ipc/lwlock.hpp"
 
+#include <sched.h>
+
 #include <algorithm>
 #include <atomic>
 #include <cstring>
-#include <sched.h>
 #include <vector>
 
 #include "storage/ipc/shmem.hpp"
@@ -74,8 +75,8 @@ bool LWLockAcquire(LWLock* lock, LWLockMode mode) {
     if (mode == LWLockMode::kExclusive) {
         // Spin until we can set the exclusive bit (state must be 0).
         uint32_t expected = 0;
-        while (!lock->state.compare_exchange_weak(expected, kExclusiveBit,
-                    std::memory_order_acquire, std::memory_order_relaxed)) {
+        while (!lock->state.compare_exchange_weak(
+            expected, kExclusiveBit, std::memory_order_acquire, std::memory_order_relaxed)) {
             expected = 0;
             sched_yield();  // give other processes a chance
         }
@@ -90,8 +91,8 @@ bool LWLockAcquire(LWLock* lock, LWLockMode mode) {
                 continue;
             }
             uint32_t new_state = old_state + 1;  // increment shared count
-            if (lock->state.compare_exchange_weak(old_state, new_state,
-                    std::memory_order_acquire, std::memory_order_relaxed)) {
+            if (lock->state.compare_exchange_weak(old_state, new_state, std::memory_order_acquire,
+                                                  std::memory_order_relaxed)) {
                 break;
             }
             // CAS failed, old_state was updated; retry.
@@ -139,8 +140,8 @@ bool LWLockConditionalAcquire(LWLock* lock, LWLockMode mode) {
 
     if (mode == LWLockMode::kExclusive) {
         uint32_t expected = 0;
-        if (lock->state.compare_exchange_strong(expected, kExclusiveBit,
-                std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (lock->state.compare_exchange_strong(expected, kExclusiveBit, std::memory_order_acquire,
+                                                std::memory_order_relaxed)) {
             HeldLocks().push_back({lock, mode, 1});
             return true;
         }
@@ -149,8 +150,8 @@ bool LWLockConditionalAcquire(LWLock* lock, LWLockMode mode) {
         uint32_t old_state = lock->state.load(std::memory_order_relaxed);
         while (!(old_state & kExclusiveBit)) {
             uint32_t new_state = old_state + 1;
-            if (lock->state.compare_exchange_weak(old_state, new_state,
-                    std::memory_order_acquire, std::memory_order_relaxed)) {
+            if (lock->state.compare_exchange_weak(old_state, new_state, std::memory_order_acquire,
+                                                  std::memory_order_relaxed)) {
                 HeldLocks().push_back({lock, mode, 1});
                 return true;
             }

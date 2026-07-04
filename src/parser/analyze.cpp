@@ -228,8 +228,7 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
     // rather than silently ignoring the clause (which would cause unique
     // violations to error instead of being handled).
     if (stmt->on_conflict_clause != nullptr) {
-        ereport(pgcpp::error::LogLevel::kError,
-                "ON CONFLICT is not supported");
+        ereport(pgcpp::error::LogLevel::kError, "ON CONFLICT is not supported");
     }
 
     // Process the WITH clause first, so CTEs are visible to the source query.
@@ -256,8 +255,7 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
                 // is not yet supported — fail explicitly rather than silently
                 // dropping all rows except the first (data loss).
                 if (sel->values_lists.size() > 1) {
-                    ereport(pgcpp::error::LogLevel::kError,
-                            "multi-row INSERT is not supported");
+                    ereport(pgcpp::error::LogLevel::kError, "multi-row INSERT is not supported");
                 }
                 // INSERT ... VALUES — convert the first row's expressions
                 // into ResTarget nodes and transform them into a target list.
@@ -337,8 +335,7 @@ static Query* transformUpdateStmt(ParseState* pstate, UpdateStmt* stmt) {
     // F-4g: RETURNING on UPDATE is not implemented — the executor silently
     // returns zero rows. Fail explicitly rather than producing wrong results.
     if (!stmt->returning_list.empty()) {
-        ereport(pgcpp::error::LogLevel::kError,
-                "RETURNING is not supported on UPDATE");
+        ereport(pgcpp::error::LogLevel::kError, "RETURNING is not supported on UPDATE");
     }
 
     // Process the WITH clause first, so CTEs are visible to SET/FROM/WHERE.
@@ -407,8 +404,7 @@ static Query* transformDeleteStmt(ParseState* pstate, DeleteStmt* stmt) {
     // F-4g: RETURNING on DELETE is not implemented — the executor silently
     // returns zero rows. Fail explicitly rather than producing wrong results.
     if (!stmt->returning_list.empty()) {
-        ereport(pgcpp::error::LogLevel::kError,
-                "RETURNING is not supported on DELETE");
+        ereport(pgcpp::error::LogLevel::kError, "RETURNING is not supported on DELETE");
     }
 
     // Process the WITH clause first, so CTEs are visible to USING/WHERE.

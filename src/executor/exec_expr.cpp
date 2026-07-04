@@ -611,8 +611,7 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
         default:
             // F-4e: Unsupported expression type — fail explicitly rather
             // than silently returning NULL (which produces wrong results).
-            ereport(pgcpp::error::LogLevel::kError,
-                    "unsupported expression type in ExecEvalExpr");
+            ereport(pgcpp::error::LogLevel::kError, "unsupported expression type in ExecEvalExpr");
             *isNull = true;
             return 0;
     }

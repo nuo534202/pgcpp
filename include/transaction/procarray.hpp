@@ -50,8 +50,7 @@ std::vector<TransactionId> GetRunningTransactionData();
 // `xmax_out` to nextXid and `xmin_out` to oldestXmin. More efficient than
 // the vector overload when the caller already has a buffer.
 // Acquires kProcArrayLock shared.
-void GetRunningTransactionData(std::vector<TransactionId>& xip_out,
-                               TransactionId* xmax_out,
+void GetRunningTransactionData(std::vector<TransactionId>& xip_out, TransactionId* xmax_out,
                                TransactionId* xmin_out);
 
 // CountRunningXacts — number of running transactions.

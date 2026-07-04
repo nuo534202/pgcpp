@@ -424,12 +424,10 @@ void InitBufferPool(int n_buffers) {
     bool found_blocks = false;
     auto* descriptors = static_cast<BufferDesc*>(
         ShmemInitStruct("BufferPoolDescriptors",
-                        sizeof(BufferDesc) * static_cast<std::size_t>(n_buffers),
-                        &found_desc));
-    auto* blocks_base = static_cast<char*>(
-        ShmemInitStruct("BufferPoolBlocks",
-                        static_cast<std::size_t>(kBlckSz) * static_cast<std::size_t>(n_buffers),
-                        &found_blocks));
+                        sizeof(BufferDesc) * static_cast<std::size_t>(n_buffers), &found_desc));
+    auto* blocks_base = static_cast<char*>(ShmemInitStruct(
+        "BufferPoolBlocks", static_cast<std::size_t>(kBlckSz) * static_cast<std::size_t>(n_buffers),
+        &found_blocks));
 
     // The mapping lock is a named LWLock allocated in shm (or test-mode
     // fallback). LookupNamedLock initializes the array on first call.
@@ -492,10 +490,8 @@ Buffer ReleaseAndReadBuffer(Buffer buffer, SmgrRelation reln, ForkNumber forknum
     // blocknum), reuse it without releasing.
     LWLockAcquire(pool->mapping_lock(), LWLockMode::kShared);
     BufferDesc* desc = pool->GetBufferDesc(buffer);
-    bool reuse = (desc != nullptr && desc->IsTagged() &&
-                  desc->tag.rnode == reln->smgr_rnode.node &&
-                  desc->tag.fork_num == forknum &&
-                  desc->tag.block_num == blocknum);
+    bool reuse = (desc != nullptr && desc->IsTagged() && desc->tag.rnode == reln->smgr_rnode.node &&
+                  desc->tag.fork_num == forknum && desc->tag.block_num == blocknum);
     LWLockRelease(pool->mapping_lock());
 
     if (reuse) {

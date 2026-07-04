@@ -8,7 +8,7 @@
 // must return a value > the deleting XID for HeapTupleIsSurelyDead to return
 // true. This requires the current transaction to be registered in ProcArray.
 
-#include "access/heapam.hpp"
+#include "commands/vacuum.hpp"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -18,12 +18,12 @@
 #include <string>
 #include <vector>
 
+#include "access/heapam.hpp"
 #include "access/rel.hpp"
 #include "catalog/catalog.hpp"
 #include "catalog/pg_attribute.hpp"
 #include "catalog/pg_class.hpp"
 #include "catalog/syscache.hpp"
-#include "commands/vacuum.hpp"
 #include "common/containers/node.hpp"
 #include "common/error/elog.hpp"
 #include "common/memory/alloc_set.hpp"

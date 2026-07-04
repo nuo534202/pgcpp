@@ -96,9 +96,9 @@ void EreportImpl(LogLevel elevel, const char* filename, const char* funcname, in
 // try/catch blocks. Stack unwinding automatically calls destructors for
 // std::string/std::vector locals, fixing the longjmp UB/leak issue.
 #define PG_TRY() try {
-
-#define PG_CATCH() } catch (const pgcpp::error::PgException&) {
-
+#define PG_CATCH() \
+    }              \
+    catch (const pgcpp::error::PgException&) {
 #define PG_END_TRY() }
 
 // PG_RE_THROW — re-throw the current error (use inside PG_CATCH).

@@ -99,8 +99,7 @@ std::string ExecVacuum(VacuumStmt* stmt) {
     BlockNumber nblocks = RelationGetNumberOfBlocks(rel);
 
     for (BlockNumber blk = 0; blk < nblocks; ++blk) {
-        Buffer buf = ReadBuffer(rel->rd_smgr, ForkNumber::kMain, blk,
-                                ReadBufferMode::kNormal);
+        Buffer buf = ReadBuffer(rel->rd_smgr, ForkNumber::kMain, blk, ReadBufferMode::kNormal);
         Page page = BufferGetPage(buf);
 
         // Mark dead line pointers as LP_DEAD.
@@ -110,8 +109,7 @@ std::string ExecVacuum(VacuumStmt* stmt) {
             auto* item_id = PageGetItemId(page, off);
             if (!ItemIdIsNormal(item_id))
                 continue;
-            auto* header = reinterpret_cast<HeapTupleHeaderData*>(
-                PageGetItem(page, item_id));
+            auto* header = reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
             if (HeapTupleIsSurelyDead(header, snap)) {
                 item_id->li_flags = kLPDead;
                 has_dead = true;

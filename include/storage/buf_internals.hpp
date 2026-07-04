@@ -119,8 +119,8 @@ public:
     // shm-allocated arrays. If `init` is true, zero the blocks and
     // initialize descriptors/free list (postmaster first init). If false,
     // the pool is being attached to existing shm (fork'd child).
-    BufferPool(int n_buffers, BufferDesc* descriptors, char* blocks_base,
-               LWLock* mapping_lock, bool init);
+    BufferPool(int n_buffers, BufferDesc* descriptors, char* blocks_base, LWLock* mapping_lock,
+               bool init);
     ~BufferPool();
 
     // Non-copyable, non-movable (references shm-allocated arrays).

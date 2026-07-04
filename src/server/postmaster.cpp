@@ -89,9 +89,9 @@ using pgcpp::storage::LWLock;
 using pgcpp::storage::ProcGlobalInit;
 using pgcpp::storage::ResetHeldLWLocks;
 using pgcpp::storage::SetStorageBaseDir;
-using pgcpp::storage::ShutdownBufferPool;
 using pgcpp::storage::ShmemAttach;
 using pgcpp::storage::ShmemInit;
+using pgcpp::storage::ShutdownBufferPool;
 using pgcpp::storage::smgrcloseall;
 using pgcpp::transaction::CLogShmemSize;
 using pgcpp::transaction::InitializeCommitLog;
@@ -269,12 +269,14 @@ ServerGlobalState g_state;
 // Load a text file into a string. Returns empty string on failure.
 std::string ReadTextFile(const std::string& path) {
     int fd = open(path.c_str(), O_RDONLY);
-    if (fd < 0) return "";
+    if (fd < 0)
+        return "";
     std::string out;
     char buf[4096];
     while (true) {
         ssize_t n = read(fd, buf, sizeof(buf));
-        if (n <= 0) break;
+        if (n <= 0)
+            break;
         out.append(buf, static_cast<size_t>(n));
     }
     close(fd);
@@ -286,7 +288,8 @@ std::string ReadTextFile(const std::string& path) {
 // auth path treats as "trust" (preserving the pre-B-2 default).
 void LoadHbaConfig(const std::string& data_dir) {
     std::string text = ReadTextFile(data_dir + "/pg_hba.conf");
-    if (text.empty()) return;
+    if (text.empty())
+        return;
     g_state.hba_config = pgcpp::protocol::ParseHbaConfig(text);
 }
 
@@ -296,13 +299,16 @@ void LoadHbaConfig(const std::string& data_dir) {
 // stored passwords → only trust/reject methods work).
 void LoadPasswordStore(const std::string& data_dir) {
     std::string text = ReadTextFile(data_dir + "/global/pg_authid.tsv");
-    if (text.empty()) return;
+    if (text.empty())
+        return;
     std::istringstream iss(text);
     std::string line;
     while (std::getline(iss, line)) {
-        if (line.empty() || line[0] == '#') continue;
+        if (line.empty() || line[0] == '#')
+            continue;
         auto tab = line.find('\t');
-        if (tab == std::string::npos) continue;
+        if (tab == std::string::npos)
+            continue;
         std::string user = line.substr(0, tab);
         std::string hash = line.substr(tab + 1);
         g_state.password_store[user] = hash;
@@ -320,12 +326,10 @@ void InitializeServerSubsystems(const std::string& data_dir) {
     // Shared memory: allocate a single mmap'd segment (inherited across
     // fork) large enough for the BufferPool, PGPROC pool, ProcArray xids,
     // CLOG, VariableCache, LWLock array, plus 1MB of slack.
-    std::size_t shm_size = BufferPoolShmemSize(4096)
-                         + pgcpp::storage::ProcArrayShmemSize()  // PGPROC pool
-                         + ProcArrayShmemSize()                  // ProcArray xids
-                         + CLogShmemSize()
-                         + sizeof(LWLock) * kNumNamedLWLocks
-                         + (1 << 20);  // 1MB slack
+    std::size_t shm_size =
+        BufferPoolShmemSize(4096) + pgcpp::storage::ProcArrayShmemSize()    // PGPROC pool
+        + ProcArrayShmemSize()                                              // ProcArray xids
+        + CLogShmemSize() + sizeof(LWLock) * kNumNamedLWLocks + (1 << 20);  // 1MB slack
     ShmemInit(shm_size);
     InitializeAllLWLocks();
     ProcGlobalInit();
@@ -553,17 +557,19 @@ void BackendMain(int client_fd) {
     SetGlobalResponseReader([client_fd]() -> std::string {
         char type;
         std::string payload;
-        if (!ReadMessage(client_fd, &type, payload)) return "";
-        if (type != 'p') return "";  // protocol error
+        if (!ReadMessage(client_fd, &type, payload))
+            return "";
+        if (type != 'p')
+            return "";  // protocol error
         // SASLInitialResponse starts with the mechanism name + NUL.
         if (payload.size() > 14 && payload.substr(0, 14) == "SCRAM-SHA-256" &&
             payload[14] == '\0') {
-            if (payload.size() < 19) return "";
-            int32_t len = static_cast<int32_t>(
-                (static_cast<uint8_t>(payload[15]) << 24) |
-                (static_cast<uint8_t>(payload[16]) << 16) |
-                (static_cast<uint8_t>(payload[17]) << 8) |
-                static_cast<uint8_t>(payload[18]));
+            if (payload.size() < 19)
+                return "";
+            int32_t len = static_cast<int32_t>((static_cast<uint8_t>(payload[15]) << 24) |
+                                               (static_cast<uint8_t>(payload[16]) << 16) |
+                                               (static_cast<uint8_t>(payload[17]) << 8) |
+                                               static_cast<uint8_t>(payload[18]));
             if (len < 0 || static_cast<size_t>(len) > payload.size() - 19)
                 return "";
             return payload.substr(19, static_cast<size_t>(len));
@@ -606,15 +612,13 @@ void BackendMain(int client_fd) {
         std::string msg;
         switch (auth_result) {
             case AuthResult::kWrongPassword:
-                msg = "password authentication failed for user \"" +
-                      startup.user + "\"";
+                msg = "password authentication failed for user \"" + startup.user + "\"";
                 break;
             case AuthResult::kNoSuchUser:
                 msg = "role \"" + startup.user + "\" does not exist";
                 break;
             case AuthResult::kRejected:
-                msg = "pg_hba.conf rejects connection for user \"" +
-                      startup.user + "\"";
+                msg = "pg_hba.conf rejects connection for user \"" + startup.user + "\"";
                 break;
             case AuthResult::kMethodUnsupported:
                 msg = "authentication method not supported";

@@ -9,7 +9,6 @@
 // follow fork() cleanly and report false leaks.
 
 #include <gtest/gtest.h>
-
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -26,12 +25,12 @@ using pgcpp::storage::ShmemInitStruct;
 
 // Detect sanitizers (ASan / TSan) to skip fork-based tests.
 #if defined(__has_feature)
-#  if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer)
-#    define PGCPP_HAS_SANITIZER 1
-#  endif
+#if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer)
+#define PGCPP_HAS_SANITIZER 1
+#endif
 #endif
 #if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__)
-#  define PGCPP_HAS_SANITIZER 1
+#define PGCPP_HAS_SANITIZER 1
 #endif
 
 namespace {
@@ -47,9 +46,7 @@ protected:
         // Defensive: ensure no stale segment from a previous test.
         ShmemDetach();
     }
-    void TearDown() override {
-        ShmemDetach();
-    }
+    void TearDown() override { ShmemDetach(); }
 };
 
 // ShmemInit creates an active shared-memory segment.
@@ -88,8 +85,7 @@ TEST_F(ConcurrencyTest, ShmemVisibleAcrossFork) {
 
     // Allocate a region and write a sentinel.
     bool found = false;
-    uint8_t* region = static_cast<uint8_t*>(
-        ShmemInitStruct(kTestRegion, kRegionSize, &found));
+    uint8_t* region = static_cast<uint8_t*>(ShmemInitStruct(kTestRegion, kRegionSize, &found));
     ASSERT_NE(region, nullptr);
     ASSERT_FALSE(found);
     region[0] = kSentinel;
@@ -103,8 +99,8 @@ TEST_F(ConcurrencyTest, ShmemVisibleAcrossFork) {
             _exit(2);
         }
         bool child_found = false;
-        uint8_t* child_region = static_cast<uint8_t*>(
-            ShmemInitStruct(kTestRegion, kRegionSize, &child_found));
+        uint8_t* child_region =
+            static_cast<uint8_t*>(ShmemInitStruct(kTestRegion, kRegionSize, &child_found));
         if (child_region == nullptr) {
             _exit(3);
         }

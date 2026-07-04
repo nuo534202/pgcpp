@@ -37,8 +37,8 @@ using pgcpp::catalog::AttStorage;
 using pgcpp::catalog::Catalog;
 using pgcpp::catalog::FormData_pg_attribute;
 using pgcpp::catalog::FormData_pg_class;
-using pgcpp::catalog::GetCatalog;
 using pgcpp::catalog::get_typalign;
+using pgcpp::catalog::GetCatalog;
 using pgcpp::catalog::Oid;
 using pgcpp::catalog::RelKind;
 using pgcpp::catalog::RelPersistence;
@@ -284,8 +284,7 @@ std::string AlterTable(AlterTableStmt* stmt) {
             default:
                 // F-4f: Unsupported ALTER TABLE subcommands — fail
                 // explicitly rather than silently succeeding.
-                ereport(pgcpp::error::LogLevel::kError,
-                        "ALTER TABLE subcommand is not supported");
+                ereport(pgcpp::error::LogLevel::kError, "ALTER TABLE subcommand is not supported");
                 break;
         }
     }
