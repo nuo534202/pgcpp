@@ -142,4 +142,111 @@ const std::vector<uint8_t>& GetWalBuffer();
 // crash. If no directory is configured (test mode), this is a no-op.
 void XLogFlush(XLogRecPtr upto);
 
+// ===========================================================================
+// WAL Segment File Support (Step 2)
+//
+// PostgreSQL stores WAL in pg_wal/ as a series of segment files, each named
+// "<TLI:8><LogId:8><SegNo:8>" (24 hex chars), e.g. "000000010000000000000001".
+// The LogId is segno / 256 and the trailing field is segno % 256 (for the
+// default 16MB segment size, 256 segments per XLogId).
+//
+// pgcpp keeps the legacy single-file `wal.log` path as default. The segment
+// file API below is provided as a standalone utility; integration into
+// XLogWriteRaw is gated by the PGCPP_USE_WAL_SEGMENTS compile macro.
+// ===========================================================================
+
+// TimeLineId — identifies a timeline in the WAL stream (1 = initial timeline).
+using TimeLineId = uint32_t;
+
+// Default timeline ID for a freshly initialized cluster.
+constexpr TimeLineId kDefaultTimelineId = 1;
+
+// Number of WAL segments per XLogId (the middle 8 hex digits of the filename).
+// For 16MB segments: 0x100000000 / 16MB = 256.
+constexpr uint32_t kXLogSegmentsPerXLogId = 0x100000000u / kWalSegmentSize;
+
+// Format a segment file name: "%08X%08X%08X" (TLI, LogId, SegNo-in-Id).
+// Example: XLogFileName(1, 1) -> "000000010000000000000001"
+std::string XLogFileName(TimeLineId tli, XLogSegNo segno);
+
+// Convert (segno, offset) to an LSN. segno is 0-based: segno 0 covers
+// LSN [0, kWalSegmentSize). offset is the byte position within the segment.
+XLogRecPtr XLogSegNoOffsetToRecPtr(XLogSegNo segno, uint32_t offset);
+
+// Convert an LSN to its segment number (0-based).
+XLogSegNo RecPtrToXLogSegNo(XLogRecPtr lsn);
+
+// Convert an LSN to the byte offset within its segment.
+uint32_t RecPtrToSegmentOffset(XLogRecPtr lsn);
+
+// Initialize a new WAL segment file at `path`. Creates the file with
+// kWalSegmentSize bytes of zeros (pre-allocated). Returns true on success,
+// false on I/O error.
+bool XLogFileInit(const std::string& path);
+
+// Open a WAL segment file by (tli, segno) under directory `dir`.
+// The file path is "<dir>/XLogFileName(tli, segno)". Returns the fd or -1
+// on error. `flags` and `mode` are passed to open(2).
+int XLogFileOpen(const std::string& dir, TimeLineId tli, XLogSegNo segno,
+                 int flags, int mode);
+
+// Install (create if missing) a WAL segment file in `<dir>` with the standard
+// segment name. If the file already exists, this is a no-op. Returns true
+// if the file exists (created or pre-existing) on success.
+bool InstallXLogFileSegment(const std::string& dir, TimeLineId tli,
+                            XLogSegNo segno);
+
+// Copy a WAL segment file from `src` to `dst` (for archive/restore).
+// Returns true on success.
+bool XLogFileCopy(const std::string& dst, const std::string& src);
+
+// WalSegmentWriter — writes a logical WAL byte stream into segment files,
+// switching to the next segment when the current one is full.
+//
+// Usage:
+//   WalSegmentWriter writer("/tmp/pg_wal", kDefaultTimelineId, seg_size);
+//   writer.Write(lsn, data, len);   // auto-switches segments
+//   writer.Flush();                 // fsync current segment
+//   writer.Close();                 // close current fd
+//
+// The writer does NOT buffer writes — each Write() call issues write(2)
+// directly to the current segment file at the correct offset. LSN to
+// (segno, offset) mapping uses RecPtrToXLogSegNo / RecPtrToSegmentOffset.
+class WalSegmentWriter {
+public:
+    // Construct a writer for directory `dir` and timeline `tli`.
+    // `segment_size` defaults to kWalSegmentSize; tests may pass a smaller
+    // value to force segment switching without writing 16MB.
+    WalSegmentWriter(std::string dir, TimeLineId tli,
+                     uint32_t segment_size = kWalSegmentSize);
+    ~WalSegmentWriter();
+
+    WalSegmentWriter(const WalSegmentWriter&) = delete;
+    WalSegmentWriter& operator=(const WalSegmentWriter&) = delete;
+
+    // Write `len` bytes starting at LSN `lsn`. If the write spans a segment
+    // boundary, automatically closes the current segment and opens the next
+    // one. Returns the number of bytes written (== len on success).
+    std::size_t Write(XLogRecPtr lsn, const void* data, std::size_t len);
+
+    // fsync the currently open segment file (if any).
+    void Flush();
+
+    // Close the currently open segment file (if any). Called automatically
+    // by the destructor.
+    void Close();
+
+    // Get the segment number of the currently open file (0 if none open).
+    XLogSegNo GetCurrentSegNo() const { return current_segno_; }
+
+private:
+    bool EnsureSegmentOpen(XLogSegNo segno);
+
+    std::string dir_;
+    TimeLineId tli_;
+    uint32_t segment_size_;
+    int fd_ = -1;
+    XLogSegNo current_segno_ = 0;
+};
+
 }  // namespace pgcpp::transaction

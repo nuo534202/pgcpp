@@ -4,7 +4,8 @@
 //
 // XLogReaderState iterates over WAL records starting from a given LSN,
 // decoding each XLogRecord header + payload. Used by crash recovery to
-// replay records one at a time.
+// replay records one at a time. If a record carries backup blocks (FPW),
+// they are parsed into backup_blocks; main_data holds the remaining payload.
 #pragma once
 
 #include <cstdint>
@@ -12,6 +13,7 @@
 
 #include "transaction/transam.hpp"
 #include "transaction/xlog.hpp"
+#include "transaction/xloginsert.hpp"  // for BackupBlock, kXlrBkpBlockImage
 
 namespace pgcpp::transaction {
 
@@ -23,15 +25,19 @@ namespace pgcpp::transaction {
 //   while (XLogReadRecord(reader, &lsn)) {
 //       XLogRecord* rec = &reader->record;
 //       // inspect rec->xl_rmid, rec->xl_info, reader->main_data, ...
+//       // if (rec->xl_info & kXlrBkpBlockImage) { reader->backup_blocks; ... }
 //   }
 //   XLogReaderFree(reader);
 struct XLogReaderState {
     XLogRecPtr current_lsn = kInvalidXLogRecPtr;  // LSN of current record
     XLogRecPtr next_lsn = kInvalidXLogRecPtr;     // LSN where to read next
     XLogRecord record;                            // decoded header
-    std::vector<uint8_t> main_data;               // record payload
+    std::vector<uint8_t> main_data;               // record payload (excl. backup blocks)
+    std::vector<BackupBlock> backup_blocks;       // parsed FPW backup blocks
 
-    bool end_of_wal = false;  // true when we've reached the end of WAL
+    bool end_of_wal = false;      // true when we've reached the end of WAL
+    bool crc_mismatch = false;    // true if the last record failed CRC check
+    XLogRecPtr bad_lsn = kInvalidXLogRecPtr;  // LSN of the corrupt record
 };
 
 // XLogReaderAlloc — allocate a new reader state (in the current memory context).
