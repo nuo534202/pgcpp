@@ -73,7 +73,8 @@ std::string ControlFilePath() {
 
 void WriteControlFile() {
     std::string path = ControlFilePath();
-    if (path.empty()) return;
+    if (path.empty())
+        return;
 
     // Create directory if needed.
     mkdir(OffsetsCtl()->disk_dir.c_str(), 0700);
@@ -83,12 +84,14 @@ void WriteControlFile() {
     ctrl.next_offset = NextMemberOffset();
 
     int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    if (fd < 0) return;
+    if (fd < 0)
+        return;
     std::size_t written = 0;
     const uint8_t* p = reinterpret_cast<const uint8_t*>(&ctrl);
     while (written < sizeof(ctrl)) {
         ssize_t n = write(fd, p + written, sizeof(ctrl) - written);
-        if (n <= 0) break;
+        if (n <= 0)
+            break;
         written += static_cast<std::size_t>(n);
     }
     fsync(fd);
@@ -97,17 +100,20 @@ void WriteControlFile() {
 
 void ReadControlFile() {
     std::string path = ControlFilePath();
-    if (path.empty()) return;
+    if (path.empty())
+        return;
 
     int fd = open(path.c_str(), O_RDONLY);
-    if (fd < 0) return;  // fresh initdb: no control file yet
+    if (fd < 0)
+        return;  // fresh initdb: no control file yet
 
     MultiXactControlFile ctrl;
     std::size_t got = 0;
     uint8_t* p = reinterpret_cast<uint8_t*>(&ctrl);
     while (got < sizeof(ctrl)) {
         ssize_t n = read(fd, p + got, sizeof(ctrl) - got);
-        if (n <= 0) break;
+        if (n <= 0)
+            break;
         got += static_cast<std::size_t>(n);
     }
     close(fd);
@@ -122,7 +128,8 @@ void ReadControlFile() {
 
 // Read the offset stored for `multi`.
 MultiXactOffset ReadOffset(MultiXactId multi) {
-    if (OffsetsCtl() == nullptr) return 0;
+    if (OffsetsCtl() == nullptr)
+        return 0;
     int pageno = static_cast<int>(multi / kMultiXactOffsetsPerPage);
     int entry = static_cast<int>(multi % kMultiXactOffsetsPerPage);
     int offset = entry * static_cast<int>(sizeof(MultiXactOffset));
@@ -133,7 +140,8 @@ MultiXactOffset ReadOffset(MultiXactId multi) {
 
 // Write the offset for `multi`.
 void WriteOffset(MultiXactId multi, MultiXactOffset off) {
-    if (OffsetsCtl() == nullptr) return;
+    if (OffsetsCtl() == nullptr)
+        return;
     int pageno = static_cast<int>(multi / kMultiXactOffsetsPerPage);
     int entry = static_cast<int>(multi % kMultiXactOffsetsPerPage);
     int offset = entry * static_cast<int>(sizeof(MultiXactOffset));
@@ -147,7 +155,8 @@ void WriteOffset(MultiXactId multi, MultiXactOffset off) {
 // A member entry occupies kMultiXactMemberStride bytes (xid 4 + status 1 + pad 3).
 
 void WriteMember(MultiXactOffset member_byte_off, const MultiXactMember& m) {
-    if (MembersCtl() == nullptr) return;
+    if (MembersCtl() == nullptr)
+        return;
     int pageno = static_cast<int>(member_byte_off / kSlruPageSize);
     int offset = static_cast<int>(member_byte_off % kSlruPageSize);
     uint8_t buf[kMultiXactMemberStride] = {0};
@@ -158,7 +167,8 @@ void WriteMember(MultiXactOffset member_byte_off, const MultiXactMember& m) {
 
 MultiXactMember ReadMember(MultiXactOffset member_byte_off) {
     MultiXactMember m;
-    if (MembersCtl() == nullptr) return m;
+    if (MembersCtl() == nullptr)
+        return m;
     int pageno = static_cast<int>(member_byte_off / kSlruPageSize);
     int offset = static_cast<int>(member_byte_off % kSlruPageSize);
     uint8_t buf[kMultiXactMemberStride] = {0};
@@ -170,8 +180,7 @@ MultiXactMember ReadMember(MultiXactOffset member_byte_off) {
 
 }  // namespace
 
-void InitializeMultiXact(const std::string& offsets_dir,
-                         const std::string& members_dir) {
+void InitializeMultiXact(const std::string& offsets_dir, const std::string& members_dir) {
     if (OffsetsCtl() != nullptr) {
         SimpleLruFree(OffsetsCtl());
     }

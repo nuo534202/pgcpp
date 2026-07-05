@@ -159,7 +159,8 @@ PGPROC* AddFakeBackend(TransactionId xid) {
 
 // Test helper: deregister a fake backend and return its PGPROC slot.
 void RemoveFakeBackend(PGPROC* p) {
-    if (p == nullptr) return;
+    if (p == nullptr)
+        return;
     PGPROC* old_proc = GetMyProc();
     SetMyProc(p);
     ProcKill();

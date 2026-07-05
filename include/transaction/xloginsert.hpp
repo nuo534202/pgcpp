@@ -26,8 +26,8 @@
 namespace pgcpp::transaction {
 
 // XLogRegisterFlags — flag bits for the current record (PG's XLR flags).
-constexpr uint8_t kXlrRelMgrInfo = 0x01;        // RMGR-specific info present
-constexpr uint8_t kXlrBkpBlockImage = 0x04;     // backup block images present
+constexpr uint8_t kXlrRelMgrInfo = 0x01;     // RMGR-specific info present
+constexpr uint8_t kXlrBkpBlockImage = 0x04;  // backup block images present
 
 // RegisteredBlock — a buffer (page) registered for the current record.
 // If is_fpw is true, the full page image is included in the WAL record
@@ -60,8 +60,7 @@ void XLogRegisterData(const void* data, std::size_t len);
 // is included in the WAL record as a backup block. `block_id` identifies
 // the buffer within the record (0-based). May be called multiple times
 // between XLogBeginInsert and XLogInsert for different block_ids.
-void XLogRegisterBuffer(uint8_t block_id, const void* page_data,
-                        std::size_t page_len, bool is_fpw);
+void XLogRegisterBuffer(uint8_t block_id, const void* page_data, std::size_t page_len, bool is_fpw);
 
 // XLogSetRecordFlags — set additional flag bits for the current record.
 void XLogSetRecordFlags(uint8_t flags);

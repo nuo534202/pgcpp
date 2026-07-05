@@ -12,13 +12,13 @@ namespace pgcpp::catalog {
 // Each row describes one tablespace (a named storage location).
 
 struct FormData_pg_tablespace {
-    Oid oid = kInvalidOid;            // tablespace OID
-    std::string spcname;              // tablespace name
-    Oid spcowner = kInvalidOid;       // owner user OID
-    bool spcacl = false;              // has ACL (placeholder)
-    int32_t spcmaxsize = -1;          // maximum size in blocks (-1 = unlimited)
-    std::string spclocation;          // on-disk location (placeholder)
-    std::string spcoptions;           // options (placeholder; comma-separated)
+    Oid oid = kInvalidOid;       // tablespace OID
+    std::string spcname;         // tablespace name
+    Oid spcowner = kInvalidOid;  // owner user OID
+    bool spcacl = false;         // has ACL (placeholder)
+    int32_t spcmaxsize = -1;     // maximum size in blocks (-1 = unlimited)
+    std::string spclocation;     // on-disk location (placeholder)
+    std::string spcoptions;      // options (placeholder; comma-separated)
 };
 
 using Form_pg_tablespace = FormData_pg_tablespace*;

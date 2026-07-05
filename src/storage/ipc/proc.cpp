@@ -128,8 +128,8 @@ void ProcGlobalInit() {
         static_cast<PGPROC*>(ShmemInitStruct("ProcPool", sizeof(PGPROC) * kMaxBackends, &found));
 
     bool pgxact_found = false;
-    g_pgxact_base =
-        static_cast<PGXACT*>(ShmemInitStruct("PgXactArray", sizeof(PGXACT) * kMaxBackends, &pgxact_found));
+    g_pgxact_base = static_cast<PGXACT*>(
+        ShmemInitStruct("PgXactArray", sizeof(PGXACT) * kMaxBackends, &pgxact_found));
 
     if (!found) {
         // Build the freelist: link all slots in order, assign pgprocno.

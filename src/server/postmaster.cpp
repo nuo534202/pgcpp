@@ -380,8 +380,7 @@ void InitializeServerSubsystems(const std::string& data_dir) {
     SetClogDirectory(data_dir + "/pg_xact");
     LoadClogFiles();
     InitializeCommitTs(data_dir + "/pg_commit_ts");
-    InitializeMultiXact(data_dir + "/pg_multixact/offsets",
-                        data_dir + "/pg_multixact/members");
+    InitializeMultiXact(data_dir + "/pg_multixact/offsets", data_dir + "/pg_multixact/members");
 
     // Storage.
     SetStorageBaseDir(data_dir);

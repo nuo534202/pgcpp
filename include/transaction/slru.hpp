@@ -43,8 +43,8 @@ struct SlruPage {
 
 // SlruCtl — control block for an SLRU instance (e.g., "clog", "commit_ts").
 struct SlruCtl {
-    std::string name;             // for diagnostics
-    std::size_t capacity = 16;    // max pages in cache
+    std::string name;           // for diagnostics
+    std::size_t capacity = 16;  // max pages in cache
 
     // Disk persistence: if disk_dir is non-empty, pages are loaded from and
     // flushed to <disk_dir>/<hex_pageno>. Empty means in-memory only.
@@ -64,7 +64,7 @@ struct SlruCtl {
 // SimpleLruInit — create an SLRU with the given name and capacity.
 // If disk_dir is non-empty, pages are persisted to that directory.
 SlruCtl* SimpleLruInit(const std::string& name, std::size_t capacity = 16,
-                        const std::string& disk_dir = "");
+                       const std::string& disk_dir = "");
 
 // SimpleLruRead — read `len` bytes at the given page offset. If the page
 // is not in cache, it is loaded from disk (or zero-initialized if the

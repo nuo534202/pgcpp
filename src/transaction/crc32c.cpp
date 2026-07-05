@@ -47,8 +47,7 @@ struct Crc32CTable {
 constexpr Crc32CTable kCrc32CTable;
 
 // Software fallback: process one byte at a time using the lookup table.
-uint32_t Crc32CUpdateSoftware(uint32_t crc, const uint8_t* data,
-                              std::size_t len) {
+uint32_t Crc32CUpdateSoftware(uint32_t crc, const uint8_t* data, std::size_t len) {
     for (std::size_t i = 0; i < len; i++) {
         crc = kCrc32CTable.entries[(crc ^ data[i]) & 0xFF] ^ (crc >> 8);
     }
@@ -61,16 +60,14 @@ uint32_t Crc32CUpdateSoftware(uint32_t crc, const uint8_t* data,
 // 4-byte chunks, and __builtin_ia32_crc32qi for trailing bytes.
 // The target("sse4.2") attribute enables SSE4.2 codegen for this function
 // only, so the rest of the file compiles without -msse4.2.
-__attribute__((target("sse4.2")))
-uint32_t Crc32CUpdateSse42(uint32_t crc, const uint8_t* data,
-                           std::size_t len) {
+__attribute__((target("sse4.2"))) uint32_t Crc32CUpdateSse42(uint32_t crc, const uint8_t* data,
+                                                             std::size_t len) {
     // Process 8-byte chunks.
     std::size_t i = 0;
     while (i + 8 <= len) {
         uint64_t chunk;
         std::memcpy(&chunk, data + i, 8);
-        crc = static_cast<uint32_t>(
-            __builtin_ia32_crc32di(static_cast<uint64_t>(crc), chunk));
+        crc = static_cast<uint32_t>(__builtin_ia32_crc32di(static_cast<uint64_t>(crc), chunk));
         i += 8;
     }
     // Process 4-byte chunk if present.

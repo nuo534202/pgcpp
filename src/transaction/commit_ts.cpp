@@ -56,8 +56,8 @@ void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts) {
         return;  // not initialized (test mode without InitializeCommitTs)
     }
     int pageno = static_cast<int>(xid / kCommitTsEntriesPerPage);
-    int offset = static_cast<int>(xid % kCommitTsEntriesPerPage) *
-                 static_cast<int>(sizeof(TimestampTz));
+    int offset =
+        static_cast<int>(xid % kCommitTsEntriesPerPage) * static_cast<int>(sizeof(TimestampTz));
     SimpleLruWrite(Ctl(), pageno, offset, &ts, sizeof(ts));
 }
 
@@ -69,8 +69,8 @@ TimestampTz TransactionIdGetCommitTs(TransactionId xid) {
         return 0;
     }
     int pageno = static_cast<int>(xid / kCommitTsEntriesPerPage);
-    int offset = static_cast<int>(xid % kCommitTsEntriesPerPage) *
-                 static_cast<int>(sizeof(TimestampTz));
+    int offset =
+        static_cast<int>(xid % kCommitTsEntriesPerPage) * static_cast<int>(sizeof(TimestampTz));
     TimestampTz ts = 0;
     SimpleLruRead(Ctl(), pageno, offset, &ts, sizeof(ts));
     return ts;

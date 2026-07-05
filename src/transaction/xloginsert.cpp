@@ -70,8 +70,8 @@ void XLogRegisterData(const void* data, std::size_t len) {
     rd.insert(rd.end(), bytes, bytes + len);
 }
 
-void XLogRegisterBuffer(uint8_t block_id, const void* page_data,
-                        std::size_t page_len, bool is_fpw) {
+void XLogRegisterBuffer(uint8_t block_id, const void* page_data, std::size_t page_len,
+                        bool is_fpw) {
     if (page_data == nullptr || page_len == 0) {
         return;
     }
@@ -150,14 +150,13 @@ XLogRecPtr XLogInsert(RmgrId rmid, uint8_t info) {
     if (has_fpw) {
         bkp_bytes.push_back(static_cast<uint8_t>(fpw_count));
         for (const auto& b : blocks) {
-            if (!b.is_fpw) continue;
+            if (!b.is_fpw)
+                continue;
             bkp_bytes.push_back(b.block_id);
             uint32_t plen = static_cast<uint32_t>(b.page_data.size());
-            bkp_bytes.insert(bkp_bytes.end(),
-                             reinterpret_cast<const uint8_t*>(&plen),
+            bkp_bytes.insert(bkp_bytes.end(), reinterpret_cast<const uint8_t*>(&plen),
                              reinterpret_cast<const uint8_t*>(&plen) + sizeof(plen));
-            bkp_bytes.insert(bkp_bytes.end(), b.page_data.begin(),
-                             b.page_data.end());
+            bkp_bytes.insert(bkp_bytes.end(), b.page_data.begin(), b.page_data.end());
         }
         crc.Update(bkp_bytes.data(), bkp_bytes.size());
     }

@@ -4,13 +4,13 @@
 // for all core node types (Var, Const, OpExpr, FuncExpr, BoolExpr,
 // TargetEntry, NullTest, BooleanTest, RangeTblEntry, Query, Value).
 #include "common/containers/outfuncs.hpp"
-#include "common/containers/readfuncs.hpp"
 
 #include <gtest/gtest.h>
 
 #include <string>
 
 #include "common/containers/node.hpp"
+#include "common/containers/readfuncs.hpp"
 #include "common/error/elog.hpp"
 #include "common/memory/alloc_set.hpp"
 #include "common/memory/memory_context.hpp"
@@ -26,9 +26,9 @@ using pgcpp::nodes::Node;
 using pgcpp::nodes::nodeToStdString;
 using pgcpp::nodes::stringToNode;
 using pgcpp::nodes::Value;
+using pgcpp::parser::BooleanTest;
 using pgcpp::parser::BoolExpr;
 using pgcpp::parser::BoolExprType;
-using pgcpp::parser::BooleanTest;
 using pgcpp::parser::BoolTestType;
 using pgcpp::parser::Const;
 using pgcpp::parser::FuncExpr;
@@ -60,14 +60,13 @@ protected:
     bool roundTripEqual(const Node* original) {
         std::string serialized = nodeToStdString(original);
         Node* deserialized = stringToNode(serialized.c_str());
-        if (deserialized == nullptr) return false;
+        if (deserialized == nullptr)
+            return false;
         return equal(original, deserialized);
     }
 
     // Get the serialized string for inspection.
-    std::string serialize(const Node* node) {
-        return nodeToStdString(node);
-    }
+    std::string serialize(const Node* node) { return nodeToStdString(node); }
 
     pgcpp::memory::MemoryContext* context_ = nullptr;
 };

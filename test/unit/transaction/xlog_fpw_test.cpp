@@ -114,8 +114,7 @@ TEST_F(XLogFpwTest, NoFpwFlagWhenBufferNotFpw) {
 
 // Backup block page_data matches what was registered.
 TEST_F(XLogFpwTest, BackupBlockContentMatches) {
-    std::vector<uint8_t> page = {0xDE, 0xAD, 0xBE, 0xEF,
-                                  0xCA, 0xFE, 0xBA, 0xBE};
+    std::vector<uint8_t> page = {0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE};
     XLogBeginInsert();
     XLogRegisterBuffer(0, page.data(), page.size(), /*is_fpw=*/true);
     XLogRecPtr lsn = XLogInsert(kRmgrHeapId, 0);
@@ -291,9 +290,7 @@ TEST_F(XLogFpwTest, RecoveryReplaysFpwRecordMainData) {
     // Register a redo callback that captures main_data.
     uint32_t redo_value = 0;
     pgcpp::transaction::RegisterRmgrRedo(
-        kRmgrHeapId,
-        [&](const XLogRecord&, const uint8_t* data, std::size_t len,
-            XLogRecPtr) {
+        kRmgrHeapId, [&](const XLogRecord&, const uint8_t* data, std::size_t len, XLogRecPtr) {
             ASSERT_EQ(len, sizeof(uint32_t));
             std::memcpy(&redo_value, data, sizeof(redo_value));
         });

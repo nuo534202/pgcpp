@@ -12,9 +12,9 @@ namespace pgcpp::catalog {
 // Each row records one parent-child partition/inheritance relationship.
 
 struct FormData_pg_inherits {
-    Oid inhrelid = kInvalidOid;    // OID of child relation
-    Oid inhparent = kInvalidOid;   // OID of parent relation
-    int16_t inhseqnum = 0;         // sequence number for ordering child tables
+    Oid inhrelid = kInvalidOid;   // OID of child relation
+    Oid inhparent = kInvalidOid;  // OID of parent relation
+    int16_t inhseqnum = 0;        // sequence number for ordering child tables
 };
 
 using Form_pg_inherits = FormData_pg_inherits*;

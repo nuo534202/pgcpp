@@ -13,10 +13,10 @@ namespace pgcpp::catalog {
 // preserved from PostgreSQL; char* name fields use std::string.
 
 struct FormData_pg_namespace {
-    Oid oid = kInvalidOid;        // namespace OID
-    std::string nspname;          // name of the namespace
-    Oid nspowner = kInvalidOid;   // owner user OID
-    bool nspacl = false;          // has ACL (placeholder; real ACL is a list)
+    Oid oid = kInvalidOid;       // namespace OID
+    std::string nspname;         // name of the namespace
+    Oid nspowner = kInvalidOid;  // owner user OID
+    bool nspacl = false;         // has ACL (placeholder; real ACL is a list)
 };
 
 using Form_pg_namespace = FormData_pg_namespace*;

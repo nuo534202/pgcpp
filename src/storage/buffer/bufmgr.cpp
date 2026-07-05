@@ -445,8 +445,8 @@ void ReleaseBuffer(Buffer buffer) {
         return;
     // The buffer is pinned by the caller, so its tag is stable. Use the
     // partition lock for the tag to serialize with concurrent lookups.
-    LWLock* part_lock = desc->IsTagged() ? pool->MappingLockForTag(desc->tag)
-                                          : pool->FreelistLock();
+    LWLock* part_lock =
+        desc->IsTagged() ? pool->MappingLockForTag(desc->tag) : pool->FreelistLock();
     LWLockAcquire(part_lock, LWLockMode::kExclusive);
     pool->UnpinBuffer(buffer);
     LWLockRelease(part_lock);
@@ -459,8 +459,8 @@ void MarkBufferDirty(Buffer buffer) {
     BufferDesc* desc = pool->GetBufferDesc(buffer);
     if (desc == nullptr)
         return;
-    LWLock* part_lock = desc->IsTagged() ? pool->MappingLockForTag(desc->tag)
-                                          : pool->FreelistLock();
+    LWLock* part_lock =
+        desc->IsTagged() ? pool->MappingLockForTag(desc->tag) : pool->FreelistLock();
     LWLockAcquire(part_lock, LWLockMode::kExclusive);
     pool->MarkBufferDirty(buffer);
     LWLockRelease(part_lock);
@@ -493,8 +493,8 @@ void FlushBuffer(Buffer buffer) {
     BufferDesc* desc = pool->GetBufferDesc(buffer);
     if (desc == nullptr)
         return;
-    LWLock* part_lock = desc->IsTagged() ? pool->MappingLockForTag(desc->tag)
-                                          : pool->FreelistLock();
+    LWLock* part_lock =
+        desc->IsTagged() ? pool->MappingLockForTag(desc->tag) : pool->FreelistLock();
     LWLockAcquire(part_lock, LWLockMode::kExclusive);
     pool->FlushBuffer(buf_id, false);
     LWLockRelease(part_lock);
@@ -538,8 +538,8 @@ bool BufferIsPinned(Buffer buffer) {
     BufferDesc* desc = pool->GetBufferDesc(buffer);
     if (desc == nullptr)
         return false;
-    LWLock* part_lock = desc->IsTagged() ? pool->MappingLockForTag(desc->tag)
-                                          : pool->FreelistLock();
+    LWLock* part_lock =
+        desc->IsTagged() ? pool->MappingLockForTag(desc->tag) : pool->FreelistLock();
     LWLockAcquire(part_lock, LWLockMode::kShared);
     bool pinned = desc->refcount > 0;
     LWLockRelease(part_lock);
@@ -639,8 +639,8 @@ void MarkBufferDirtyHint(Buffer buffer, bool release) {
     BufferDesc* desc = pool->GetBufferDesc(buffer);
     if (desc == nullptr)
         return;
-    LWLock* part_lock = desc->IsTagged() ? pool->MappingLockForTag(desc->tag)
-                                          : pool->FreelistLock();
+    LWLock* part_lock =
+        desc->IsTagged() ? pool->MappingLockForTag(desc->tag) : pool->FreelistLock();
     LWLockAcquire(part_lock, LWLockMode::kExclusive);
     if (!desc->IsDirty()) {
         pool->MarkBufferDirty(buffer);
@@ -682,8 +682,8 @@ void IncrBufferRefCount(Buffer buffer) {
     BufferDesc* desc = pool->GetBufferDesc(buffer);
     if (desc == nullptr)
         return;
-    LWLock* part_lock = desc->IsTagged() ? pool->MappingLockForTag(desc->tag)
-                                          : pool->FreelistLock();
+    LWLock* part_lock =
+        desc->IsTagged() ? pool->MappingLockForTag(desc->tag) : pool->FreelistLock();
     LWLockAcquire(part_lock, LWLockMode::kExclusive);
     pool->PinBuffer(buffer);
     LWLockRelease(part_lock);
@@ -697,8 +697,8 @@ void BufferGetTag(Buffer buffer, RelFileNode* rnode, ForkNumber* forknum, BlockN
     if (desc == nullptr)
         return;
     // The buffer is pinned by the caller, so its tag is stable.
-    LWLock* part_lock = desc->IsTagged() ? pool->MappingLockForTag(desc->tag)
-                                          : pool->FreelistLock();
+    LWLock* part_lock =
+        desc->IsTagged() ? pool->MappingLockForTag(desc->tag) : pool->FreelistLock();
     LWLockAcquire(part_lock, LWLockMode::kShared);
     if (rnode != nullptr)
         *rnode = desc->tag.rnode;

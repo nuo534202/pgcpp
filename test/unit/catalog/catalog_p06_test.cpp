@@ -6,8 +6,6 @@
 //   pg_depend, pg_statistic, pg_inherits, pg_am, pg_tablespace,
 //   pg_trigger, pg_rewrite.
 
-#include "catalog/catalog.hpp"
-
 #include <gtest/gtest.h>
 #include <unistd.h>
 
@@ -15,6 +13,7 @@
 #include <string>
 #include <vector>
 
+#include "catalog/catalog.hpp"
 #include "catalog/pg_am.hpp"
 #include "catalog/pg_attrdef.hpp"
 #include "catalog/pg_constraint.hpp"
@@ -34,6 +33,7 @@
 
 namespace {
 
+using pgcpp::catalog::AmType;
 using pgcpp::catalog::Catalog;
 using pgcpp::catalog::ConstraintAction;
 using pgcpp::catalog::ConstraintMatch;
@@ -51,7 +51,6 @@ using pgcpp::catalog::FormData_pg_rewrite;
 using pgcpp::catalog::FormData_pg_statistic;
 using pgcpp::catalog::FormData_pg_tablespace;
 using pgcpp::catalog::FormData_pg_trigger;
-using pgcpp::catalog::AmType;
 using pgcpp::catalog::kFirstNormalObjectId;
 using pgcpp::catalog::kInvalidOid;
 using pgcpp::catalog::Oid;
@@ -393,8 +392,8 @@ TEST_F(CatalogP06Test, AttrdefGetByRelidAndDelete) {
 
 TEST_F(CatalogP06Test, DependInsertAndLookup) {
     auto* r = makePallocNode<FormData_pg_depend>();
-    r->classid = 1259;   // pg_class
-    r->objid = 20000;    // user table
+    r->classid = 1259;  // pg_class
+    r->objid = 20000;   // user table
     r->objsubid = 0;
     r->refclassid = 1259;
     r->refobjid = 20001;  // depends on another user table
@@ -470,8 +469,8 @@ TEST_F(CatalogP06Test, StatisticDeleteForRelid) {
 
 TEST_F(CatalogP06Test, InheritsInsertAndLookup) {
     auto* r = makePallocNode<FormData_pg_inherits>();
-    r->inhrelid = 20000;  // child
-    r->inhparent = 16384; // parent
+    r->inhrelid = 20000;   // child
+    r->inhparent = 16384;  // parent
     r->inhseqnum = 1;
     catalog_->InsertInherits(r);
 

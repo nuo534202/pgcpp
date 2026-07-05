@@ -30,10 +30,12 @@ bool WriteAllToFd(int fd, const uint8_t* data, std::size_t len) {
     while (written < len) {
         ssize_t n = write(fd, data + written, len - written);
         if (n < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR)
+                continue;
             return false;
         }
-        if (n == 0) return false;
+        if (n == 0)
+            return false;
         written += static_cast<std::size_t>(n);
     }
     return true;
@@ -51,10 +53,12 @@ std::string PageFilePath(const std::string& dir, int pageno) {
 bool ReadPageFromDisk(const std::string& dir, int pageno, SlruPage* page) {
     std::string path = PageFilePath(dir, pageno);
     int fd = open(path.c_str(), O_RDONLY);
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
     ssize_t n = read(fd, page->data.data(), kSlruPageSize);
     close(fd);
-    if (n < 0) return false;
+    if (n < 0)
+        return false;
     // If the file is short, the remaining bytes stay zero (page->data was
     // zero-initialized by the constructor). This matches PG behavior.
     return true;
@@ -66,7 +70,8 @@ void WritePageToDisk(const std::string& dir, int pageno, const SlruPage* page) {
     mkdir(dir.c_str(), 0700);
     std::string path = PageFilePath(dir, pageno);
     int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    if (fd < 0) return;
+    if (fd < 0)
+        return;
     WriteAllToFd(fd, page->data.data(), kSlruPageSize);
     fsync(fd);
     close(fd);
@@ -86,12 +91,14 @@ void TouchPage(SlruCtl* ctl, int pageno) {
 // EvictOnePage — evict the least-recently-used page. If it's dirty, write
 // it to disk first. No-op if the cache is empty.
 void EvictOnePage(SlruCtl* ctl) {
-    if (ctl->lru_order.empty()) return;
+    if (ctl->lru_order.empty())
+        return;
     int victim = ctl->lru_order.front();
     ctl->lru_order.pop_front();
 
     auto it = ctl->pages.find(victim);
-    if (it == ctl->pages.end()) return;
+    if (it == ctl->pages.end())
+        return;
 
     if (it->second.status == SlruPageStatus::kDirty && !ctl->disk_dir.empty()) {
         WritePageToDisk(ctl->disk_dir, victim, &it->second);
@@ -133,8 +140,7 @@ SlruPage* LoadPage(SlruCtl* ctl, int pageno) {
 
 }  // namespace
 
-SlruCtl* SimpleLruInit(const std::string& name, std::size_t capacity,
-                        const std::string& disk_dir) {
+SlruCtl* SimpleLruInit(const std::string& name, std::size_t capacity, const std::string& disk_dir) {
     SlruCtl* ctl = new SlruCtl();
     ctl->name = name;
     ctl->capacity = capacity;

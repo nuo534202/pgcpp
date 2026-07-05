@@ -14,15 +14,15 @@
 // without writing 16MB. The WalSegmentWriter accepts a custom segment_size
 // for this purpose.
 
+#include <fcntl.h>
 #include <gtest/gtest.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <cstdio>
 #include <cstring>
-#include <fcntl.h>
 #include <filesystem>
 #include <string>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <vector>
 
 #include "transaction/xlog.hpp"
@@ -37,8 +37,8 @@ using pgcpp::transaction::TimeLineId;
 using pgcpp::transaction::WalSegmentWriter;
 using pgcpp::transaction::XLogFileCopy;
 using pgcpp::transaction::XLogFileInit;
-using pgcpp::transaction::XLogFileOpen;
 using pgcpp::transaction::XLogFileName;
+using pgcpp::transaction::XLogFileOpen;
 using pgcpp::transaction::XLogRecPtr;
 using pgcpp::transaction::XLogSegNo;
 using pgcpp::transaction::XLogSegNoOffsetToRecPtr;
@@ -54,13 +54,11 @@ std::string MakeTempDir(const std::string& name) {
 }
 
 // Helper: read `len` bytes from `path` at `offset` and compare to `expected`.
-::testing::AssertionResult ReadEquals(const std::string& path, off_t offset,
-                                      std::size_t len,
+::testing::AssertionResult ReadEquals(const std::string& path, off_t offset, std::size_t len,
                                       const uint8_t* expected) {
     int fd = open(path.c_str(), O_RDONLY);
     if (fd < 0) {
-        return ::testing::AssertionFailure()
-               << "open(" << path << ") failed: " << strerror(errno);
+        return ::testing::AssertionFailure() << "open(" << path << ") failed: " << strerror(errno);
     }
     std::vector<uint8_t> buf(len, 0);
     if (lseek(fd, offset, SEEK_SET) < 0) {
@@ -72,15 +70,13 @@ std::string MakeTempDir(const std::string& name) {
         ssize_t n = read(fd, buf.data() + got, len - got);
         if (n <= 0) {
             close(fd);
-            return ::testing::AssertionFailure()
-                   << "read got " << got << " of " << len << " bytes";
+            return ::testing::AssertionFailure() << "read got " << got << " of " << len << " bytes";
         }
         got += static_cast<std::size_t>(n);
     }
     close(fd);
     if (std::memcmp(buf.data(), expected, len) != 0) {
-        return ::testing::AssertionFailure() << "content mismatch at offset "
-                                             << offset;
+        return ::testing::AssertionFailure() << "content mismatch at offset " << offset;
     }
     return ::testing::AssertionSuccess();
 }
@@ -231,7 +227,8 @@ TEST(XLogSegmentTest, FileOpen_ReturnsFdForExistingSegment) {
 
     int fd = XLogFileOpen(dir, kDefaultTimelineId, 0, O_WRONLY, 0600);
     EXPECT_GE(fd, 0);
-    if (fd >= 0) close(fd);
+    if (fd >= 0)
+        close(fd);
 
     // Non-existent segment returns -1.
     int fd2 = XLogFileOpen(dir, kDefaultTimelineId, 99, O_RDONLY, 0600);
@@ -338,11 +335,8 @@ TEST(WalSegmentWriterTest, Write_CrossSegmentContinuousReadback) {
 
         // Verify the segment's content matches the corresponding slice of
         // the payload.
-        std::size_t payload_off =
-            static_cast<std::size_t>(segno) * kTestSegmentSize;
-        EXPECT_EQ(std::memcmp(seg_data.data(), payload.data() + payload_off,
-                              kTestSegmentSize),
-                  0)
+        std::size_t payload_off = static_cast<std::size_t>(segno) * kTestSegmentSize;
+        EXPECT_EQ(std::memcmp(seg_data.data(), payload.data() + payload_off, kTestSegmentSize), 0)
             << "mismatch in segno " << segno;
     }
 

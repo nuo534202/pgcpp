@@ -31,8 +31,7 @@ namespace {
 // Verify the CRC32C of a WAL record.
 // CRC covers: header bytes [0, offsetof(xl_crc)) + payload.
 // Returns true if the CRC matches, false otherwise.
-bool VerifyRecordCrc(const XLogRecord& header, const uint8_t* payload,
-                     std::size_t payload_len) {
+bool VerifyRecordCrc(const XLogRecord& header, const uint8_t* payload, std::size_t payload_len) {
     Crc32C crc;
     constexpr std::size_t kHeaderCrcLen = offsetof(XLogRecord, xl_crc);
     crc.Update(&header, kHeaderCrcLen);
@@ -47,8 +46,7 @@ bool VerifyRecordCrc(const XLogRecord& header, const uint8_t* payload,
 // On success, returns true and fills `out_blocks` and `out_main_offset`
 // (byte offset where main_data begins). On malformed input, returns false.
 bool ParseBackupBlocks(const uint8_t* payload, std::size_t payload_len,
-                       std::vector<BackupBlock>& out_blocks,
-                       std::size_t& out_main_offset) {
+                       std::vector<BackupBlock>& out_blocks, std::size_t& out_main_offset) {
     out_blocks.clear();
     out_main_offset = 0;
     if (payload_len < 1) {
@@ -96,13 +94,11 @@ bool ReadAndDecodeRecord(XLogReaderState* reader, XLogRecPtr lsn) {
     }
 
     // Read the payload (xl_tot_len - header_size bytes).
-    std::size_t data_len =
-        static_cast<std::size_t>(header.xl_tot_len) - kSizeofXlogRecord;
+    std::size_t data_len = static_cast<std::size_t>(header.xl_tot_len) - kSizeofXlogRecord;
     std::vector<uint8_t> payload;
     if (data_len > 0) {
         payload.resize(data_len);
-        std::size_t got_data =
-            XLogReadRaw(lsn + kSizeofXlogRecord, payload.data(), data_len);
+        std::size_t got_data = XLogReadRaw(lsn + kSizeofXlogRecord, payload.data(), data_len);
         if (got_data < data_len) {
             return false;
         }
@@ -120,8 +116,7 @@ bool ReadAndDecodeRecord(XLogReaderState* reader, XLogRecPtr lsn) {
     reader->main_data.clear();
     std::size_t main_offset = 0;
     if ((header.xl_info & kXlrBkpBlockImage) && data_len > 0) {
-        if (!ParseBackupBlocks(payload.data(), data_len,
-                               reader->backup_blocks, main_offset)) {
+        if (!ParseBackupBlocks(payload.data(), data_len, reader->backup_blocks, main_offset)) {
             // Malformed backup block section — treat as corrupt.
             reader->crc_mismatch = true;
             reader->bad_lsn = lsn;
@@ -130,8 +125,7 @@ bool ReadAndDecodeRecord(XLogReaderState* reader, XLogRecPtr lsn) {
     }
     // main_data = payload bytes after backup blocks (or whole payload if no FPW).
     if (main_offset < data_len) {
-        reader->main_data.assign(payload.data() + main_offset,
-                                 payload.data() + data_len);
+        reader->main_data.assign(payload.data() + main_offset, payload.data() + data_len);
     }
 
     reader->current_lsn = lsn;

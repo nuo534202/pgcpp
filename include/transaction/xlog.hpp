@@ -187,14 +187,12 @@ bool XLogFileInit(const std::string& path);
 // Open a WAL segment file by (tli, segno) under directory `dir`.
 // The file path is "<dir>/XLogFileName(tli, segno)". Returns the fd or -1
 // on error. `flags` and `mode` are passed to open(2).
-int XLogFileOpen(const std::string& dir, TimeLineId tli, XLogSegNo segno,
-                 int flags, int mode);
+int XLogFileOpen(const std::string& dir, TimeLineId tli, XLogSegNo segno, int flags, int mode);
 
 // Install (create if missing) a WAL segment file in `<dir>` with the standard
 // segment name. If the file already exists, this is a no-op. Returns true
 // if the file exists (created or pre-existing) on success.
-bool InstallXLogFileSegment(const std::string& dir, TimeLineId tli,
-                            XLogSegNo segno);
+bool InstallXLogFileSegment(const std::string& dir, TimeLineId tli, XLogSegNo segno);
 
 // Copy a WAL segment file from `src` to `dst` (for archive/restore).
 // Returns true on success.
@@ -217,8 +215,7 @@ public:
     // Construct a writer for directory `dir` and timeline `tli`.
     // `segment_size` defaults to kWalSegmentSize; tests may pass a smaller
     // value to force segment switching without writing 16MB.
-    WalSegmentWriter(std::string dir, TimeLineId tli,
-                     uint32_t segment_size = kWalSegmentSize);
+    WalSegmentWriter(std::string dir, TimeLineId tli, uint32_t segment_size = kWalSegmentSize);
     ~WalSegmentWriter();
 
     WalSegmentWriter(const WalSegmentWriter&) = delete;

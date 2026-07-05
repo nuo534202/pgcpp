@@ -35,8 +35,8 @@ struct XLogReaderState {
     std::vector<uint8_t> main_data;               // record payload (excl. backup blocks)
     std::vector<BackupBlock> backup_blocks;       // parsed FPW backup blocks
 
-    bool end_of_wal = false;      // true when we've reached the end of WAL
-    bool crc_mismatch = false;    // true if the last record failed CRC check
+    bool end_of_wal = false;                  // true when we've reached the end of WAL
+    bool crc_mismatch = false;                // true if the last record failed CRC check
     XLogRecPtr bad_lsn = kInvalidXLogRecPtr;  // LSN of the corrupt record
 };
 

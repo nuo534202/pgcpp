@@ -275,8 +275,7 @@ TEST_F(ClogPersistenceTest, CommitPersistsAcrossRestart) {
     InitializeCommitLog();
     LoadClogFiles();
 
-    EXPECT_TRUE(TransactionIdDidCommit(xid))
-        << "committed XID should survive restart";
+    EXPECT_TRUE(TransactionIdDidCommit(xid)) << "committed XID should survive restart";
     EXPECT_FALSE(TransactionIdDidAbort(xid));
 }
 
@@ -294,8 +293,7 @@ TEST_F(ClogPersistenceTest, AbortPersistsAcrossRestart) {
     InitializeCommitLog();
     LoadClogFiles();
 
-    EXPECT_TRUE(TransactionIdDidAbort(xid))
-        << "aborted XID should survive restart";
+    EXPECT_TRUE(TransactionIdDidAbort(xid)) << "aborted XID should survive restart";
     EXPECT_FALSE(TransactionIdDidCommit(xid));
 }
 
@@ -307,8 +305,7 @@ TEST_F(ClogPersistenceTest, MultipleStatusesPersist) {
     LoadClogFiles();
 
     // Use XIDs that span across the first page boundary (kClogXidsPerPage).
-    TransactionId xids[] = {kFirstNormalTransactionId,
-                            kFirstNormalTransactionId + 100,
+    TransactionId xids[] = {kFirstNormalTransactionId, kFirstNormalTransactionId + 100,
                             kFirstNormalTransactionId + 200,
                             kFirstNormalTransactionId + kClogXidsPerPage + 1};
     for (TransactionId xid : xids) {
@@ -343,8 +340,7 @@ TEST_F(ClogPersistenceTest, InMemoryClogWritesNoFiles) {
     // The directory we registered should be empty (no page files written).
     // (We point SetClogDirectory at "" so FlushClogFiles is a no-op; the
     // registered dir is just a sentinel to verify nothing was written there.)
-    EXPECT_TRUE(std::filesystem::is_empty(dir))
-        << "in-memory CLOG should not write any files";
+    EXPECT_TRUE(std::filesystem::is_empty(dir)) << "in-memory CLOG should not write any files";
 }
 
 // ===========================================================================
@@ -404,8 +400,7 @@ TEST_F(CommitTsPersistenceTest, SetCommitTsPersistsAcrossRestart) {
     ShutdownCommitTs();
     InitializeCommitTs(dir);
 
-    EXPECT_EQ(TransactionIdGetCommitTs(xid), ts)
-        << "commit timestamp should survive restart";
+    EXPECT_EQ(TransactionIdGetCommitTs(xid), ts) << "commit timestamp should survive restart";
 }
 
 // Multiple commit_ts entries on different pages persist.
@@ -586,8 +581,7 @@ TEST_F(MultiXactPersistenceTest, MembersSpanPageBoundary) {
     auto retrieved = MultiXactIdGetMembers(multi);
     ASSERT_EQ(retrieved.size(), many.size());
     for (std::size_t i = 0; i < many.size(); ++i) {
-        EXPECT_EQ(retrieved[i].xid, many[i].xid)
-            << "member " << i << " mismatch";
+        EXPECT_EQ(retrieved[i].xid, many[i].xid) << "member " << i << " mismatch";
     }
 }
 

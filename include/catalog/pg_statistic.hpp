@@ -17,19 +17,19 @@ namespace pgcpp::catalog {
 // stadistinct values: positive = exact count, negative = fraction of rows.
 // stakind* values: STATISTIC_KIND_* constants (MCV, HISTOGRAM, etc.).
 
-constexpr int kStatisticKindMcv = 1;        // most common values
-constexpr int kStatisticKindHistogram = 2;   // histogram of values
+constexpr int kStatisticKindMcv = 1;          // most common values
+constexpr int kStatisticKindHistogram = 2;    // histogram of values
 constexpr int kStatisticKindCorrelation = 3;  // physical-vs-logical correlation
-constexpr int kStatisticKindMcelem = 4;      // MCV for array elements
-constexpr int kStatisticKindDechist = 5;     // distinct-element histogram
+constexpr int kStatisticKindMcelem = 4;       // MCV for array elements
+constexpr int kStatisticKindDechist = 5;      // distinct-element histogram
 
 struct FormData_pg_statistic {
-    Oid starelid = kInvalidOid;      // OID of the relation containing the column
-    int16_t staattnum = 0;           // attnum of the column
-    bool stainherit = false;         // is this an inherited stats row?
-    float stanullfrac = 0.0F;        // fraction of entries that are NULL
-    int32_t stawidth = 0;            // average stored width in bytes
-    int32_t stadistinct = 0;         // distinct values: positive count, negative fraction
+    Oid starelid = kInvalidOid;  // OID of the relation containing the column
+    int16_t staattnum = 0;       // attnum of the column
+    bool stainherit = false;     // is this an inherited stats row?
+    float stanullfrac = 0.0F;    // fraction of entries that are NULL
+    int32_t stawidth = 0;        // average stored width in bytes
+    int32_t stadistinct = 0;     // distinct values: positive count, negative fraction
     // stakind1..5, staop1..5, stacoll1..5: kind/op/collation for each slot.
     int16_t stakind1 = 0;
     int16_t stakind2 = 0;

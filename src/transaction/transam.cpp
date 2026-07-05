@@ -101,10 +101,12 @@ bool WriteAllToFd(int fd, const uint8_t* data, std::size_t len) {
     while (written < len) {
         ssize_t n = write(fd, data + written, len - written);
         if (n < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR)
+                continue;
             return false;
         }
-        if (n == 0) return false;
+        if (n == 0)
+            return false;
         written += static_cast<std::size_t>(n);
     }
     return true;
@@ -129,7 +131,8 @@ void LoadClogFiles() {
     struct dirent* ent;
     while ((ent = readdir(dir)) != nullptr) {
         // Skip "." and ".."
-        if (ent->d_name[0] == '.') continue;
+        if (ent->d_name[0] == '.')
+            continue;
 
         // Parse filename as hex page number.
         char* end = nullptr;
@@ -141,21 +144,23 @@ void LoadClogFiles() {
         // Read the page (up to 8 KB).
         std::string path = ClogDirectory() + "/" + ent->d_name;
         int fd = open(path.c_str(), O_RDONLY);
-        if (fd < 0) continue;
+        if (fd < 0)
+            continue;
 
         uint8_t page[kSlruPageSize];
         ssize_t n = read(fd, page, kSlruPageSize);
         close(fd);
-        if (n <= 0) continue;
+        if (n <= 0)
+            continue;
 
         // Expand 2-bit entries to 1-byte and store in g_clog_base.
-        TransactionId xid_start =
-            static_cast<TransactionId>(pageno) * kClogXidsPerPage;
+        TransactionId xid_start = static_cast<TransactionId>(pageno) * kClogXidsPerPage;
         for (ssize_t i = 0; i < n; ++i) {
             uint8_t byte = page[i];
             for (int j = 0; j < 4; ++j) {
                 TransactionId xid = xid_start + i * 4 + j;
-                if (xid >= static_cast<TransactionId>(kMaxXids)) break;
+                if (xid >= static_cast<TransactionId>(kMaxXids))
+                    break;
                 uint8_t status = (byte >> (j * 2)) & 0x03;
                 g_clog_base[xid] = static_cast<XidStatus>(status);
             }
@@ -174,19 +179,19 @@ void FlushClogFiles() {
 
     for (int pageno : DirtyClogPages()) {
         std::string path = ClogDirectory() + "/" + PageFileName(pageno);
-        int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-                       S_IRUSR | S_IWUSR);
-        if (fd < 0) continue;
+        int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+        if (fd < 0)
+            continue;
 
         // Encode 1-byte-per-XID → 2-bit-per-XID page.
         uint8_t page[kSlruPageSize];
         std::memset(page, 0, sizeof(page));
-        TransactionId xid_start =
-            static_cast<TransactionId>(pageno) * kClogXidsPerPage;
+        TransactionId xid_start = static_cast<TransactionId>(pageno) * kClogXidsPerPage;
         for (int i = 0; i < kSlruPageSize; ++i) {
             for (int j = 0; j < 4; ++j) {
                 TransactionId xid = xid_start + i * 4 + j;
-                if (xid >= static_cast<TransactionId>(kMaxXids)) break;
+                if (xid >= static_cast<TransactionId>(kMaxXids))
+                    break;
                 uint8_t status = static_cast<uint8_t>(g_clog_base[xid]);
                 page[i] |= (status & 0x03) << (j * 2);
             }

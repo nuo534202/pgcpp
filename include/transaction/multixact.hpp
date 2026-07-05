@@ -36,8 +36,7 @@ constexpr MultiXactId kFirstMultiXactId = 1;
 constexpr MultiXactId kInvalidMultiXactId = 0;
 
 // MultiXactOffsetsPerPage — 8 KB / 4 bytes = 2048 entries per page.
-constexpr int kMultiXactOffsetsPerPage =
-    kSlruPageSize / static_cast<int>(sizeof(MultiXactOffset));
+constexpr int kMultiXactOffsetsPerPage = kSlruPageSize / static_cast<int>(sizeof(MultiXactOffset));
 
 // MultiXactMemberStride — bytes per member entry in the members SLRU.
 // PG packs (xid, status) into 4 bytes (xid 32 bits + status 4 bits) but
@@ -46,14 +45,12 @@ constexpr int kMultiXactOffsetsPerPage =
 constexpr int kMultiXactMemberStride = 8;
 
 // MultiXactMembersPerPage — 8 KB / 8 bytes = 1024 entries per page.
-constexpr int kMultiXactMembersPerPage =
-    kSlruPageSize / kMultiXactMemberStride;
+constexpr int kMultiXactMembersPerPage = kSlruPageSize / kMultiXactMemberStride;
 
 // InitializeMultiXact — set up the multixact subsystem.
 // Call with empty dirs for in-memory operation (tests), or with
 // <data_dir>/pg_multixact/{offsets,members} for persistence.
-void InitializeMultiXact(const std::string& offsets_dir = "",
-                         const std::string& members_dir = "");
+void InitializeMultiXact(const std::string& offsets_dir = "", const std::string& members_dir = "");
 
 // ResetMultiXact — clear all multixact data and SLRU caches (for testing).
 void ResetMultiXact();

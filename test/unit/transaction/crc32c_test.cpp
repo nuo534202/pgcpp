@@ -9,6 +9,8 @@
 //   - Corrupt record: modified payload triggers crc_mismatch
 //   - Corrupt header: modified xl_tot_len triggers crc_mismatch
 
+#include "transaction/crc32c.hpp"
+
 #include <gtest/gtest.h>
 
 #include <cstring>
@@ -17,7 +19,6 @@
 #include "common/error/elog.hpp"
 #include "common/memory/alloc_set.hpp"
 #include "common/memory/memory_context.hpp"
-#include "transaction/crc32c.hpp"
 #include "transaction/transam.hpp"
 #include "transaction/xact.hpp"
 #include "transaction/xlog.hpp"
@@ -238,8 +239,7 @@ TEST_F(WalCrcTest, MultipleRecordsAllHaveValidCrc) {
 
     auto* reader = XLogReaderAlloc();
     for (std::size_t i = 0; i < lsns.size(); i++) {
-        ASSERT_TRUE(XLogReadRecordAt(reader, lsns[i]))
-            << "record " << i << " failed";
+        ASSERT_TRUE(XLogReadRecordAt(reader, lsns[i])) << "record " << i << " failed";
         EXPECT_FALSE(reader->crc_mismatch);
         EXPECT_EQ(reader->main_data.size(), sizeof(uint32_t));
 
@@ -265,9 +265,7 @@ TEST_F(WalCrcTest, CrashRecoveryWithValidCrc) {
     // Replay and verify.
     std::vector<uint32_t> replayed;
     pgcpp::transaction::RegisterRmgrRedo(
-        kRmgrHeapId,
-        [&](const XLogRecord&, const uint8_t* data, std::size_t len,
-            XLogRecPtr) {
+        kRmgrHeapId, [&](const XLogRecord&, const uint8_t* data, std::size_t len, XLogRecPtr) {
             ASSERT_EQ(len, sizeof(uint32_t));
             uint32_t v = 0;
             std::memcpy(&v, data, sizeof(v));

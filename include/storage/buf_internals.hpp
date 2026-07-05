@@ -124,9 +124,9 @@ struct BufferDesc {
 // allocated via ShmemInitStruct; in multi-process mode it's inherited across
 // fork via MAP_SHARED.
 struct BufferPoolShmemState {
-    int clock_hand = 0;    // clock-sweep position (protected by mapping locks)
-    int first_free = -1;   // head of free-list (index, or -1 if none)
-    int n_buffers = 0;     // total number of buffers in the pool
+    int clock_hand = 0;   // clock-sweep position (protected by mapping locks)
+    int first_free = -1;  // head of free-list (index, or -1 if none)
+    int n_buffers = 0;    // total number of buffers in the pool
 };
 
 // BufferPool — the shared buffer pool.
@@ -151,8 +151,8 @@ public:
     // initialize descriptors/free list/hash table (postmaster first init).
     // If false, the pool is being attached to existing shm (fork'd child).
     BufferPool(int n_buffers, BufferDesc* descriptors, char* blocks_base,
-               BufferPoolShmemState* shmem_state, BufferHashEntry* hash_table,
-               int hash_table_size, bool init);
+               BufferPoolShmemState* shmem_state, BufferHashEntry* hash_table, int hash_table_size,
+               bool init);
     ~BufferPool();
 
     // Non-copyable, non-movable (references shm-allocated arrays).

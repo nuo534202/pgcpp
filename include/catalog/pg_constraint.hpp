@@ -40,9 +40,9 @@ enum class ConstraintMatch : char {
 };
 
 struct FormData_pg_constraint {
-    Oid oid = kInvalidOid;            // constraint OID
-    std::string conname;              // constraint name (may be empty)
-    Oid connamespace = kInvalidOid;   // OID of namespace containing constraint
+    Oid oid = kInvalidOid;           // constraint OID
+    std::string conname;             // constraint name (may be empty)
+    Oid connamespace = kInvalidOid;  // OID of namespace containing constraint
     ConstraintType contype = ConstraintType::kCheck;
     bool condeferrable = false;       // deferrable?
     bool condeferred = false;         // initially deferred?
@@ -60,11 +60,11 @@ struct FormData_pg_constraint {
     ConstraintAction confupdtype = ConstraintAction::kNoAction;  // ON UPDATE action
     ConstraintAction confdeltype = ConstraintAction::kNoAction;  // ON DELETE action
     ConstraintMatch confmatchtype = ConstraintMatch::kSimple;    // FULL / PARTIAL / SIMPLE
-    bool conislocal = true;           // constraint is local to this relation
-    int16_t coninhcount = 0;          // number of times inherited
-    bool connoinherit = false;        // cannot be inherited?
-    Oid conbin = kInvalidOid;         // OID of check expression tree (pg_node_tree)
-    std::string consrc;               // human-readable check expression (placeholder)
+    bool conislocal = true;     // constraint is local to this relation
+    int16_t coninhcount = 0;    // number of times inherited
+    bool connoinherit = false;  // cannot be inherited?
+    Oid conbin = kInvalidOid;   // OID of check expression tree (pg_node_tree)
+    std::string consrc;         // human-readable check expression (placeholder)
 };
 
 using Form_pg_constraint = FormData_pg_constraint*;

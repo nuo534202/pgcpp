@@ -195,8 +195,8 @@ void InitializeAllLWLocks() {
         ShmemInitStruct("LWLockArray", sizeof(LWLock) * kNumNamedLWLocks, &found));
 
     bool buf_found = false;
-    g_buf_mapping_locks = static_cast<LWLock*>(ShmemInitStruct(
-        "BufMappingLockArray", sizeof(LWLock) * kNumBufferPartitions, &buf_found));
+    g_buf_mapping_locks = static_cast<LWLock*>(
+        ShmemInitStruct("BufMappingLockArray", sizeof(LWLock) * kNumBufferPartitions, &buf_found));
 
     if (!found) {
         for (int i = 0; i < kNumNamedLWLocks; ++i) {

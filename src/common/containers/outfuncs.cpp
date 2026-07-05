@@ -25,8 +25,8 @@
 namespace pgcpp::nodes {
 
 using pgcpp::containers::StringInfo;
-using pgcpp::parser::BoolExpr;
 using pgcpp::parser::BooleanTest;
+using pgcpp::parser::BoolExpr;
 using pgcpp::parser::Const;
 using pgcpp::parser::FuncExpr;
 using pgcpp::parser::NullTest;
@@ -117,22 +117,38 @@ void outNodeList(StringInfo* buf, const char* label, const std::vector<Node*>& l
 
 static const char* tagName(NodeTag tag) {
     switch (tag) {
-        case NodeTag::kVar:           return "VAR";
-        case NodeTag::kConst:         return "CONST";
-        case NodeTag::kParam:         return "PARAM";
-        case NodeTag::kOpExpr:        return "OPEXPR";
-        case NodeTag::kFuncExpr:      return "FUNCEXPR";
-        case NodeTag::kBoolExpr:      return "BOOLEXPR";
-        case NodeTag::kNullTest:      return "NULLTEST";
-        case NodeTag::kBooleanTest:   return "BOOLEANTEST";
-        case NodeTag::kTargetEntry:   return "TARGETENTRY";
-        case NodeTag::kRangeTblEntry: return "RTE";
-        case NodeTag::kQuery:         return "QUERY";
-        case NodeTag::kInteger:       return "INTEGER";
-        case NodeTag::kFloat:         return "FLOAT";
-        case NodeTag::kString:        return "STRING";
-        case NodeTag::kNull:          return "NULL";
-        default:                      return "UNKNOWN";
+        case NodeTag::kVar:
+            return "VAR";
+        case NodeTag::kConst:
+            return "CONST";
+        case NodeTag::kParam:
+            return "PARAM";
+        case NodeTag::kOpExpr:
+            return "OPEXPR";
+        case NodeTag::kFuncExpr:
+            return "FUNCEXPR";
+        case NodeTag::kBoolExpr:
+            return "BOOLEXPR";
+        case NodeTag::kNullTest:
+            return "NULLTEST";
+        case NodeTag::kBooleanTest:
+            return "BOOLEANTEST";
+        case NodeTag::kTargetEntry:
+            return "TARGETENTRY";
+        case NodeTag::kRangeTblEntry:
+            return "RTE";
+        case NodeTag::kQuery:
+            return "QUERY";
+        case NodeTag::kInteger:
+            return "INTEGER";
+        case NodeTag::kFloat:
+            return "FLOAT";
+        case NodeTag::kString:
+            return "STRING";
+        case NodeTag::kNull:
+            return "NULL";
+        default:
+            return "UNKNOWN";
     }
 }
 
@@ -308,8 +324,7 @@ static void outRangeTblEntry(StringInfo* buf, const RangeTblEntry* node) {
     outOid(buf, "relid", node->relid);
     outChar(buf, "relkind", node->relkind);
     outInt(buf, "rellockmode", node->rellockmode);
-    outNodeField(buf, "tablesample",
-                 reinterpret_cast<const Node*>(node->tablesample));
+    outNodeField(buf, "tablesample", reinterpret_cast<const Node*>(node->tablesample));
     outNodeField(buf, "subquery", reinterpret_cast<const Node*>(node->subquery));
     outBool(buf, "security_barrier", node->security_barrier);
     outInt(buf, "jointype", static_cast<int>(node->jointype));
