@@ -21,6 +21,18 @@
 #include "catalog/pg_operator.hpp"
 #include "catalog/pg_proc.hpp"
 #include "catalog/pg_type.hpp"
+#include "catalog/pg_namespace.hpp"
+#include "catalog/pg_database.hpp"
+#include "catalog/pg_index.hpp"
+#include "catalog/pg_constraint.hpp"
+#include "catalog/pg_attrdef.hpp"
+#include "catalog/pg_depend.hpp"
+#include "catalog/pg_statistic.hpp"
+#include "catalog/pg_inherits.hpp"
+#include "catalog/pg_am.hpp"
+#include "catalog/pg_tablespace.hpp"
+#include "catalog/pg_trigger.hpp"
+#include "catalog/pg_rewrite.hpp"
 #include "common/containers/node.hpp"
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
@@ -354,6 +366,468 @@ const FormData_pg_collation* Catalog::GetCollationByName(const std::string& name
 
 Oid Catalog::AllocateOid() {
     return next_oid_++;
+}
+
+// --- Catalog: pg_namespace ---
+
+Oid Catalog::InsertNamespace(FormData_pg_namespace* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertNamespace: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_namespace_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_namespace* Catalog::GetNamespaceByOid(Oid oid) const {
+    for (const auto* row : pg_namespace_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+const FormData_pg_namespace* Catalog::GetNamespaceByName(const std::string& name) const {
+    for (const auto* row : pg_namespace_rows_) {
+        if (row->nspname == name) return row;
+    }
+    return nullptr;
+}
+
+bool Catalog::DeleteNamespace(Oid oid) {
+    auto it = std::find_if(pg_namespace_rows_.begin(), pg_namespace_rows_.end(),
+                           [oid](const FormData_pg_namespace* r) { return r->oid == oid; });
+    if (it == pg_namespace_rows_.end()) return false;
+    pg_namespace_rows_.erase(it);
+    return true;
+}
+
+// --- Catalog: pg_database ---
+
+Oid Catalog::InsertDatabase(FormData_pg_database* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertDatabase: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_database_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_database* Catalog::GetDatabaseByOid(Oid oid) const {
+    for (const auto* row : pg_database_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+const FormData_pg_database* Catalog::GetDatabaseByName(const std::string& name) const {
+    for (const auto* row : pg_database_rows_) {
+        if (row->datname == name) return row;
+    }
+    return nullptr;
+}
+
+bool Catalog::DeleteDatabase(Oid oid) {
+    auto it = std::find_if(pg_database_rows_.begin(), pg_database_rows_.end(),
+                           [oid](const FormData_pg_database* r) { return r->oid == oid; });
+    if (it == pg_database_rows_.end()) return false;
+    pg_database_rows_.erase(it);
+    return true;
+}
+
+// --- Catalog: pg_index ---
+
+Oid Catalog::InsertIndex(FormData_pg_index* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertIndex: row is null");
+    }
+    // pg_index is keyed by indexrelid; if not set, allocate one.
+    if (row->indexrelid == kInvalidOid) {
+        row->indexrelid = AllocateOid();
+    }
+    pg_index_rows_.push_back(row);
+    return row->indexrelid;
+}
+
+const FormData_pg_index* Catalog::GetIndexByOid(Oid indexrelid) const {
+    for (const auto* row : pg_index_rows_) {
+        if (row->indexrelid == indexrelid) return row;
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_index*> Catalog::GetIndexesByRelid(Oid indrelid) const {
+    std::vector<const FormData_pg_index*> result;
+    for (const auto* row : pg_index_rows_) {
+        if (row->indrelid == indrelid) result.push_back(row);
+    }
+    return result;
+}
+
+bool Catalog::DeleteIndex(Oid indexrelid) {
+    auto it = std::find_if(pg_index_rows_.begin(), pg_index_rows_.end(),
+                           [indexrelid](const FormData_pg_index* r) { return r->indexrelid == indexrelid; });
+    if (it == pg_index_rows_.end()) return false;
+    pg_index_rows_.erase(it);
+    return true;
+}
+
+std::size_t Catalog::DeleteIndexesForRelid(Oid indrelid) {
+    auto original_size = pg_index_rows_.size();
+    pg_index_rows_.erase(
+        std::remove_if(pg_index_rows_.begin(), pg_index_rows_.end(),
+                       [indrelid](const FormData_pg_index* r) { return r->indrelid == indrelid; }),
+        pg_index_rows_.end());
+    return original_size - pg_index_rows_.size();
+}
+
+// --- Catalog: pg_constraint ---
+
+Oid Catalog::InsertConstraint(FormData_pg_constraint* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertConstraint: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_constraint_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_constraint* Catalog::GetConstraintByOid(Oid oid) const {
+    for (const auto* row : pg_constraint_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_constraint*> Catalog::GetConstraintsByRelid(Oid conrelid) const {
+    std::vector<const FormData_pg_constraint*> result;
+    for (const auto* row : pg_constraint_rows_) {
+        if (row->conrelid == conrelid) result.push_back(row);
+    }
+    return result;
+}
+
+bool Catalog::DeleteConstraint(Oid oid) {
+    auto it = std::find_if(pg_constraint_rows_.begin(), pg_constraint_rows_.end(),
+                           [oid](const FormData_pg_constraint* r) { return r->oid == oid; });
+    if (it == pg_constraint_rows_.end()) return false;
+    pg_constraint_rows_.erase(it);
+    return true;
+}
+
+std::size_t Catalog::DeleteConstraintsForRelid(Oid conrelid) {
+    auto original_size = pg_constraint_rows_.size();
+    pg_constraint_rows_.erase(
+        std::remove_if(pg_constraint_rows_.begin(), pg_constraint_rows_.end(),
+                       [conrelid](const FormData_pg_constraint* r) { return r->conrelid == conrelid; }),
+        pg_constraint_rows_.end());
+    return original_size - pg_constraint_rows_.size();
+}
+
+// --- Catalog: pg_attrdef ---
+
+Oid Catalog::InsertAttrdef(FormData_pg_attrdef* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertAttrdef: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_attrdef_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_attrdef* Catalog::GetAttrdef(Oid adrelid, int16_t adnum) const {
+    for (const auto* row : pg_attrdef_rows_) {
+        if (row->adrelid == adrelid && row->adnum == adnum) return row;
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_attrdef*> Catalog::GetAttrdefsByRelid(Oid adrelid) const {
+    std::vector<const FormData_pg_attrdef*> result;
+    for (const auto* row : pg_attrdef_rows_) {
+        if (row->adrelid == adrelid) result.push_back(row);
+    }
+    return result;
+}
+
+bool Catalog::DeleteAttrdef(Oid oid) {
+    auto it = std::find_if(pg_attrdef_rows_.begin(), pg_attrdef_rows_.end(),
+                           [oid](const FormData_pg_attrdef* r) { return r->oid == oid; });
+    if (it == pg_attrdef_rows_.end()) return false;
+    pg_attrdef_rows_.erase(it);
+    return true;
+}
+
+std::size_t Catalog::DeleteAttrdefsForRelid(Oid adrelid) {
+    auto original_size = pg_attrdef_rows_.size();
+    pg_attrdef_rows_.erase(
+        std::remove_if(pg_attrdef_rows_.begin(), pg_attrdef_rows_.end(),
+                       [adrelid](const FormData_pg_attrdef* r) { return r->adrelid == adrelid; }),
+        pg_attrdef_rows_.end());
+    return original_size - pg_attrdef_rows_.size();
+}
+
+// --- Catalog: pg_depend ---
+
+void Catalog::InsertDepend(FormData_pg_depend* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertDepend: row is null");
+    }
+    pg_depend_rows_.push_back(row);
+}
+
+std::vector<const FormData_pg_depend*> Catalog::GetDependsByRef(Oid refclassid, Oid refobjid) const {
+    std::vector<const FormData_pg_depend*> result;
+    for (const auto* row : pg_depend_rows_) {
+        if (row->refclassid == refclassid && row->refobjid == refobjid) result.push_back(row);
+    }
+    return result;
+}
+
+std::vector<const FormData_pg_depend*> Catalog::GetDependsByObj(Oid classid, Oid objid) const {
+    std::vector<const FormData_pg_depend*> result;
+    for (const auto* row : pg_depend_rows_) {
+        if (row->classid == classid && row->objid == objid) result.push_back(row);
+    }
+    return result;
+}
+
+std::size_t Catalog::DeleteDependsByObj(Oid classid, Oid objid) {
+    auto original_size = pg_depend_rows_.size();
+    pg_depend_rows_.erase(
+        std::remove_if(pg_depend_rows_.begin(), pg_depend_rows_.end(),
+                       [classid, objid](const FormData_pg_depend* r) {
+                           return r->classid == classid && r->objid == objid;
+                       }),
+        pg_depend_rows_.end());
+    return original_size - pg_depend_rows_.size();
+}
+
+std::size_t Catalog::DeleteDependsByRef(Oid refclassid, Oid refobjid) {
+    auto original_size = pg_depend_rows_.size();
+    pg_depend_rows_.erase(
+        std::remove_if(pg_depend_rows_.begin(), pg_depend_rows_.end(),
+                       [refclassid, refobjid](const FormData_pg_depend* r) {
+                           return r->refclassid == refclassid && r->refobjid == refobjid;
+                       }),
+        pg_depend_rows_.end());
+    return original_size - pg_depend_rows_.size();
+}
+
+// --- Catalog: pg_statistic ---
+
+void Catalog::InsertStatistic(FormData_pg_statistic* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertStatistic: row is null");
+    }
+    pg_statistic_rows_.push_back(row);
+}
+
+const FormData_pg_statistic* Catalog::GetStatistic(Oid starelid, int16_t staattnum) const {
+    for (const auto* row : pg_statistic_rows_) {
+        if (row->starelid == starelid && row->staattnum == staattnum) return row;
+    }
+    return nullptr;
+}
+
+std::size_t Catalog::DeleteStatisticsForRelid(Oid starelid) {
+    auto original_size = pg_statistic_rows_.size();
+    pg_statistic_rows_.erase(
+        std::remove_if(pg_statistic_rows_.begin(), pg_statistic_rows_.end(),
+                       [starelid](const FormData_pg_statistic* r) { return r->starelid == starelid; }),
+        pg_statistic_rows_.end());
+    return original_size - pg_statistic_rows_.size();
+}
+
+// --- Catalog: pg_inherits ---
+
+void Catalog::InsertInherits(FormData_pg_inherits* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertInherits: row is null");
+    }
+    pg_inherits_rows_.push_back(row);
+}
+
+std::vector<const FormData_pg_inherits*> Catalog::GetInheritsByParent(Oid inhparent) const {
+    std::vector<const FormData_pg_inherits*> result;
+    for (const auto* row : pg_inherits_rows_) {
+        if (row->inhparent == inhparent) result.push_back(row);
+    }
+    return result;
+}
+
+const FormData_pg_inherits* Catalog::GetInheritsByChild(Oid inhrelid) const {
+    for (const auto* row : pg_inherits_rows_) {
+        if (row->inhrelid == inhrelid) return row;
+    }
+    return nullptr;
+}
+
+bool Catalog::DeleteInherits(Oid inhrelid) {
+    auto it = std::find_if(pg_inherits_rows_.begin(), pg_inherits_rows_.end(),
+                           [inhrelid](const FormData_pg_inherits* r) { return r->inhrelid == inhrelid; });
+    if (it == pg_inherits_rows_.end()) return false;
+    pg_inherits_rows_.erase(it);
+    return true;
+}
+
+// --- Catalog: pg_am ---
+
+Oid Catalog::InsertAm(FormData_pg_am* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertAm: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_am_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_am* Catalog::GetAmByOid(Oid oid) const {
+    for (const auto* row : pg_am_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+const FormData_pg_am* Catalog::GetAmByName(const std::string& name) const {
+    for (const auto* row : pg_am_rows_) {
+        if (row->amname == name) return row;
+    }
+    return nullptr;
+}
+
+// --- Catalog: pg_tablespace ---
+
+Oid Catalog::InsertTablespace(FormData_pg_tablespace* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertTablespace: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_tablespace_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_tablespace* Catalog::GetTablespaceByOid(Oid oid) const {
+    for (const auto* row : pg_tablespace_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+const FormData_pg_tablespace* Catalog::GetTablespaceByName(const std::string& name) const {
+    for (const auto* row : pg_tablespace_rows_) {
+        if (row->spcname == name) return row;
+    }
+    return nullptr;
+}
+
+bool Catalog::DeleteTablespace(Oid oid) {
+    auto it = std::find_if(pg_tablespace_rows_.begin(), pg_tablespace_rows_.end(),
+                           [oid](const FormData_pg_tablespace* r) { return r->oid == oid; });
+    if (it == pg_tablespace_rows_.end()) return false;
+    pg_tablespace_rows_.erase(it);
+    return true;
+}
+
+// --- Catalog: pg_trigger ---
+
+Oid Catalog::InsertTrigger(FormData_pg_trigger* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertTrigger: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_trigger_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_trigger* Catalog::GetTriggerByOid(Oid oid) const {
+    for (const auto* row : pg_trigger_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_trigger*> Catalog::GetTriggersByRelid(Oid tgrelid) const {
+    std::vector<const FormData_pg_trigger*> result;
+    for (const auto* row : pg_trigger_rows_) {
+        if (row->tgrelid == tgrelid) result.push_back(row);
+    }
+    return result;
+}
+
+bool Catalog::DeleteTrigger(Oid oid) {
+    auto it = std::find_if(pg_trigger_rows_.begin(), pg_trigger_rows_.end(),
+                           [oid](const FormData_pg_trigger* r) { return r->oid == oid; });
+    if (it == pg_trigger_rows_.end()) return false;
+    pg_trigger_rows_.erase(it);
+    return true;
+}
+
+std::size_t Catalog::DeleteTriggersForRelid(Oid tgrelid) {
+    auto original_size = pg_trigger_rows_.size();
+    pg_trigger_rows_.erase(
+        std::remove_if(pg_trigger_rows_.begin(), pg_trigger_rows_.end(),
+                       [tgrelid](const FormData_pg_trigger* r) { return r->tgrelid == tgrelid; }),
+        pg_trigger_rows_.end());
+    return original_size - pg_trigger_rows_.size();
+}
+
+// --- Catalog: pg_rewrite ---
+
+Oid Catalog::InsertRewrite(FormData_pg_rewrite* row) {
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertRewrite: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_rewrite_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_rewrite* Catalog::GetRewriteByOid(Oid oid) const {
+    for (const auto* row : pg_rewrite_rows_) {
+        if (row->oid == oid) return row;
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_rewrite*> Catalog::GetRewritesByRelid(Oid ev_class) const {
+    std::vector<const FormData_pg_rewrite*> result;
+    for (const auto* row : pg_rewrite_rows_) {
+        if (row->ev_class == ev_class) result.push_back(row);
+    }
+    return result;
+}
+
+bool Catalog::DeleteRewrite(Oid oid) {
+    auto it = std::find_if(pg_rewrite_rows_.begin(), pg_rewrite_rows_.end(),
+                           [oid](const FormData_pg_rewrite* r) { return r->oid == oid; });
+    if (it == pg_rewrite_rows_.end()) return false;
+    pg_rewrite_rows_.erase(it);
+    return true;
+}
+
+std::size_t Catalog::DeleteRewritesForRelid(Oid ev_class) {
+    auto original_size = pg_rewrite_rows_.size();
+    pg_rewrite_rows_.erase(
+        std::remove_if(pg_rewrite_rows_.begin(), pg_rewrite_rows_.end(),
+                       [ev_class](const FormData_pg_rewrite* r) { return r->ev_class == ev_class; }),
+        pg_rewrite_rows_.end());
+    return original_size - pg_rewrite_rows_.size();
 }
 
 // --- Persistence helpers (A-3) ---
@@ -715,6 +1189,103 @@ std::vector<std::string> Ser(const FormData_pg_collation& r) {
             Fmt(r.collowner),     FmtEnum(r.collprovider), Fmt(r.collisdeterministic),
             Fmt(r.collencoding),  Fmt(r.collcollate),      Fmt(r.collctype),
             Fmt(r.colliculocale), Fmt(r.collversion)};
+}
+
+// --- New table serializers (P0-6) ---
+
+std::string FmtI16Vec(const std::vector<int16_t>& v) {
+    return FmtOidVec(std::vector<Oid>(v.begin(), v.end()));
+}
+
+std::vector<std::string> Ser(const FormData_pg_namespace& r) {
+    return {Fmt(r.oid), Fmt(r.nspname), Fmt(r.nspowner), Fmt(r.nspacl)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_database& r) {
+    return {Fmt(r.oid),           Fmt(r.datname),       Fmt(r.datdba),
+            Fmt(r.encoding),      Fmt(r.datcollate),    Fmt(r.datctype),
+            Fmt(r.datistemplate), Fmt(r.datallowconn),  Fmt(r.datconnlimit),
+            Fmt(r.datlastsysoid), Fmt(r.datsize),       Fmt(r.datacl),
+            Fmt(r.datfrozenxid),  Fmt(r.datminmxid)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_index& r) {
+    return {Fmt(r.indexrelid),      Fmt(r.indrelid),       Fmt(r.indnatts),
+            Fmt(r.indnkeyatts),     Fmt(r.indisunique),    Fmt(r.indisprimary),
+            Fmt(r.indisexclusion),  Fmt(r.indisimmediate), Fmt(r.indisclustered),
+            Fmt(r.indisvalid),      Fmt(r.indcheckxmin),   Fmt(r.indisready),
+            Fmt(r.indislive),       Fmt(r.indisreplident), FmtI16Vec(r.indkey),
+            FmtOidVec(r.indcollation), FmtOidVec(r.indclass), FmtI16Vec(r.indoption),
+            Fmt(r.indpred),         Fmt(r.indexprs)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_constraint& r) {
+    return {Fmt(r.oid),            Fmt(r.conname),         Fmt(r.connamespace),
+            FmtEnum(r.contype),    Fmt(r.condeferrable),   Fmt(r.condeferred),
+            Fmt(r.convalidated),   Fmt(r.conrelid),        Fmt(r.contypid),
+            Fmt(r.conindid),       Fmt(r.conparentid),     FmtI16Vec(r.conkey),
+            FmtI16Vec(r.confkey),  FmtOidVec(r.conpfeqop), FmtOidVec(r.conppeqop),
+            FmtOidVec(r.conffeqop), FmtOidVec(r.confdelsetcols),
+            FmtEnum(r.confupdtype), FmtEnum(r.confdeltype), FmtEnum(r.confmatchtype),
+            Fmt(r.conislocal),     Fmt(r.coninhcount),     Fmt(r.connoinherit),
+            Fmt(r.conbin),         Fmt(r.consrc)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_attrdef& r) {
+    return {Fmt(r.oid), Fmt(r.adrelid), Fmt(r.adnum), Fmt(r.adbin), Fmt(r.adsrc)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_depend& r) {
+    return {Fmt(r.classid),     Fmt(r.objid),       Fmt(r.objsubid),
+            Fmt(r.refclassid),  Fmt(r.refobjid),    Fmt(r.refobjsubid),
+            FmtEnum(r.deptype)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_statistic& r) {
+    return {Fmt(r.starelid),    Fmt(r.staattnum),   Fmt(r.stainherit),
+            Fmt(r.stanullfrac), Fmt(r.stawidth),    Fmt(r.stadistinct),
+            Fmt(r.stakind1),    Fmt(r.stakind2),    Fmt(r.stakind3),
+            Fmt(r.stakind4),    Fmt(r.stakind5),    Fmt(r.staop1),
+            Fmt(r.staop2),      Fmt(r.staop3),      Fmt(r.staop4),
+            Fmt(r.staop5),      Fmt(r.stacoll1),    Fmt(r.stacoll2),
+            Fmt(r.stacoll3),    Fmt(r.stacoll4),    Fmt(r.stacoll5),
+            Fmt(r.stavalues1),  Fmt(r.stavalues2),  Fmt(r.stavalues3),
+            Fmt(r.stavalues4),  Fmt(r.stavalues5)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_inherits& r) {
+    return {Fmt(r.inhrelid), Fmt(r.inhparent), Fmt(r.inhseqnum)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_am& r) {
+    return {Fmt(r.oid),         Fmt(r.amname),         FmtEnum(r.amtype),
+            Fmt(r.amhandler),   Fmt(r.amcanorder),     Fmt(r.amcanorderbyop),
+            Fmt(r.amcanbackward), Fmt(r.amcanunique),  Fmt(r.amcanmulticol),
+            Fmt(r.amoptionalkey), Fmt(r.amsearcharray), Fmt(r.amsearchnulls),
+            Fmt(r.amstorage),   Fmt(r.amclusterable),  Fmt(r.ampredlocks),
+            Fmt(r.amkeytype),   Fmt(r.amsummarizing),  Fmt(r.amcaninclude),
+            Fmt(r.amusemaintenanceworkmem)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_tablespace& r) {
+    return {Fmt(r.oid),       Fmt(r.spcname),     Fmt(r.spcowner),
+            Fmt(r.spcacl),    Fmt(r.spcmaxsize),  Fmt(r.spclocation),
+            Fmt(r.spcoptions)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_trigger& r) {
+    return {Fmt(r.oid),            Fmt(r.tgrelid),        Fmt(r.tgparentid),
+            Fmt(r.tgname),         Fmt(r.tgfoid),         FmtEnum(r.tgenabled),
+            Fmt(r.tgisinternal),   Fmt(r.tgnargs),        Fmt(r.tgargs),
+            FmtI16Vec(r.tgattr),   Fmt(r.tgconstrrelid),  Fmt(r.tgconstrindid),
+            Fmt(r.tgconstraint),   Fmt(r.tgdeferrable),   Fmt(r.tginitdeferred),
+            Fmt(r.tgqual),         Fmt(r.tgnewtable),     Fmt(r.tgoldtable)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_rewrite& r) {
+    return {Fmt(r.oid),       Fmt(r.ev_class),   Fmt(r.rulename),
+            Fmt(r.ev_type),   Fmt(r.ev_enabled), Fmt(r.is_instead),
+            Fmt(r.ev_qual),   Fmt(r.ev_action)};
 }
 
 // --- Per-struct deserializers ---
@@ -1122,6 +1693,283 @@ FormData_pg_collation* DeserPgCollation(const std::vector<std::string>& f) {
     return makePallocNode<FormData_pg_collation>(t);
 }
 
+// --- New table deserializers (P0-6) ---
+
+std::vector<int16_t> ParseI16Vec(const std::string& s) {
+    auto oids = ParseOidVec(s);
+    return std::vector<int16_t>(oids.begin(), oids.end());
+}
+
+FormData_pg_namespace* DeserPgNamespace(const std::vector<std::string>& f) {
+    if (f.size() < 4) return nullptr;
+    FormData_pg_namespace t;
+    if (!ParseU32(f[0], t.oid)) return nullptr;
+    t.nspname = f[1];
+    if (!ParseU32(f[2], t.nspowner)) return nullptr;
+    if (f[3] != "0" && f[3] != "1") return nullptr;
+    t.nspacl = f[3] == "1";
+    return makePallocNode<FormData_pg_namespace>(t);
+}
+
+FormData_pg_database* DeserPgDatabase(const std::vector<std::string>& f) {
+    if (f.size() < 14) return nullptr;
+    FormData_pg_database t;
+    if (!ParseU32(f[0], t.oid)) return nullptr;
+    t.datname = f[1];
+    if (!ParseU32(f[2], t.datdba)) return nullptr;
+    if (!ParseI32(f[3], t.encoding)) return nullptr;
+    t.datcollate = f[4];
+    t.datctype = f[5];
+    if (f[6] != "0" && f[6] != "1") return nullptr;
+    t.datistemplate = f[6] == "1";
+    if (f[7] != "0" && f[7] != "1") return nullptr;
+    t.datallowconn = f[7] == "1";
+    if (!ParseI32(f[8], t.datconnlimit)) return nullptr;
+    if (!ParseU32(f[9], t.datlastsysoid)) return nullptr;
+    if (!ParseI32(f[10], t.datsize)) return nullptr;
+    if (f[11] != "0" && f[11] != "1") return nullptr;
+    t.datacl = f[11] == "1";
+    if (!ParseU32(f[12], t.datfrozenxid)) return nullptr;
+    if (!ParseU32(f[13], t.datminmxid)) return nullptr;
+    return makePallocNode<FormData_pg_database>(t);
+}
+
+FormData_pg_index* DeserPgIndex(const std::vector<std::string>& f) {
+    if (f.size() < 20) return nullptr;
+    FormData_pg_index t;
+    if (!ParseU32(f[0], t.indexrelid)) return nullptr;
+    if (!ParseU32(f[1], t.indrelid)) return nullptr;
+    if (!ParseI16(f[2], t.indnatts)) return nullptr;
+    if (!ParseI16(f[3], t.indnkeyatts)) return nullptr;
+    if (f[4] != "0" && f[4] != "1") return nullptr;
+    t.indisunique = f[4] == "1";
+    if (f[5] != "0" && f[5] != "1") return nullptr;
+    t.indisprimary = f[5] == "1";
+    if (f[6] != "0" && f[6] != "1") return nullptr;
+    t.indisexclusion = f[6] == "1";
+    if (f[7] != "0" && f[7] != "1") return nullptr;
+    t.indisimmediate = f[7] == "1";
+    if (f[8] != "0" && f[8] != "1") return nullptr;
+    t.indisclustered = f[8] == "1";
+    if (f[9] != "0" && f[9] != "1") return nullptr;
+    t.indisvalid = f[9] == "1";
+    if (f[10] != "0" && f[10] != "1") return nullptr;
+    t.indcheckxmin = f[10] == "1";
+    if (f[11] != "0" && f[11] != "1") return nullptr;
+    t.indisready = f[11] == "1";
+    if (f[12] != "0" && f[12] != "1") return nullptr;
+    t.indislive = f[12] == "1";
+    if (f[13] != "0" && f[13] != "1") return nullptr;
+    t.indisreplident = f[13] == "1";
+    t.indkey = ParseI16Vec(f[14]);
+    t.indcollation = ParseOidVec(f[15]);
+    t.indclass = ParseOidVec(f[16]);
+    t.indoption = ParseI16Vec(f[17]);
+    if (!ParseU32(f[18], t.indpred)) return nullptr;
+    if (!ParseU32(f[19], t.indexprs)) return nullptr;
+    return makePallocNode<FormData_pg_index>(t);
+}
+
+FormData_pg_constraint* DeserPgConstraint(const std::vector<std::string>& f) {
+    if (f.size() < 25) return nullptr;
+    FormData_pg_constraint t;
+    if (!ParseU32(f[0], t.oid)) return nullptr;
+    t.conname = f[1];
+    if (!ParseU32(f[2], t.connamespace)) return nullptr;
+    if (f[3].empty()) return nullptr;
+    t.contype = static_cast<ConstraintType>(f[3][0]);
+    if (f[4] != "0" && f[4] != "1") return nullptr;
+    t.condeferrable = f[4] == "1";
+    if (f[5] != "0" && f[5] != "1") return nullptr;
+    t.condeferred = f[5] == "1";
+    if (f[6] != "0" && f[6] != "1") return nullptr;
+    t.convalidated = f[6] == "1";
+    if (!ParseU32(f[7], t.conrelid)) return nullptr;
+    if (!ParseU32(f[8], t.contypid)) return nullptr;
+    if (!ParseU32(f[9], t.conindid)) return nullptr;
+    if (!ParseU32(f[10], t.conparentid)) return nullptr;
+    t.conkey = ParseI16Vec(f[11]);
+    t.confkey = ParseI16Vec(f[12]);
+    t.conpfeqop = ParseOidVec(f[13]);
+    t.conppeqop = ParseOidVec(f[14]);
+    t.conffeqop = ParseOidVec(f[15]);
+    t.confdelsetcols = ParseOidVec(f[16]);
+    if (f[17].empty()) return nullptr;
+    t.confupdtype = static_cast<ConstraintAction>(f[17][0]);
+    if (f[18].empty()) return nullptr;
+    t.confdeltype = static_cast<ConstraintAction>(f[18][0]);
+    if (f[19].empty()) return nullptr;
+    t.confmatchtype = static_cast<ConstraintMatch>(f[19][0]);
+    if (f[20] != "0" && f[20] != "1") return nullptr;
+    t.conislocal = f[20] == "1";
+    if (!ParseI16(f[21], t.coninhcount)) return nullptr;
+    if (f[22] != "0" && f[22] != "1") return nullptr;
+    t.connoinherit = f[22] == "1";
+    if (!ParseU32(f[23], t.conbin)) return nullptr;
+    t.consrc = f[24];
+    return makePallocNode<FormData_pg_constraint>(t);
+}
+
+FormData_pg_attrdef* DeserPgAttrdef(const std::vector<std::string>& f) {
+    if (f.size() < 5) return nullptr;
+    FormData_pg_attrdef t;
+    if (!ParseU32(f[0], t.oid)) return nullptr;
+    if (!ParseU32(f[1], t.adrelid)) return nullptr;
+    if (!ParseI16(f[2], t.adnum)) return nullptr;
+    if (!ParseU32(f[3], t.adbin)) return nullptr;
+    t.adsrc = f[4];
+    return makePallocNode<FormData_pg_attrdef>(t);
+}
+
+FormData_pg_depend* DeserPgDepend(const std::vector<std::string>& f) {
+    if (f.size() < 7) return nullptr;
+    FormData_pg_depend t;
+    if (!ParseU32(f[0], t.classid)) return nullptr;
+    if (!ParseU32(f[1], t.objid)) return nullptr;
+    if (!ParseI32(f[2], t.objsubid)) return nullptr;
+    if (!ParseU32(f[3], t.refclassid)) return nullptr;
+    if (!ParseU32(f[4], t.refobjid)) return nullptr;
+    if (!ParseI32(f[5], t.refobjsubid)) return nullptr;
+    if (f[6].empty()) return nullptr;
+    t.deptype = static_cast<DependencyType>(f[6][0]);
+    return makePallocNode<FormData_pg_depend>(t);
+}
+
+FormData_pg_statistic* DeserPgStatistic(const std::vector<std::string>& f) {
+    if (f.size() < 26) return nullptr;
+    FormData_pg_statistic t;
+    if (!ParseU32(f[0], t.starelid)) return nullptr;
+    if (!ParseI16(f[1], t.staattnum)) return nullptr;
+    if (f[2] != "0" && f[2] != "1") return nullptr;
+    t.stainherit = f[2] == "1";
+    if (!ParseFloat(f[3], t.stanullfrac)) return nullptr;
+    if (!ParseI32(f[4], t.stawidth)) return nullptr;
+    if (!ParseI32(f[5], t.stadistinct)) return nullptr;
+    if (!ParseI16(f[6], t.stakind1)) return nullptr;
+    if (!ParseI16(f[7], t.stakind2)) return nullptr;
+    if (!ParseI16(f[8], t.stakind3)) return nullptr;
+    if (!ParseI16(f[9], t.stakind4)) return nullptr;
+    if (!ParseI16(f[10], t.stakind5)) return nullptr;
+    if (!ParseU32(f[11], t.staop1)) return nullptr;
+    if (!ParseU32(f[12], t.staop2)) return nullptr;
+    if (!ParseU32(f[13], t.staop3)) return nullptr;
+    if (!ParseU32(f[14], t.staop4)) return nullptr;
+    if (!ParseU32(f[15], t.staop5)) return nullptr;
+    if (!ParseU32(f[16], t.stacoll1)) return nullptr;
+    if (!ParseU32(f[17], t.stacoll2)) return nullptr;
+    if (!ParseU32(f[18], t.stacoll3)) return nullptr;
+    if (!ParseU32(f[19], t.stacoll4)) return nullptr;
+    if (!ParseU32(f[20], t.stacoll5)) return nullptr;
+    t.stavalues1 = f[21];
+    t.stavalues2 = f[22];
+    t.stavalues3 = f[23];
+    t.stavalues4 = f[24];
+    t.stavalues5 = f[25];
+    return makePallocNode<FormData_pg_statistic>(t);
+}
+
+FormData_pg_inherits* DeserPgInherits(const std::vector<std::string>& f) {
+    if (f.size() < 3) return nullptr;
+    FormData_pg_inherits t;
+    if (!ParseU32(f[0], t.inhrelid)) return nullptr;
+    if (!ParseU32(f[1], t.inhparent)) return nullptr;
+    if (!ParseI16(f[2], t.inhseqnum)) return nullptr;
+    return makePallocNode<FormData_pg_inherits>(t);
+}
+
+FormData_pg_am* DeserPgAm(const std::vector<std::string>& f) {
+    if (f.size() < 18) return nullptr;
+    FormData_pg_am t;
+    if (!ParseU32(f[0], t.oid)) return nullptr;
+    t.amname = f[1];
+    if (f[2].empty()) return nullptr;
+    t.amtype = static_cast<AmType>(f[2][0]);
+    if (!ParseU32(f[3], t.amhandler)) return nullptr;
+    auto parse_bool = [](const std::string& s, bool& out) {
+        if (s != "0" && s != "1") return false;
+        out = s == "1";
+        return true;
+    };
+    if (!parse_bool(f[4], t.amcanorder)) return nullptr;
+    if (!parse_bool(f[5], t.amcanorderbyop)) return nullptr;
+    if (!parse_bool(f[6], t.amcanbackward)) return nullptr;
+    if (!parse_bool(f[7], t.amcanunique)) return nullptr;
+    if (!parse_bool(f[8], t.amcanmulticol)) return nullptr;
+    if (!parse_bool(f[9], t.amoptionalkey)) return nullptr;
+    if (!parse_bool(f[10], t.amsearcharray)) return nullptr;
+    if (!parse_bool(f[11], t.amsearchnulls)) return nullptr;
+    if (!parse_bool(f[12], t.amstorage)) return nullptr;
+    if (!parse_bool(f[13], t.amclusterable)) return nullptr;
+    if (!parse_bool(f[14], t.ampredlocks)) return nullptr;
+    if (!parse_bool(f[15], t.amkeytype)) return nullptr;
+    if (!parse_bool(f[16], t.amsummarizing)) return nullptr;
+    if (!parse_bool(f[17], t.amcaninclude)) return nullptr;
+    // amusemaintenanceworkmem is field 18; allow older files without it.
+    if (f.size() > 18) {
+        if (!parse_bool(f[18], t.amusemaintenanceworkmem)) return nullptr;
+    }
+    return makePallocNode<FormData_pg_am>(t);
+}
+
+FormData_pg_tablespace* DeserPgTablespace(const std::vector<std::string>& f) {
+    if (f.size() < 7) return nullptr;
+    FormData_pg_tablespace t;
+    if (!ParseU32(f[0], t.oid)) return nullptr;
+    t.spcname = f[1];
+    if (!ParseU32(f[2], t.spcowner)) return nullptr;
+    if (f[3] != "0" && f[3] != "1") return nullptr;
+    t.spcacl = f[3] == "1";
+    if (!ParseI32(f[4], t.spcmaxsize)) return nullptr;
+    t.spclocation = f[5];
+    t.spcoptions = f[6];
+    return makePallocNode<FormData_pg_tablespace>(t);
+}
+
+FormData_pg_trigger* DeserPgTrigger(const std::vector<std::string>& f) {
+    if (f.size() < 18) return nullptr;
+    FormData_pg_trigger t;
+    if (!ParseU32(f[0], t.oid)) return nullptr;
+    if (!ParseU32(f[1], t.tgrelid)) return nullptr;
+    if (!ParseU32(f[2], t.tgparentid)) return nullptr;
+    t.tgname = f[3];
+    if (!ParseU32(f[4], t.tgfoid)) return nullptr;
+    if (f[5].empty()) return nullptr;
+    t.tgenabled = static_cast<TriggerEnabled>(f[5][0]);
+    if (f[6] != "0" && f[6] != "1") return nullptr;
+    t.tgisinternal = f[6] == "1";
+    if (!ParseI16(f[7], t.tgnargs)) return nullptr;
+    t.tgargs = f[8];
+    t.tgattr = ParseI16Vec(f[9]);
+    if (!ParseU32(f[10], t.tgconstrrelid)) return nullptr;
+    if (!ParseU32(f[11], t.tgconstrindid)) return nullptr;
+    if (!ParseU32(f[12], t.tgconstraint)) return nullptr;
+    if (f[13] != "0" && f[13] != "1") return nullptr;
+    t.tgdeferrable = f[13] == "1";
+    if (f[14] != "0" && f[14] != "1") return nullptr;
+    t.tginitdeferred = f[14] == "1";
+    if (!ParseU32(f[15], t.tgqual)) return nullptr;
+    t.tgnewtable = f[16];
+    t.tgoldtable = f[17];
+    return makePallocNode<FormData_pg_trigger>(t);
+}
+
+FormData_pg_rewrite* DeserPgRewrite(const std::vector<std::string>& f) {
+    if (f.size() < 8) return nullptr;
+    FormData_pg_rewrite t;
+    if (!ParseU32(f[0], t.oid)) return nullptr;
+    if (!ParseU32(f[1], t.ev_class)) return nullptr;
+    t.rulename = f[2];
+    if (f[3].empty()) return nullptr;
+    t.ev_type = f[3][0];
+    if (f[4] != "0" && f[4] != "1") return nullptr;
+    t.ev_enabled = f[4] == "1";
+    if (f[5] != "0" && f[5] != "1") return nullptr;
+    t.is_instead = f[5] == "1";
+    if (!ParseU32(f[6], t.ev_qual)) return nullptr;
+    if (!ParseU32(f[7], t.ev_action)) return nullptr;
+    return makePallocNode<FormData_pg_rewrite>(t);
+}
+
 }  // namespace
 
 // --- Catalog: persistence (A-3) ---
@@ -1210,6 +2058,114 @@ bool Catalog::Save(const std::string& path) const {
         }
         return body;
     };
+    auto emit_namespace = [&]() {
+        std::string body;
+        for (const auto* r : pg_namespace_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_database = [&]() {
+        std::string body;
+        for (const auto* r : pg_database_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_index = [&]() {
+        std::string body;
+        for (const auto* r : pg_index_rows_) {
+            if (r->indexrelid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_constraint = [&]() {
+        std::string body;
+        for (const auto* r : pg_constraint_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_attrdef = [&]() {
+        std::string body;
+        for (const auto* r : pg_attrdef_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_depend = [&]() {
+        std::string body;
+        for (const auto* r : pg_depend_rows_) {
+            if (r->objid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_statistic = [&]() {
+        std::string body;
+        for (const auto* r : pg_statistic_rows_) {
+            if (r->starelid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_inherits = [&]() {
+        std::string body;
+        for (const auto* r : pg_inherits_rows_) {
+            if (r->inhrelid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_am = [&]() {
+        std::string body;
+        for (const auto* r : pg_am_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_tablespace = [&]() {
+        std::string body;
+        for (const auto* r : pg_tablespace_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_trigger = [&]() {
+        std::string body;
+        for (const auto* r : pg_trigger_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
+    auto emit_rewrite = [&]() {
+        std::string body;
+        for (const auto* r : pg_rewrite_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
 
     write_section("[pg_class]", emit_class());
     write_section("[pg_attribute]", emit_attr());
@@ -1219,6 +2175,18 @@ bool Catalog::Save(const std::string& path) const {
     write_section("[pg_cast]", emit_cast());
     write_section("[pg_aggregate]", emit_agg());
     write_section("[pg_collation]", emit_coll());
+    write_section("[pg_namespace]", emit_namespace());
+    write_section("[pg_database]", emit_database());
+    write_section("[pg_index]", emit_index());
+    write_section("[pg_constraint]", emit_constraint());
+    write_section("[pg_attrdef]", emit_attrdef());
+    write_section("[pg_depend]", emit_depend());
+    write_section("[pg_statistic]", emit_statistic());
+    write_section("[pg_inherits]", emit_inherits());
+    write_section("[pg_am]", emit_am());
+    write_section("[pg_tablespace]", emit_tablespace());
+    write_section("[pg_trigger]", emit_trigger());
+    write_section("[pg_rewrite]", emit_rewrite());
 
     out.flush();
     return out.good();
@@ -1281,6 +2249,42 @@ bool Catalog::Load(const std::string& path) {
         } else if (section == "[pg_collation]") {
             if (auto* r = DeserPgCollation(fields))
                 InsertCollation(r);
+        } else if (section == "[pg_namespace]") {
+            if (auto* r = DeserPgNamespace(fields))
+                InsertNamespace(r);
+        } else if (section == "[pg_database]") {
+            if (auto* r = DeserPgDatabase(fields))
+                InsertDatabase(r);
+        } else if (section == "[pg_index]") {
+            if (auto* r = DeserPgIndex(fields))
+                InsertIndex(r);
+        } else if (section == "[pg_constraint]") {
+            if (auto* r = DeserPgConstraint(fields))
+                InsertConstraint(r);
+        } else if (section == "[pg_attrdef]") {
+            if (auto* r = DeserPgAttrdef(fields))
+                InsertAttrdef(r);
+        } else if (section == "[pg_depend]") {
+            if (auto* r = DeserPgDepend(fields))
+                InsertDepend(r);
+        } else if (section == "[pg_statistic]") {
+            if (auto* r = DeserPgStatistic(fields))
+                InsertStatistic(r);
+        } else if (section == "[pg_inherits]") {
+            if (auto* r = DeserPgInherits(fields))
+                InsertInherits(r);
+        } else if (section == "[pg_am]") {
+            if (auto* r = DeserPgAm(fields))
+                InsertAm(r);
+        } else if (section == "[pg_tablespace]") {
+            if (auto* r = DeserPgTablespace(fields))
+                InsertTablespace(r);
+        } else if (section == "[pg_trigger]") {
+            if (auto* r = DeserPgTrigger(fields))
+                InsertTrigger(r);
+        } else if (section == "[pg_rewrite]") {
+            if (auto* r = DeserPgRewrite(fields))
+                InsertRewrite(r);
         }
     }
 

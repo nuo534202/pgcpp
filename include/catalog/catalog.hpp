@@ -26,6 +26,18 @@ struct FormData_pg_proc;
 struct FormData_pg_cast;
 struct FormData_pg_aggregate;
 struct FormData_pg_collation;
+struct FormData_pg_namespace;
+struct FormData_pg_database;
+struct FormData_pg_index;
+struct FormData_pg_constraint;
+struct FormData_pg_attrdef;
+struct FormData_pg_depend;
+struct FormData_pg_statistic;
+struct FormData_pg_inherits;
+struct FormData_pg_am;
+struct FormData_pg_tablespace;
+struct FormData_pg_trigger;
+struct FormData_pg_rewrite;
 
 // Catalog — the in-memory system catalog registry.
 //
@@ -125,6 +137,94 @@ public:
     // Look up a pg_collation by name.
     const FormData_pg_collation* GetCollationByName(const std::string& name) const;
 
+    // --- pg_namespace accessors ---
+
+    Oid InsertNamespace(FormData_pg_namespace* row);
+    const FormData_pg_namespace* GetNamespaceByOid(Oid oid) const;
+    const FormData_pg_namespace* GetNamespaceByName(const std::string& name) const;
+    bool DeleteNamespace(Oid oid);
+
+    // --- pg_database accessors ---
+
+    Oid InsertDatabase(FormData_pg_database* row);
+    const FormData_pg_database* GetDatabaseByOid(Oid oid) const;
+    const FormData_pg_database* GetDatabaseByName(const std::string& name) const;
+    bool DeleteDatabase(Oid oid);
+
+    // --- pg_index accessors ---
+
+    Oid InsertIndex(FormData_pg_index* row);
+    const FormData_pg_index* GetIndexByOid(Oid indexrelid) const;
+    std::vector<const FormData_pg_index*> GetIndexesByRelid(Oid indrelid) const;
+    bool DeleteIndex(Oid indexrelid);
+    std::size_t DeleteIndexesForRelid(Oid indrelid);
+
+    // --- pg_constraint accessors ---
+
+    Oid InsertConstraint(FormData_pg_constraint* row);
+    const FormData_pg_constraint* GetConstraintByOid(Oid oid) const;
+    std::vector<const FormData_pg_constraint*> GetConstraintsByRelid(Oid conrelid) const;
+    bool DeleteConstraint(Oid oid);
+    std::size_t DeleteConstraintsForRelid(Oid conrelid);
+
+    // --- pg_attrdef accessors ---
+
+    Oid InsertAttrdef(FormData_pg_attrdef* row);
+    const FormData_pg_attrdef* GetAttrdef(Oid adrelid, int16_t adnum) const;
+    std::vector<const FormData_pg_attrdef*> GetAttrdefsByRelid(Oid adrelid) const;
+    bool DeleteAttrdef(Oid oid);
+    std::size_t DeleteAttrdefsForRelid(Oid adrelid);
+
+    // --- pg_depend accessors ---
+
+    void InsertDepend(FormData_pg_depend* row);
+    std::vector<const FormData_pg_depend*> GetDependsByRef(Oid refclassid, Oid refobjid) const;
+    std::vector<const FormData_pg_depend*> GetDependsByObj(Oid classid, Oid objid) const;
+    std::size_t DeleteDependsByObj(Oid classid, Oid objid);
+    std::size_t DeleteDependsByRef(Oid refclassid, Oid refobjid);
+
+    // --- pg_statistic accessors ---
+
+    void InsertStatistic(FormData_pg_statistic* row);
+    const FormData_pg_statistic* GetStatistic(Oid starelid, int16_t staattnum) const;
+    std::size_t DeleteStatisticsForRelid(Oid starelid);
+
+    // --- pg_inherits accessors ---
+
+    void InsertInherits(FormData_pg_inherits* row);
+    std::vector<const FormData_pg_inherits*> GetInheritsByParent(Oid inhparent) const;
+    const FormData_pg_inherits* GetInheritsByChild(Oid inhrelid) const;
+    bool DeleteInherits(Oid inhrelid);
+
+    // --- pg_am accessors ---
+
+    Oid InsertAm(FormData_pg_am* row);
+    const FormData_pg_am* GetAmByOid(Oid oid) const;
+    const FormData_pg_am* GetAmByName(const std::string& name) const;
+
+    // --- pg_tablespace accessors ---
+
+    Oid InsertTablespace(FormData_pg_tablespace* row);
+    const FormData_pg_tablespace* GetTablespaceByOid(Oid oid) const;
+    const FormData_pg_tablespace* GetTablespaceByName(const std::string& name) const;
+    bool DeleteTablespace(Oid oid);
+
+    // --- pg_trigger accessors ---
+
+    Oid InsertTrigger(FormData_pg_trigger* row);
+    const FormData_pg_trigger* GetTriggerByOid(Oid oid) const;
+    std::vector<const FormData_pg_trigger*> GetTriggersByRelid(Oid tgrelid) const;
+    bool DeleteTrigger(Oid oid);
+    std::size_t DeleteTriggersForRelid(Oid tgrelid);
+
+    // --- pg_rewrite accessors ---
+
+    Oid InsertRewrite(FormData_pg_rewrite* row);
+    const FormData_pg_rewrite* GetRewriteByOid(Oid oid) const;
+    std::vector<const FormData_pg_rewrite*> GetRewritesByRelid(Oid ev_class) const;
+    bool DeleteRewrite(Oid oid);
+    std::size_t DeleteRewritesForRelid(Oid ev_class);
+
     // --- OID assignment ---
 
     // Allocate the next OID (PostgreSQL GetNewOid equivalent for catalog).
@@ -151,6 +251,18 @@ private:
     std::vector<FormData_pg_cast*> pg_cast_rows_;
     std::vector<FormData_pg_aggregate*> pg_aggregate_rows_;
     std::vector<FormData_pg_collation*> pg_collation_rows_;
+    std::vector<FormData_pg_namespace*> pg_namespace_rows_;
+    std::vector<FormData_pg_database*> pg_database_rows_;
+    std::vector<FormData_pg_index*> pg_index_rows_;
+    std::vector<FormData_pg_constraint*> pg_constraint_rows_;
+    std::vector<FormData_pg_attrdef*> pg_attrdef_rows_;
+    std::vector<FormData_pg_depend*> pg_depend_rows_;
+    std::vector<FormData_pg_statistic*> pg_statistic_rows_;
+    std::vector<FormData_pg_inherits*> pg_inherits_rows_;
+    std::vector<FormData_pg_am*> pg_am_rows_;
+    std::vector<FormData_pg_tablespace*> pg_tablespace_rows_;
+    std::vector<FormData_pg_trigger*> pg_trigger_rows_;
+    std::vector<FormData_pg_rewrite*> pg_rewrite_rows_;
     Oid next_oid_ = kFirstNormalObjectId;
 };
 
