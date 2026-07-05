@@ -23,6 +23,7 @@
 
 #include "access/heapam.hpp"
 #include "common/error/elog.hpp"
+#include "storage/ipc/proc.hpp"
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
 
@@ -105,6 +106,14 @@ void CommitTransaction() {
         TransactionIdCommit(s->transaction_id);
     }
 
+    // P0-3: clear the XID from PGXACT so concurrent backends no longer see
+    // this transaction as running. The PGPROC slot stays registered (the
+    // backend is still alive); only the per-transaction XID is cleared.
+    pgcpp::storage::PGXACT* pgxact = pgcpp::storage::GetMyPgXact();
+    if (pgxact != nullptr) {
+        pgxact->xid = pgcpp::transaction::kInvalidTransactionId;
+    }
+
     // Release the transaction snapshot so the next transaction sees the
     // latest committed state.
     ResetTransactionSnapshot();
@@ -123,6 +132,12 @@ void AbortTransaction() {
     // Record the XID as aborted in the commit log (if it was assigned).
     if (TransactionIdIsValid(s->transaction_id)) {
         TransactionIdAbort(s->transaction_id);
+    }
+
+    // P0-3: clear the XID from PGXACT (same as commit path).
+    pgcpp::storage::PGXACT* pgxact = pgcpp::storage::GetMyPgXact();
+    if (pgxact != nullptr) {
+        pgxact->xid = pgcpp::transaction::kInvalidTransactionId;
     }
 
     // Release the transaction snapshot.
@@ -261,6 +276,14 @@ TransactionId GetCurrentTransactionId() {
         }
         if (!TransactionIdIsValid(top->transaction_id)) {
             top->transaction_id = AllocateNextTransactionId();
+            // P0-3: publish the XID in the PGXACT compact array so concurrent
+            // backends see this transaction in their snapshots. The PGPROC slot
+            // was registered in ProcArray by InitProcess; we only need to set
+            // the xid field here.
+            pgcpp::storage::PGXACT* pgxact = pgcpp::storage::GetMyPgXact();
+            if (pgxact != nullptr) {
+                pgxact->xid = top->transaction_id;
+            }
         }
         // Subtransactions share the top-level XID.
         s->transaction_id = top->transaction_id;

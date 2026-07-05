@@ -54,11 +54,31 @@ struct PGPROC {
 
     // Freelist linkage (next free PGPROC, or nullptr if none).
     PGPROC* next = nullptr;
+
+    // Index of this PGPROC in the pool (set by ProcGlobalInit). Used as
+    // the PGXACT array index.
+    int pgprocno = -1;
+};
+
+// PGXACT — compact per-backend transaction state, parallel to PGPROC.
+//
+// PostgreSQL keeps PGXACT separate from PGPROC so that GetSnapshotData
+// can scan only the compact PGXACT entries (xid/xmin) without touching
+// the much larger PGPROC structs, reducing cache-line traffic during
+// snapshot acquisition. Indexed by the same slot index as PGPROC.
+//
+// All fields are plain types so the struct can live in shared memory.
+struct PGXACT {
+    pgcpp::transaction::TransactionId xid =
+        pgcpp::transaction::kInvalidTransactionId;  // current top-level XID
+    pgcpp::transaction::TransactionId xmin =
+        pgcpp::transaction::kInvalidTransactionId;  // snapshot xmin
 };
 
 // InitProcess — initialize a PGPROC for the current backend.
-// Claims a slot from the shared freelist (under kProcArrayLock).
-// Returns a pointer to the PGPROC; nullptr if no slot is available.
+// Claims a slot from the shared freelist (under kProcArrayLock) and
+// registers it in the ProcArray. Returns a pointer to the PGPROC;
+// nullptr if no slot is available.
 PGPROC* InitProcess();
 
 // ProcKill — release the current backend's PGPROC back to the freelist.
@@ -81,7 +101,16 @@ PGPROC* GetMyProc();
 // SetMyProc — install a PGPROC pointer for the current backend (test hook).
 void SetMyProc(PGPROC* proc);
 
-// ProcArrayShmemSize — shared-memory bytes needed for the PGPROC pool.
+// GetMyPgXact — return the PGXACT entry for the current backend (parallel
+// to GetMyProc). Returns nullptr if InitProcess has not been called.
+PGXACT* GetMyPgXact();
+
+// GetPgXactByIndex — return the PGXACT entry at the given pool index.
+// Used by ProcArray snapshot scans. Returns nullptr if not initialized.
+PGXACT* GetPgXactByIndex(int index);
+
+// ProcArrayShmemSize — shared-memory bytes needed for the PGPROC pool
+// and the parallel PGXACT compact array.
 std::size_t ProcArrayShmemSize();
 
 // NumProcs — number of currently-active PGPROC slots (pid != 0).

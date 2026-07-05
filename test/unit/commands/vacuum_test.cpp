@@ -31,6 +31,7 @@
 #include "parser/parsenodes.hpp"
 #include "storage/bufmgr.hpp"
 #include "storage/bufpage.hpp"
+#include "storage/ipc/proc.hpp"
 #include "storage/smgr.hpp"
 #include "transaction/heap_tuple.hpp"
 #include "transaction/procarray.hpp"
@@ -79,7 +80,9 @@ using pgcpp::storage::Buffer;
 using pgcpp::storage::BufferGetPage;
 using pgcpp::storage::ForkNumber;
 using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::InitProcess;
 using pgcpp::storage::PageGetHeapFreeSpace;
+using pgcpp::storage::ProcKill;
 using pgcpp::storage::ReadBuffer;
 using pgcpp::storage::ReadBufferMode;
 using pgcpp::storage::ReleaseBuffer;
@@ -96,8 +99,6 @@ using pgcpp::transaction::InitializeProcArray;
 using pgcpp::transaction::InitializeTransactionSystem;
 using pgcpp::transaction::ItemPointerData;
 using pgcpp::transaction::kInvalidTransactionId;
-using pgcpp::transaction::ProcArrayAdd;
-using pgcpp::transaction::ProcArrayRemove;
 using pgcpp::transaction::ResetProcArray;
 using pgcpp::transaction::ResetTransactionState;
 using pgcpp::transaction::TransactionId;
@@ -124,12 +125,15 @@ protected:
         ResetTransactionState();
         InitializeTransactionSystem();
         InitializeProcArray();
+        // P0-3: claim a PGPROC slot (registers in ProcArray) so the backend
+        // is visible to GetOldestXmin / snapshot scans.
+        InitProcess();
         BeginTransactionBlock();
 
-        // Force XID assignment and register in ProcArray so GetOldestXmin()
-        // returns a meaningful value (needed by HeapTupleIsSurelyDead).
+        // Force XID assignment — GetCurrentTransactionId publishes the XID
+        // in PGXACT so GetOldestXmin() returns a meaningful value (needed
+        // by HeapTupleIsSurelyDead).
         current_xid_ = GetCurrentTransactionId();
-        ProcArrayAdd(current_xid_);
 
         test_dir_ = "/tmp/pgcpp_vacuum_test_" + std::to_string(getpid());
         SetStorageBaseDir(test_dir_);
@@ -140,12 +144,11 @@ protected:
     }
 
     void TearDown() override {
-        // Remove the current XID from ProcArray before ending the transaction.
-        if (TransactionIdIsValid(current_xid_)) {
-            ProcArrayRemove(current_xid_);
-        }
-
         EndTransactionBlock();
+        // P0-3: release the PGPROC slot (deregisters from ProcArray) BEFORE
+        // ShutdownBufferPool(), which calls ResetShmem() and frees the
+        // ProcArray/PGPROC backing memory.
+        ProcKill();
         ResetRelcache();
         ShutdownBufferPool();
         smgrcloseall();
@@ -166,18 +169,13 @@ protected:
         }
     }
 
-    // Commit the current transaction and start a new one, updating ProcArray.
-    // The old XID is committed (in CLOG via EndTransactionBlock) and removed
-    // from ProcArray; the new XID is allocated and added to ProcArray.
+    // Commit the current transaction and start a new one. CommitTransaction
+    // clears the old XID from PGXACT; the new GetCurrentTransactionId call
+    // publishes the new XID. No manual ProcArray manipulation needed.
     void CommitAndStartNew() {
-        TransactionId old_xid = GetCurrentTransactionIdIfAny();
         EndTransactionBlock();
-        if (TransactionIdIsValid(old_xid)) {
-            ProcArrayRemove(old_xid);
-        }
         BeginTransactionBlock();
         current_xid_ = GetCurrentTransactionId();
-        ProcArrayAdd(current_xid_);
     }
 
     FormData_pg_class* MakeClassRow(const std::string& name, Oid oid) {

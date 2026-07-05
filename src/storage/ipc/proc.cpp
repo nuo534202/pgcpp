@@ -14,6 +14,7 @@
 
 #include "storage/ipc/lwlock.hpp"
 #include "storage/ipc/shmem.hpp"
+#include "transaction/procarray.hpp"
 
 namespace pgcpp::storage {
 
@@ -22,6 +23,11 @@ namespace {
 // Pointer to the shm-allocated PGPROC pool (kMaxBackends entries).
 // Set by ProcGlobalInit(); nullptr before initialization.
 PGPROC* g_proc_base = nullptr;
+
+// Pointer to the shm-allocated PGXACT compact array (kMaxBackends entries).
+// Parallel to g_proc_base: g_pgxact_base[i] is the compact state for
+// g_proc_base[i]. Set by ProcGlobalInit(); nullptr before initialization.
+PGXACT* g_pgxact_base = nullptr;
 
 // Head of the PGPROC freelist (slots with pid == 0). Protected by
 // kProcArrayLock. Linked via PGPROC::next.
@@ -67,7 +73,16 @@ PGPROC* InitProcess() {
     p->backend_id_num = 0;
     p->is_aux = false;
 
+    // Initialize the parallel PGXACT entry (compact state for snapshot scans).
+    if (g_pgxact_base != nullptr && p->pgprocno >= 0) {
+        g_pgxact_base[p->pgprocno] = PGXACT{};
+    }
+
     MyProcPtr() = p;
+
+    // Register this backend in the shared ProcArray so concurrent backends
+    // see it in their snapshots. ProcArrayAdd stores p->pgprocno.
+    pgcpp::transaction::ProcArrayAdd(p);
 
     LWLockRelease(lock);
     return p;
@@ -82,6 +97,14 @@ void ProcKill() {
     LWLock* lock = LookupNamedLock(LWLockId::kProcArrayLock);
     LWLockAcquire(lock, LWLockMode::kExclusive);
 
+    // Deregister from the ProcArray before returning the slot.
+    pgcpp::transaction::ProcArrayRemove(p);
+
+    // Clear the PGXACT entry.
+    if (g_pgxact_base != nullptr && p->pgprocno >= 0) {
+        g_pgxact_base[p->pgprocno] = PGXACT{};
+    }
+
     // Return the slot to the freelist.
     p->pid = 0;
     p->xid = pgcpp::transaction::kInvalidTransactionId;
@@ -95,18 +118,24 @@ void ProcKill() {
 }
 
 void ProcGlobalInit() {
-    if (g_proc_base != nullptr) {
-        return;  // already initialized
-    }
-
+    // Always re-validate the pointers via ShmemInitStruct. In test mode,
+    // ResetShmem() may have freed the backing memory, leaving g_proc_base /
+    // g_pgxact_base dangling. ShmemInitStruct is idempotent (returns existing
+    // region with found=true if the name still exists, or allocates fresh
+    // with found=false).
     bool found = false;
     g_proc_base =
         static_cast<PGPROC*>(ShmemInitStruct("ProcPool", sizeof(PGPROC) * kMaxBackends, &found));
 
+    bool pgxact_found = false;
+    g_pgxact_base =
+        static_cast<PGXACT*>(ShmemInitStruct("PgXactArray", sizeof(PGXACT) * kMaxBackends, &pgxact_found));
+
     if (!found) {
-        // Build the freelist: link all slots in order.
+        // Build the freelist: link all slots in order, assign pgprocno.
         for (int i = 0; i < kMaxBackends; ++i) {
             g_proc_base[i] = PGPROC{};  // zero-init
+            g_proc_base[i].pgprocno = i;
             g_proc_base[i].next = (i + 1 < kMaxBackends) ? &g_proc_base[i + 1] : nullptr;
         }
         g_proc_freelist = &g_proc_base[0];
@@ -115,6 +144,10 @@ void ProcGlobalInit() {
         // (In multi-process mode, fork'd children inherit the freelist
         // pointer via MAP_SHARED, so this branch is mainly for test mode
         // where ShmemInitStruct returns the same process-local memory.)
+        // Ensure pgprocno is set (may be zero from prior zero-init).
+        for (int i = 0; i < kMaxBackends; ++i) {
+            g_proc_base[i].pgprocno = i;
+        }
         g_proc_freelist = nullptr;
         for (int i = kMaxBackends - 1; i >= 0; --i) {
             if (g_proc_base[i].pid == 0) {
@@ -132,18 +165,25 @@ void ProcGlobalReset() {
     // ShmemInitStruct (which gives fresh memory in test mode).
     if (!IsShmemActive()) {
         g_proc_base = nullptr;
+        g_pgxact_base = nullptr;
         g_proc_freelist = nullptr;
     } else {
         // Multi-process mode: clear slots in-place (shm survives).
         if (g_proc_base != nullptr) {
             for (int i = 0; i < kMaxBackends; ++i) {
                 g_proc_base[i] = PGPROC{};
+                g_proc_base[i].pgprocno = i;
             }
             g_proc_freelist = nullptr;
             for (int i = 0; i < kMaxBackends; ++i) {
                 g_proc_base[i].next = (i + 1 < kMaxBackends) ? &g_proc_base[i + 1] : nullptr;
             }
             g_proc_freelist = &g_proc_base[0];
+        }
+        if (g_pgxact_base != nullptr) {
+            for (int i = 0; i < kMaxBackends; ++i) {
+                g_pgxact_base[i] = PGXACT{};
+            }
         }
     }
     MyProcPtr() = nullptr;
@@ -158,8 +198,24 @@ void SetMyProc(PGPROC* proc) {
     MyProcPtr() = proc;
 }
 
+PGXACT* GetMyPgXact() {
+    PGPROC* p = MyProcPtr();
+    if (p == nullptr || g_pgxact_base == nullptr || p->pgprocno < 0) {
+        return nullptr;
+    }
+    return &g_pgxact_base[p->pgprocno];
+}
+
+PGXACT* GetPgXactByIndex(int index) {
+    if (g_pgxact_base == nullptr || index < 0 || index >= kMaxBackends) {
+        return nullptr;
+    }
+    return &g_pgxact_base[index];
+}
+
 std::size_t ProcArrayShmemSize() {
-    return sizeof(PGPROC) * static_cast<std::size_t>(kMaxBackends);
+    return sizeof(PGPROC) * static_cast<std::size_t>(kMaxBackends) +
+           sizeof(PGXACT) * static_cast<std::size_t>(kMaxBackends);
 }
 
 int NumProcs() {

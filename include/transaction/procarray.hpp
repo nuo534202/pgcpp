@@ -7,16 +7,23 @@
 // determine the oldest running XID (for VACUUM), and build the snapshot of
 // running XIDs for standby.
 //
-// pgcpp allocates the ProcArray as a shared-memory array of TransactionIds
-// (via ShmemInitStruct) so fork'd backends share the same view. All
-// mutations are serialized by kProcArrayLock. In test mode (no ShmemInit
-// called), ShmemInitStruct falls back to process-local allocation.
+// pgcpp allocates the ProcArray in shared memory as an array of PGPROC slot
+// indices (pgprocnos), parallel to the PGXACT compact array. InitProcess
+// registers a backend by calling ProcArrayAdd(PGPROC*); ProcKill deregisters
+// via ProcArrayRemove(PGPROC*). GetSnapshotData scans the PGXACT entries
+// (via pgprocnos) for cache-line efficiency. All mutations are serialized
+// by kProcArrayLock. In test mode (no ShmemInit called), ShmemInitStruct
+// falls back to process-local allocation.
 #pragma once
 
 #include <cstdint>
 #include <vector>
 
 #include "transaction/transam.hpp"
+
+namespace pgcpp::storage {
+struct PGPROC;  // forward decl from storage/ipc/proc.hpp
+}  // namespace pgcpp::storage
 
 namespace pgcpp::transaction {
 
@@ -27,14 +34,16 @@ void InitializeProcArray();
 // ResetProcArray — clear the ProcArray (for testing).
 void ResetProcArray();
 
-// ProcArrayAdd — register a running transaction with the given XID.
-// Called at transaction start (when XID is assigned).
+// ProcArrayAdd — register a backend (by its PGPROC slot) in the ProcArray.
+// Called by InitProcess at backend startup. Stores the PGPROC's pool index
+// (pgprocno) so snapshot scans can read the parallel PGXACT entry.
 // Acquires kProcArrayLock exclusive.
-void ProcArrayAdd(TransactionId xid);
+void ProcArrayAdd(pgcpp::storage::PGPROC* proc);
 
-// ProcArrayRemove — remove a transaction from the array (called at commit/abort).
+// ProcArrayRemove — deregister a backend from the ProcArray.
+// Called by ProcKill at backend exit.
 // Acquires kProcArrayLock exclusive.
-void ProcArrayRemove(TransactionId xid);
+void ProcArrayRemove(pgcpp::storage::PGPROC* proc);
 
 // GetOldestXmin — the oldest XID that could still be running, used by VACUUM
 // as the cutoff for removing dead tuples. Returns FrozenTransactionId if
@@ -53,15 +62,17 @@ std::vector<TransactionId> GetRunningTransactionData();
 void GetRunningTransactionData(std::vector<TransactionId>& xip_out, TransactionId* xmax_out,
                                TransactionId* xmin_out);
 
-// CountRunningXacts — number of running transactions.
-// Acquires kProcArrayLock shared.
+// CountRunningXacts — number of running transactions (backends with a valid
+// XID in their PGXACT entry). Acquires kProcArrayLock shared.
 int CountRunningXacts();
 
-// ProcArrayContains — true if `xid` is currently in the array (running).
+// ProcArrayContains — true if `xid` is currently in any registered backend's
+// PGXACT entry (i.e., a backend with that XID is running).
 // Acquires kProcArrayLock shared.
 bool ProcArrayContains(TransactionId xid);
 
-// ProcArrayShmemSize — shared-memory bytes needed for the ProcArray.
+// ProcArrayShmemSize — shared-memory bytes needed for the ProcArray
+// (the pgprocnos index array).
 std::size_t ProcArrayShmemSize();
 
 }  // namespace pgcpp::transaction

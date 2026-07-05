@@ -89,6 +89,7 @@ using pgcpp::storage::InitProcess;
 using pgcpp::storage::kNumNamedLWLocks;
 using pgcpp::storage::LWLock;
 using pgcpp::storage::ProcGlobalInit;
+using pgcpp::storage::ProcKill;
 using pgcpp::storage::ResetHeldLWLocks;
 using pgcpp::storage::SetStorageBaseDir;
 using pgcpp::storage::ShmemAttach;
@@ -334,11 +335,12 @@ void InitializeServerSubsystems(const std::string& data_dir) {
     InitErrorSubsystem();
 
     // Shared memory: allocate a single mmap'd segment (inherited across
-    // fork) large enough for the BufferPool, PGPROC pool, ProcArray xids,
-    // CLOG, VariableCache, LWLock array, plus 1MB of slack.
+    // fork) large enough for the BufferPool, PGPROC pool + PGXACT compact
+    // array, ProcArray index, CLOG, VariableCache, LWLock array, plus 1MB
+    // of slack.
     std::size_t shm_size =
-        BufferPoolShmemSize(4096) + pgcpp::storage::ProcArrayShmemSize()    // PGPROC pool
-        + ProcArrayShmemSize()                                              // ProcArray xids
+        BufferPoolShmemSize(4096) + pgcpp::storage::ProcArrayShmemSize()    // PGPROC + PGXACT
+        + ProcArrayShmemSize()                                              // ProcArray index
         + CLogShmemSize() + sizeof(LWLock) * kNumNamedLWLocks + (1 << 20);  // 1MB slack
     ShmemInit(shm_size);
     InitializeAllLWLocks();
@@ -931,6 +933,11 @@ int Postmaster::AcceptAndFork() {
         InitProcess();
 
         BackendMain(client_fd);
+
+        // P0-3: release the PGPROC slot back to the shared freelist so
+        // subsequent connections can reuse it. Without this, the pool would
+        // leak slots (one per connection) until kMaxBackends is exhausted.
+        ProcKill();
         _exit(0);
     }
 

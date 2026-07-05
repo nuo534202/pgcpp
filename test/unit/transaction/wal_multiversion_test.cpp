@@ -19,6 +19,7 @@
 #include "common/error/elog.hpp"
 #include "common/memory/alloc_set.hpp"
 #include "common/memory/memory_context.hpp"
+#include "storage/ipc/proc.hpp"
 #include "transaction/commit_ts.hpp"
 #include "transaction/multixact.hpp"
 #include "transaction/parallel.hpp"
@@ -77,9 +78,7 @@ using pgcpp::transaction::ParallelContext;
 using pgcpp::transaction::ParallelContextActive;
 using pgcpp::transaction::PerformCrashRecovery;
 using pgcpp::transaction::PerformCrashRecoveryFrom;
-using pgcpp::transaction::ProcArrayAdd;
 using pgcpp::transaction::ProcArrayContains;
-using pgcpp::transaction::ProcArrayRemove;
 using pgcpp::transaction::RecoveryStats;
 using pgcpp::transaction::RedoFn;
 using pgcpp::transaction::RegisterInvalidationHandler;
@@ -132,7 +131,40 @@ using pgcpp::transaction::XLogResetInsert;
 using pgcpp::transaction::XLogSetRecordFlags;
 using pgcpp::transaction::XLogWriteRaw;
 
+using pgcpp::storage::GetMyPgXact;
+using pgcpp::storage::GetMyProc;
+using pgcpp::storage::InitProcess;
+using pgcpp::storage::PGPROC;
+using pgcpp::storage::ProcKill;
+using pgcpp::storage::SetMyProc;
+
 namespace {
+
+// Test helper: simulate a backend with the given XID.
+// Claims a PGPROC slot via InitProcess (which registers in ProcArray),
+// sets the PGXACT xid, then restores the previous MyProc so the caller's
+// state is preserved. Returns the PGPROC* for later removal.
+PGPROC* AddFakeBackend(TransactionId xid) {
+    PGPROC* old_proc = GetMyProc();
+    PGPROC* p = InitProcess();
+    if (p != nullptr) {
+        pgcpp::storage::PGXACT* pgxact = GetMyPgXact();
+        if (pgxact != nullptr) {
+            pgxact->xid = xid;
+        }
+    }
+    SetMyProc(old_proc);
+    return p;
+}
+
+// Test helper: deregister a fake backend and return its PGPROC slot.
+void RemoveFakeBackend(PGPROC* p) {
+    if (p == nullptr) return;
+    PGPROC* old_proc = GetMyProc();
+    SetMyProc(p);
+    ProcKill();
+    SetMyProc(old_proc);
+}
 
 class WalMultiversionTest : public ::testing::Test {
 protected:
@@ -162,6 +194,9 @@ protected:
         ResetCommitTs();
         ResetMultiXact();
         ResetProcArray();
+        // P0-3: reset the PGPROC pool so fake backends from ProcArray tests
+        // don't leak slots into subsequent tests.
+        pgcpp::storage::ProcGlobalReset();
         ResetSinval();
 
         pgcpp::memory::SetCurrentMemoryContext(nullptr);
@@ -646,23 +681,29 @@ TEST_F(WalMultiversionTest, MultiXact_GetMembersEmptyForInvalid) {
 // ProcArrayAdd/Remove track running transactions.
 TEST_F(WalMultiversionTest, ProcArray_AddRemove) {
     EXPECT_EQ(CountRunningXacts(), 0);
-    ProcArrayAdd(10);
-    ProcArrayAdd(20);
+    PGPROC* p10 = AddFakeBackend(10);
+    PGPROC* p20 = AddFakeBackend(20);
+    ASSERT_NE(p10, nullptr);
+    ASSERT_NE(p20, nullptr);
     EXPECT_EQ(CountRunningXacts(), 2);
     EXPECT_TRUE(ProcArrayContains(10));
     EXPECT_FALSE(ProcArrayContains(99));
 
-    ProcArrayRemove(10);
+    RemoveFakeBackend(p10);
     EXPECT_EQ(CountRunningXacts(), 1);
     EXPECT_FALSE(ProcArrayContains(10));
+    RemoveFakeBackend(p20);
 }
 
 // GetOldestXmin returns the minimum running XID.
 TEST_F(WalMultiversionTest, ProcArray_GetOldestXmin) {
-    ProcArrayAdd(50);
-    ProcArrayAdd(30);
-    ProcArrayAdd(70);
+    PGPROC* p50 = AddFakeBackend(50);
+    PGPROC* p30 = AddFakeBackend(30);
+    PGPROC* p70 = AddFakeBackend(70);
     EXPECT_EQ(GetOldestXmin(), static_cast<TransactionId>(30));
+    RemoveFakeBackend(p50);
+    RemoveFakeBackend(p30);
+    RemoveFakeBackend(p70);
 }
 
 // GetOldestXmin returns FrozenTransactionId when no transactions are running.
@@ -672,17 +713,21 @@ TEST_F(WalMultiversionTest, ProcArray_GetOldestXminEmpty) {
 
 // GetOldestXmin ignores the specified XID.
 TEST_F(WalMultiversionTest, ProcArray_GetOldestXminIgnore) {
-    ProcArrayAdd(30);
-    ProcArrayAdd(50);
+    PGPROC* p30 = AddFakeBackend(30);
+    PGPROC* p50 = AddFakeBackend(50);
     EXPECT_EQ(GetOldestXmin(30), static_cast<TransactionId>(50));
+    RemoveFakeBackend(p30);
+    RemoveFakeBackend(p50);
 }
 
 // GetRunningTransactionData returns a copy of the running XIDs.
 TEST_F(WalMultiversionTest, ProcArray_GetRunningData) {
-    ProcArrayAdd(10);
-    ProcArrayAdd(20);
+    PGPROC* p10 = AddFakeBackend(10);
+    PGPROC* p20 = AddFakeBackend(20);
     auto running = GetRunningTransactionData();
     EXPECT_EQ(running.size(), 2u);
+    RemoveFakeBackend(p10);
+    RemoveFakeBackend(p20);
 }
 
 // ===========================================================================
