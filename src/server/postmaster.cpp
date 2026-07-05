@@ -42,6 +42,8 @@
 #include "storage/ipc/proc.hpp"
 #include "storage/ipc/shmem.hpp"
 #include "storage/smgr.hpp"
+#include "transaction/commit_ts.hpp"
+#include "transaction/multixact.hpp"
 #include "transaction/procarray.hpp"
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
@@ -94,14 +96,22 @@ using pgcpp::storage::ShmemInit;
 using pgcpp::storage::ShutdownBufferPool;
 using pgcpp::storage::smgrcloseall;
 using pgcpp::transaction::CLogShmemSize;
+using pgcpp::transaction::FlushClogFiles;
 using pgcpp::transaction::InitializeCommitLog;
+using pgcpp::transaction::InitializeCommitTs;
+using pgcpp::transaction::InitializeMultiXact;
 using pgcpp::transaction::InitializeProcArray;
 using pgcpp::transaction::InitializeSnapshotManager;
 using pgcpp::transaction::InitializeTransactionSystem;
 using pgcpp::transaction::InitializeWal;
+using pgcpp::transaction::LoadClogFiles;
 using pgcpp::transaction::ProcArrayShmemSize;
 using pgcpp::transaction::ResetTransactionState;
+using pgcpp::transaction::SetClogDirectory;
 using pgcpp::transaction::SetWalDirectory;
+using pgcpp::transaction::ShutdownClog;
+using pgcpp::transaction::ShutdownCommitTs;
+using pgcpp::transaction::ShutdownMultiXact;
 using pgcpp::transaction::ShutdownWal;
 
 // ---------------------------------------------------------------------------
@@ -362,6 +372,15 @@ void InitializeServerSubsystems(const std::string& data_dir) {
     SetWalDirectory(data_dir + "/pg_wal");
     InitializeWal();
 
+    // P0-2: CLOG / commit_ts / multixact — load existing pages from disk so
+    // transaction status, commit timestamps, and multixact membership survive
+    // restarts. Each subsystem persists to its own subdirectory under data_dir.
+    SetClogDirectory(data_dir + "/pg_xact");
+    LoadClogFiles();
+    InitializeCommitTs(data_dir + "/pg_commit_ts");
+    InitializeMultiXact(data_dir + "/pg_multixact/offsets",
+                        data_dir + "/pg_multixact/members");
+
     // Storage.
     SetStorageBaseDir(data_dir);
     InitBufferPool(4096);
@@ -387,6 +406,13 @@ void ShutdownServerSubsystems() {
 
     // A-2: close the WAL file (flushes pending appends to the OS).
     ShutdownWal();
+
+    // P0-2: flush CLOG / commit_ts / multixact dirty pages to disk so
+    // transaction state survives a restart. Matches PG's shutdown sequence
+    // where the checkpointer flushes all SLRUs before exit.
+    ShutdownClog();
+    ShutdownCommitTs();
+    ShutdownMultiXact();
 
     ResetTransactionState();
     InitializeTransactionSystem();

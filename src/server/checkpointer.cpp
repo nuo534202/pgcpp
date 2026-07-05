@@ -18,6 +18,9 @@
 
 #include "server/bgwriter.hpp"
 #include "server/interrupt.hpp"
+#include "transaction/commit_ts.hpp"
+#include "transaction/multixact.hpp"
+#include "transaction/transam.hpp"
 #include "transaction/xlog.hpp"
 
 namespace pgcpp::server {
@@ -75,6 +78,13 @@ bool CreateCheckPoint(uint32_t flags) {
     // Flush WAL up to the current insert position.
     uint64_t current_lsn = transaction::GetXLogInsertRecPtr();
     transaction::XLogFlush(current_lsn);
+
+    // P0-2: flush all SLRU-backed transaction-status data so CLOG,
+    // commit_ts, and multixact survive a crash. In PG the checkpointer
+    // calls SimpleLruFlush for each SLRU; pgcpp mirrors that here.
+    transaction::FlushClogFiles();
+    transaction::FlushCommitTs();
+    transaction::FlushMultiXact();
 
     s.last_checkpoint_lsn = current_lsn;
     s.last_checkpoint_time_ms = NowMs();

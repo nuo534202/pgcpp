@@ -5,13 +5,15 @@
 // Records the wall-clock timestamp at which each transaction committed.
 // Used for logical replication and debugging. Backed by an SLRU in PG.
 //
-// pgcpp keeps an in-memory map (XID → timestamp). Timestamps are
-// microseconds since the epoch (matches PG's TimestampTz internal rep).
+// pgcpp uses an SLRU with optional disk persistence (pg_commit_ts/).
+// Each entry is 8 bytes (TimestampTz = int64_t), so 1024 entries per
+// 8 KB page. The SLRU cache is process-local; disk is the source of truth.
 #pragma once
 
 #include <cstdint>
-#include <vector>
+#include <string>
 
+#include "transaction/slru.hpp"
 #include "transaction/transam.hpp"
 
 namespace pgcpp::transaction {
@@ -25,11 +27,22 @@ struct CommitTsEntry {
     TimestampTz commit_ts = 0;  // 0 = not committed / unknown
 };
 
-// InitializeCommitTs — set up the commit timestamp subsystem (clear the table).
-void InitializeCommitTs();
+// CommitTsEntriesPerPage — 8 KB / 8 bytes = 1024 entries per page.
+constexpr int kCommitTsEntriesPerPage = kSlruPageSize / static_cast<int>(sizeof(TimestampTz));
 
-// ResetCommitTs — clear all commit timestamps (for testing).
+// InitializeCommitTs — set up the commit timestamp subsystem.
+// Call with an empty dir for in-memory operation (tests), or with
+// <data_dir>/pg_commit_ts for persistence.
+void InitializeCommitTs(const std::string& disk_dir = "");
+
+// ResetCommitTs — clear all commit timestamps and the SLRU cache (for testing).
 void ResetCommitTs();
+
+// ShutdownCommitTs — flush dirty pages to disk.
+void ShutdownCommitTs();
+
+// FlushCommitTs — flush dirty pages to disk (called by checkpointer).
+void FlushCommitTs();
 
 // TransactionIdSetCommitTs — record the commit timestamp for `xid`.
 void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts);

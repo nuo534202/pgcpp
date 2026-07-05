@@ -4,48 +4,76 @@
 //
 // Records the wall-clock timestamp at which each transaction committed.
 // In PostgreSQL this is backed by an SLRU persisted to pg_commit_ts/.
-// pgcpp keeps an in-memory vector indexed by XID, which is sufficient for
-// single-process operation.
+// pgcpp uses the SLRU infrastructure with optional disk persistence.
+//
+// Each entry is 8 bytes (TimestampTz = int64_t). Page size is 8 KB, so
+// 1024 entries per page. XID → (pageno, offset) mapping:
+//   pageno = xid / kCommitTsEntriesPerPage
+//   offset = (xid % kCommitTsEntriesPerPage) * sizeof(TimestampTz)
 #include "transaction/commit_ts.hpp"
 
-#include <vector>
+#include <cstring>
 
 namespace pgcpp::transaction {
 
 namespace {
 
-// In-memory commit timestamp table: index by XID, value is the timestamp.
-// 0 means "not committed / unknown". Uses a function-local static to avoid
-// the global initialization order fiasco (Google C++ Style).
-std::vector<TimestampTz>& CommitTsTable() {
-    static std::vector<TimestampTz> table;
-    return table;
+// The SLRU control block for commit timestamps. Nullptr means not initialized.
+SlruCtl*& Ctl() {
+    static SlruCtl* ctl = nullptr;
+    return ctl;
 }
 
 }  // namespace
 
-void InitializeCommitTs() {
-    CommitTsTable().clear();
+void InitializeCommitTs(const std::string& disk_dir) {
+    if (Ctl() != nullptr) {
+        SimpleLruFree(Ctl());
+    }
+    Ctl() = SimpleLruInit("commit_ts", /*capacity=*/16, disk_dir);
 }
 
 void ResetCommitTs() {
-    CommitTsTable().clear();
+    if (Ctl() != nullptr) {
+        SimpleLruReset(Ctl());
+    }
+}
+
+void ShutdownCommitTs() {
+    if (Ctl() != nullptr) {
+        SimpleLruFlush(Ctl());
+    }
+}
+
+void FlushCommitTs() {
+    if (Ctl() != nullptr) {
+        SimpleLruFlush(Ctl());
+    }
 }
 
 void TransactionIdSetCommitTs(TransactionId xid, TimestampTz ts) {
-    auto& table = CommitTsTable();
-    if (xid >= table.size()) {
-        table.resize(xid + 1, 0);
+    if (Ctl() == nullptr) {
+        return;  // not initialized (test mode without InitializeCommitTs)
     }
-    table[xid] = ts;
+    int pageno = static_cast<int>(xid / kCommitTsEntriesPerPage);
+    int offset = static_cast<int>(xid % kCommitTsEntriesPerPage) *
+                 static_cast<int>(sizeof(TimestampTz));
+    SimpleLruWrite(Ctl(), pageno, offset, &ts, sizeof(ts));
 }
 
 TimestampTz TransactionIdGetCommitTs(TransactionId xid) {
-    auto& table = CommitTsTable();
-    if (!TransactionIdIsValid(xid) || xid >= table.size()) {
+    if (Ctl() == nullptr) {
+        return 0;  // not initialized
+    }
+    if (!TransactionIdIsValid(xid)) {
         return 0;
     }
-    return table[xid];
+    int pageno = static_cast<int>(xid / kCommitTsEntriesPerPage);
+    int offset = static_cast<int>(xid % kCommitTsEntriesPerPage) *
+                 static_cast<int>(sizeof(TimestampTz));
+    TimestampTz ts = 0;
+    SimpleLruRead(Ctl(), pageno, offset, &ts, sizeof(ts));
+    return ts;
 }
 
 void TransactionTreeSetCommitTsData(TransactionId xid, TimestampTz ts, int nsubxids,

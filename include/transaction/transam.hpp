@@ -24,6 +24,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace pgcpp::transaction {
@@ -191,5 +192,35 @@ void ResetTransactionState();
 
 // CLogShmemSize — shared-memory bytes needed for the CLOG + VariableCache.
 std::size_t CLogShmemSize();
+
+// --- CLOG persistence (pg_xact/) ---
+//
+// pgcpp persists the CLOG to <data_dir>/pg_xact/ in PostgreSQL-compatible
+// format: 2 bits per XID, 8 KB pages, file name = hex page number.
+// In memory, pgcpp keeps 1 byte per XID (XidStatus) for simplicity; the
+// 2-bit encoding is applied only on disk. Dirty pages are tracked and
+// flushed by the checkpointer and on shutdown.
+
+// ClogXidsPerPage — XIDs per CLOG page (8 KB × 4 XIDs/byte = 32768).
+constexpr int kClogXidsPerPage = 32768;
+
+// SetClogDirectory — set the directory where CLOG pages are persisted.
+// Called once at server startup with <data_dir>/pg_xact.
+void SetClogDirectory(const std::string& dir);
+
+// LoadClogFiles — load CLOG from disk into the shared-memory array.
+// Called at startup. A missing directory is not an error (fresh initdb).
+void LoadClogFiles();
+
+// FlushClogFiles — write dirty CLOG pages to disk and fsync.
+// Called by the checkpointer and on shutdown.
+void FlushClogFiles();
+
+// ShutdownClog — flush dirty pages (no file descriptors to close).
+void ShutdownClog();
+
+// ResetClogPersistence — clear the CLOG directory and dirty-page tracking
+// (for testing).
+void ResetClogPersistence();
 
 }  // namespace pgcpp::transaction
