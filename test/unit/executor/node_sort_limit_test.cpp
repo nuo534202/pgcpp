@@ -326,7 +326,10 @@ protected:
         return qd;
     }
 
-    static void RunShell(const std::string& cmd) { std::system(cmd.c_str()); }
+    static void RunShell(const std::string& cmd) {
+        int rc = std::system(cmd.c_str());
+        (void)rc;
+    }
 
     AllocSetContext* context_ = nullptr;
     Catalog* catalog_ = nullptr;

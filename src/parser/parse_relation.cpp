@@ -365,7 +365,8 @@ Node* scanNameSpaceForColumn(ParseState* pstate, const std::string& colname, int
 // expandRTE — expand a range table entry into a list of Vars (for SELECT *).
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> expandRTE(ParseState* pstate, RangeTblEntry* rte, int rtindex, int location) {
+std::vector<Node*> expandRTE([[maybe_unused]] ParseState* pstate, RangeTblEntry* rte, int rtindex,
+                             int location) {
     std::vector<Node*> result;
 
     if (rte->rtekind == RTEKind::kRelation && rte->relid != kInvalidOid) {
@@ -409,7 +410,7 @@ std::vector<Node*> expandRelAttrs(ParseState* pstate, RangeTblEntry* rte, int rt
 // ---------------------------------------------------------------------------
 
 void addRTEToQuery(ParseState* pstate, RangeTblEntry* rte, bool addToJoinList, bool addToNameSpace,
-                   bool allowVLE) {
+                   [[maybe_unused]] bool allowVLE) {
     int rtindex = 0;
     for (size_t i = 0; i < pstate->p_rtable.size(); ++i) {
         if (pstate->p_rtable[i] == rte) {

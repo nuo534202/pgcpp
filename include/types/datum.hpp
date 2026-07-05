@@ -109,7 +109,7 @@ inline int VARSIZE(const char* text) {
     return len;
 }
 inline int VARSIZE_DATA(const char* text) {
-    return VARSIZE(text) - sizeof(int32_t);
+    return static_cast<int>(VARSIZE(text) - sizeof(int32_t));
 }
 
 }  // namespace pgcpp::types

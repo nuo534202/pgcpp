@@ -179,7 +179,7 @@ CompletionResult CompleteSqlCommand(const CompletionContext& ctx) {
     if (cursor < 0)
         cursor = 0;
     if (cursor > static_cast<int>(ctx.line.size()))
-        cursor = ctx.line.size();
+        cursor = static_cast<int>(ctx.line.size());
     int end = cursor;
     int start = cursor;
     while (start > 0) {

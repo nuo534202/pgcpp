@@ -413,7 +413,10 @@ protected:
         return query;
     }
 
-    static void RunShell(const std::string& cmd) { std::system(cmd.c_str()); }
+    static void RunShell(const std::string& cmd) {
+        int rc = std::system(cmd.c_str());
+        (void)rc;
+    }
 
     AllocSetContext* context_ = nullptr;
     Catalog* catalog_ = nullptr;
@@ -1387,6 +1390,7 @@ TEST_F(ExecutorTest, ExecInitNode_DispatchesOnPlanType) {
     result_plan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(7), 1, "x"));
 
     auto* query = MakeSelectQuery({});
+    (void)query;
     auto* estate = makePallocNode<EState>();
     estate->es_query_cxt = context_;
 

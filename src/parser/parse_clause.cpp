@@ -241,7 +241,7 @@ Node* transformFromClause(ParseState* pstate, const std::vector<Node*>& frmList)
 // ---------------------------------------------------------------------------
 
 Node* transformWhereClause(ParseState* pstate, Node* clause, ParseExprKind exprKind,
-                           const char* constructName) {
+                           [[maybe_unused]] const char* constructName) {
     if (clause == nullptr)
         return nullptr;
 
@@ -266,7 +266,7 @@ Node* transformWhereClause(ParseState* pstate, Node* clause, ParseExprKind exprK
 // ---------------------------------------------------------------------------
 
 Node* transformLimitClause(ParseState* pstate, Node* clause, ParseExprKind exprKind,
-                           const char* constructName) {
+                           [[maybe_unused]] const char* constructName) {
     if (clause == nullptr)
         return nullptr;
 

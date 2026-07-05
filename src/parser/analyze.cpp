@@ -483,6 +483,7 @@ static Query* transformSetOperationStmt(ParseState* pstate, SelectStmt* stmt) {
         right_query = transformSelectStmt(right_pstate, stmt->rarg);
         free_parsestate(right_pstate);
     }
+    (void)right_query;
 
     // Build a simple set operation tree
     // For now, we just store the left query's target list and range table

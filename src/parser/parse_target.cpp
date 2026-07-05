@@ -290,7 +290,8 @@ std::vector<Node*> transformTargetList(ParseState* pstate, const std::vector<Nod
 // (In our implementation, this is handled directly in transformTargetList.)
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> expandTargetList(ParseState* pstate, const std::vector<Node*>& targetlist) {
+std::vector<Node*> expandTargetList([[maybe_unused]] ParseState* pstate,
+                                    const std::vector<Node*>& targetlist) {
     // Star expansion is already handled in transformTargetList.
     return targetlist;
 }
@@ -385,7 +386,7 @@ TargetEntry* findTargetlistEntrySQL99(ParseState* pstate, Node* node,
 
 std::vector<Node*> transformSortClause(ParseState* pstate, const std::vector<Node*>& orderlist,
                                        std::vector<Node*>* targetlist, ParseExprKind exprKind,
-                                       bool useSQL99) {
+                                       [[maybe_unused]] bool useSQL99) {
     std::vector<Node*> sortclauses;
 
     for (Node* node : orderlist) {
@@ -465,7 +466,7 @@ std::vector<Node*> transformSortClause(ParseState* pstate, const std::vector<Nod
 
 std::vector<Node*> transformGroupClause(ParseState* pstate, const std::vector<Node*>& grouplist,
                                         std::vector<Node*>* targetlist,
-                                        const std::vector<Node*>& sortClause,
+                                        [[maybe_unused]] const std::vector<Node*>& sortClause,
                                         ParseExprKind exprKind) {
     std::vector<Node*> groupclauses;
 
@@ -545,8 +546,9 @@ std::vector<Node*> transformGroupClause(ParseState* pstate, const std::vector<No
 // For SELECT DISTINCT, we use the entire target list as the distinct clause.
 // ---------------------------------------------------------------------------
 
-std::vector<Node*> transformDistinctClause(ParseState* pstate, std::vector<Node*>* targetlist,
-                                           const std::vector<Node*>& distinctClause, bool isOn) {
+std::vector<Node*> transformDistinctClause(
+    [[maybe_unused]] ParseState* pstate, std::vector<Node*>* targetlist,
+    [[maybe_unused]] const std::vector<Node*>& distinctClause, bool isOn) {
     std::vector<Node*> result;
 
     if (!isOn) {

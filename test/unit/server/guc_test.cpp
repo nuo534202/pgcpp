@@ -258,7 +258,10 @@ TEST(GucTest, LoadFromStringParsesLines) {
 TEST(GucTest, LoadGucFromDataDirLoadsPostgresqlConf) {
     std::string dir = "/tmp/pgcpp_guc_datadir_" + std::to_string(getpid());
     std::string rm = "rm -rf " + dir;
-    std::system(rm.c_str());
+    {
+        int rc = std::system(rm.c_str());
+        (void)rc;
+    }
     ASSERT_EQ(mkdir(dir.c_str(), 0700), 0);
 
     {
@@ -272,7 +275,10 @@ TEST(GucTest, LoadGucFromDataDirLoadsPostgresqlConf) {
     EXPECT_EQ(guc.GetInt("port", 0), 6000);
     EXPECT_EQ(guc.GetInt("max_connections", 0), 50);
 
-    std::system(rm.c_str());
+    {
+        int rc = std::system(rm.c_str());
+        (void)rc;
+    }
 }
 
 TEST(GucTest, LoadGucFromDataDirReturnsFalseWhenMissing) {
@@ -284,12 +290,18 @@ TEST(GucTest, LoadGucFromDataDirReturnsFalseWhenMissing) {
 TEST(GucTest, LoadGucFromDataDirReturnsFalseOnEmptyDir) {
     std::string dir = "/tmp/pgcpp_guc_emptydir_" + std::to_string(getpid());
     std::string rm = "rm -rf " + dir;
-    std::system(rm.c_str());
+    {
+        int rc = std::system(rm.c_str());
+        (void)rc;
+    }
     ASSERT_EQ(mkdir(dir.c_str(), 0700), 0);
 
     GucConfig guc;
     EXPECT_FALSE(LoadGucFromDataDir(dir, &guc));
     EXPECT_EQ(guc.size(), 0u);
 
-    std::system(rm.c_str());
+    {
+        int rc = std::system(rm.c_str());
+        (void)rc;
+    }
 }

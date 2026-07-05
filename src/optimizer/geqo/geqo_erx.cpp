@@ -89,9 +89,9 @@ bool CrossoverERX(const Chromosome* mum, const Chromosome* dad, Chromosome* chil
         std::vector<Gene> candidates;
         auto it = edges.find(current);
         if (it != edges.end()) {
-            for (Gene n : it->second) {
-                if (used.find(n) == used.end())
-                    candidates.push_back(n);
+            for (Gene gene : it->second) {
+                if (used.find(gene) == used.end())
+                    candidates.push_back(gene);
             }
         }
         if (candidates.empty()) {

@@ -179,7 +179,7 @@ void WindowAggState::AccumulateRow(TupleTableSlot* row) {
                         v = DatumGetInt64(val);
                     wa_running.sum_int[i] += v;
                 } else if (info.argtype == kFloat4Oid) {
-                    wa_running.sum_float[i] += DatumGetFloat4(val);
+                    wa_running.sum_float[i] += static_cast<double>(DatumGetFloat4(val));
                 } else {
                     wa_running.sum_float[i] += DatumGetFloat8(val);
                 }
@@ -192,7 +192,7 @@ void WindowAggState::AccumulateRow(TupleTableSlot* row) {
                 } else if (info.argtype == kInt8Oid) {
                     wa_running.sum_float[i] += static_cast<double>(DatumGetInt64(val));
                 } else if (info.argtype == kFloat4Oid) {
-                    wa_running.sum_float[i] += DatumGetFloat4(val);
+                    wa_running.sum_float[i] += static_cast<double>(DatumGetFloat4(val));
                 } else {
                     wa_running.sum_float[i] += DatumGetFloat8(val);
                 }
@@ -362,7 +362,7 @@ void WindowAggState::ExecInit() {
         std::vector<pgcpp::catalog::FormData_pg_attribute> agg_attrs;
         for (const auto& info : wa_agg_infos) {
             pgcpp::catalog::FormData_pg_attribute attr;
-            attr.attnum = info.aggno + 1;
+            attr.attnum = static_cast<int16_t>(info.aggno + 1);
             attr.attname = "wagg" + std::to_string(info.aggno);
             attr.atttypid = info.restype;
             int16_t len;

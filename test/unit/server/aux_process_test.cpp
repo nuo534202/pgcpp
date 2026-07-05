@@ -183,7 +183,8 @@ protected:
         pgcpp::memory::SetCurrentMemoryContext(mem_ctx_);
         test_dir_ = "/tmp/pgcpp_aux_test_" + std::to_string(getpid());
         SetStorageBaseDir(test_dir_);
-        std::system(("rm -rf " + test_dir_).c_str());
+        int rc = std::system(("rm -rf " + test_dir_).c_str());
+        (void)rc;
         InitBufferPool(64);
     }
 
@@ -193,7 +194,8 @@ protected:
         // Shut down buffer pool (flushes dirty buffers, frees shm).
         ShutdownBufferPool();
         smgrcloseall();
-        std::system(("rm -rf " + test_dir_).c_str());
+        int rc = std::system(("rm -rf " + test_dir_).c_str());
+        (void)rc;
     }
 
     // CreateDirtyBuffers — read `count` blocks into the pool and mark them

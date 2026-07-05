@@ -171,7 +171,7 @@ AuthResult CheckPasswordAuth(OutputSink* sink, const std::string& user,
     return AuthResult::kWrongPassword;
 }
 
-AuthResult CheckMd5Auth(OutputSink* sink, const std::string& user,
+AuthResult CheckMd5Auth(OutputSink* sink, [[maybe_unused]] const std::string& user,
                         const std::string& stored_password, uint32_t salt) {
     // Send AuthenticationMd5Password (code 5) followed by 4-byte salt.
     std::string extra;

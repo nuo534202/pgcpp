@@ -188,7 +188,8 @@ bool IsOperatorShell(const FormData_pg_operator* op) {
 // `ltree` and `rtree` are in/out parameters: if coercion is applied, they
 // are updated to the coerced expressions.
 const FormData_pg_operator* SelectOperator(ParseState* pstate, const std::string& opname,
-                                           Node*& ltree, Node*& rtree, int location) {
+                                           Node*& ltree, Node*& rtree,
+                                           [[maybe_unused]] int location) {
     Oid left_type = exprType(ltree);
     Oid right_type = exprType(rtree);
 

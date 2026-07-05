@@ -18,6 +18,7 @@ using pgcpp::nodes::makePallocNode;
 
 void SubqueryScanState::ExecInit() {
     auto* subplan = static_cast<SubqueryScan*>(plan);
+    (void)subplan;
 
     // Build result slot from target list.
     auto* result_desc = BuildTupleDescFromTargetList(plan->targetlist);

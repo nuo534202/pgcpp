@@ -352,6 +352,10 @@ bool BeginTransactionBlock() {
         // Start a new transaction for the block.
         StartTransaction();
         s = CurrentState();
+        if (s == nullptr) {
+            ereport(pgcpp::error::LogLevel::kError,
+                    "BeginTransactionBlock: failed to start transaction");
+        }
         s->block_state = TBlockState::kBegin;
         return true;
     }
@@ -433,7 +437,7 @@ void AbortTransactionBlock() {
 
         case TBlockState::kSubInProgress:
             // ROLLBACK inside a subtransaction — abort the whole stack.
-            while (s->parent != nullptr) {
+            while (s != nullptr && s->parent != nullptr) {
                 AbortSubTransaction();
                 s = CurrentState();
             }

@@ -73,7 +73,7 @@ int _bt_compare_keys(BTKeyKind kind, const void* key1, uint16_t len1, const void
 
 // --- Index entry construction ---
 
-uint16_t _bt_item_size(BTKeyKind kind, const void* key, uint16_t key_len) {
+uint16_t _bt_item_size(BTKeyKind kind, [[maybe_unused]] const void* key, uint16_t key_len) {
     switch (kind) {
         case BTKeyKind::kInt32:
             return static_cast<uint16_t>(sizeof(BTItemData) + sizeof(int32_t));

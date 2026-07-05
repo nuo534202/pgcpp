@@ -81,7 +81,7 @@ BisonParser::symbol_type pgcpp_parser::yylex(ParserDriver& driver) {
         // Lowercase for keyword lookup.
         std::string lower_word = word;
         for (auto& ch : lower_word)
-            ch = std::tolower(static_cast<unsigned char>(ch));
+            ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
 
         const KeywordEntry* kw = ScanKeywordLookup(lower_word);
         if (kw != nullptr) {

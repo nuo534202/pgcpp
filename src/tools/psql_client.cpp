@@ -184,14 +184,14 @@ QueryResult PsqlClient::ExecuteQuery(const std::string& query) {
     }
 
     // Send the 'Q' (Simple Query) message.
-    std::string payload = query;
-    payload.push_back('\0');  // null-terminated
+    std::string query_payload = query;
+    query_payload.push_back('\0');  // null-terminated
 
     std::string msg;
     msg.push_back('Q');
-    int32_t len = htonl(static_cast<int32_t>(4 + payload.size()));
+    int32_t len = htonl(static_cast<int32_t>(4 + query_payload.size()));
     msg.append(reinterpret_cast<const char*>(&len), 4);
-    msg += payload;
+    msg += query_payload;
 
     if (!WriteAll(fd_, msg.data(), msg.size())) {
         result.error_message = "failed to send query";

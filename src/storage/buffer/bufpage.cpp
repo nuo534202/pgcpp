@@ -52,7 +52,7 @@ void PageInit(Page page, int page_size, int special_size) {
 }
 
 OffsetNumber PageAddItem(Page page, Item item, Size size, OffsetNumber offset_number,
-                         bool is_heap) {
+                         [[maybe_unused]] bool is_heap) {
     auto* phdr = reinterpret_cast<PageHeader>(page);
     int lower = phdr->pd_lower;
     int upper = phdr->pd_upper;
@@ -69,7 +69,7 @@ OffsetNumber PageAddItem(Page page, Item item, Size size, OffsetNumber offset_nu
 
     // Compute the position of the new line pointer.
     int item_id_index = line_off - 1;
-    int new_lower = kPageHeaderSize + (item_id_index + 1) * sizeof(ItemIdData);
+    int new_lower = static_cast<int>(kPageHeaderSize + (item_id_index + 1) * sizeof(ItemIdData));
 
     // Check if the item fits.
     // The new item goes at pd_upper - size, and the line pointer array
@@ -93,9 +93,12 @@ OffsetNumber PageAddItem(Page page, Item item, Size size, OffsetNumber offset_nu
 
     // Set up the line pointer.
     ItemIdData* item_id = reinterpret_cast<ItemIdData*>(page + kPageHeaderSize) + item_id_index;
-    item_id->li_off = static_cast<uint32_t>(item_offset);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+    item_id->li_off = static_cast<uint16_t>(item_offset);
     item_id->li_flags = kLPNormal;
-    item_id->li_len = static_cast<uint32_t>(size);
+    item_id->li_len = static_cast<uint16_t>(size);
+#pragma GCC diagnostic pop
 
     // Update the header.
     phdr->pd_lower = static_cast<LocationIndex>(new_lower);
@@ -109,7 +112,7 @@ int PageGetHeapFreeSpace(Page page) {
     int space = phdr->pd_upper - phdr->pd_lower;
 
     // Account for the line pointer we'd need to add.
-    space -= sizeof(ItemIdData);
+    space -= static_cast<int>(sizeof(ItemIdData));
 
     // Align down to 4 bytes (sizeof(ItemIdData)).
     space &= ~(sizeof(ItemIdData) - 1);
@@ -124,7 +127,7 @@ int PageGetHeapFreeSpace(Page page) {
 int PageGetFreeSpace(Page page) {
     auto* phdr = reinterpret_cast<PageHeader>(page);
     int space = phdr->pd_upper - phdr->pd_lower;
-    space -= sizeof(ItemIdData);
+    space -= static_cast<int>(sizeof(ItemIdData));
     space = MaxAlignDown(space);
     if (space < 0)
         space = 0;
@@ -166,7 +169,8 @@ static void compactify_tuples(Page page) {
     for (OffsetNumber i = 1; i <= nline; ++i) {
         ItemIdData* lp = PageGetItemId(page, i);
         if (lp->li_flags == kLPNormal) {
-            items.push_back({i, lp->li_off, MaxAlignUp(lp->li_len), lp->li_len});
+            items.push_back({i, static_cast<LocationIndex>(lp->li_off), MaxAlignUp(lp->li_len),
+                             static_cast<int>(lp->li_len)});
         }
     }
 
@@ -188,7 +192,10 @@ static void compactify_tuples(Page page) {
         // Only move `raw_len` bytes; the padding (aligned_len - raw_len) is
         // garbage and need not be preserved.
         std::memmove(page + new_upper, page + item.item_off, item.raw_len);
-        lp->li_off = new_upper;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+        lp->li_off = static_cast<uint16_t>(new_upper);
+#pragma GCC diagnostic pop
     }
     phdr->pd_upper = new_upper;
 }
@@ -243,7 +250,10 @@ void PageIndexTupleDelete(Page page, OffsetNumber offset) {
 
     for (ItemIdData* lpi : to_move) {
         std::memmove(page + lpi->li_off + deleted_aligned, page + lpi->li_off, lpi->li_len);
-        lpi->li_off += deleted_aligned;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+        lpi->li_off = static_cast<uint16_t>(lpi->li_off + deleted_aligned);
+#pragma GCC diagnostic pop
     }
 
     phdr->pd_upper = static_cast<LocationIndex>(phdr->pd_upper + deleted_aligned);
@@ -324,7 +334,10 @@ bool PageIndexTupleOverwrite(Page page, OffsetNumber offnum, Item newitem, Size 
     if (newitem != nullptr && newsize > 0) {
         std::memcpy(page + lp->li_off, newitem, newsize);
     }
-    lp->li_len = static_cast<uint32_t>(newsize);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+    lp->li_len = static_cast<uint16_t>(newsize);
+#pragma GCC diagnostic pop
 
     // If the aligned size shrank, close the resulting gap by moving lower
     // tuples up (same compaction logic as PageIndexTupleDelete).
@@ -345,7 +358,10 @@ bool PageIndexTupleOverwrite(Page page, OffsetNumber offnum, Item newitem, Size 
 
         for (ItemIdData* lpi : to_move) {
             std::memmove(page + lpi->li_off + diff, page + lpi->li_off, lpi->li_len);
-            lpi->li_off += diff;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+            lpi->li_off = static_cast<uint16_t>(lpi->li_off + diff);
+#pragma GCC diagnostic pop
         }
         phdr->pd_upper = static_cast<LocationIndex>(phdr->pd_upper + diff);
     }

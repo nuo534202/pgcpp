@@ -44,7 +44,7 @@ void CostIndexScan(IndexPath* path, int tuples, Selectivity selectivity) {
     path->rows = static_cast<Cardinality>(fetched);
 }
 
-Cost CostSort(int tuples, int width, int64_t limit) {
+Cost CostSort(int tuples, [[maybe_unused]] int width, int64_t limit) {
     if (tuples <= 1)
         return 0.0;
     int n = (limit > 0 && limit < tuples) ? static_cast<int>(limit) : tuples;
@@ -53,7 +53,7 @@ Cost CostSort(int tuples, int width, int64_t limit) {
     return static_cast<Cost>(n) * log_n * kOperatorCost;
 }
 
-Cost CostAgg(int input_rows, int num_groups, int width) {
+Cost CostAgg(int input_rows, int num_groups, [[maybe_unused]] int width) {
     // Cost: one transition per input row + one finalization per group.
     Cost transition_cost = static_cast<Cost>(input_rows) * kOperatorCost;
     Cost finalization_cost = static_cast<Cost>(num_groups) * kCpuTupleCost;

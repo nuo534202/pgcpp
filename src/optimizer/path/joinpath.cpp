@@ -39,7 +39,7 @@ namespace {
 
 // Extract the Var operand of a join clause's args[i], if it is a Var
 // (or a RelabelType wrapping a Var). Returns nullptr otherwise.
-Var* GetVarArg(Node* arg) {
+[[maybe_unused]] Var* GetVarArg(Node* arg) {
     if (arg == nullptr)
         return nullptr;
     if (arg->GetTag() == NodeTag::kVar)

@@ -158,7 +158,7 @@ void LoadClogFiles() {
         for (ssize_t i = 0; i < n; ++i) {
             uint8_t byte = page[i];
             for (int j = 0; j < 4; ++j) {
-                TransactionId xid = xid_start + i * 4 + j;
+                TransactionId xid = static_cast<TransactionId>(xid_start + i * 4 + j);
                 if (xid >= static_cast<TransactionId>(kMaxXids))
                     break;
                 uint8_t status = (byte >> (j * 2)) & 0x03;
@@ -193,7 +193,7 @@ void FlushClogFiles() {
                 if (xid >= static_cast<TransactionId>(kMaxXids))
                     break;
                 uint8_t status = static_cast<uint8_t>(g_clog_base[xid]);
-                page[i] |= (status & 0x03) << (j * 2);
+                page[i] |= static_cast<uint8_t>((status & 0x03) << (j * 2));
             }
         }
 

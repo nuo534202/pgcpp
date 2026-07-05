@@ -127,9 +127,10 @@ void IndexScanState::ExecInit() {
                         key_kind = KeyKindFromType(var->vartype);
                         scan_key.kind = key_kind;
                         scan_key.key = &con->constvalue;
-                        scan_key.key_len = (key_kind == BTKeyKind::kText)
-                                               ? VARSIZE_DATA(DatumGetTextP(con->constvalue))
-                                               : 0;
+                        scan_key.key_len =
+                            static_cast<uint16_t>((key_kind == BTKeyKind::kText)
+                                                      ? VARSIZE_DATA(DatumGetTextP(con->constvalue))
+                                                      : 0);
 
                         if (opname == "=") {
                             scan_key.strategy = BTStrategy::kEqual;

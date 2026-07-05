@@ -13,12 +13,14 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/parser)
 
 # Bison generates parser.cpp and parser.hpp from gram.yy
 # Use C++ skeleton (lalr1.cc) for clean C++ integration.
+# -Wno-other suppresses "rule useless" / "nonterminal useless" / "type clash"
+#   warnings that are inherent to PostgreSQL's large grammar and not actionable.
 BISON_TARGET(
     pgcpp_parser
     ${CMAKE_CURRENT_SOURCE_DIR}/parser/gram.yy
     ${CMAKE_CURRENT_BINARY_DIR}/parser/gram.tab.cpp
     DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser/gram.tab.hpp
-    COMPILE_FLAGS "-Wno-conflicts-sr -Wno-conflicts-rr"
+    COMPILE_FLAGS "-Wno-conflicts-sr -Wno-conflicts-rr -Wno-other"
 )
 
 # Glob all C++ sources under src/ (CONFIGURE_DEPENDS so CMake re-checks
@@ -62,7 +64,7 @@ target_compile_options(pgcpp_core PRIVATE -Wall -Wextra -Wpedantic)
 set_source_files_properties(
     ${BISON_pgcpp_parser_OUTPUTS}
     PROPERTIES
-        COMPILE_OPTIONS "-Wno-unused;-Wno-sign-compare;-Wno-old-style-cast"
+        COMPILE_OPTIONS "-Wno-unused;-Wno-sign-compare;-Wno-old-style-cast;-Wno-conversion;-Wno-shadow;-Wno-null-dereference"
 )
 
 # ---------------------------------------------------------------------------

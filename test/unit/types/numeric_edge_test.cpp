@@ -14,6 +14,10 @@
 #include "common/memory/memory_context.hpp"
 #include "types/numeric.hpp"
 
+// __int128 is a GCC extension; suppress -Wpedantic for test-local helpers.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 namespace {
 
 using pgcpp::memory::AllocSetContext;
@@ -279,3 +283,5 @@ TEST_F(NumericEdgeTest, NumericRoundToScale) {
 }
 
 }  // namespace
+
+#pragma GCC diagnostic pop

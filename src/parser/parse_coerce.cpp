@@ -59,7 +59,7 @@ static TypeCategory GetTypeCategory(Oid type_oid) {
 }
 
 // Get the preferred type in a category (for resolving unknowns).
-static Oid GetPreferredType(TypeCategory cat) {
+[[maybe_unused]] static Oid GetPreferredType(TypeCategory cat) {
     switch (cat) {
         case TypeCategory::kBoolean:
             return kBoolOid;
@@ -175,8 +175,9 @@ bool can_coerce_type(int nargs, const Oid* input_typeids, const Oid* target_type
 // coerce_type — coerce an expression to the target type.
 // ---------------------------------------------------------------------------
 
-Node* coerce_type(ParseState* pstate, Node* node, Oid input_typeid, Oid target_typeid,
-                  int target_typmod, CoercionContext ccontext, CoercionForm cformat, int location) {
+Node* coerce_type([[maybe_unused]] ParseState* pstate, Node* node, Oid input_typeid,
+                  Oid target_typeid, int target_typmod, CoercionContext ccontext,
+                  CoercionForm cformat, int location) {
     if (input_typeid == target_typeid) {
         // No coercion needed, but may need a RelabelType for typmod
         return node;
@@ -443,8 +444,8 @@ Node* coerce_to_target_type(ParseState* pstate, Node* expr, Oid expr_type, Oid t
 // select_common_type — select a common type for a list of expressions.
 // ---------------------------------------------------------------------------
 
-Oid select_common_type(ParseState* pstate, const std::vector<Node*>& exprs, const char* context,
-                       Node** which_expr) {
+Oid select_common_type([[maybe_unused]] ParseState* pstate, const std::vector<Node*>& exprs,
+                       [[maybe_unused]] const char* context, Node** which_expr) {
     if (exprs.empty())
         return kInvalidOid;
 
@@ -509,6 +510,10 @@ Oid select_common_type(ParseState* pstate, const std::vector<Node*>& exprs, cons
         common_type = kTextOid;
     }
 
+    (void)have_unknown;
+    (void)have_numeric;
+    (void)have_string;
+
     return common_type;
 }
 
@@ -516,7 +521,8 @@ Oid select_common_type(ParseState* pstate, const std::vector<Node*>& exprs, cons
 // coerce_to_common_type — coerce an expression to a common type.
 // ---------------------------------------------------------------------------
 
-Node* coerce_to_common_type(ParseState* pstate, Node* node, Oid common_type, const char* context) {
+Node* coerce_to_common_type(ParseState* pstate, Node* node, Oid common_type,
+                            [[maybe_unused]] const char* context) {
     Oid node_type = exprType(node);
     if (node_type == common_type)
         return node;

@@ -243,6 +243,7 @@ TEST_F(PathNodeTest, AddPath_KeepsCheapestWhenMoreExpensive) {
 // cheapest_path returns nullptr for an empty rel.
 TEST_F(PathNodeTest, CheapestPath_EmptyRel) {
     auto* root = makePallocNode<PlannerInfo>();
+    (void)root;
     RelOptInfo* rel = MakeRel();
 
     EXPECT_EQ(cheapest_path(rel), nullptr);

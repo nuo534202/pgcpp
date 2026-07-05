@@ -182,7 +182,10 @@ protected:
         return tid;
     }
 
-    static void RunShell(const std::string& cmd) { std::system(cmd.c_str()); }
+    static void RunShell(const std::string& cmd) {
+        int rc = std::system(cmd.c_str());
+        (void)rc;
+    }
 
     AllocSetContext* context_ = nullptr;
     Catalog* catalog_ = nullptr;
@@ -591,6 +594,7 @@ TEST_F(NbtreeTest, InsertAndScanInt64) {
 
     BTScanDesc scan = btbeginscan(rel, BTKeyKind::kInt64, nullptr);
     int64_t expected[] = {50LL, 75LL, 100LL, 125LL, 150LL};
+    (void)expected;
     int idx = 0;
     while (btgettuple(scan)) {
         // Verify ordering by checking TID (insertion order matches sorted order

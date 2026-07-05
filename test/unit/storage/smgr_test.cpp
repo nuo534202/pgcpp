@@ -92,7 +92,8 @@ protected:
 private:
     static void RunShell(const std::string& cmd) {
         // Use system() for test setup/teardown only.
-        std::system(cmd.c_str());
+        int rc = std::system(cmd.c_str());
+        (void)rc;
     }
 
     static int getpid() { return static_cast<int>(::getpid()); }

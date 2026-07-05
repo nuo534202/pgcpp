@@ -20,7 +20,7 @@ using pgcpp::parser::Var;
 // Check if a qual clause can be used as an index scan qualifier.
 // A usable index qual is an OpExpr of the form (Var op Const) where the
 // operator is a comparison operator supported by B-tree indexes.
-static bool IsIndexableClause(const Node* clause) {
+[[maybe_unused]] static bool IsIndexableClause(const Node* clause) {
     if (clause == nullptr)
         return false;
     if (clause->GetTag() != NodeTag::kOpExpr)

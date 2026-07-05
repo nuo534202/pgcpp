@@ -4,6 +4,11 @@
 
 #include "types/datum.hpp"
 
+// __int128 is a GCC extension not standardized by ISO C++; -Wpedantic flags it.
+// It is used intentionally here for arbitrary-precision numeric arithmetic.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 namespace pgcpp::types {
 
 // NumericData — a simplified arbitrary-precision decimal type.
@@ -66,3 +71,5 @@ inline NumericData* DatumGetNumeric(Datum x) {
 }
 
 }  // namespace pgcpp::types
+
+#pragma GCC diagnostic pop

@@ -142,7 +142,7 @@ inline const void* _bt_item_get_key(BTItem item) {
 
 // _bt_item_get_key_len — compute the key length from the item's total size.
 inline uint16_t _bt_item_get_key_len(uint16_t item_size) {
-    return item_size - sizeof(BTItemData);
+    return static_cast<uint16_t>(item_size - sizeof(BTItemData));
 }
 
 // Compute the size of an index entry for a given key.

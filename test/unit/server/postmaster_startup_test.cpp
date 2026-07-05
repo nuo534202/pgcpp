@@ -158,7 +158,8 @@ ChildOutcome RunChildAndSend(const std::function<void(int fd)>& writer) {
         out.push_back('\0');
         uint32_t net_proto = htonl(r.protocol_version);
         out.append(reinterpret_cast<const char*>(&net_proto), 4);
-        write(pipefd[1], out.data(), out.size());
+        ssize_t wr = write(pipefd[1], out.data(), out.size());
+        (void)wr;
         close(pipefd[1]);
         close(sock[0]);
         _exit(0);

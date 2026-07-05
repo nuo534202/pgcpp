@@ -483,7 +483,7 @@ static Node* transformSubLink(ParseState* pstate, SubLink* sublink) {
 // transformParamRef — transform a parameter reference ($1, $2, etc.).
 // ---------------------------------------------------------------------------
 
-static Node* transformParamRef(ParseState* pstate, ParamRef* pref) {
+static Node* transformParamRef([[maybe_unused]] ParseState* pstate, ParamRef* pref) {
     auto* param = makeNode<Param>();
     param->paramkind = ParamKind::kExtern;
     param->paramid = pref->number;

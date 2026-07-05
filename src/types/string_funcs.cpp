@@ -25,7 +25,7 @@ using pgcpp::memory::palloc;
 namespace {
 
 // Allocate a palloc'd C string copy (null-terminated).
-char* PallocCString(std::string_view s) {
+[[maybe_unused]] char* PallocCString(std::string_view s) {
     char* buf = static_cast<char*>(palloc(s.size() + 1));
     if (!s.empty()) {
         std::memcpy(buf, s.data(), s.size());

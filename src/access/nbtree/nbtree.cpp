@@ -99,9 +99,12 @@ OffsetNumber _bt_page_insert_item(Page page, const void* item_data, uint16_t ite
 
     // Set the line pointer for the new item.
     auto* new_lp = reinterpret_cast<ItemIdData*>(page + kPageHeaderSize) + (insert_offset - 1);
-    new_lp->li_off = static_cast<uint32_t>(item_offset);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+    new_lp->li_off = static_cast<uint16_t>(item_offset);
     new_lp->li_flags = pgcpp::storage::kLPNormal;
-    new_lp->li_len = item_size;
+    new_lp->li_len = static_cast<uint16_t>(item_size);
+#pragma GCC diagnostic pop
 
     // Update header.
     phdr->pd_lower += sizeof(ItemIdData);
@@ -177,7 +180,7 @@ OffsetNumber _bt_find_scan_pos(Page page, BTKeyKind kind, const void* key, uint1
 
 // --- Index creation ---
 
-void btbuild(Relation index, BTKeyKind key_kind) {
+void btbuild(Relation index, [[maybe_unused]] BTKeyKind key_kind) {
     index->rd_smgr = RelationGetSmgr(index);
 
     // Block 0: meta page.
@@ -355,7 +358,7 @@ bool btinsert(Relation index, BTKeyKind kind, const void* key, uint16_t key_len,
 
         // Compare search key with this entry's key.
         const void* entry_key = data + sizeof(BlockNumber);
-        uint16_t entry_key_len = data_len - sizeof(BlockNumber);
+        uint16_t entry_key_len = static_cast<uint16_t>(data_len - sizeof(BlockNumber));
         int cmp = _bt_compare_keys(kind, key, key_len, entry_key, entry_key_len);
         if (cmp < 0) {
             // Search key < this entry's key → go to previous child.
@@ -468,7 +471,7 @@ bool btinsert(Relation index, BTKeyKind kind, const void* key, uint16_t key_len,
         if (data_len < sizeof(BlockNumber))
             continue;
         const void* entry_key = data + sizeof(BlockNumber);
-        uint16_t entry_key_len = data_len - sizeof(BlockNumber);
+        uint16_t entry_key_len = static_cast<uint16_t>(data_len - sizeof(BlockNumber));
         int cmp = _bt_compare_keys(kind, first_key, first_key_len, entry_key, entry_key_len);
         if (cmp <= 0) {
             root_insert_pos = off;
@@ -542,7 +545,7 @@ Buffer _bt_search_leaf(Relation index, BTKeyKind kind, const void* key, uint16_t
         }
 
         const void* entry_key = data + sizeof(BlockNumber);
-        uint16_t entry_key_len = data_len - sizeof(BlockNumber);
+        uint16_t entry_key_len = static_cast<uint16_t>(data_len - sizeof(BlockNumber));
         int cmp = _bt_compare_keys(kind, key, key_len, entry_key, entry_key_len);
         if (cmp < 0) {
             break;
@@ -653,6 +656,7 @@ bool btgettuple(BTScanDesc scan) {
             scan->curr_buf = _bt_search_leaf(index, scan->key_kind, scan->scan_key.key,
                                              scan->scan_key.key_len, &start_offset);
             Page page = BufferGetPage(scan->curr_buf);
+            (void)page;
             scan->curr_block = 0;  // Will be set from the buffer's tag
             // Get the block number from the buffer descriptor.
             auto* pool = pgcpp::storage::GetBufferPool();
@@ -776,7 +780,7 @@ OffsetNumber _bt_binsrch(Page page, BTKeyKind kind, const void* key, uint16_t ke
     OffsetNumber low = 1;
     OffsetNumber high = PageGetMaxOffsetNumber(page);
     while (low <= high) {
-        OffsetNumber mid = low + (high - low) / 2;
+        OffsetNumber mid = static_cast<OffsetNumber>(low + (high - low) / 2);
         auto* item_id = PageGetItemId(page, mid);
         if (!ItemIdIsNormal(item_id)) {
             // Non-normal (dead) line pointers should not appear on compacted

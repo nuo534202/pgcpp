@@ -181,8 +181,9 @@ int count_agg_clauses(Node* node) {
 // This is called from transformFuncCall after the Aggref node is created.
 // ---------------------------------------------------------------------------
 
-Node* transformAggregateCall(ParseState* pstate, Aggref* agg, std::vector<Node*>& args,
-                             int location) {
+Node* transformAggregateCall(ParseState* pstate, Aggref* agg,
+                             [[maybe_unused]] std::vector<Node*>& args,
+                             [[maybe_unused]] int location) {
     // The Aggref node is already built by transformFuncCall.
     // Here we just set the pstate flag and return the node.
     pstate->p_has_aggs = true;

@@ -94,8 +94,8 @@ int16_t MessageReader::ReadInt16() {
     if (pos_ + 2 > payload_.size()) {
         ereport(pgcpp::error::LogLevel::kError, "protocol message: unexpected end of data");
     }
-    uint16_t u =
-        (static_cast<uint8_t>(payload_[pos_]) << 8) | static_cast<uint8_t>(payload_[pos_ + 1]);
+    uint16_t u = static_cast<uint16_t>((static_cast<uint8_t>(payload_[pos_]) << 8) |
+                                       static_cast<uint8_t>(payload_[pos_ + 1]));
     pos_ += 2;
     return static_cast<int16_t>(u);
 }

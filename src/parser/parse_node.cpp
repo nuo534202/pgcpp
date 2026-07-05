@@ -58,7 +58,7 @@ void free_parsestate(ParseState* pstate) {
 // make_const — convert an A_Const (raw parse tree) to a Const (transformed).
 // ---------------------------------------------------------------------------
 
-Const* make_const(ParseState* pstate, AConst* aconst) {
+Const* make_const([[maybe_unused]] ParseState* pstate, AConst* aconst) {
     if (aconst->isnull) {
         // Return a null const of unknown type.
         auto* con = makeConst(kUnknownOid, -1, 0, -2, 0, true, false, aconst->location);

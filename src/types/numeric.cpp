@@ -15,6 +15,10 @@
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
 
+// __int128 is a GCC extension; suppress -Wpedantic for this translation unit.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 namespace pgcpp::types {
 
 using pgcpp::error::LogLevel;
@@ -310,3 +314,5 @@ double numeric_to_float8(Datum value) {
 }
 
 }  // namespace pgcpp::types
+
+#pragma GCC diagnostic pop

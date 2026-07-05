@@ -51,7 +51,7 @@ Datum ordered_set_percentile_disc(const std::vector<Datum>& sorted_values, Datum
         ereport(LogLevel::kError, "percentile fraction must be in [0,1]");
     }
     int64_t n = static_cast<int64_t>(sorted_values.size());
-    int64_t idx = static_cast<int64_t>(std::ceil(fraction * n));
+    int64_t idx = static_cast<int64_t>(std::ceil(fraction * static_cast<double>(n)));
     if (idx < 1) {
         idx = 1;
     }
@@ -70,10 +70,10 @@ Datum ordered_set_percentile_cont_int4(const std::vector<Datum>& sorted_values, 
         ereport(LogLevel::kError, "percentile fraction must be in [0,1]");
     }
     int64_t n = static_cast<int64_t>(sorted_values.size());
-    double pos = fraction * (n - 1);
+    double pos = fraction * static_cast<double>(n - 1);
     int64_t lower = static_cast<int64_t>(std::floor(pos));
     int64_t upper = static_cast<int64_t>(std::ceil(pos));
-    double frac = pos - lower;
+    double frac = pos - static_cast<double>(lower);
     double low_val =
         static_cast<double>(DatumGetInt32(sorted_values[static_cast<std::size_t>(lower)]));
     double high_val =
@@ -90,10 +90,10 @@ Datum ordered_set_percentile_cont_float8(const std::vector<Datum>& sorted_values
         ereport(LogLevel::kError, "percentile fraction must be in [0,1]");
     }
     int64_t n = static_cast<int64_t>(sorted_values.size());
-    double pos = fraction * (n - 1);
+    double pos = fraction * static_cast<double>(n - 1);
     int64_t lower = static_cast<int64_t>(std::floor(pos));
     int64_t upper = static_cast<int64_t>(std::ceil(pos));
-    double frac = pos - lower;
+    double frac = pos - static_cast<double>(lower);
     double low_val = DatumGetFloat8(sorted_values[static_cast<std::size_t>(lower)]);
     double high_val = DatumGetFloat8(sorted_values[static_cast<std::size_t>(upper)]);
     return Float8GetDatum(low_val + (high_val - low_val) * frac);

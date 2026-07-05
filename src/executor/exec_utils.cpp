@@ -85,7 +85,7 @@ pgcpp::access::TupleDesc BuildTupleDescFromTargetList(const std::vector<TargetEn
     int attno = 1;
     for (TargetEntry* te : targetlist) {
         FormData_pg_attribute attr;
-        attr.attnum = attno;
+        attr.attnum = static_cast<int16_t>(attno);
         attr.attname = te->resname.empty() ? ("col" + std::to_string(attno)) : te->resname;
 
         // Determine the type from the expression.

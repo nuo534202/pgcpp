@@ -43,7 +43,7 @@ static SeqScanPath* CreateSeqScanPath(RelOptInfo* rel) {
 
 // Set up the path list for a base relation.
 // Creates SeqScan path and, if indexes exist, IndexPath candidates.
-static void SetBaseRelPathlist(PlannerInfo* root, RelOptInfo* rel) {
+static void SetBaseRelPathlist([[maybe_unused]] PlannerInfo* root, RelOptInfo* rel) {
     // Always create a SeqScan path.
     SeqScanPath* seqpath = CreateSeqScanPath(rel);
     rel->pathlist.push_back(seqpath);

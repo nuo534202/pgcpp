@@ -73,7 +73,8 @@ protected:
         // Set up temp storage directory.
         test_dir_ = "/tmp/pgcpp_bufmgr_test_" + std::to_string(getpid());
         SetStorageBaseDir(test_dir_);
-        std::system(("rm -rf " + test_dir_).c_str());
+        int rc = std::system(("rm -rf " + test_dir_).c_str());
+        (void)rc;
 
         // Create a small buffer pool (4 buffers) for easy eviction testing.
         InitBufferPool(4);
@@ -97,7 +98,8 @@ protected:
     void TearDown() override {
         ShutdownBufferPool();
         smgrcloseall();
-        std::system(("rm -rf " + test_dir_).c_str());
+        int rc = std::system(("rm -rf " + test_dir_).c_str());
+        (void)rc;
 
         pgcpp::memory::SetCurrentMemoryContext(nullptr);
         if (context_ != nullptr) {

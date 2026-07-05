@@ -106,15 +106,37 @@ struct BufferDesc {
 
     bool IsDirty() const { return (state & kBMDirty) != 0; }
     bool IsValid() const { return (state & kBMValid) != 0; }
-    bool IsTagged() const { return (state & kBMTagged) != 0; }
-    bool IsPinned() const { return refcount > 0; }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+    bool IsTagged() const {
+        return (state & kBMTagged) != 0;
+    }
+#pragma GCC diagnostic pop
+    bool IsPinned() const {
+        return refcount > 0;
+    }
 
-    void SetDirty() { state |= kBMDirty; }
-    void ClearDirty() { state &= ~kBMDirty; }
-    void SetValid() { state |= kBMValid; }
-    void ClearValid() { state &= ~kBMValid; }
-    void SetTagged() { state |= kBMTagged; }
-    void ClearTagged() { state &= ~kBMTagged; }
+    void SetDirty() {
+        state |= kBMDirty;
+    }
+    void ClearDirty() {
+        state &= ~kBMDirty;
+    }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+    void SetValid() {
+        state |= kBMValid;
+    }
+#pragma GCC diagnostic pop
+    void ClearValid() {
+        state &= ~kBMValid;
+    }
+    void SetTagged() {
+        state |= kBMTagged;
+    }
+    void ClearTagged() {
+        state &= ~kBMTagged;
+    }
 };
 
 // BufferPoolShmemState — shared buffer-pool control state.

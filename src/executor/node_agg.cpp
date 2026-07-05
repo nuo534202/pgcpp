@@ -278,7 +278,7 @@ void AggState::Accumulate(AggGroupState& gs, ExprContext* econtext) {
                         v = DatumGetInt64(val);
                     gs.sum_int[i] += v;
                 } else if (info.argtype == kFloat4Oid) {
-                    gs.sum_float[i] += DatumGetFloat4(val);
+                    gs.sum_float[i] += static_cast<double>(DatumGetFloat4(val));
                 } else {
                     gs.sum_float[i] += DatumGetFloat8(val);
                 }
@@ -294,7 +294,7 @@ void AggState::Accumulate(AggGroupState& gs, ExprContext* econtext) {
                 } else if (info.argtype == kInt8Oid) {
                     gs.sum_float[i] += static_cast<double>(DatumGetInt64(val));
                 } else if (info.argtype == kFloat4Oid) {
-                    gs.sum_float[i] += DatumGetFloat4(val);
+                    gs.sum_float[i] += static_cast<double>(DatumGetFloat4(val));
                 } else {
                     gs.sum_float[i] += DatumGetFloat8(val);
                 }
@@ -486,7 +486,7 @@ void AggState::ExecInit() {
         std::vector<pgcpp::catalog::FormData_pg_attribute> agg_attrs;
         for (const auto& info : agg_infos) {
             pgcpp::catalog::FormData_pg_attribute attr;
-            attr.attnum = info.aggno + 1;
+            attr.attnum = static_cast<int16_t>(info.aggno + 1);
             attr.attname = "agg" + std::to_string(info.aggno);
             attr.atttypid = info.restype;
             int16_t len;

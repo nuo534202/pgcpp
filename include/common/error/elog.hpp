@@ -62,12 +62,25 @@ void InitErrorSubsystem();
 
 // ereport macro: the primary error reporting mechanism.
 // Usage: ereport(LogLevel::kError, "error message");
-#define ereport(elevel, ...) \
-    pgcpp::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__)
+//
+// For ERROR/FATAL/PANIC levels, EreportImpl throws PgException and never
+// returns. The conditional __builtin_unreachable() below tells the compiler
+// this, suppressing -Wreturn-type and -Wnull-dereference false positives in
+// callers that rely on ereport(ERROR) being a no-return statement.
+#define ereport(elevel, ...)                                                              \
+    do {                                                                                  \
+        pgcpp::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__);     \
+        if (static_cast<int>(elevel) >= static_cast<int>(pgcpp::error::LogLevel::kError)) \
+            __builtin_unreachable();                                                      \
+    } while (0)
 
 // elog macro: legacy alias for ereport (same behavior).
-#define elog(elevel, ...) \
-    pgcpp::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__)
+#define elog(elevel, ...)                                                                 \
+    do {                                                                                  \
+        pgcpp::error::EreportImpl(elevel, __FILE__, __func__, __LINE__, __VA_ARGS__);     \
+        if (static_cast<int>(elevel) >= static_cast<int>(pgcpp::error::LogLevel::kError)) \
+            __builtin_unreachable();                                                      \
+    } while (0)
 
 // Implementation function (do not call directly; use ereport/elog macros).
 // For ERROR/FATAL/PANIC: never returns (throws PgException to nearest PG_CATCH).

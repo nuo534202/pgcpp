@@ -215,7 +215,7 @@ char* date_out(Datum value) {
     int32_t days = DatumGetInt32(value);
     int year, month, day;
     DaysToDateParts(days, &year, &month, &day);
-    char buf[16];
+    char buf[40];
     std::snprintf(buf, sizeof(buf), "%04d-%02d-%02d", year, month, day);
     return PallocCString(buf);
 }
