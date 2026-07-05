@@ -19,6 +19,7 @@
 #include <cstdint>
 
 #include "server/interrupt.hpp"
+#include "storage/bufmgr.hpp"
 
 namespace pgcpp::server {
 
@@ -64,10 +65,19 @@ int BgWriterFlushBuffers(int max_buffers) {
         return 0;
     }
 
-    target -= to_flush;
+    // Scan the buffer pool for dirty+valid+unpinned buffers and flush up to
+    // `to_flush` of them to disk. FlushDirtyBuffers acquires FreelistLock
+    // internally to serialize with concurrent victim selection.
+    pgcpp::storage::BufferPool* pool = pgcpp::storage::GetBufferPool();
+    int flushed = 0;
+    if (pool != nullptr) {
+        flushed = pool->FlushDirtyBuffers(to_flush);
+    }
+
+    target -= flushed;
     auto& s = Stats();
-    s.buffers_written += static_cast<uint64_t>(to_flush);
-    return to_flush;
+    s.buffers_written += static_cast<uint64_t>(flushed);
+    return flushed;
 }
 
 int BgWriterMain(int max_iterations) {

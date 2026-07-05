@@ -17,10 +17,15 @@
 #include <chrono>
 #include <csignal>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include "common/error/elog.hpp"
+#include "common/memory/alloc_set.hpp"
+#include "common/memory/memory_context.hpp"
 #include "server/autovacuum.hpp"
 #include "server/auxprocess.hpp"
 #include "server/bgworker.hpp"
@@ -33,6 +38,9 @@
 #include "server/startup.hpp"
 #include "server/syslogger.hpp"
 #include "server/walwriter.hpp"
+#include "storage/bufmgr.hpp"
+#include "storage/bufpage.hpp"
+#include "storage/smgr.hpp"
 #include "transaction/xlog.hpp"
 #include "transaction/xloginsert.hpp"
 #include "transaction/xlogrecovery.hpp"
@@ -128,6 +136,24 @@ using pgcpp::transaction::XLogFlush;
 using pgcpp::transaction::XLogInsert;
 using pgcpp::transaction::XLogRecPtr;
 
+// Buffer pool imports for bgwriter/checkpointer tests.
+using pgcpp::storage::Buffer;
+using pgcpp::storage::ForkNumber;
+using pgcpp::storage::InitBufferPool;
+using pgcpp::storage::kBlckSz;
+using pgcpp::storage::MarkBufferDirty;
+using pgcpp::storage::ReadBuffer;
+using pgcpp::storage::ReadBufferMode;
+using pgcpp::storage::ReleaseBuffer;
+using pgcpp::storage::RelFileNodeBackend;
+using pgcpp::storage::SetStorageBaseDir;
+using pgcpp::storage::ShutdownBufferPool;
+using pgcpp::storage::smgrcloseall;
+using pgcpp::storage::smgrcreate;
+using pgcpp::storage::smgrextend;
+using pgcpp::storage::smgropen;
+using pgcpp::storage::SmgrRelation;
+
 // ===========================================================================
 // Test fixture — resets all auxiliary process subsystems between tests.
 // ===========================================================================
@@ -150,12 +176,62 @@ protected:
         ResetWal();
         ResetXlogInsertState();
         InitializeWal();
+
+        // Set up a buffer pool for bgwriter/checkpointer tests.
+        pgcpp::error::InitErrorSubsystem();
+        mem_ctx_ = pgcpp::memory::AllocSetContext::Create("aux_process_test");
+        pgcpp::memory::SetCurrentMemoryContext(mem_ctx_);
+        test_dir_ = "/tmp/pgcpp_aux_test_" + std::to_string(getpid());
+        SetStorageBaseDir(test_dir_);
+        std::system(("rm -rf " + test_dir_).c_str());
+        InitBufferPool(64);
     }
 
     void TearDown() override {
         // Clean up signal handlers installed by tests.
         ResetInterruptFlags();
+        // Shut down buffer pool (flushes dirty buffers, frees shm).
+        ShutdownBufferPool();
+        smgrcloseall();
+        std::system(("rm -rf " + test_dir_).c_str());
     }
+
+    // CreateDirtyBuffers — read `count` blocks into the pool and mark them
+    // dirty. Used by bgwriter/checkpointer tests to set up flush targets.
+    int CreateDirtyBuffers(int count) {
+        RelFileNodeBackend rnode;
+        rnode.node.spc_node = 0;
+        rnode.node.db_node = 16384;
+        rnode.node.rel_node = 200;
+        rnode.backend = 0;
+        SmgrRelation reln = smgropen(rnode);
+        smgrcreate(reln, ForkNumber::kMain, false);
+
+        // Extend with `count` blocks of zeroed pages.
+        char buf[kBlckSz];
+        std::memset(buf, 0, kBlckSz);
+        pgcpp::storage::PageInit(buf, kBlckSz, 0);
+        for (int i = 0; i < count; ++i) {
+            smgrextend(reln, ForkNumber::kMain, i, buf, false);
+        }
+
+        // Read each block into the pool and mark it dirty, then release the
+        // pin so the bgwriter can flush it (FlushDirtyBuffers skips pinned
+        // buffers to avoid writing partially-updated pages).
+        int created = 0;
+        for (int i = 0; i < count; ++i) {
+            Buffer b = ReadBuffer(reln, ForkNumber::kMain, i, ReadBufferMode::kNormal);
+            if (b != 0) {
+                MarkBufferDirty(b);
+                pgcpp::storage::ReleaseBuffer(b);
+                ++created;
+            }
+        }
+        return created;
+    }
+
+    pgcpp::memory::MemoryContext* mem_ctx_ = nullptr;
+    std::string test_dir_;
 };
 
 // ===========================================================================
@@ -289,18 +365,26 @@ TEST_F(AuxProcessTest, BgWriterInitialState) {
 }
 
 TEST_F(AuxProcessTest, BgWriterScheduleFlushSetsTarget) {
+    // Create 10 dirty buffers so FlushBuffers has something to flush.
+    int created = CreateDirtyBuffers(10);
+    ASSERT_EQ(created, 10);
+
     pgcpp::server::BgWriterScheduleFlush(/*target_count=*/10);
-    // FlushBuffers drains the target.
+    // FlushBuffers drains the target, up to max_buffers.
     int flushed = pgcpp::server::BgWriterFlushBuffers(/*max_buffers=*/5);
     EXPECT_EQ(flushed, 5);
     flushed = pgcpp::server::BgWriterFlushBuffers(/*max_buffers=*/5);
     EXPECT_EQ(flushed, 5);
-    // Target exhausted.
+    // Target exhausted (all dirty buffers flushed).
     flushed = pgcpp::server::BgWriterFlushBuffers(/*max_buffers=*/5);
     EXPECT_EQ(flushed, 0);
 }
 
 TEST_F(AuxProcessTest, BgWriterFlushUpdatesStats) {
+    // Create 30 dirty buffers so the flush count is reflected in stats.
+    int created = CreateDirtyBuffers(30);
+    ASSERT_EQ(created, 30);
+
     pgcpp::server::BgWriterScheduleFlush(/*target_count=*/100);
     pgcpp::server::BgWriterFlushBuffers(/*max_buffers=*/30);
 
@@ -309,6 +393,10 @@ TEST_F(AuxProcessTest, BgWriterFlushUpdatesStats) {
 }
 
 TEST_F(AuxProcessTest, BgWriterMainFlushesScheduledBuffers) {
+    // Create some dirty buffers for the main loop to flush.
+    int created = CreateDirtyBuffers(10);
+    ASSERT_GT(created, 0);
+
     pgcpp::server::BgWriterScheduleFlush(/*target_count=*/100);
     int total = pgcpp::server::BgWriterMain(/*max_iterations=*/10);
     EXPECT_GT(total, 0);
@@ -340,6 +428,10 @@ TEST_F(AuxProcessTest, CheckpointerInitialState) {
 }
 
 TEST_F(AuxProcessTest, CreateCheckPointUpdatesStatsAndLsn) {
+    // Create some dirty buffers so the checkpoint has something to flush.
+    int created = CreateDirtyBuffers(5);
+    ASSERT_GT(created, 0);
+
     // Write a WAL record first so the LSN advances.
     XLogBeginInsert();
     XLogInsert(kRmgrXactId, /*info=*/0);

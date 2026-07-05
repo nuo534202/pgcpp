@@ -53,9 +53,17 @@ enum class LWLockId : int {
     kPredicateLockManagerLock,
     kOldSerXidLock,
     kWrapLimitsVacuumLock,
-    kBufferMappingLock,
-    kBufferIOCount,
+    kBufferMappingLock,  // legacy single lock (unused for partitioned access)
+    kBufFreelistLock,    // protects clock sweep + free list
+    kBufferIOCount,      // sentinel = first unused id
 };
+
+// kNumBufferPartitions — number of BufMappingLock partitions (PG default: 16).
+// Each partition protects a slice of the buffer hash table, reducing contention
+// versus a single global lock. Declared here so the LWLock allocator can size
+// the partition lock array; BufMappingPartition() in buf_internals.hpp maps a
+// BufferTag to a partition index.
+constexpr int kNumBufferPartitions = 16;
 
 // Total number of builtin named LWLocks.
 constexpr int kNumNamedLWLocks = static_cast<int>(LWLockId::kBufferIOCount) + 1;
@@ -75,6 +83,12 @@ struct LWLock {
     int SharedHolders() const { return static_cast<int>(state.load() & 0x7FFFFFFF); }
     bool ExclusiveHeld() const { return (state.load() & 0x80000000u) != 0; }
 };
+
+// GetBufMappingLock — return the LWLock for the given buffer-mapping partition
+// (0..kNumBufferPartitions-1). The partition lock array is allocated in shared
+// memory alongside the named lock array. Used by the buffer manager for
+// hash-table lookups/insertions.
+LWLock* GetBufMappingLock(int partition);
 
 // LWLockInitialize — create a new LWLock with the given id/tranche.
 void LWLockInitialize(LWLock* lock, LWLockId id, int tranche = 0);

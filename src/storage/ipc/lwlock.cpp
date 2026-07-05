@@ -171,24 +171,49 @@ LWLock* LookupNamedLock(LWLockId id) {
     return &g_named_locks[idx];
 }
 
-void InitializeAllLWLocks() {
-    if (g_named_locks != nullptr) {
-        return;  // already initialized
-    }
+namespace {
+// Pointer to the shm-allocated buffer mapping partition lock array.
+// Set by InitializeAllLWLocks(); nullptr before initialization.
+LWLock* g_buf_mapping_locks = nullptr;
+}  // namespace
 
+LWLock* GetBufMappingLock(int partition) {
+    if (g_buf_mapping_locks == nullptr) {
+        InitializeAllLWLocks();
+    }
+    if (partition < 0 || partition >= kNumBufferPartitions) {
+        return nullptr;
+    }
+    return &g_buf_mapping_locks[partition];
+}
+
+void InitializeAllLWLocks() {
+    // Always re-validate via ShmemInitStruct (idempotent). In test mode,
+    // ResetShmem() may have freed the backing memory.
     bool found = false;
     g_named_locks = static_cast<LWLock*>(
         ShmemInitStruct("LWLockArray", sizeof(LWLock) * kNumNamedLWLocks, &found));
+
+    bool buf_found = false;
+    g_buf_mapping_locks = static_cast<LWLock*>(ShmemInitStruct(
+        "BufMappingLockArray", sizeof(LWLock) * kNumBufferPartitions, &buf_found));
 
     if (!found) {
         for (int i = 0; i < kNumNamedLWLocks; ++i) {
             LWLockInitialize(&g_named_locks[i], static_cast<LWLockId>(i));
         }
     }
+    if (!buf_found) {
+        for (int i = 0; i < kNumBufferPartitions; ++i) {
+            LWLockInitialize(&g_buf_mapping_locks[i], LWLockId::kBufferMappingLock,
+                             /*tranche=*/1);
+        }
+    }
 }
 
 void ResetAllLWLocks() {
     g_named_locks = nullptr;
+    g_buf_mapping_locks = nullptr;
     HeldLocks().clear();
 }
 

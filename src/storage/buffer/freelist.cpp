@@ -36,18 +36,26 @@ constexpr int kRingSizeVacuum = 32;
 // Returns the 0-based buffer index, or -1 if all buffers are pinned.
 // If the victim is dirty, it is NOT flushed here; the caller must flush
 // it before reusing the slot.
+//
+// Acquires the freelist lock (kBufFreelistLock) internally to protect the
+// shared clock_hand and first_free fields. The caller must NOT hold any
+// BufMappingLock partition when calling this (lock ordering: freelist lock
+// is always acquired before partition locks, never the reverse).
 int BufferPool::FindVictimBuffer() {
+    LWLockAcquire(FreelistLock(), LWLockMode::kExclusive);
+
     // First, try the free list (buffers that have never been used or were
     // explicitly freed). This is faster than the clock sweep.
-    if (first_free_ >= 0) {
-        int victim = first_free_;
-        first_free_ = descriptors_[victim].free_next;
+    if (shmem_state_->first_free >= 0) {
+        int victim = shmem_state_->first_free;
+        shmem_state_->first_free = descriptors_[victim].free_next;
         descriptors_[victim].free_next = -1;
+        LWLockRelease(FreelistLock());
         return victim;
     }
 
-    // Clock sweep: scan the buffer pool starting from clock_hand_.
-    int start = clock_hand_;
+    // Clock sweep: scan the buffer pool starting from clock_hand.
+    int start = shmem_state_->clock_hand;
     for (int i = 0; i < n_buffers_ * 2; ++i) {
         int buf_id = (start + i) % n_buffers_;
         BufferDesc& desc = descriptors_[buf_id];
@@ -58,23 +66,25 @@ int BufferPool::FindVictimBuffer() {
                 --desc.usage_count;
             } else {
                 // Found a victim: usage_count == 0 and not pinned.
-                clock_hand_ = (buf_id + 1) % n_buffers_;
+                shmem_state_->clock_hand = (buf_id + 1) % n_buffers_;
+                LWLockRelease(FreelistLock());
                 return buf_id;
             }
         }
     }
 
+    LWLockRelease(FreelistLock());
     // All buffers are pinned — this is an error in PostgreSQL too.
     return -1;
 }
 
 // InitFreeList — initialize the free list with all buffers.
-// Called during BufferPool construction.
+// Called during BufferPool construction. Caller must hold the freelist lock.
 void BufferPool::InitFreeList() {
-    first_free_ = -1;
+    shmem_state_->first_free = -1;
     for (int i = n_buffers_ - 1; i >= 0; --i) {
-        descriptors_[i].free_next = first_free_;
-        first_free_ = i;
+        descriptors_[i].free_next = shmem_state_->first_free;
+        shmem_state_->first_free = i;
     }
 }
 

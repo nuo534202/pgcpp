@@ -66,6 +66,27 @@ struct BufferTagHash {
     }
 };
 
+// kNumBufferPartitions and GetBufMappingLock are declared in lwlock.hpp
+// (included above). BufMappingPartition maps a BufferTag to a partition.
+
+// BufMappingPartition — return the partition index (0..kNumBufferPartitions-1)
+// for the given BufferTag. Uses a simple XOR-fold of the tag hash.
+inline int BufMappingPartition(const BufferTag& tag) {
+    BufferTagHash hasher;
+    std::size_t h = hasher(tag);
+    return static_cast<int>(h % static_cast<std::size_t>(kNumBufferPartitions));
+}
+
+// BufferHashEntry — a single entry in the shared buffer hash table.
+// Maps a BufferTag to a buffer_id (0-based index into the descriptor array).
+// `tag.block_num == kInvalidBlockNumber` denotes an empty slot.
+struct BufferHashEntry {
+    BufferTag tag;
+    BufferId buf_id = -1;
+
+    bool IsEmpty() const { return tag.block_num == kInvalidBlockNumber; }
+};
+
 // BufferDesc — per-buffer metadata.
 //
 // In PostgreSQL this is a shared-memory struct with atomic fields. In
@@ -96,31 +117,42 @@ struct BufferDesc {
     void ClearTagged() { state &= ~kBMTagged; }
 };
 
+// BufferPoolShmemState — shared buffer-pool control state.
+//
+// Lives in shared memory so fork'd backends share the same clock-sweep hand
+// and free-list head. In the single-process model this is a single struct
+// allocated via ShmemInitStruct; in multi-process mode it's inherited across
+// fork via MAP_SHARED.
+struct BufferPoolShmemState {
+    int clock_hand = 0;    // clock-sweep position (protected by mapping locks)
+    int first_free = -1;   // head of free-list (index, or -1 if none)
+    int n_buffers = 0;     // total number of buffers in the pool
+};
+
 // BufferPool — the shared buffer pool.
 //
 // Manages a fixed-size array of buffer descriptors and their associated
 // page data. Provides:
-//   - Linear-scan lookup: BufferTag → buffer index
+//   - Hash-table lookup: BufferTag → buffer index (O(1))
 //   - Clock sweep replacement: find a victim buffer to evict
 //   - Page read/write through the storage manager
 //
-// The descriptor array and page block memory are allocated in shared memory
-// (via ShmemInitStruct) so fork'd backends share the same pool. A coarse
-// LWLock (kBufferMappingLock) serializes all state transitions. In test
+// The descriptor array, page block memory, hash table, and control state
+// are all allocated in shared memory (via ShmemInitStruct) so fork'd
+// backends share the same pool. Partitioned BufMappingLocks (16 partitions)
+// protect hash-table operations, reducing contention versus a single global
+// lock. The clock sweep is protected by a separate BufFreelistLock. In test
 // mode (no ShmemInit called), ShmemInitStruct falls back to process-local
 // allocation, so the buffer pool works identically in single-process tests.
-//
-// Lookup is a linear scan over the descriptor array (O(n_buffers)). For the
-// expected pool sizes (64–4096) this is L1-cache-resident and negligible,
-// and avoids the complexity of placing a hash table in shared memory.
 class BufferPool {
 public:
     // Create a buffer pool with `n_buffers` slots using the given
     // shm-allocated arrays. If `init` is true, zero the blocks and
-    // initialize descriptors/free list (postmaster first init). If false,
-    // the pool is being attached to existing shm (fork'd child).
-    BufferPool(int n_buffers, BufferDesc* descriptors, char* blocks_base, LWLock* mapping_lock,
-               bool init);
+    // initialize descriptors/free list/hash table (postmaster first init).
+    // If false, the pool is being attached to existing shm (fork'd child).
+    BufferPool(int n_buffers, BufferDesc* descriptors, char* blocks_base,
+               BufferPoolShmemState* shmem_state, BufferHashEntry* hash_table,
+               int hash_table_size, bool init);
     ~BufferPool();
 
     // Non-copyable, non-movable (references shm-allocated arrays).
@@ -138,9 +170,9 @@ public:
 
     // --- Lookup and pinning ---
 
-    // Look up a page in the buffer pool. If found, return the buffer
-    // handle (pinned by caller). If not found, return kInvalidBuffer.
-    // Caller must hold mapping_lock_.
+    // Look up a page in the buffer pool hash table. If found, return the
+    // buffer handle (pinned by caller). If not found, return kInvalidBuffer.
+    // Caller must hold the partition lock for this tag.
     Buffer LookupBuffer(const BufferTag& tag);
 
     // Pin a buffer (increment refcount). The buffer must already be in the pool.
@@ -156,15 +188,16 @@ public:
     // Find a victim buffer to evict. The victim must have refcount == 0.
     // If the victim is dirty, it is flushed to disk first.
     // Returns the buffer index, or -1 if all buffers are pinned.
-    // Caller must hold mapping_lock_.
+    // Acquires the freelist lock internally; caller must NOT hold it.
     int FindVictimBuffer();
 
     // --- Insertion ---
 
     // Insert a new page into the buffer pool. The victim buffer must have
     // been selected by FindVictimBuffer() and its old content flushed.
-    // Sets the tag, marks as valid, and pins the buffer.
-    // Returns the buffer handle. Caller must hold mapping_lock_.
+    // Sets the tag, marks as valid, and pins the buffer. Also inserts the
+    // tag into the hash table. Caller must hold the partition lock for the
+    // new tag AND the old tag (if different).
     Buffer InsertBuffer(const BufferTag& tag, int victim_id);
 
     // --- Dirty management ---
@@ -182,6 +215,12 @@ public:
     // destruction (not from the destructor) so errors propagate normally.
     void FlushAllDirtyBuffers();
 
+    // Flush up to `max_buffers` dirty+valid+unpinned buffers to disk.
+    // Called by the bgwriter. Returns the count actually flushed.
+    // Acquires FreelistLock during the scan to serialize with victim
+    // selection.
+    int FlushDirtyBuffers(int max_buffers);
+
     // Invalidate a buffer: flush if dirty, clear the tag, and reset the
     // descriptor to the free state. Used by the Drop* family.
     // The buffer must not be pinned (caller's responsibility).
@@ -195,7 +234,12 @@ public:
 
     // --- Lock access (for public API functions in bufmgr.cpp) ---
 
-    LWLock* mapping_lock() { return mapping_lock_; }
+    // Return the partition lock for a given tag. Acquired shared for lookups,
+    // exclusive for insertions/removals.
+    LWLock* MappingLockForTag(const BufferTag& tag);
+
+    // Return the freelist lock (protects clock sweep + free list).
+    LWLock* FreelistLock();
 
 private:
     int n_buffers_;
@@ -207,18 +251,28 @@ private:
     // Page i is at blocks_base_ + i * kBlckSz.
     char* blocks_base_;
 
-    // Coarse lock protecting all state transitions (tag changes, refcount,
-    // clock sweep, free list). Acquired exclusive for state-modifying ops,
-    // shared for lookups/stats.
-    LWLock* mapping_lock_;
+    // Shared control state (shm-allocated: clock_hand, first_free, n_buffers).
+    BufferPoolShmemState* shmem_state_;
 
-    // Clock sweep state (protected by mapping_lock_).
-    int clock_hand_ = 0;
+    // Hash table (shm-allocated, open addressing with linear probing).
+    BufferHashEntry* hash_table_;
+    int hash_table_size_;  // number of slots (power of 2, >= 2*n_buffers)
 
-    // Free list head (index of first free buffer, or -1 if none).
-    int first_free_ = -1;
+    // --- Hash table helpers (no locking; caller holds partition lock) ---
 
-    // Initialize the free list (all buffers start free).
+    // Hash a tag to a slot index in the hash table.
+    int HashTableSlot(const BufferTag& tag) const;
+
+    // Insert a (tag → buf_id) mapping into the hash table. Caller must hold
+    // the partition lock for `tag` exclusively.
+    void HashTableInsert(const BufferTag& tag, BufferId buf_id);
+
+    // Remove a (tag → buf_id) mapping from the hash table. Caller must hold
+    // the partition lock for `tag` exclusively.
+    void HashTableDelete(const BufferTag& tag);
+
+    // Initialize the free list (all buffers start free). Caller must hold
+    // the freelist lock.
     void InitFreeList();
 };
 
