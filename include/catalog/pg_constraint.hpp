@@ -63,7 +63,7 @@ struct FormData_pg_constraint {
     bool conislocal = true;     // constraint is local to this relation
     int16_t coninhcount = 0;    // number of times inherited
     bool connoinherit = false;  // cannot be inherited?
-    Oid conbin = kInvalidOid;   // OID of check expression tree (pg_node_tree)
+    std::string conbin;         // serialized check expression tree (pg_node_tree)
     std::string consrc;         // human-readable check expression (placeholder)
 };
 

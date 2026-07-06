@@ -51,6 +51,8 @@ using pgcpp::parser::AlterTableStmt;
 using pgcpp::parser::AlterTableType;
 using pgcpp::parser::CmdType;
 using pgcpp::parser::ColumnDef;
+using pgcpp::parser::Constraint;
+using pgcpp::parser::ConstrType;
 using pgcpp::parser::CreateStmt;
 using pgcpp::parser::DefElem;
 using pgcpp::parser::DropBehavior;
@@ -132,13 +134,25 @@ bool RaisesError(F&& fn) {
 }
 
 // Find the DefElem with the given defname in a list of nodes; else nullptr.
-DefElem* FindDefElem(const std::vector<Node*>& nodes, const std::string& name) {
+[[maybe_unused]] DefElem* FindDefElem(const std::vector<Node*>& nodes, const std::string& name) {
     for (Node* n : nodes) {
         if (n == nullptr || n->GetTag() != NodeTag::kDefElem)
             continue;
         auto* d = static_cast<DefElem*>(n);
         if (d->defname == name)
             return d;
+    }
+    return nullptr;
+}
+
+// Find the first Constraint with the given contype in a list of nodes; else nullptr.
+Constraint* FindConstraint(const std::vector<Node*>& nodes, ConstrType contype) {
+    for (Node* n : nodes) {
+        if (n == nullptr || n->GetTag() != NodeTag::kConstraint)
+            continue;
+        auto* c = static_cast<Constraint*>(n);
+        if (c->contype == contype)
+            return c;
     }
     return nullptr;
 }
@@ -239,11 +253,11 @@ TEST_F(ParseUtilCmdTest, TransformCreateStmtCooksCheckConstraint) {
 
     // The CHECK constraint should be transformed from a raw a_expr (AExpr)
     // to a transformed expression (OpExpr).
-    DefElem* check = FindDefElem(coldef->constraints, "check");
+    Constraint* check = FindConstraint(coldef->constraints, ConstrType::kCheck);
     ASSERT_NE(check, nullptr);
-    ASSERT_NE(check->arg, nullptr);
-    // After transform, the arg should be an OpExpr (">" applied to var and const).
-    EXPECT_EQ(nodeTag(check->arg), NodeTag::kOpExpr);
+    ASSERT_NE(check->cooked_expr, nullptr);
+    // After transform, the cooked_expr should be an OpExpr (">" applied to var and const).
+    EXPECT_EQ(nodeTag(check->cooked_expr), NodeTag::kOpExpr);
 }
 
 TEST_F(ParseUtilCmdTest, TransformCreateStmtMarksNotNull) {

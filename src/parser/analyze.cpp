@@ -20,6 +20,7 @@
 #include "parser/parse_relation.hpp"
 #include "parser/parse_target.hpp"
 #include "parser/parse_type.hpp"
+#include "parser/parse_utilcmd.hpp"
 #include "parser/parsenodes.hpp"
 #include "parser/primnodes.hpp"
 
@@ -114,6 +115,10 @@ Query* transformStmt(ParseState* pstate, Node* stmt) {
             return transformUpdateStmt(pstate, static_cast<UpdateStmt*>(stmt));
         case NodeTag::kDeleteStmt:
             return transformDeleteStmt(pstate, static_cast<DeleteStmt*>(stmt));
+        case NodeTag::kCreateStmt:
+            return transformCreateStmt(pstate, static_cast<CreateStmt*>(stmt));
+        case NodeTag::kAlterTableStmt:
+            return transformAlterTableStmt(pstate, static_cast<AlterTableStmt*>(stmt));
         default:
             // For utility statements and other types, wrap in a CMD_UTILITY Query
             auto* qry = makeNode<Query>();

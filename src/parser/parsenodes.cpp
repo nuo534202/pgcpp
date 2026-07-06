@@ -400,6 +400,34 @@ bool DefElem::Equals(const Node& other) const {
            defaction == o.defaction && location == o.location;
 }
 
+Node* Constraint::Clone() const {
+    auto* copy = makePallocNode<Constraint>(*this);
+    copy->raw_expr = CloneNode(raw_expr);
+    copy->cooked_expr = CloneNode(cooked_expr);
+    copy->keys = CloneVec(keys);
+    copy->including_keys = CloneVec(including_keys);
+    copy->fk_attrs = CloneVec(fk_attrs);
+    copy->fk_del_set_cols = CloneVec(fk_del_set_cols);
+    copy->where_clause = CloneNode(where_clause);
+    return copy;
+}
+
+bool Constraint::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const Constraint&>(other);
+    return contype == o.contype && conname == o.conname && EqNode(raw_expr, o.raw_expr) &&
+           EqNode(cooked_expr, o.cooked_expr) && EqVec(keys, o.keys) &&
+           EqVec(including_keys, o.including_keys) && EqNode(pktable, o.pktable) &&
+           EqVec(fk_attrs, o.fk_attrs) && fk_matchtype == o.fk_matchtype &&
+           fk_upd_action == o.fk_upd_action && fk_del_action == o.fk_del_action &&
+           EqVec(fk_del_set_cols, o.fk_del_set_cols) && access_method == o.access_method &&
+           EqNode(where_clause, o.where_clause) && deferrable == o.deferrable &&
+           initdeferred == o.initdeferred && is_no_inherit == o.is_no_inherit &&
+           skip_validation == o.skip_validation && initially_valid == o.initially_valid &&
+           location == o.location;
+}
+
 Node* LockingClause::Clone() const {
     auto* copy = makePallocNode<LockingClause>(*this);
     copy->locked_rels = CloneVec(locked_rels);

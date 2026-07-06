@@ -473,6 +473,7 @@ class DropTableSpaceStmt;
 class CreatedbStmt;
 class DropdbStmt;
 class AlterDatabaseStmt;
+class Constraint;
 
 // ---------------------------------------------------------------------------
 // Type name and column reference nodes
@@ -812,6 +813,63 @@ public:
     Node* arg = nullptr;  // typically Integer, Float, String, or TypeName
     DefElemAction defaction = DefElemAction::kUnspec;  // SET/ADD/DROP
     int location = -1;                                 // token location, or -1 if unknown
+};
+
+// Constraint — a constraint definition (from CREATE TABLE / ALTER TABLE).
+// Mirrors PostgreSQL's parsenodes.h Constraint node. Used for both column-level
+// and table-level constraints.
+class Constraint : public Node {
+public:
+    Constraint() : Node(pgcpp::nodes::NodeTag::kConstraint) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    ConstrType contype = ConstrType::kNull;  // constraint type
+
+    // Name of constraint (empty if not set)
+    std::string conname;
+
+    // CHECK / DEFAULT expression (raw, untransformed)
+    Node* raw_expr = nullptr;
+    // CHECK / DEFAULT expression (transformed, cooked)
+    Node* cooked_expr = nullptr;
+
+    // Columns for PRIMARY KEY / UNIQUE / FOREIGN KEY (list of String nodes)
+    std::vector<Node*> keys;
+    // Included columns for INCLUDE clause (list of String nodes)
+    std::vector<Node*> including_keys;
+
+    // FK reference relation
+    RangeVar* pktable = nullptr;
+    // FK referenced columns (list of String nodes)
+    std::vector<Node*> fk_attrs;
+    // FK MATCH type: 's' SIMPLE, 'f' FULL, 'p' PARTIAL
+    char fk_matchtype = 's';
+    // FK ON UPDATE / ON DELETE action: 'a' NO ACTION, 'r' RESTRICT, 'c' CASCADE,
+    // 'n' SET NULL, 'd' SET DEFAULT
+    char fk_upd_action = 'a';
+    char fk_del_action = 'a';
+    // FK SET NULL/DEFAULT target columns (list of String nodes)
+    std::vector<Node*> fk_del_set_cols;
+
+    // Access method for PK/UNIQUE index (empty = default)
+    std::string access_method;
+    // WHERE clause for partial index / EXCLUDE (raw expr)
+    Node* where_clause = nullptr;
+
+    // Deferrability
+    bool deferrable = false;
+    bool initdeferred = false;
+
+    // NO INHERIT (for CHECK constraints)
+    bool is_no_inherit = false;
+
+    // Skip validation (for ADD CONSTRAINT NOT VALID)
+    bool skip_validation = false;
+    bool initially_valid = true;
+
+    int location = -1;  // token location, or -1 if unknown
 };
 
 // LockingClause — raw representation of FOR [NO KEY] UPDATE/[KEY] SHARE.

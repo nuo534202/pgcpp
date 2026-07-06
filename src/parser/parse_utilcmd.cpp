@@ -130,28 +130,41 @@ void ProcessColumnDef(ParseState* pstate, ColumnDef* coldef) {
     // 1. Resolve the column type.
     ResolveAndSetTypeOid(coldef->type_name);
 
-    // 2. Walk the column-level constraints (stored as DefElems by the grammar).
+    // 2. Walk the column-level constraints (Constraint nodes from the grammar).
     for (Node* cn : coldef->constraints) {
-        if (cn == nullptr || cn->GetTag() != NodeTag::kDefElem)
+        if (cn == nullptr || cn->GetTag() != NodeTag::kConstraint)
             continue;
-        auto* de = static_cast<DefElem*>(cn);
+        auto* con = static_cast<Constraint*>(cn);
 
-        if (de->defname == "not_null") {
-            coldef->is_not_null = true;
-        } else if (de->defname == "default") {
-            // Cook the default expression.
-            if (de->arg != nullptr) {
-                coldef->cooked_default =
-                    transformExpr(pstate, de->arg, ParseExprKind::kColumnDefault);
-            }
-        } else if (de->defname == "check") {
-            // Cook the CHECK expression in place.
-            if (de->arg != nullptr) {
-                de->arg = transformExpr(pstate, de->arg, ParseExprKind::kCheckConstraint);
-            }
+        switch (con->contype) {
+            case ConstrType::kNotNull:
+                coldef->is_not_null = true;
+                break;
+            case ConstrType::kNull:
+                coldef->is_not_null = false;
+                break;
+            case ConstrType::kDefault:
+                // Cook the default expression.
+                if (con->raw_expr != nullptr) {
+                    coldef->cooked_default =
+                        transformExpr(pstate, con->raw_expr, ParseExprKind::kColumnDefault);
+                    con->cooked_expr = coldef->cooked_default;
+                }
+                break;
+            case ConstrType::kCheck:
+                // Cook the CHECK expression in place.
+                if (con->raw_expr != nullptr) {
+                    con->cooked_expr =
+                        transformExpr(pstate, con->raw_expr, ParseExprKind::kCheckConstraint);
+                }
+                break;
+            case ConstrType::kPrimary:
+                coldef->is_not_null = true;
+                break;
+            default:
+                // kUnique, kForeign, etc. — recorded but not transformed here.
+                break;
         }
-        // primary_key / unique / references are recorded but not transformed
-        // here — they are enforced at execution time.
     }
 }
 
@@ -203,7 +216,20 @@ Query* transformCreateStmt(ParseState* pstate, CreateStmt* stmt) {
         ProcessColumnDef(pstate, static_cast<ColumnDef*>(elt));
     }
 
-    // 5. Wrap as CMD_UTILITY.
+    // 5. Cook table-level CHECK constraints. Table-level constraints live
+    //    in stmt->table_elts (mixed with ColumnDef nodes), not in
+    //    stmt->constraints.
+    for (Node* elt : stmt->table_elts) {
+        if (elt == nullptr || elt->GetTag() != NodeTag::kConstraint)
+            continue;
+        auto* con = static_cast<Constraint*>(elt);
+        if (con->contype == ConstrType::kCheck && con->raw_expr != nullptr) {
+            con->cooked_expr =
+                transformExpr(pstate, con->raw_expr, ParseExprKind::kCheckConstraint);
+        }
+    }
+
+    // 6. Wrap as CMD_UTILITY.
     auto* qry = makeNode<Query>();
     qry->command_type = CmdType::kUtility;
     qry->utility_stmt = stmt;

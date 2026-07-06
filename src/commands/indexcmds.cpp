@@ -13,6 +13,7 @@
 #include "catalog/lsyscache.hpp"
 #include "catalog/pg_attribute.hpp"
 #include "catalog/pg_class.hpp"
+#include "catalog/pg_index.hpp"
 #include "common/containers/node.hpp"
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
@@ -33,6 +34,7 @@ using pgcpp::catalog::AttStorage;
 using pgcpp::catalog::Catalog;
 using pgcpp::catalog::FormData_pg_attribute;
 using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::FormData_pg_index;
 using pgcpp::catalog::get_typalign;
 using pgcpp::catalog::GetCatalog;
 using pgcpp::catalog::Oid;
@@ -155,6 +157,36 @@ std::string DefineIndex(IndexStmt* stmt) {
         btbuild(index_rel, key_kind);
         RelationClose(index_rel);
     }
+
+    // Record the index in pg_index so the executor/constraint code can
+    // discover it (uniqueness, primary key, key columns).
+    auto* idx_row = makePallocNode<FormData_pg_index>();
+    idx_row->indexrelid = index_oid;
+    idx_row->indrelid = heap_oid;
+    idx_row->indnatts = static_cast<int16_t>(stmt->index_params.size());
+    idx_row->indnkeyatts = idx_row->indnatts;
+    idx_row->indisunique = stmt->unique;
+    idx_row->indisprimary = stmt->primary;
+    idx_row->indisimmediate = true;
+    idx_row->indisvalid = true;
+    idx_row->indisready = true;
+    idx_row->indislive = true;
+    int16_t key_attnum = 1;
+    for (Node* node : stmt->index_params) {
+        if (node == nullptr || node->GetTag() != NodeTag::kIndexElem)
+            continue;
+        auto* elem = static_cast<IndexElem*>(node);
+        auto attrs = cat->GetAttributes(heap_oid);
+        for (const FormData_pg_attribute* attr : attrs) {
+            if (attr->attname == elem->name) {
+                idx_row->indkey.push_back(attr->attnum);
+                break;
+            }
+        }
+        (void)key_attnum;
+        key_attnum++;
+    }
+    cat->InsertIndex(idx_row);
 
     return "CREATE INDEX";
 }

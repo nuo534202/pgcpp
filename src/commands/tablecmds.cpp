@@ -14,9 +14,13 @@
 #include "access/rel.hpp"
 #include "catalog/catalog.hpp"
 #include "catalog/lsyscache.hpp"
+#include "catalog/pg_attrdef.hpp"
 #include "catalog/pg_attribute.hpp"
 #include "catalog/pg_class.hpp"
+#include "catalog/pg_constraint.hpp"
+#include "commands/indexcmds.hpp"
 #include "common/containers/node.hpp"
+#include "common/containers/outfuncs.hpp"
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
 #include "parser/parse_type.hpp"
@@ -35,8 +39,13 @@ using pgcpp::access::RelationOpen;
 using pgcpp::catalog::AttAlign;
 using pgcpp::catalog::AttStorage;
 using pgcpp::catalog::Catalog;
+using pgcpp::catalog::ConstraintAction;
+using pgcpp::catalog::ConstraintMatch;
+using pgcpp::catalog::ConstraintType;
+using pgcpp::catalog::FormData_pg_attrdef;
 using pgcpp::catalog::FormData_pg_attribute;
 using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::FormData_pg_constraint;
 using pgcpp::catalog::get_typalign;
 using pgcpp::catalog::GetCatalog;
 using pgcpp::catalog::Oid;
@@ -46,13 +55,18 @@ using pgcpp::memory::palloc;
 using pgcpp::memory::pfree;
 using pgcpp::nodes::makePallocNode;
 using pgcpp::nodes::NodeTag;
+using pgcpp::nodes::nodeToStdString;
 using pgcpp::parser::AlterTableCmd;
 using pgcpp::parser::AlterTableStmt;
 using pgcpp::parser::ColumnDef;
+using pgcpp::parser::Constraint;
+using pgcpp::parser::ConstrType;
 using pgcpp::parser::CreateStmt;
 using pgcpp::parser::DropStmt;
 using pgcpp::parser::get_typbyval;
 using pgcpp::parser::get_typlen;
+using pgcpp::parser::IndexElem;
+using pgcpp::parser::IndexStmt;
 using pgcpp::parser::Node;
 using pgcpp::parser::RangeVar;
 using pgcpp::parser::RenameStmt;
@@ -73,6 +87,161 @@ std::string ExtractTypeName(TypeName* type_name) {
         return v->GetString();
     }
     return "";
+}
+
+// Resolve a column name to its 1-based attnum. Returns 0 if not found.
+int16_t FindAttnum(const std::vector<std::pair<std::string, int16_t>>& colmap,
+                   const std::string& name) {
+    for (const auto& [n, i] : colmap) {
+        if (n == name)
+            return i;
+    }
+    return 0;
+}
+
+// Extract a column name from a String node (used for constraint key lists).
+std::string StringNodeValue(Node* n) {
+    if (n == nullptr || n->GetTag() != NodeTag::kString)
+        return "";
+    auto* v = static_cast<pgcpp::nodes::Value*>(n);
+    return v->GetString();
+}
+
+// Build a default constraint name following PG conventions.
+std::string MakeConstraintName(const std::string& relname, ConstraintType type,
+                               const std::vector<int16_t>& conkey) {
+    std::string suffix;
+    switch (type) {
+        case ConstraintType::kPrimaryKey:
+            suffix = "_pkey";
+            break;
+        case ConstraintType::kUnique:
+            suffix = "_key";
+            break;
+        case ConstraintType::kCheck:
+            suffix = "_check";
+            break;
+        case ConstraintType::kForeignKey:
+            suffix = "_fkey";
+            break;
+        default:
+            suffix = "_con";
+            break;
+    }
+    std::string name = relname;
+    for (int16_t k : conkey) {
+        name += "_" + std::to_string(k);
+    }
+    return name + suffix;
+}
+
+// Insert a pg_constraint row for the given constraint. Returns the constraint OID.
+Oid RecordConstraint(Catalog* cat, Oid relid, const std::string& relname, const Constraint* con,
+                     const std::vector<int16_t>& conkey,
+                     Oid conindid = pgcpp::catalog::kInvalidOid) {
+    auto* row = makePallocNode<FormData_pg_constraint>();
+    row->connamespace = 2200;  // public
+    row->condeferrable = con->deferrable;
+    row->condeferred = con->initdeferred;
+    row->convalidated = con->initially_valid;
+    row->conrelid = relid;
+    row->conindid = conindid;
+    row->conkey = conkey;
+    row->conislocal = true;
+
+    switch (con->contype) {
+        case ConstrType::kCheck:
+            row->contype = ConstraintType::kCheck;
+            row->conbin = (con->cooked_expr != nullptr) ? nodeToStdString(con->cooked_expr) : "";
+            break;
+        case ConstrType::kPrimary:
+            row->contype = ConstraintType::kPrimaryKey;
+            break;
+        case ConstrType::kUnique:
+            row->contype = ConstraintType::kUnique;
+            break;
+        case ConstrType::kForeign: {
+            row->contype = ConstraintType::kForeignKey;
+            row->confmatchtype = static_cast<ConstraintMatch>(con->fk_matchtype);
+            row->confupdtype = static_cast<ConstraintAction>(con->fk_upd_action);
+            row->confdeltype = static_cast<ConstraintAction>(con->fk_del_action);
+            // pgcpp's FormData_pg_constraint has no confrelid field; store the
+            // referenced relation OID in contypid (otherwise unused for table
+            // constraints). FK enforcement is deferred (PG uses triggers).
+            if (con->pktable != nullptr) {
+                const FormData_pg_class* pk = cat->GetClassByName(con->pktable->relname);
+                if (pk != nullptr) {
+                    row->contypid = pk->oid;
+                    auto pk_attrs = cat->GetAttributes(pk->oid);
+                    if (con->fk_attrs.empty()) {
+                        // Column-level REFERENCES without explicit column list:
+                        // default to the referenced table's primary key column.
+                        auto pk_cons = cat->GetConstraintsByRelid(pk->oid);
+                        for (const FormData_pg_constraint* c : pk_cons) {
+                            if (c->contype == ConstraintType::kPrimaryKey && !c->conkey.empty()) {
+                                row->confkey.push_back(c->conkey[0]);
+                                break;
+                            }
+                        }
+                    } else {
+                        for (Node* fa : con->fk_attrs) {
+                            std::string n = StringNodeValue(fa);
+                            for (const FormData_pg_attribute* a : pk_attrs) {
+                                if (a->attname == n) {
+                                    row->confkey.push_back(a->attnum);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    row->conname =
+        con->conname.empty() ? MakeConstraintName(relname, row->contype, conkey) : con->conname;
+    return cat->InsertConstraint(row);
+}
+
+// Build an IndexStmt for a PK/UNIQUE constraint and invoke DefineIndex.
+// Returns the created index OID, or kInvalidOid on failure.
+Oid CreateConstraintIndex(Catalog* cat, Oid relid, const std::string& relname,
+                          const Constraint* con, const std::vector<int16_t>& conkey) {
+    auto attrs = cat->GetAttributes(relid);
+    auto* istmt = makePallocNode<IndexStmt>();
+    istmt->relation = makePallocNode<RangeVar>();
+    istmt->relation->relname = relname;
+    istmt->access_method = "btree";
+    istmt->primary = (con->contype == ConstrType::kPrimary);
+    istmt->unique = istmt->primary || (con->contype == ConstrType::kUnique);
+
+    for (int16_t attnum : conkey) {
+        for (const FormData_pg_attribute* a : attrs) {
+            if (a->attnum == attnum) {
+                auto* elem = makePallocNode<IndexElem>();
+                elem->name = a->attname;
+                istmt->index_params.push_back(elem);
+                break;
+            }
+        }
+    }
+    if (istmt->index_params.empty())
+        return pgcpp::catalog::kInvalidOid;
+
+    // Generate an index name if none provided.
+    istmt->idxname = con->conname.empty() ? MakeConstraintName(relname,
+                                                               con->contype == ConstrType::kPrimary
+                                                                   ? ConstraintType::kPrimaryKey
+                                                                   : ConstraintType::kUnique,
+                                                               conkey)
+                                          : con->conname;
+
+    DefineIndex(istmt);
+    const FormData_pg_class* idx_row = cat->GetClassByName(istmt->idxname);
+    return (idx_row != nullptr) ? idx_row->oid : pgcpp::catalog::kInvalidOid;
 }
 
 }  // namespace
@@ -135,7 +304,8 @@ std::string DefineRelation(CreateStmt* stmt) {
     Oid relid = cat->InsertClass(class_row);
     class_row->relfilenode = relid;
 
-    // Create pg_attribute entries.
+    // Create pg_attribute entries; build name→attnum map for constraint resolution.
+    std::vector<std::pair<std::string, int16_t>> colmap;
     int16_t attnum = 1;
     for (const auto& ci : columns) {
         auto* attr_row = makePallocNode<FormData_pg_attribute>();
@@ -150,7 +320,123 @@ std::string DefineRelation(CreateStmt* stmt) {
         attr_row->attnotnull = ci.is_not_null;
         attr_row->attislocal = true;
         cat->InsertAttribute(attr_row);
+        colmap.emplace_back(ci.name, attnum);
         attnum++;
+    }
+
+    // --- Process column-level constraints (DEFAULT / CHECK / PK / UNIQUE / FK) ---
+    int idx = 0;
+    for (Node* elt : stmt->table_elts) {
+        if (elt == nullptr || elt->GetTag() != NodeTag::kColumnDef)
+            continue;
+        auto* coldef = static_cast<ColumnDef*>(elt);
+        int16_t this_attnum = static_cast<int16_t>(idx + 1);
+
+        for (Node* cn : coldef->constraints) {
+            if (cn == nullptr || cn->GetTag() != NodeTag::kConstraint)
+                continue;
+            auto* con = static_cast<Constraint*>(cn);
+
+            switch (con->contype) {
+                case ConstrType::kDefault: {
+                    auto* ad = makePallocNode<FormData_pg_attrdef>();
+                    ad->adrelid = relid;
+                    ad->adnum = this_attnum;
+                    ad->adbin =
+                        (con->cooked_expr != nullptr) ? nodeToStdString(con->cooked_expr) : "";
+                    ad->adsrc = con->conname;  // best-effort source label
+                    cat->InsertAttrdef(ad);
+                    // Mark the attribute as having a default.
+                    auto attrs = cat->GetAttributes(relid);
+                    if (this_attnum >= 1 && this_attnum <= static_cast<int16_t>(attrs.size())) {
+                        auto* mut = const_cast<FormData_pg_attribute*>(attrs[this_attnum - 1]);
+                        mut->atthasdef = true;
+                    }
+                    break;
+                }
+                case ConstrType::kCheck: {
+                    std::vector<int16_t> conkey = {this_attnum};
+                    RecordConstraint(cat, relid, relname, con, conkey);
+                    break;
+                }
+                case ConstrType::kPrimary: {
+                    std::vector<int16_t> conkey = {this_attnum};
+                    Oid idx_oid = CreateConstraintIndex(cat, relid, relname, con, conkey);
+                    RecordConstraint(cat, relid, relname, con, conkey, idx_oid);
+                    // PRIMARY KEY implies NOT NULL on the column.
+                    auto attrs = cat->GetAttributes(relid);
+                    if (this_attnum >= 1 && this_attnum <= static_cast<int16_t>(attrs.size())) {
+                        auto* mut = const_cast<FormData_pg_attribute*>(attrs[this_attnum - 1]);
+                        mut->attnotnull = true;
+                    }
+                    break;
+                }
+                case ConstrType::kUnique: {
+                    std::vector<int16_t> conkey = {this_attnum};
+                    Oid idx_oid = CreateConstraintIndex(cat, relid, relname, con, conkey);
+                    RecordConstraint(cat, relid, relname, con, conkey, idx_oid);
+                    break;
+                }
+                case ConstrType::kForeign: {
+                    std::vector<int16_t> conkey = {this_attnum};
+                    RecordConstraint(cat, relid, relname, con, conkey);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+        idx++;
+    }
+
+    // --- Process table-level constraints (CHECK / PK / UNIQUE / FK) ---
+    // Table-level constraints live in stmt->table_elts (mixed with ColumnDef
+    // nodes), not in stmt->constraints.
+    for (Node* cn : stmt->table_elts) {
+        if (cn == nullptr || cn->GetTag() != NodeTag::kConstraint)
+            continue;
+        auto* con = static_cast<Constraint*>(cn);
+
+        // Resolve key column names to attnums for PK/UNIQUE/FK.
+        std::vector<int16_t> conkey;
+        for (Node* kn : con->keys) {
+            std::string n = StringNodeValue(kn);
+            int16_t a = FindAttnum(colmap, n);
+            if (a == 0) {
+                ereport(pgcpp::error::LogLevel::kError,
+                        "column \"" + n + "\" named in constraint does not exist");
+            }
+            conkey.push_back(a);
+        }
+
+        switch (con->contype) {
+            case ConstrType::kCheck:
+                RecordConstraint(cat, relid, relname, con, conkey);
+                break;
+            case ConstrType::kPrimary: {
+                Oid idx_oid = CreateConstraintIndex(cat, relid, relname, con, conkey);
+                RecordConstraint(cat, relid, relname, con, conkey, idx_oid);
+                // PK implies NOT NULL on all key columns.
+                auto attrs = cat->GetAttributes(relid);
+                for (int16_t a : conkey) {
+                    if (a >= 1 && a <= static_cast<int16_t>(attrs.size())) {
+                        auto* mut = const_cast<FormData_pg_attribute*>(attrs[a - 1]);
+                        mut->attnotnull = true;
+                    }
+                }
+                break;
+            }
+            case ConstrType::kUnique: {
+                Oid idx_oid = CreateConstraintIndex(cat, relid, relname, con, conkey);
+                RecordConstraint(cat, relid, relname, con, conkey, idx_oid);
+                break;
+            }
+            case ConstrType::kForeign:
+                RecordConstraint(cat, relid, relname, con, conkey);
+                break;
+            default:
+                break;
+        }
     }
 
     RelationCreateStorage(relid, false);

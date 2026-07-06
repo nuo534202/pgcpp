@@ -1916,8 +1916,7 @@ FormData_pg_constraint* DeserPgConstraint(const std::vector<std::string>& f) {
     if (f[22] != "0" && f[22] != "1")
         return nullptr;
     t.connoinherit = f[22] == "1";
-    if (!ParseU32(f[23], t.conbin))
-        return nullptr;
+    t.conbin = f[23];
     t.consrc = f[24];
     return makePallocNode<FormData_pg_constraint>(t);
 }
@@ -1932,8 +1931,7 @@ FormData_pg_attrdef* DeserPgAttrdef(const std::vector<std::string>& f) {
         return nullptr;
     if (!ParseI16(f[2], t.adnum))
         return nullptr;
-    if (!ParseU32(f[3], t.adbin))
-        return nullptr;
+    t.adbin = f[3];
     t.adsrc = f[4];
     return makePallocNode<FormData_pg_attrdef>(t);
 }

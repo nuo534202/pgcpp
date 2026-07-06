@@ -217,6 +217,28 @@ static inline DefElem* makeDefElem(std::string name, Node* arg, int location) {
     n->location = location;
     return n;
 }
+
+// Convert index_params (vector of IndexElem*) to a vector of String nodes
+// for Constraint::keys (which stores plain column names).
+static inline std::vector<Node*> indexParamsToKeys(const std::vector<Node*>& params) {
+    std::vector<Node*> keys;
+    keys.reserve(params.size());
+    for (const auto* node : params) {
+        if (auto* elem = dynamic_cast<const IndexElem*>(node)) {
+            keys.push_back(makeString(elem->name));
+        }
+    }
+    return keys;
+}
+
+// Convert key_match int (0=empty/simple, 1=FULL, 2=PARTIAL, 3=SIMPLE) to char.
+static inline char keyMatchToChar(int match) {
+    switch (match) {
+        case 1: return 'f';  // FULL
+        case 2: return 'p';  // PARTIAL
+        default: return 's';  // SIMPLE (0 or 3)
+    }
+}
 }
 
 // ---------------------------------------------------------------------------
@@ -368,7 +390,7 @@ static inline DefElem* makeDefElem(std::string name, Node* arg, int location) {
 %type <Node*> where_or_current_clause opt_where_or_current_clause
 %type <Node*> relation_expr relation_expr_opt_alias qualified_name
 %type <std::vector<Node*>> qualified_name_list
-%type <Node*> CreateStmt
+%type <Node*> CreateStmt ConstraintAttrElem
 %type <int> OptTemp
 %type <std::vector<Node*>> table_element_list opt_table_element_list
 %type <Node*> columnDef table_element TableConstraint ConstraintElem
@@ -1768,61 +1790,142 @@ ColQualList:
 
 ColConstraintElem:
       CONSTRAINT name ColConstraint
-        { $$ = makeDefElem($2, $3, @1); }
+        {
+            auto* c = static_cast<Constraint*>($3);
+            c->conname = $2;
+            $$ = $3;
+        }
     | ColConstraint
         { $$ = $1; }
 ;
 
 ColConstraint:
       NOT NULL_P
-        { $$ = makeDefElem("not_null", nullptr, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kNotNull;
+            n->location = @1;
+            $$ = n;
+        }
     | NULL_P
-        { $$ = makeDefElem("null", nullptr, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kNull;
+            n->location = @1;
+            $$ = n;
+        }
     | DEFAULT b_expr
-        { $$ = makeDefElem("default", $2, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kDefault;
+            n->raw_expr = $2;
+            n->location = @1;
+            $$ = n;
+        }
     | PRIMARY KEY opt_constraint_attr_spec
-        { $$ = makeDefElem("primary_key", nullptr, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kPrimary;
+            n->location = @1;
+            $$ = n;
+        }
     | UNIQUE opt_constraint_attr_spec
-        { $$ = makeDefElem("unique", nullptr, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kUnique;
+            n->location = @1;
+            $$ = n;
+        }
     | CHECK '(' a_expr ')' opt_constraint_attr_spec
-        { $$ = makeDefElem("check", $3, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kCheck;
+            n->raw_expr = $3;
+            n->location = @1;
+            $$ = n;
+        }
     | REFERENCES qualified_name opt_column_list key_match key_actions
-        { $$ = makeDefElem("references", $2, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kForeign;
+            n->pktable = static_cast<RangeVar*>($2);
+            n->fk_attrs = std::move($3);
+            n->fk_matchtype = keyMatchToChar($4);
+            n->location = @1;
+            $$ = n;
+        }
 ;
 
 TableConstraint:
       CONSTRAINT name ConstraintElem
-        { $$ = makeDefElem($2, $3, @1); }
+        {
+            auto* c = static_cast<Constraint*>($3);
+            c->conname = $2;
+            $$ = $3;
+        }
     | ConstraintElem
         { $$ = $1; }
 ;
 
 ConstraintElem:
       CHECK '(' a_expr ')' ConstraintAttributeSpec
-        { $$ = makeDefElem("check", $3, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kCheck;
+            n->raw_expr = $3;
+            n->location = @1;
+            $$ = n;
+        }
     | PRIMARY KEY '(' index_params ')' ConstraintAttributeSpec
-        { $$ = makeDefElem("primary_key", nullptr, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kPrimary;
+            n->keys = indexParamsToKeys($4);
+            n->location = @1;
+            $$ = n;
+        }
     | UNIQUE '(' index_params ')' ConstraintAttributeSpec
-        { $$ = makeDefElem("unique", nullptr, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kUnique;
+            n->keys = indexParamsToKeys($3);
+            n->location = @1;
+            $$ = n;
+        }
     | FOREIGN KEY '(' index_params ')' REFERENCES qualified_name
           opt_column_list key_match key_actions ConstraintAttributeSpec
-        { $$ = makeDefElem("foreign_key", $7, @1); }
+        {
+            auto* n = makeNode<Constraint>();
+            n->contype = ConstrType::kForeign;
+            n->keys = indexParamsToKeys($4);
+            n->pktable = static_cast<RangeVar*>($7);
+            n->fk_attrs = std::move($8);
+            n->fk_matchtype = keyMatchToChar($9);
+            n->location = @1;
+            $$ = n;
+        }
 ;
 
 ConstraintAttributeSpec:
       ConstraintAttributeSpec ConstraintAttrElem
-        { $$ = $1; }
+        { $1.push_back($2); $$ = std::move($1); }
     | /* empty */
         { $$ = {}; }
 ;
 
 ConstraintAttrElem:
       DEFERRABLE
+        { $$ = makeString("deferrable"); }
     | NOT DEFERRABLE
+        { $$ = makeString("not_deferrable"); }
     | INITIALLY DEFERRED
+        { $$ = makeString("initially_deferred"); }
     | INITIALLY IMMEDIATE
+        { $$ = makeString("initially_immediate"); }
     | NOT VALID
+        { $$ = makeString("not_valid"); }
     | NO INHERIT
+        { $$ = makeString("no_inherit"); }
 ;
 
 opt_constraint_attr_spec:
@@ -1877,8 +1980,9 @@ opt_inherits:
 
 opt_column_list:
       '(' columnList ')'
-        { (void)$2; }
+        { $$ = std::move($2); }
     | /* empty */
+        { $$ = {}; }
 ;
 
 columnList:

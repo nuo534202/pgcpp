@@ -15,7 +15,7 @@ struct FormData_pg_attrdef {
     Oid oid = kInvalidOid;      // attrdef OID
     Oid adrelid = kInvalidOid;  // OID of the relation containing the column
     int16_t adnum = 0;          // attnum of the column
-    Oid adbin = kInvalidOid;    // OID of default expression tree (pg_node_tree)
+    std::string adbin;          // serialized default expression tree (pg_node_tree)
     std::string adsrc;          // human-readable default expression (placeholder)
 };
 

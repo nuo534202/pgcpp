@@ -162,6 +162,8 @@ enum class NodeTag : int {
     kBooleanTest,
     kCoerceToDomainValue,
     kSetToDefault,
+    // Constraint node (parsenodes.h Constraint)
+    kConstraint,
 };
 
 // Node — the abstract base class for all AST nodes.

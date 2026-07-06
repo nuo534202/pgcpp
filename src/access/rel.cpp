@@ -17,7 +17,10 @@
 #include <unordered_map>
 
 #include "catalog/catalog.hpp"
+#include "catalog/pg_attrdef.hpp"
+#include "catalog/pg_constraint.hpp"
 #include "common/containers/node.hpp"
+#include "common/containers/readfuncs.hpp"
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
 #include "storage/bufmgr.hpp"
@@ -103,6 +106,41 @@ Relation RelationBuildDesc(pgcpp::catalog::Oid relid) {
     rel->rd_refcnt = 1;
     rel->rd_isnailed = false;
     rel->rd_isvalid = true;
+
+    // Populate TupleConstr from pg_attrdef and pg_constraint catalog rows so
+    // the executor can evaluate DEFAULT expressions and CHECK constraints at
+    // INSERT/UPDATE time. has_not_null is derived from attnotnull flags.
+    bool has_not_null = false;
+    for (const auto& a : attrs) {
+        if (a.attnotnull) {
+            has_not_null = true;
+            break;
+        }
+    }
+    rel->rd_att->constr.has_not_null = has_not_null;
+
+    auto attrdefs = cat->GetAttrdefsByRelid(relid);
+    for (const pgcpp::catalog::FormData_pg_attrdef* ad : attrdefs) {
+        AttrDefault def;
+        def.adnum = ad->adnum;
+        // Deserialize the stored expression tree for runtime evaluation.
+        if (!ad->adbin.empty()) {
+            def.adbin = ad->adbin;  // keep raw text as fallback
+        }
+        rel->rd_att->constr.defval.push_back(def);
+    }
+
+    auto cons = cat->GetConstraintsByRelid(relid);
+    for (const pgcpp::catalog::FormData_pg_constraint* c : cons) {
+        if (c->contype == pgcpp::catalog::ConstraintType::kCheck) {
+            CheckConstraint chk;
+            chk.ccname = c->conname;
+            chk.ccbin = c->conbin;
+            chk.ccvalid = c->convalidated;
+            chk.ccnoinherit = c->connoinherit;
+            rel->rd_att->constr.check.push_back(chk);
+        }
+    }
 
     // Open the storage manager handle (lazy: file is not created here).
     pgcpp::catalog::Oid relfilenode = pg_class->relfilenode;

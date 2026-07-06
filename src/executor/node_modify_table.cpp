@@ -20,6 +20,7 @@
 #include "access/heapam.hpp"
 #include "access/rel.hpp"
 #include "common/containers/node.hpp"
+#include "common/containers/readfuncs.hpp"
 #include "common/error/elog.hpp"
 #include "executor/estate.hpp"
 #include "executor/exec_expr.hpp"
@@ -31,6 +32,8 @@
 
 namespace pgcpp::executor {
 
+using pgcpp::access::AttrDefault;
+using pgcpp::access::CheckConstraint;
 using pgcpp::access::heap_delete;
 using pgcpp::access::heap_form_tuple;
 using pgcpp::access::heap_freetuple;
@@ -41,11 +44,87 @@ using pgcpp::access::RelationClose;
 using pgcpp::access::RelationOpen;
 using pgcpp::access::TupleDesc;
 using pgcpp::memory::palloc;
+using pgcpp::nodes::stringToNode;
 using pgcpp::parser::CmdType;
+using pgcpp::parser::Node;
 using pgcpp::parser::RangeTblEntry;
 using pgcpp::transaction::HeapTuple;
 using pgcpp::transaction::HeapTupleData;
 using pgcpp::transaction::ItemPointerData;
+
+namespace {
+
+// Substitute DEFAULT expressions for NULL columns in the slot. Mirrors
+// PostgreSQL's ExecComputeStoredGenerated / EvalAlterTableExpressionals:
+// for each column that has a default and is currently NULL, evaluate the
+// default expression and fill in the value.
+void ExecInsertDefault(TupleTableSlot* slot, ExprContext* econtext) {
+    if (slot == nullptr || slot->tts_tupleDescriptor == nullptr)
+        return;
+    TupleDesc tupdesc = slot->tts_tupleDescriptor;
+    int natts = tupdesc->natts;
+    for (int i = 0; i < natts; ++i) {
+        if (!slot->tts_isnull[i])
+            continue;
+        // Find a default for this column (attnum = i+1).
+        const AttrDefault* def = nullptr;
+        for (const auto& d : tupdesc->constr.defval) {
+            if (d.adnum == i + 1) {
+                def = &d;
+                break;
+            }
+        }
+        if (def == nullptr || def->adbin.empty())
+            continue;
+        // Deserialize and evaluate the default expression. Default exprs
+        // cannot reference other columns, so ecxt_scantuple is not needed.
+        Node* expr = stringToNode(def->adbin.c_str());
+        if (expr == nullptr)
+            continue;
+        bool is_null = false;
+        pgcpp::types::Datum val = ExecEvalExpr(expr, econtext, &is_null);
+        slot->tts_values[i] = val;
+        slot->tts_isnull[i] = is_null;
+    }
+}
+
+// Enforce NOT NULL and CHECK constraints on a tuple about to be inserted
+// or updated. Mirrors PostgreSQL's ExecConstraints() in execMain.c.
+void ExecConstraints(TupleTableSlot* slot, ExprContext* econtext, Relation rel) {
+    if (slot == nullptr || slot->tts_tupleDescriptor == nullptr || rel == nullptr)
+        return;
+    TupleDesc tupdesc = slot->tts_tupleDescriptor;
+    int natts = tupdesc->natts;
+
+    // NOT NULL checks.
+    for (int i = 0; i < natts; ++i) {
+        if (tupdesc->attrs[i].attnotnull && slot->tts_isnull[i]) {
+            ereport(pgcpp::error::LogLevel::kError,
+                    "null value in column \"" + tupdesc->attrs[i].attname + "\" of relation \"" +
+                        rel->rd_rel->relname + "\" violates not-null constraint");
+        }
+    }
+
+    // CHECK constraint checks.
+    for (const CheckConstraint& chk : tupdesc->constr.check) {
+        if (chk.ccbin.empty())
+            continue;
+        Node* expr = stringToNode(chk.ccbin.c_str());
+        if (expr == nullptr)
+            continue;
+        // Evaluate the CHECK expression against the current tuple.
+        bool is_null = false;
+        pgcpp::types::Datum val = ExecEvalExpr(expr, econtext, &is_null);
+        bool ok = is_null ? false : pgcpp::types::DatumGetBool(val);
+        if (!ok) {
+            ereport(pgcpp::error::LogLevel::kError,
+                    "new row for relation \"" + rel->rd_rel->relname +
+                        "\" violates check constraint \"" + chk.ccname + "\"");
+        }
+    }
+}
+
+}  // namespace
 
 void ModifyTableState::ExecInit() {
     auto* mtplan = static_cast<ModifyTable*>(plan);
@@ -91,14 +170,25 @@ TupleTableSlot* ModifyTableState::ExecProcNode() {
 
         switch (mt_operation) {
             case CmdType::kInsert: {
-                // Build a heap tuple from the child slot's values.
-                HeapTuple tup =
-                    heap_form_tuple(mt_tupDesc, child_slot->tts_values, child_slot->tts_isnull);
+                // Project the child's output through the ModifyTable's
+                // targetlist into ps_ResultTupleSlot, which uses the target
+                // relation's tuple descriptor (carrying attnotnull / constr
+                // metadata). This ensures constraint checks see the correct
+                // per-column flags.
+                ExecProject(plan->targetlist, ps_ExprContext, ps_ResultTupleSlot);
+
+                // Substitute DEFAULT expressions for NULL columns, then
+                // enforce NOT NULL / CHECK constraints before writing.
+                ExecInsertDefault(ps_ResultTupleSlot, ps_ExprContext);
+                ExecConstraints(ps_ResultTupleSlot, ps_ExprContext, mt_relation);
+
+                // Build a heap tuple from the projected slot's values.
+                HeapTuple tup = heap_form_tuple(mt_tupDesc, ps_ResultTupleSlot->tts_values,
+                                                ps_ResultTupleSlot->tts_isnull);
                 heap_insert(mt_relation, tup);
                 heap_freetuple(tup);
 
                 // Return the inserted tuple (for RETURNING).
-                ps_ResultTupleSlot->StoreVirtual(child_slot->tts_values, child_slot->tts_isnull);
                 return ps_ResultTupleSlot;
             }
             case CmdType::kDelete: {
@@ -141,8 +231,13 @@ TupleTableSlot* ModifyTableState::ExecProcNode() {
                     continue;
                 }
                 ItemPointerData otid = scan_tuple->t_self;
-                HeapTuple new_tup =
-                    heap_form_tuple(mt_tupDesc, child_slot->tts_values, child_slot->tts_isnull);
+                // Project the child's output through the targetlist into the
+                // result slot (which carries the relation's constraint
+                // metadata), then enforce NOT NULL / CHECK constraints.
+                ExecProject(plan->targetlist, ps_ExprContext, ps_ResultTupleSlot);
+                ExecConstraints(ps_ResultTupleSlot, ps_ExprContext, mt_relation);
+                HeapTuple new_tup = heap_form_tuple(mt_tupDesc, ps_ResultTupleSlot->tts_values,
+                                                    ps_ResultTupleSlot->tts_isnull);
                 heap_update(mt_relation, otid, new_tup);
                 heap_freetuple(new_tup);
                 // UPDATE without RETURNING produces no output row; continue
