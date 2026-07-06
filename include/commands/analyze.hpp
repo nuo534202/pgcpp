@@ -1,8 +1,10 @@
 // analyze.h — ANALYZE command (M14 commands module).
 //
 // Converted from PostgreSQL 15's src/backend/commands/analyze.c.
-// Updates pg_statistic for the planner. Currently a no-op stub since
-// pgcpp's planner uses fixed cardinality estimates.
+// Scans heap relations to collect per-column statistics (null fraction,
+// average width, distinct count, MCV, histogram) and writes them to
+// pg_statistic for the planner/optimizer. Also updates pg_class.relpages
+// and reltuples so the cost model has accurate relation sizes.
 #pragma once
 
 #include <string>

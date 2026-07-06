@@ -39,7 +39,10 @@ Cost CostAgg(int input_rows, int num_groups, int width);
 Cardinality ClampRowEst(Cardinality rows);
 
 // Estimate selectivity of a simple equality qual (col = const).
+// When `relid` is valid, uses pg_statistic (MCV, histogram, stadistinct)
+// for accurate selectivity. Otherwise falls back to heuristics.
 // Returns a fraction between 0.0 and 1.0.
-Selectivity EstimateSelectivity(const pgcpp::parser::Node* qual, int total_rows);
+Selectivity EstimateSelectivity(const pgcpp::parser::Node* qual, int total_rows,
+                                pgcpp::catalog::Oid relid = pgcpp::catalog::kInvalidOid);
 
 }  // namespace pgcpp::optimizer

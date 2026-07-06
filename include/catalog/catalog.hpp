@@ -71,6 +71,10 @@ public:
     // Number of pg_class rows.
     std::size_t ClassCount() const { return pg_class_rows_.size(); }
 
+    // All pg_class rows (for ANALYZE ALL). Returns pointers into the catalog's
+    // internal storage; callers must not modify or free them.
+    std::vector<const FormData_pg_class*> GetAllClasses() const;
+
     // --- pg_attribute accessors ---
 
     // Insert a pg_attribute row.

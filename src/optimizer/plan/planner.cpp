@@ -17,6 +17,7 @@
 #include "common/memory/memory_context.hpp"
 #include "executor/plannodes.hpp"
 #include "optimizer/geqo/geqo_main.hpp"
+#include "optimizer/path/indxpath.hpp"
 #include "optimizer/plan/create_plan.hpp"
 #include "optimizer/plan/init_splan.hpp"
 #include "optimizer/plan/set_refs.hpp"
@@ -138,7 +139,8 @@ Plan* query_planner(PlannerInfo* root, Query* parse) {
     query_planner_init(root, parse);
 
     // 2. Generate paths and select the cheapest for each base relation.
-    //    For single-table queries, this creates a SeqScanPath per base rel.
+    //    For each base rel, this creates a SeqScanPath (always) and any
+    //    matching IndexPaths (when B-tree indexes exist on the rel).
     //    GEQO's fitness function and path builder also rely on each base
     //    rel having a cheapest_path set.
     for (RelOptInfo* rel : root->simple_rel_array) {
@@ -146,6 +148,9 @@ Plan* query_planner(PlannerInfo* root, Query* parse) {
             continue;
         SeqScanPath* seqpath = create_seqscan_path(root, rel);
         add_path(rel, seqpath);
+        // Generate IndexPath candidates for any B-tree indexes whose first
+        // key column matches an indexable clause in rel->baserestrictinfo.
+        CreateIndexPaths(root, rel);
     }
 
     // 3. Build the best Path tree (scan → agg → sort).

@@ -192,9 +192,11 @@ void distribute_quals_to_rels(PlannerInfo* root, Node* quals) {
             RelOptInfo* rel = find_base_rel(root, relid);
             if (rel != nullptr) {
                 rel->baserestrictinfo.push_back(ri);
-                // Refine selectivity estimate.
+                // Refine selectivity estimate using pg_statistic when available.
+                // Pass the rel's OID so EstimateSelectivity can look up stats.
                 ri->norm_selec =
-                    EstimateSelectivity(ri->clause, (rel->tuples > 0) ? rel->tuples : 1000);
+                    EstimateSelectivity(ri->clause, (rel->tuples > 0) ? rel->tuples : 1000,
+                                        static_cast<pgcpp::catalog::Oid>(rel->relid));
             }
         } else {
             // Multi-table qual: this is a join clause. Classify it for

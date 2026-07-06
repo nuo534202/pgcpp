@@ -86,6 +86,14 @@ const FormData_pg_class* Catalog::GetClassByName(const std::string& name) const 
     return nullptr;
 }
 
+std::vector<const FormData_pg_class*> Catalog::GetAllClasses() const {
+    std::vector<const FormData_pg_class*> result;
+    result.reserve(pg_class_rows_.size());
+    for (const auto* row : pg_class_rows_)
+        result.push_back(row);
+    return result;
+}
+
 bool Catalog::UpdateClass(Oid oid, const FormData_pg_class* new_row) {
     PreWrite();
     for (auto*& row : pg_class_rows_) {
