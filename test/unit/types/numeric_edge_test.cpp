@@ -2,8 +2,8 @@
 //
 // Mirrors the fixture pattern of numeric_test.cpp. Covers zero/one/negative
 // identity, small arithmetic, scale growth on multiply, comparison, string
-// round-tripping, large precision, and (via test-local helpers) abs/round
-// behavior that pgcpp does not yet expose as first-class functions.
+// round-tripping, large precision, and the rounding/abs APIs introduced in
+// P1-6 (numeric_round, numeric_trunc, numeric_ceil, numeric_floor, numeric_abs).
 
 #include <gtest/gtest.h>
 
@@ -14,10 +14,6 @@
 #include "common/memory/memory_context.hpp"
 #include "types/numeric.hpp"
 
-// __int128 is a GCC extension; suppress -Wpedantic for test-local helpers.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-
 namespace {
 
 using pgcpp::memory::AllocSetContext;
@@ -25,16 +21,20 @@ using pgcpp::types::Datum;
 using pgcpp::types::DatumGetBool;
 using pgcpp::types::DatumGetNumeric;
 using pgcpp::types::Int32ToNumeric;
-using pgcpp::types::MakeNumericDatum;
+using pgcpp::types::numeric_abs;
 using pgcpp::types::numeric_add;
+using pgcpp::types::numeric_ceil;
 using pgcpp::types::numeric_cmp;
 using pgcpp::types::numeric_div;
 using pgcpp::types::numeric_eq;
+using pgcpp::types::numeric_floor;
 using pgcpp::types::numeric_in;
 using pgcpp::types::numeric_lt;
 using pgcpp::types::numeric_mul;
 using pgcpp::types::numeric_out;
+using pgcpp::types::numeric_round;
 using pgcpp::types::numeric_sub;
+using pgcpp::types::numeric_trunc;
 
 class NumericEdgeTest : public ::testing::Test {
 protected:
@@ -54,57 +54,14 @@ protected:
     AllocSetContext* context_ = nullptr;
 };
 
-// Test-local helper: compute |x| via the public numeric API.
-//
-// Limitation: the pgcpp numeric module does not (yet) expose a dedicated
-// numeric_abs() function. This helper works around that by subtracting from
-// zero when the value is negative, which is semantically equivalent for the
-// fixed-precision decimal representation used here.
-Datum NumericAbs(Datum x) {
-    Datum zero = Int32ToNumeric(0);
-    if (numeric_cmp(x, zero) < 0) {
-        return numeric_sub(zero, x);
-    }
-    return x;
-}
-
-// Test-local helper: round a numeric to a smaller dscale using round-half-
-// away-from-zero.
-//
-// Limitation: the pgcpp numeric module does not (yet) expose a numeric_round()
-// function. This helper implements rounding by directly manipulating the
-// scaled int128 representation via MakeNumericDatum, mirroring what a future
-// numeric_round() would do.
-Datum NumericRound(Datum x, int32_t new_dscale) {
-    const auto* n = DatumGetNumeric(x);
-    int32_t cur = n->dscale;
-    if (new_dscale >= cur) {
-        return x;  // No rounding needed; the value already fits.
-    }
-    int32_t drop = cur - new_dscale;
-    __int128 divisor = 1;
-    for (int32_t i = 0; i < drop; ++i) {
-        divisor *= 10;
-    }
-    __int128 v = n->value;
-    // Round half away from zero.
-    if (v >= 0) {
-        v = (v + divisor / 2) / divisor;
-    } else {
-        v = -(((-v) + divisor / 2) / divisor);
-    }
-    return MakeNumericDatum(v, new_dscale);
-}
-
 // ===========================================================================
 // zero / one / negative identity
 // ===========================================================================
 
 TEST_F(NumericEdgeTest, NumericZeroValue) {
     Datum z = numeric_in("0");
-    const auto* n = DatumGetNumeric(z);
-    EXPECT_EQ(static_cast<long long>(n->value), 0);
-    EXPECT_EQ(n->dscale, 0);
+    EXPECT_STREQ(numeric_out(z), "0");
+    EXPECT_EQ(DatumGetNumeric(z)->dscale, 0);
 
     // 0 + 0 == 0, 0 - 0 == 0, 0 * 5 == 0.
     EXPECT_STREQ(numeric_out(numeric_add(z, z)), "0");
@@ -117,9 +74,8 @@ TEST_F(NumericEdgeTest, NumericZeroValue) {
 
 TEST_F(NumericEdgeTest, NumericOneValue) {
     Datum one = numeric_in("1");
-    const auto* n = DatumGetNumeric(one);
-    EXPECT_EQ(static_cast<long long>(n->value), 1);
-    EXPECT_EQ(n->dscale, 0);
+    EXPECT_STREQ(numeric_out(one), "1");
+    EXPECT_EQ(DatumGetNumeric(one)->dscale, 0);
 
     // 1 * x == x for both integer and decimal x.
     EXPECT_STREQ(numeric_out(numeric_mul(one, numeric_in("42"))), "42");
@@ -131,9 +87,7 @@ TEST_F(NumericEdgeTest, NumericOneValue) {
 
 TEST_F(NumericEdgeTest, NumericNegativeValue) {
     Datum neg = numeric_in("-123.45");
-    const auto* n = DatumGetNumeric(neg);
-    EXPECT_EQ(static_cast<long long>(n->value), -12345);
-    EXPECT_EQ(n->dscale, 2);
+    EXPECT_EQ(DatumGetNumeric(neg)->dscale, 2);
 
     // Sign is preserved through numeric_out.
     EXPECT_STREQ(numeric_out(neg), "-123.45");
@@ -219,9 +173,7 @@ TEST_F(NumericEdgeTest, NumericCompareGreaterThan) {
 
 TEST_F(NumericEdgeTest, NumericFromString) {
     Datum d = numeric_in("123.456");
-    const auto* n = DatumGetNumeric(d);
-    EXPECT_EQ(static_cast<long long>(n->value), 123456);
-    EXPECT_EQ(n->dscale, 3);
+    EXPECT_EQ(DatumGetNumeric(d)->dscale, 3);
 
     // Round-trip via numeric_out.
     EXPECT_STREQ(numeric_out(d), "123.456");
@@ -237,51 +189,78 @@ TEST_F(NumericEdgeTest, NumericToString) {
 }
 
 // ===========================================================================
-// precision
+// precision (base-10000 supports arbitrary length, well beyond int128)
 // ===========================================================================
 
 TEST_F(NumericEdgeTest, NumericLargePrecision) {
-    // 30 fractional digits — int128 can hold up to ~38 decimal digits.
-    const std::string s = "0.123456789012345678901234567890";
+    // 50 fractional digits — int128 could only hold ~38 decimal digits.
+    const std::string s = "0.12345678901234567890123456789012345678901234567890";
     Datum d = numeric_in(s.c_str());
-    EXPECT_EQ(DatumGetNumeric(d)->dscale, 30);
+    EXPECT_EQ(DatumGetNumeric(d)->dscale, 50);
+    EXPECT_STREQ(numeric_out(d), s.c_str());
+}
+
+TEST_F(NumericEdgeTest, NumericVeryLargePrecision) {
+    // 100 fractional digits — exercises digit array growth well beyond what
+    // any fixed-width integer type could represent.
+    const std::string s =
+        "0."
+        "12345678901234567890123456789012345678901234567890"
+        "12345678901234567890123456789012345678901234567890";
+    Datum d = numeric_in(s.c_str());
+    EXPECT_EQ(DatumGetNumeric(d)->dscale, 100);
     EXPECT_STREQ(numeric_out(d), s.c_str());
 }
 
 // ===========================================================================
-// abs / round (test-local helpers — see limitation notes above)
+// abs / round / trunc / ceil / floor (public APIs as of P1-6)
 // ===========================================================================
 
 TEST_F(NumericEdgeTest, NumericAbsValue) {
-    // |-123.45| == 123.45. pgcpp has no numeric_abs(); we use the
-    // test-local NumericAbs helper built on numeric_sub and numeric_cmp.
+    // |-123.45| == 123.45.
     Datum neg = numeric_in("-123.45");
-    Datum a = NumericAbs(neg);
+    Datum a = numeric_abs(neg);
     EXPECT_STREQ(numeric_out(a), "123.45");
 
     // Abs of a positive value is itself.
     Datum pos = numeric_in("99");
-    EXPECT_STREQ(numeric_out(NumericAbs(pos)), "99");
+    EXPECT_STREQ(numeric_out(numeric_abs(pos)), "99");
 
     // Abs of zero is zero.
-    EXPECT_STREQ(numeric_out(NumericAbs(numeric_in("0"))), "0");
+    EXPECT_STREQ(numeric_out(numeric_abs(numeric_in("0"))), "0");
 }
 
 TEST_F(NumericEdgeTest, NumericRoundToScale) {
     // Round 1.235 (dscale 3) to dscale 2 -> 1.24 (round half away from zero).
     Datum v = numeric_in("1.235");
-    Datum r = NumericRound(v, 2);
+    Datum r = numeric_round(v, 2);
     EXPECT_EQ(DatumGetNumeric(r)->dscale, 2);
     EXPECT_STREQ(numeric_out(r), "1.24");
 
     // Rounding to the same or larger scale is a no-op.
-    EXPECT_STREQ(numeric_out(NumericRound(numeric_in("1.5"), 4)), "1.5");
+    EXPECT_STREQ(numeric_out(numeric_round(numeric_in("1.5"), 4)), "1.5");
 
     // Round a negative value away from zero: -1.235 -> -1.24.
     Datum neg = numeric_in("-1.235");
-    EXPECT_STREQ(numeric_out(NumericRound(neg, 2)), "-1.24");
+    EXPECT_STREQ(numeric_out(numeric_round(neg, 2)), "-1.24");
+}
+
+TEST_F(NumericEdgeTest, NumericTruncTowardZero) {
+    EXPECT_STREQ(numeric_out(numeric_trunc(numeric_in("1.999"), 0)), "1");
+    EXPECT_STREQ(numeric_out(numeric_trunc(numeric_in("-1.999"), 0)), "-1");
+    EXPECT_STREQ(numeric_out(numeric_trunc(numeric_in("1.2345"), 2)), "1.23");
+    EXPECT_STREQ(numeric_out(numeric_trunc(numeric_in("-1.2345"), 2)), "-1.23");
+}
+
+TEST_F(NumericEdgeTest, NumericCeilFloorSignBehavior) {
+    // Ceil rounds toward +inf: 1.01 -> 2, -1.99 -> -1, integers unchanged.
+    EXPECT_STREQ(numeric_out(numeric_ceil(numeric_in("1.01"))), "2");
+    EXPECT_STREQ(numeric_out(numeric_ceil(numeric_in("-1.99"))), "-1");
+    EXPECT_STREQ(numeric_out(numeric_ceil(numeric_in("5"))), "5");
+    // Floor rounds toward -inf: 1.99 -> 1, -1.01 -> -2, integers unchanged.
+    EXPECT_STREQ(numeric_out(numeric_floor(numeric_in("1.99"))), "1");
+    EXPECT_STREQ(numeric_out(numeric_floor(numeric_in("-1.01"))), "-2");
+    EXPECT_STREQ(numeric_out(numeric_floor(numeric_in("5"))), "5");
 }
 
 }  // namespace
-
-#pragma GCC diagnostic pop

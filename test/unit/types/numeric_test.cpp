@@ -18,17 +18,22 @@ using pgcpp::types::DatumGetBool;
 using pgcpp::types::DatumGetNumeric;
 using pgcpp::types::Int32ToNumeric;
 using pgcpp::types::Int64ToNumeric;
+using pgcpp::types::numeric_abs;
 using pgcpp::types::numeric_accum;
 using pgcpp::types::numeric_add;
 using pgcpp::types::numeric_avg;
+using pgcpp::types::numeric_ceil;
 using pgcpp::types::numeric_cmp;
 using pgcpp::types::numeric_div;
 using pgcpp::types::numeric_eq;
+using pgcpp::types::numeric_floor;
 using pgcpp::types::numeric_in;
 using pgcpp::types::numeric_lt;
 using pgcpp::types::numeric_mul;
 using pgcpp::types::numeric_out;
+using pgcpp::types::numeric_round;
 using pgcpp::types::numeric_sub;
+using pgcpp::types::numeric_trunc;
 
 class NumericTest : public ::testing::Test {
 protected:
@@ -70,35 +75,30 @@ bool RaisesError(F&& fn) {
 
 TEST_F(NumericTest, NumericInParsesInteger) {
     Datum d = numeric_in("123");
-    const auto* n = DatumGetNumeric(d);
-    EXPECT_EQ(static_cast<long long>(n->value), 123);
-    EXPECT_EQ(n->dscale, 0);
+    EXPECT_STREQ(numeric_out(d), "123");
+    EXPECT_EQ(DatumGetNumeric(d)->dscale, 0);
 }
 
 TEST_F(NumericTest, NumericInParsesDecimal) {
     Datum d = numeric_in("123.456");
-    const auto* n = DatumGetNumeric(d);
-    EXPECT_EQ(static_cast<long long>(n->value), 123456);
-    EXPECT_EQ(n->dscale, 3);
+    EXPECT_STREQ(numeric_out(d), "123.456");
+    EXPECT_EQ(DatumGetNumeric(d)->dscale, 3);
 }
 
 TEST_F(NumericTest, NumericInParsesNegative) {
     Datum d = numeric_in("-123.456");
-    const auto* n = DatumGetNumeric(d);
-    EXPECT_EQ(static_cast<long long>(n->value), -123456);
-    EXPECT_EQ(n->dscale, 3);
+    EXPECT_STREQ(numeric_out(d), "-123.456");
+    EXPECT_EQ(DatumGetNumeric(d)->dscale, 3);
 }
 
 TEST_F(NumericTest, NumericInParsesZero) {
     Datum d0 = numeric_in("0");
-    const auto* n0 = DatumGetNumeric(d0);
-    EXPECT_EQ(static_cast<long long>(n0->value), 0);
-    EXPECT_EQ(n0->dscale, 0);
+    EXPECT_STREQ(numeric_out(d0), "0");
+    EXPECT_EQ(DatumGetNumeric(d0)->dscale, 0);
 
     Datum d3 = numeric_in("0.000");
-    const auto* n3 = DatumGetNumeric(d3);
-    EXPECT_EQ(static_cast<long long>(n3->value), 0);
-    EXPECT_EQ(n3->dscale, 3);
+    EXPECT_STREQ(numeric_out(d3), "0.000");
+    EXPECT_EQ(DatumGetNumeric(d3)->dscale, 3);
 }
 
 TEST_F(NumericTest, NumericInInvalidRaises) {
@@ -246,6 +246,86 @@ TEST_F(NumericTest, NumericAvg) {
     // 1000 / 3 = 333.33333...
     EXPECT_EQ(out.substr(0, 4), "333.");
     EXPECT_EQ(out.substr(4, 4), "3333");
+}
+
+// ===========================================================================
+// rounding / truncation / abs (new in P1-6)
+// ===========================================================================
+
+TEST_F(NumericTest, NumericRoundHalfAwayFromZero) {
+    // Round 1.235 to dscale 2 -> 1.24 (half away from zero).
+    EXPECT_STREQ(numeric_out(numeric_round(numeric_in("1.235"), 2)), "1.24");
+    // Round 1.234 to dscale 2 -> 1.23.
+    EXPECT_STREQ(numeric_out(numeric_round(numeric_in("1.234"), 2)), "1.23");
+    // Round -1.235 to dscale 2 -> -1.24 (away from zero).
+    EXPECT_STREQ(numeric_out(numeric_round(numeric_in("-1.235"), 2)), "-1.24");
+    // Rounding to a larger scale is a no-op (zero-padded conceptually).
+    EXPECT_STREQ(numeric_out(numeric_round(numeric_in("1.5"), 4)), "1.5");
+}
+
+TEST_F(NumericTest, NumericTruncTowardZero) {
+    EXPECT_STREQ(numeric_out(numeric_trunc(numeric_in("1.999"), 0)), "1");
+    EXPECT_STREQ(numeric_out(numeric_trunc(numeric_in("-1.999"), 0)), "-1");
+    EXPECT_STREQ(numeric_out(numeric_trunc(numeric_in("1.2345"), 2)), "1.23");
+}
+
+TEST_F(NumericTest, NumericCeilFloor) {
+    // Ceil: smallest integer >= value.
+    EXPECT_STREQ(numeric_out(numeric_ceil(numeric_in("1.5"))), "2");
+    EXPECT_STREQ(numeric_out(numeric_ceil(numeric_in("-1.5"))), "-1");
+    EXPECT_STREQ(numeric_out(numeric_ceil(numeric_in("3"))), "3");
+    // Floor: largest integer <= value.
+    EXPECT_STREQ(numeric_out(numeric_floor(numeric_in("1.5"))), "1");
+    EXPECT_STREQ(numeric_out(numeric_floor(numeric_in("-1.5"))), "-2");
+    EXPECT_STREQ(numeric_out(numeric_floor(numeric_in("3"))), "3");
+}
+
+TEST_F(NumericTest, NumericAbs) {
+    EXPECT_STREQ(numeric_out(numeric_abs(numeric_in("-123.45"))), "123.45");
+    EXPECT_STREQ(numeric_out(numeric_abs(numeric_in("99"))), "99");
+    EXPECT_STREQ(numeric_out(numeric_abs(numeric_in("0"))), "0");
+}
+
+// ===========================================================================
+// large precision (base-10000 supports arbitrary length, well beyond int128)
+// ===========================================================================
+
+TEST_F(NumericTest, NumericLargePrecisionBeyondInt128) {
+    // 50 fractional digits — far beyond what __int128 (38 digits) could hold.
+    const std::string s = "0.12345678901234567890123456789012345678901234567890";
+    Datum d = numeric_in(s.c_str());
+    EXPECT_EQ(DatumGetNumeric(d)->dscale, 50);
+    EXPECT_STREQ(numeric_out(d), s.c_str());
+}
+
+TEST_F(NumericTest, NumericLargeIntegerBeyondInt128) {
+    // 50 integer digits.
+    const std::string s = "12345678901234567890123456789012345678901234567890";
+    Datum d = numeric_in(s.c_str());
+    EXPECT_STREQ(numeric_out(d), s.c_str());
+}
+
+TEST_F(NumericTest, NumericAddLargePrecision) {
+    const std::string s = "0.12345678901234567890123456789012345678901234567890";
+    Datum a = numeric_in(s.c_str());
+    Datum b = numeric_in(s.c_str());
+    // a + a = 2a.
+    std::string expected = "0.24691357802469135780246913578024691357802469135780";
+    EXPECT_STREQ(numeric_out(numeric_add(a, b)), expected.c_str());
+}
+
+TEST_F(NumericTest, NumericMulLargePrecision) {
+    // 1.1 * 1.1 = 1.21 with dscale 2.
+    EXPECT_STREQ(numeric_out(numeric_mul(numeric_in("1.1"), numeric_in("1.1"))), "1.21");
+    // Multiply two 20-digit numbers, verify exact result.
+    const std::string a = "12345678901234567890";
+    const std::string b = "98765432109876543210";
+    Datum da = numeric_in(a.c_str());
+    Datum db = numeric_in(b.c_str());
+    Datum r = numeric_mul(da, db);
+    // 12345678901234567890 * 98765432109876543210
+    //   = 1219326311370217952237463801111263526900
+    EXPECT_STREQ(numeric_out(r), "1219326311370217952237463801111263526900");
 }
 
 }  // namespace

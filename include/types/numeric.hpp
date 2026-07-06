@@ -4,25 +4,36 @@
 
 #include "types/datum.hpp"
 
-// __int128 is a GCC extension not standardized by ISO C++; -Wpedantic flags it.
-// It is used intentionally here for arbitrary-precision numeric arithmetic.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-
 namespace pgcpp::types {
 
-// NumericData — a simplified arbitrary-precision decimal type.
+// Base-10,000 digit array representation (mirrors PostgreSQL's NBASE).
+// Each int16_t holds 4 decimal digits, value in [0, 9999].
+constexpr int kNumericBase = 10000;
+constexpr int kNumericPos = 0;
+constexpr int kNumericNeg = 1;
+
+// NumericData — base-10,000 variable-length arbitrary-precision decimal.
 //
-// Stores a scaled integer: actual_value = value / 10^dscale.
-// The sign is implicit in `value` (int128 supports negative values).
-// This mirrors PostgreSQL's numeric semantics closely enough for
-// ClickBench AVG/SUM aggregation, while keeping the implementation
-// compact (the full PG numeric algorithm is 1000+ lines).
+// Mirrors PostgreSQL's utils/adt/numeric.c NumericVar layout:
+//   value = sign * Σ(digits[i] * NBASE^(weight - i))  for i in [0, ndigits)
 //
-// Datum storage: palloc'd NumericData; the Datum is a pointer.
+// Semantics:
+//   - digits[0] is the most significant stored group; weight names its
+//     position (0 = ones group, -1 = first fractional group, 1 = NBASEs).
+//   - dscale is the display scale (decimal digits after the point); it
+//     determines how many fractional digits numeric_out renders.
+//   - Trailing zero digits beyond what dscale requires are stripped.
+//   - Leading zero digits are stripped; if all digits are zero the value
+//     is positive zero with weight 0.
+//
+// Datum storage: palloc'd NumericData; the Datum is a pointer. The digits
+// array is a separate palloc allocation owned by the NumericData.
 struct NumericData {
-    __int128 value;  // scaled integer
-    int32_t dscale;  // number of decimal digits after the point
+    int ndigits;      // number of int16_t digit slots in use
+    int weight;       // position of digits[0] (0 = ones, -1 = first frac)
+    int sign;         // kNumericPos or kNumericNeg
+    int dscale;       // display scale (decimal digits after the point)
+    int16_t* digits;  // palloc'd array of ndigits int16_t, each [0, NBASE-1]
 };
 
 // --- I/O ---
@@ -33,8 +44,9 @@ Datum numeric_in(const char* str);
 char* numeric_out(Datum value);
 
 // --- construction ---
-// Build a NumericData datum from a scaled integer and dscale.
-Datum MakeNumericDatum(__int128 value, int32_t dscale);
+// Build a NumericData datum from a base-10000 digit array.
+// `digits` may be nullptr when ndigits == 0 (yields canonical zero).
+Datum MakeNumericDatum(const int16_t* digits, int ndigits, int weight, int sign, int dscale);
 // Construct a numeric from a 64-bit signed integer (dscale = 0).
 Datum Int64ToNumeric(int64_t val);
 // Construct a numeric from a 32-bit signed integer (dscale = 0).
@@ -47,6 +59,19 @@ Datum numeric_add(Datum a, Datum b);
 Datum numeric_sub(Datum a, Datum b);
 Datum numeric_mul(Datum a, Datum b);
 Datum numeric_div(Datum a, Datum b);
+
+// --- rounding / truncation ---
+// Round to `new_dscale` decimal digits, half away from zero.
+// If new_dscale >= current dscale, the result is zero-padded (no rounding).
+Datum numeric_round(Datum value, int32_t new_dscale);
+// Truncate toward zero to `new_dscale` decimal digits.
+Datum numeric_trunc(Datum value, int32_t new_dscale);
+// Smallest integer >= value (round toward +inf).
+Datum numeric_ceil(Datum value);
+// Largest integer <= value (round toward -inf).
+Datum numeric_floor(Datum value);
+// Absolute value: |x|. Preserves dscale.
+Datum numeric_abs(Datum value);
 
 // --- comparison ---
 // Returns -1, 0, 1 like PostgreSQL's numeric_cmp.
@@ -71,5 +96,3 @@ inline NumericData* DatumGetNumeric(Datum x) {
 }
 
 }  // namespace pgcpp::types
-
-#pragma GCC diagnostic pop
