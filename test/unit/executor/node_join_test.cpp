@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include <cstdlib>
+#include <map>
 #include <set>
 #include <string>
 #include <tuple>
@@ -39,6 +40,8 @@
 #include "executor/exec_main.hpp"
 #include "executor/exec_utils.hpp"
 #include "executor/node_exec.hpp"
+#include "executor/node_hash.hpp"
+#include "executor/node_hashjoin.hpp"
 #include "executor/plannodes.hpp"
 #include "executor/tupletable.hpp"
 #include "parser/parsenodes.hpp"
@@ -99,6 +102,7 @@ using pgcpp::executor::ExecutorRun;
 using pgcpp::executor::ExecutorStart;
 using pgcpp::executor::ExprContext;
 using pgcpp::executor::HashJoin;
+using pgcpp::executor::HashJoinState;
 using pgcpp::executor::Limit;
 using pgcpp::executor::MakeTupleTableSlot;
 using pgcpp::executor::Material;
@@ -413,6 +417,28 @@ protected:
     // Helper: run a join plan and collect (a, b1, b2) result rows.
     std::vector<std::tuple<int, int, int>> RunJoin(QueryDesc* qd) {
         ExecutorStart(qd);
+        std::vector<std::tuple<int, int, int>> results;
+        TupleTableSlot* slot = nullptr;
+        while ((slot = ExecutorRun(qd)) != nullptr) {
+            int a = slot->tts_isnull[0] ? -1 : DatumGetInt32(slot->tts_values[0]);
+            int b1 = slot->tts_isnull[1] ? -1 : DatumGetInt32(slot->tts_values[1]);
+            int b2 = slot->tts_isnull[2] ? -1 : DatumGetInt32(slot->tts_values[2]);
+            results.emplace_back(a, b1, b2);
+        }
+        ExecutorFinish(qd);
+        ExecutorEnd(qd);
+        return results;
+    }
+
+    // Helper: run a join plan with a custom work_mem on the HashState.
+    // work_mem is set after ExecutorStart (which builds the planstate tree)
+    // but before ExecutorRun (which triggers hash table build).
+    std::vector<std::tuple<int, int, int>> RunJoinWithWorkMem(QueryDesc* qd, size_t work_mem) {
+        ExecutorStart(qd);
+        auto* hjs = static_cast<HashJoinState*>(qd->planstate);
+        if (hjs != nullptr && hjs->hj_HashState != nullptr) {
+            hjs->hj_HashState->work_mem = work_mem;
+        }
         std::vector<std::tuple<int, int, int>> results;
         TupleTableSlot* slot = nullptr;
         while ((slot = ExecutorRun(qd)) != nullptr) {
@@ -1020,6 +1046,246 @@ TEST_F(NodeJoinTest, NestLoopBothEmpty) {
 
     auto results = RunJoin(qd);
     EXPECT_EQ(results.size(), 0u);
+}
+
+// ===========================================================================
+// 16. HashJoinRightJoin — RIGHT JOIN, unmatched inner rows get NULL outer
+// ===========================================================================
+
+TEST_F(NodeJoinTest, HashJoinRightJoin) {
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    InsertIntIntRow(rel1, 1, 10);
+    InsertIntIntRow(rel1, 2, 20);
+    InsertIntIntRow(rel1, 3, 30);
+    InsertIntIntRow(rel2, 2, 200);
+    InsertIntIntRow(rel2, 3, 300);
+    InsertIntIntRow(rel2, 4, 400);  // no outer match
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    auto* hjplan = MakeHashJoinPlan(JoinType::kRight, MakeSeqScanPlan(1), MakeSeqScanPlan(2), 1);
+    auto* query = MakeSelectQuery({MakeRTE(relid1), MakeRTE(relid2)});
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = query;
+    qd->plan = hjplan;
+
+    auto results = RunJoin(qd);
+    // Expected: (2,20,200), (3,30,300), (-1,-1,400) — 3 rows.
+    ASSERT_EQ(results.size(), 3u);
+    bool found_2 = false, found_3 = false, found_4 = false;
+    for (const auto& r : results) {
+        int a = std::get<0>(r);
+        int b2 = std::get<2>(r);
+        if (a == 2) {
+            EXPECT_EQ(std::get<1>(r), 20);
+            EXPECT_EQ(b2, 200);
+            found_2 = true;
+        }
+        if (a == 3) {
+            EXPECT_EQ(std::get<1>(r), 30);
+            EXPECT_EQ(b2, 300);
+            found_3 = true;
+        }
+        if (a == -1) {  // unmatched inner: NULL outer columns
+            EXPECT_EQ(std::get<1>(r), -1);
+            EXPECT_EQ(b2, 400);
+            found_4 = true;
+        }
+    }
+    EXPECT_TRUE(found_2);
+    EXPECT_TRUE(found_3);
+    EXPECT_TRUE(found_4);
+}
+
+// ===========================================================================
+// 17. HashJoinFullJoin — FULL JOIN: unmatched outer + unmatched inner
+// ===========================================================================
+
+TEST_F(NodeJoinTest, HashJoinFullJoin) {
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    InsertIntIntRow(rel1, 1, 10);  // no inner match
+    InsertIntIntRow(rel1, 2, 20);
+    InsertIntIntRow(rel1, 3, 30);
+    InsertIntIntRow(rel2, 2, 200);
+    InsertIntIntRow(rel2, 3, 300);
+    InsertIntIntRow(rel2, 4, 400);  // no outer match
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    auto* hjplan = MakeHashJoinPlan(JoinType::kFull, MakeSeqScanPlan(1), MakeSeqScanPlan(2), 1);
+    auto* query = MakeSelectQuery({MakeRTE(relid1), MakeRTE(relid2)});
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = query;
+    qd->plan = hjplan;
+
+    auto results = RunJoin(qd);
+    // Expected: (2,20,200), (3,30,300), (1,10,-1) [unmatched outer],
+    //            (-1,-1,400) [unmatched inner] — 4 rows.
+    ASSERT_EQ(results.size(), 4u);
+    bool found_1 = false, found_2 = false, found_3 = false, found_4 = false;
+    for (const auto& r : results) {
+        int a = std::get<0>(r);
+        int b1 = std::get<1>(r);
+        int b2 = std::get<2>(r);
+        if (a == 1) {
+            EXPECT_EQ(b1, 10);
+            EXPECT_EQ(b2, -1);  // NULL inner
+            found_1 = true;
+        }
+        if (a == 2) {
+            EXPECT_EQ(b1, 20);
+            EXPECT_EQ(b2, 200);
+            found_2 = true;
+        }
+        if (a == 3) {
+            EXPECT_EQ(b1, 30);
+            EXPECT_EQ(b2, 300);
+            found_3 = true;
+        }
+        if (a == -1) {  // unmatched inner: NULL outer columns
+            EXPECT_EQ(b1, -1);
+            EXPECT_EQ(b2, 400);
+            found_4 = true;
+        }
+    }
+    EXPECT_TRUE(found_1);
+    EXPECT_TRUE(found_2);
+    EXPECT_TRUE(found_3);
+    EXPECT_TRUE(found_4);
+}
+
+// ===========================================================================
+// 18. HashJoinSemiJoin — SEMI JOIN: emit outer on first match, skip rest
+// ===========================================================================
+
+TEST_F(NodeJoinTest, HashJoinSemiJoin) {
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    // t1: two rows with key=1, one with key=2, one with key=3 (no match).
+    InsertIntIntRow(rel1, 1, 10);
+    InsertIntIntRow(rel1, 1, 11);
+    InsertIntIntRow(rel1, 2, 20);
+    InsertIntIntRow(rel1, 3, 30);  // no inner match → not emitted
+    // t2: key=1 (two rows), key=2 (one row).
+    InsertIntIntRow(rel2, 1, 100);
+    InsertIntIntRow(rel2, 1, 101);
+    InsertIntIntRow(rel2, 2, 200);
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    auto* hjplan = MakeHashJoinPlan(JoinType::kSemi, MakeSeqScanPlan(1), MakeSeqScanPlan(2), 1);
+    auto* query = MakeSelectQuery({MakeRTE(relid1), MakeRTE(relid2)});
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = query;
+    qd->plan = hjplan;
+
+    auto results = RunJoin(qd);
+    // SEMI: each outer row with at least one match is emitted once.
+    // (1,10) matches → emit. (1,11) matches → emit. (2,20) matches → emit.
+    // (3,30) no match → not emitted. Total: 3 rows.
+    ASSERT_EQ(results.size(), 3u);
+    // Verify outer keys: should be {1, 1, 2}.
+    std::multiset<int> outer_keys;
+    for (const auto& r : results) {
+        outer_keys.insert(std::get<0>(r));
+    }
+    EXPECT_EQ(outer_keys.count(1), 2u);
+    EXPECT_EQ(outer_keys.count(2), 1u);
+    EXPECT_EQ(outer_keys.count(3), 0u);
+}
+
+// ===========================================================================
+// 19. HashJoinAntiJoin — ANTI JOIN: emit outer if NO match found
+// ===========================================================================
+
+TEST_F(NodeJoinTest, HashJoinAntiJoin) {
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    InsertIntIntRow(rel1, 1, 10);  // no match → emitted
+    InsertIntIntRow(rel1, 2, 20);  // matches → NOT emitted
+    InsertIntIntRow(rel1, 3, 30);  // no match → emitted
+    InsertIntIntRow(rel2, 2, 200);
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    auto* hjplan = MakeHashJoinPlan(JoinType::kAnti, MakeSeqScanPlan(1), MakeSeqScanPlan(2), 1);
+    auto* query = MakeSelectQuery({MakeRTE(relid1), MakeRTE(relid2)});
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = query;
+    qd->plan = hjplan;
+
+    auto results = RunJoin(qd);
+    // ANTI: only keys 1 and 3 should be emitted (key 2 has a match).
+    // Inner columns are NULL-padded.
+    ASSERT_EQ(results.size(), 2u);
+    bool found_1 = false, found_3 = false;
+    for (const auto& r : results) {
+        int a = std::get<0>(r);
+        EXPECT_EQ(std::get<2>(r), -1);  // NULL inner
+        if (a == 1) {
+            EXPECT_EQ(std::get<1>(r), 10);
+            found_1 = true;
+        }
+        if (a == 3) {
+            EXPECT_EQ(std::get<1>(r), 30);
+            found_3 = true;
+        }
+    }
+    EXPECT_TRUE(found_1);
+    EXPECT_TRUE(found_3);
+}
+
+// ===========================================================================
+// 20. HashJoinSpill — force batch spilling with small work_mem
+// ===========================================================================
+
+TEST_F(NodeJoinTest, HashJoinSpill) {
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    // Insert 20 rows in each relation with keys 1..20.
+    for (int k = 1; k <= 20; k++) {
+        InsertIntIntRow(rel1, k, k * 10);
+        InsertIntIntRow(rel2, k, k * 100);
+    }
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    auto* hjplan = MakeHashJoinPlan(JoinType::kInner, MakeSeqScanPlan(1), MakeSeqScanPlan(2), 1);
+    auto* query = MakeSelectQuery({MakeRTE(relid1), MakeRTE(relid2)});
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = query;
+    qd->plan = hjplan;
+
+    // Use a tiny work_mem to force batch spilling during hash table build.
+    auto results = RunJoinWithWorkMem(qd, /*work_mem=*/2000);
+    // All 20 keys should match: (k, k*10, k*100) for k=1..20.
+    ASSERT_EQ(results.size(), 20u);
+    std::map<int, std::pair<int, int>> by_key;
+    for (const auto& r : results) {
+        by_key[std::get<0>(r)] = {std::get<1>(r), std::get<2>(r)};
+    }
+    ASSERT_EQ(by_key.size(), 20u);
+    for (int k = 1; k <= 20; k++) {
+        EXPECT_EQ(by_key[k].first, k * 10);
+        EXPECT_EQ(by_key[k].second, k * 100);
+    }
 }
 
 }  // namespace
