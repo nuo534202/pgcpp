@@ -242,7 +242,55 @@ public:
     // Restore the OID counter after Load (avoids OID collisions).
     void SetNextOid(Oid oid) { next_oid_ = oid; }
 
+    // --- P1-2: Transactional catalog (DDL rollback support) ---
+    //
+    // pgcpp does not implement per-row MVCC on catalog tables. Instead, the
+    // transaction system takes a deep-copy snapshot of all user-created
+    // catalog rows at transaction start. On ROLLBACK, the snapshot is restored
+    // (undoing all DDL changes). On COMMIT, the catalog is persisted to disk
+    // if any DDL marked it dirty.
+    //
+    // Limitations (documented):
+    //   - SAVEPOINT-level DDL rollback is not supported (only top-level).
+    //   - Crash recovery uses on-commit Save() rather than WAL replay.
+
+    // Set the path used by CommitDirty() to persist the catalog. Called once
+    // at server startup after Load(). If empty (default), CommitDirty is a
+    // no-op (used by tests that don't need persistence).
+    void SetPersistPath(const std::string& path) { persist_path_ = path; }
+
+    // Take a deep-copy snapshot of all user-created rows. Called at
+    // StartTransaction. If a snapshot already exists, it is discarded first.
+    void TakeSnapshot();
+
+    // Restore the catalog to the snapshot state, undoing all modifications
+    // made since TakeSnapshot. Frees all user-created rows added since the
+    // snapshot, and deep-copies the snapshot rows back into the live vectors.
+    // No-op if no snapshot exists.
+    void RestoreSnapshot();
+
+    // Discard the snapshot without restoring (used on COMMIT).
+    void DiscardSnapshot();
+
+    // True if a snapshot is currently held.
+    bool HasSnapshot() const { return snapshot_ != nullptr; }
+
+    // Mark the catalog as modified (called by every DDL write method via
+    // PreWrite()). CommitDirty checks this flag to decide whether to Save.
+    void MarkDirty() { dirty_ = true; }
+    bool IsDirty() const { return dirty_; }
+    void ClearDirty() { dirty_ = false; }
+
+    // If dirty_, call Save(persist_path_) and clear dirty_. Called at
+    // CommitTransaction. No-op if not dirty or persist_path_ is empty.
+    void CommitDirty();
+
 private:
+    // PreWrite — called at the start of every DDL write method. Ensures a
+    // snapshot exists (so ROLLBACK can undo this change) and marks the
+    // catalog dirty (so COMMIT persists it).
+    void PreWrite();
+
     std::vector<FormData_pg_class*> pg_class_rows_;
     std::vector<FormData_pg_attribute*> pg_attribute_rows_;
     std::vector<FormData_pg_type*> pg_type_rows_;
@@ -264,6 +312,12 @@ private:
     std::vector<FormData_pg_trigger*> pg_trigger_rows_;
     std::vector<FormData_pg_rewrite*> pg_rewrite_rows_;
     Oid next_oid_ = kFirstNormalObjectId;
+
+    // P1-2: transactional catalog state.
+    struct CatalogSnapshot;
+    CatalogSnapshot* snapshot_ = nullptr;  // owned; null = no snapshot
+    bool dirty_ = false;
+    std::string persist_path_;
 };
 
 // Global catalog accessor. Returns the process-wide catalog instance.

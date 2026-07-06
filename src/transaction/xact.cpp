@@ -22,6 +22,9 @@
 #include <vector>
 
 #include "access/heapam.hpp"
+#include "access/rel.hpp"
+#include "catalog/catalog.hpp"
+#include "catalog/syscache.hpp"
 #include "common/error/elog.hpp"
 #include "storage/ipc/proc.hpp"
 #include "transaction/snapshot.hpp"
@@ -91,6 +94,14 @@ void StartTransaction() {
     s->sub_transaction_id = kTopSubTransactionId;
     s->command_id = kFirstCommandId;
     s->state = TransState::kInProgress;
+
+    // P1-2: take a catalog snapshot so DDL changes can be rolled back.
+    // The snapshot is a deep copy of all user-created catalog rows; it is
+    // restored on AbortTransaction and discarded on CommitTransaction.
+    pgcpp::catalog::Catalog* cat = pgcpp::catalog::GetCatalog();
+    if (cat != nullptr) {
+        cat->TakeSnapshot();
+    }
 }
 
 // Commit the current top-level transaction.
@@ -118,6 +129,15 @@ void CommitTransaction() {
     // latest committed state.
     ResetTransactionSnapshot();
 
+    // P1-2: persist catalog changes (if any DDL marked the catalog dirty),
+    // then discard the snapshot. The snapshot is no longer needed because
+    // the changes are now committed.
+    pgcpp::catalog::Catalog* cat = pgcpp::catalog::GetCatalog();
+    if (cat != nullptr) {
+        cat->CommitDirty();
+        cat->DiscardSnapshot();
+    }
+
     PopState();
 }
 
@@ -142,6 +162,20 @@ void AbortTransaction() {
 
     // Release the transaction snapshot.
     ResetTransactionSnapshot();
+
+    // P1-2: restore the catalog snapshot to undo all DDL changes made in
+    // this transaction, then discard the snapshot. Invalidate relcache and
+    // syscache so no stale pointers survive the restore.
+    pgcpp::catalog::Catalog* cat = pgcpp::catalog::GetCatalog();
+    if (cat != nullptr) {
+        cat->RestoreSnapshot();
+        cat->DiscardSnapshot();
+        pgcpp::access::ResetRelcache();
+        pgcpp::catalog::SysCache* sc = pgcpp::catalog::GetSysCache();
+        if (sc != nullptr) {
+            sc->Invalidate();
+        }
+    }
 
     PopState();
 }
@@ -395,6 +429,14 @@ bool EndTransactionBlock() {
         case TBlockState::kAbort:
         case TBlockState::kAbortEnd:
             // ROLLBACK was already issued — abort and report.
+            AbortTransaction();
+            return false;
+
+        case TBlockState::kAbortPending:
+            // Error occurred during the block — COMMIT is treated as ROLLBACK
+            // (matches PostgreSQL's behavior). Without this, the snapshot
+            // allocated in StartTransaction would be leaked.
+            s->block_state = TBlockState::kAbort;
             AbortTransaction();
             return false;
 

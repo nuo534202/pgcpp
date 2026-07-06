@@ -360,6 +360,9 @@ void InitializeServerSubsystems(const std::string& data_dir) {
     // on top of BootstrapCatalog's built-in rows. A missing file is not an
     // error (fresh initdb).
     g_state.catalog->Load(data_dir + "/pgcpp_catalog.tsv");
+    // P1-2: set the persist path so CommitDirty() can save catalog changes
+    // at transaction commit (not just at server shutdown).
+    g_state.catalog->SetPersistPath(data_dir + "/pgcpp_catalog.tsv");
 
     g_state.syscache = new SysCache();
     SetSysCache(g_state.syscache);

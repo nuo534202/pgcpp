@@ -51,6 +51,7 @@ Catalog* g_catalog = nullptr;
 // --- Catalog: pg_class ---
 
 Oid Catalog::InsertClass(FormData_pg_class* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertClass: row is null");
     }
@@ -86,6 +87,7 @@ const FormData_pg_class* Catalog::GetClassByName(const std::string& name) const 
 }
 
 bool Catalog::UpdateClass(Oid oid, const FormData_pg_class* new_row) {
+    PreWrite();
     for (auto*& row : pg_class_rows_) {
         if (row->oid == oid) {
             // Copy fields from new_row into the existing row (in-place update,
@@ -123,6 +125,7 @@ bool Catalog::UpdateClass(Oid oid, const FormData_pg_class* new_row) {
 }
 
 bool Catalog::DeleteClass(Oid oid) {
+    PreWrite();
     auto it = std::find_if(pg_class_rows_.begin(), pg_class_rows_.end(),
                            [oid](const FormData_pg_class* r) { return r->oid == oid; });
     if (it == pg_class_rows_.end()) {
@@ -135,6 +138,7 @@ bool Catalog::DeleteClass(Oid oid) {
 // --- Catalog: pg_attribute ---
 
 void Catalog::InsertAttribute(FormData_pg_attribute* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertAttribute: row is null");
     }
@@ -166,6 +170,7 @@ std::vector<const FormData_pg_attribute*> Catalog::GetAttributes(Oid relid) cons
 }
 
 std::size_t Catalog::DeleteAttributes(Oid relid) {
+    PreWrite();
     auto original_size = pg_attribute_rows_.size();
     pg_attribute_rows_.erase(
         std::remove_if(pg_attribute_rows_.begin(), pg_attribute_rows_.end(),
@@ -177,6 +182,7 @@ std::size_t Catalog::DeleteAttributes(Oid relid) {
 // --- Catalog: pg_type ---
 
 Oid Catalog::InsertType(FormData_pg_type* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertType: row is null");
     }
@@ -213,6 +219,7 @@ const FormData_pg_type* Catalog::GetTypeByName(const std::string& name) const {
 // --- Catalog: pg_operator ---
 
 Oid Catalog::InsertOperator(FormData_pg_operator* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertOperator: row is null");
     }
@@ -254,6 +261,7 @@ const FormData_pg_operator* Catalog::GetOperator(const std::string& name, Oid le
 // --- Catalog: pg_proc ---
 
 Oid Catalog::InsertProc(FormData_pg_proc* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertProc: row is null");
     }
@@ -288,6 +296,7 @@ std::vector<const FormData_pg_proc*> Catalog::GetProcsByName(const std::string& 
 // --- Catalog: pg_cast ---
 
 Oid Catalog::InsertCast(FormData_pg_cast* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertCast: row is null");
     }
@@ -319,6 +328,7 @@ std::vector<const FormData_pg_cast*> Catalog::GetCastsBySource(Oid source_type) 
 // --- Catalog: pg_aggregate ---
 
 void Catalog::InsertAggregate(FormData_pg_aggregate* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertAggregate: row is null");
     }
@@ -336,6 +346,7 @@ const FormData_pg_aggregate* Catalog::GetAggregate(Oid aggfnoid) const {
 // --- Catalog: pg_collation ---
 
 Oid Catalog::InsertCollation(FormData_pg_collation* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertCollation: row is null");
     }
@@ -371,6 +382,7 @@ Oid Catalog::AllocateOid() {
 // --- Catalog: pg_namespace ---
 
 Oid Catalog::InsertNamespace(FormData_pg_namespace* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertNamespace: row is null");
     }
@@ -398,6 +410,7 @@ const FormData_pg_namespace* Catalog::GetNamespaceByName(const std::string& name
 }
 
 bool Catalog::DeleteNamespace(Oid oid) {
+    PreWrite();
     auto it = std::find_if(pg_namespace_rows_.begin(), pg_namespace_rows_.end(),
                            [oid](const FormData_pg_namespace* r) { return r->oid == oid; });
     if (it == pg_namespace_rows_.end())
@@ -409,6 +422,7 @@ bool Catalog::DeleteNamespace(Oid oid) {
 // --- Catalog: pg_database ---
 
 Oid Catalog::InsertDatabase(FormData_pg_database* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertDatabase: row is null");
     }
@@ -436,6 +450,7 @@ const FormData_pg_database* Catalog::GetDatabaseByName(const std::string& name) 
 }
 
 bool Catalog::DeleteDatabase(Oid oid) {
+    PreWrite();
     auto it = std::find_if(pg_database_rows_.begin(), pg_database_rows_.end(),
                            [oid](const FormData_pg_database* r) { return r->oid == oid; });
     if (it == pg_database_rows_.end())
@@ -447,6 +462,7 @@ bool Catalog::DeleteDatabase(Oid oid) {
 // --- Catalog: pg_index ---
 
 Oid Catalog::InsertIndex(FormData_pg_index* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertIndex: row is null");
     }
@@ -476,6 +492,7 @@ std::vector<const FormData_pg_index*> Catalog::GetIndexesByRelid(Oid indrelid) c
 }
 
 bool Catalog::DeleteIndex(Oid indexrelid) {
+    PreWrite();
     auto it = std::find_if(
         pg_index_rows_.begin(), pg_index_rows_.end(),
         [indexrelid](const FormData_pg_index* r) { return r->indexrelid == indexrelid; });
@@ -486,6 +503,7 @@ bool Catalog::DeleteIndex(Oid indexrelid) {
 }
 
 std::size_t Catalog::DeleteIndexesForRelid(Oid indrelid) {
+    PreWrite();
     auto original_size = pg_index_rows_.size();
     pg_index_rows_.erase(
         std::remove_if(pg_index_rows_.begin(), pg_index_rows_.end(),
@@ -497,6 +515,7 @@ std::size_t Catalog::DeleteIndexesForRelid(Oid indrelid) {
 // --- Catalog: pg_constraint ---
 
 Oid Catalog::InsertConstraint(FormData_pg_constraint* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertConstraint: row is null");
     }
@@ -525,6 +544,7 @@ std::vector<const FormData_pg_constraint*> Catalog::GetConstraintsByRelid(Oid co
 }
 
 bool Catalog::DeleteConstraint(Oid oid) {
+    PreWrite();
     auto it = std::find_if(pg_constraint_rows_.begin(), pg_constraint_rows_.end(),
                            [oid](const FormData_pg_constraint* r) { return r->oid == oid; });
     if (it == pg_constraint_rows_.end())
@@ -534,6 +554,7 @@ bool Catalog::DeleteConstraint(Oid oid) {
 }
 
 std::size_t Catalog::DeleteConstraintsForRelid(Oid conrelid) {
+    PreWrite();
     auto original_size = pg_constraint_rows_.size();
     pg_constraint_rows_.erase(std::remove_if(pg_constraint_rows_.begin(), pg_constraint_rows_.end(),
                                              [conrelid](const FormData_pg_constraint* r) {
@@ -546,6 +567,7 @@ std::size_t Catalog::DeleteConstraintsForRelid(Oid conrelid) {
 // --- Catalog: pg_attrdef ---
 
 Oid Catalog::InsertAttrdef(FormData_pg_attrdef* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertAttrdef: row is null");
     }
@@ -574,6 +596,7 @@ std::vector<const FormData_pg_attrdef*> Catalog::GetAttrdefsByRelid(Oid adrelid)
 }
 
 bool Catalog::DeleteAttrdef(Oid oid) {
+    PreWrite();
     auto it = std::find_if(pg_attrdef_rows_.begin(), pg_attrdef_rows_.end(),
                            [oid](const FormData_pg_attrdef* r) { return r->oid == oid; });
     if (it == pg_attrdef_rows_.end())
@@ -583,6 +606,7 @@ bool Catalog::DeleteAttrdef(Oid oid) {
 }
 
 std::size_t Catalog::DeleteAttrdefsForRelid(Oid adrelid) {
+    PreWrite();
     auto original_size = pg_attrdef_rows_.size();
     pg_attrdef_rows_.erase(
         std::remove_if(pg_attrdef_rows_.begin(), pg_attrdef_rows_.end(),
@@ -594,6 +618,7 @@ std::size_t Catalog::DeleteAttrdefsForRelid(Oid adrelid) {
 // --- Catalog: pg_depend ---
 
 void Catalog::InsertDepend(FormData_pg_depend* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertDepend: row is null");
     }
@@ -620,6 +645,7 @@ std::vector<const FormData_pg_depend*> Catalog::GetDependsByObj(Oid classid, Oid
 }
 
 std::size_t Catalog::DeleteDependsByObj(Oid classid, Oid objid) {
+    PreWrite();
     auto original_size = pg_depend_rows_.size();
     pg_depend_rows_.erase(std::remove_if(pg_depend_rows_.begin(), pg_depend_rows_.end(),
                                          [classid, objid](const FormData_pg_depend* r) {
@@ -630,6 +656,7 @@ std::size_t Catalog::DeleteDependsByObj(Oid classid, Oid objid) {
 }
 
 std::size_t Catalog::DeleteDependsByRef(Oid refclassid, Oid refobjid) {
+    PreWrite();
     auto original_size = pg_depend_rows_.size();
     pg_depend_rows_.erase(std::remove_if(pg_depend_rows_.begin(), pg_depend_rows_.end(),
                                          [refclassid, refobjid](const FormData_pg_depend* r) {
@@ -643,6 +670,7 @@ std::size_t Catalog::DeleteDependsByRef(Oid refclassid, Oid refobjid) {
 // --- Catalog: pg_statistic ---
 
 void Catalog::InsertStatistic(FormData_pg_statistic* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertStatistic: row is null");
     }
@@ -658,6 +686,7 @@ const FormData_pg_statistic* Catalog::GetStatistic(Oid starelid, int16_t staattn
 }
 
 std::size_t Catalog::DeleteStatisticsForRelid(Oid starelid) {
+    PreWrite();
     auto original_size = pg_statistic_rows_.size();
     pg_statistic_rows_.erase(std::remove_if(pg_statistic_rows_.begin(), pg_statistic_rows_.end(),
                                             [starelid](const FormData_pg_statistic* r) {
@@ -670,6 +699,7 @@ std::size_t Catalog::DeleteStatisticsForRelid(Oid starelid) {
 // --- Catalog: pg_inherits ---
 
 void Catalog::InsertInherits(FormData_pg_inherits* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertInherits: row is null");
     }
@@ -694,6 +724,7 @@ const FormData_pg_inherits* Catalog::GetInheritsByChild(Oid inhrelid) const {
 }
 
 bool Catalog::DeleteInherits(Oid inhrelid) {
+    PreWrite();
     auto it =
         std::find_if(pg_inherits_rows_.begin(), pg_inherits_rows_.end(),
                      [inhrelid](const FormData_pg_inherits* r) { return r->inhrelid == inhrelid; });
@@ -706,6 +737,7 @@ bool Catalog::DeleteInherits(Oid inhrelid) {
 // --- Catalog: pg_am ---
 
 Oid Catalog::InsertAm(FormData_pg_am* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertAm: row is null");
     }
@@ -735,6 +767,7 @@ const FormData_pg_am* Catalog::GetAmByName(const std::string& name) const {
 // --- Catalog: pg_tablespace ---
 
 Oid Catalog::InsertTablespace(FormData_pg_tablespace* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertTablespace: row is null");
     }
@@ -762,6 +795,7 @@ const FormData_pg_tablespace* Catalog::GetTablespaceByName(const std::string& na
 }
 
 bool Catalog::DeleteTablespace(Oid oid) {
+    PreWrite();
     auto it = std::find_if(pg_tablespace_rows_.begin(), pg_tablespace_rows_.end(),
                            [oid](const FormData_pg_tablespace* r) { return r->oid == oid; });
     if (it == pg_tablespace_rows_.end())
@@ -773,6 +807,7 @@ bool Catalog::DeleteTablespace(Oid oid) {
 // --- Catalog: pg_trigger ---
 
 Oid Catalog::InsertTrigger(FormData_pg_trigger* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertTrigger: row is null");
     }
@@ -801,6 +836,7 @@ std::vector<const FormData_pg_trigger*> Catalog::GetTriggersByRelid(Oid tgrelid)
 }
 
 bool Catalog::DeleteTrigger(Oid oid) {
+    PreWrite();
     auto it = std::find_if(pg_trigger_rows_.begin(), pg_trigger_rows_.end(),
                            [oid](const FormData_pg_trigger* r) { return r->oid == oid; });
     if (it == pg_trigger_rows_.end())
@@ -810,6 +846,7 @@ bool Catalog::DeleteTrigger(Oid oid) {
 }
 
 std::size_t Catalog::DeleteTriggersForRelid(Oid tgrelid) {
+    PreWrite();
     auto original_size = pg_trigger_rows_.size();
     pg_trigger_rows_.erase(
         std::remove_if(pg_trigger_rows_.begin(), pg_trigger_rows_.end(),
@@ -821,6 +858,7 @@ std::size_t Catalog::DeleteTriggersForRelid(Oid tgrelid) {
 // --- Catalog: pg_rewrite ---
 
 Oid Catalog::InsertRewrite(FormData_pg_rewrite* row) {
+    PreWrite();
     if (row == nullptr) {
         ereport(error::LogLevel::kError, "Catalog::InsertRewrite: row is null");
     }
@@ -849,6 +887,7 @@ std::vector<const FormData_pg_rewrite*> Catalog::GetRewritesByRelid(Oid ev_class
 }
 
 bool Catalog::DeleteRewrite(Oid oid) {
+    PreWrite();
     auto it = std::find_if(pg_rewrite_rows_.begin(), pg_rewrite_rows_.end(),
                            [oid](const FormData_pg_rewrite* r) { return r->oid == oid; });
     if (it == pg_rewrite_rows_.end())
@@ -858,6 +897,7 @@ bool Catalog::DeleteRewrite(Oid oid) {
 }
 
 std::size_t Catalog::DeleteRewritesForRelid(Oid ev_class) {
+    PreWrite();
     auto original_size = pg_rewrite_rows_.size();
     pg_rewrite_rows_.erase(std::remove_if(pg_rewrite_rows_.begin(), pg_rewrite_rows_.end(),
                                           [ev_class](const FormData_pg_rewrite* r) {
@@ -865,6 +905,235 @@ std::size_t Catalog::DeleteRewritesForRelid(Oid ev_class) {
                                           }),
                            pg_rewrite_rows_.end());
     return original_size - pg_rewrite_rows_.size();
+}
+
+// --- P1-2: Transactional catalog snapshot ---
+//
+// pgcpp does not implement per-row MVCC on catalog tables. Instead, the
+// transaction system takes a deep-copy snapshot of all user-created catalog
+// rows (oid >= kFirstNormalObjectId) at transaction start. On ROLLBACK, the
+// snapshot is restored (undoing all DDL changes). On COMMIT, the catalog is
+// persisted to disk if any DDL marked it dirty.
+//
+// Snapshot row copies use plain `new`/`delete` (NOT palloc) so their lifetime
+// is independent of any memory context — the snapshot must survive transaction
+// commit/abort, which may delete memory contexts. Restored rows are re-allocated
+// via makePallocNode so they rejoin the normal memory-context ownership model.
+//
+// Limitations (documented in catalog.hpp):
+//   - SAVEPOINT-level DDL rollback is not supported (only top-level).
+//   - Crash recovery uses on-commit Save() rather than WAL replay.
+
+namespace {
+
+using pgcpp::nodes::destroyPallocNode;
+using pgcpp::nodes::makePallocNode;
+
+// CopyUserRowsToSnapshot — deep-copy user rows (oid_field >= kFirstNormalObjectId)
+// from a live vector into a snapshot vector using plain `new`.
+template<typename Row>
+void CopyUserRowsToSnapshot(const std::vector<Row*>& src, std::vector<Row*>& dst,
+                            Oid Row::*oid_field) {
+    for (const auto* r : src) {
+        if ((r->*oid_field) >= kFirstNormalObjectId) {
+            dst.push_back(new Row(*r));
+        }
+    }
+}
+
+// FreeUserRows — free all user rows (oid_field >= kFirstNormalObjectId) from a
+// live vector via destroyPallocNode, then erase the nullified slots. Built-in
+// rows (oid_field < kFirstNormalObjectId) are preserved.
+template<typename Row>
+void FreeUserRows(std::vector<Row*>& vec, Oid Row::*oid_field) {
+    for (auto*& r : vec) {
+        if ((r->*oid_field) >= kFirstNormalObjectId) {
+            destroyPallocNode(r);
+            r = nullptr;
+        }
+    }
+    vec.erase(std::remove(vec.begin(), vec.end(), nullptr), vec.end());
+}
+
+// RestoreUserRows — deep-copy snapshot rows back into a live vector using
+// makePallocNode so they are owned by the current memory context.
+template<typename Row>
+void RestoreUserRows(const std::vector<Row*>& src, std::vector<Row*>& dst) {
+    for (const auto* r : src) {
+        dst.push_back(makePallocNode<Row>(*r));
+    }
+}
+
+// DeleteSnapshotRows — free all snapshot-owned rows (allocated with plain `new`).
+template<typename Row>
+void DeleteSnapshotRows(std::vector<Row*>& vec) {
+    for (auto* r : vec) {
+        delete r;
+    }
+    vec.clear();
+}
+
+}  // namespace
+
+struct Catalog::CatalogSnapshot {
+    std::vector<FormData_pg_class*> pg_class_rows;
+    std::vector<FormData_pg_attribute*> pg_attribute_rows;
+    std::vector<FormData_pg_type*> pg_type_rows;
+    std::vector<FormData_pg_operator*> pg_operator_rows;
+    std::vector<FormData_pg_proc*> pg_proc_rows;
+    std::vector<FormData_pg_cast*> pg_cast_rows;
+    std::vector<FormData_pg_aggregate*> pg_aggregate_rows;
+    std::vector<FormData_pg_collation*> pg_collation_rows;
+    std::vector<FormData_pg_namespace*> pg_namespace_rows;
+    std::vector<FormData_pg_database*> pg_database_rows;
+    std::vector<FormData_pg_index*> pg_index_rows;
+    std::vector<FormData_pg_constraint*> pg_constraint_rows;
+    std::vector<FormData_pg_attrdef*> pg_attrdef_rows;
+    std::vector<FormData_pg_depend*> pg_depend_rows;
+    std::vector<FormData_pg_statistic*> pg_statistic_rows;
+    std::vector<FormData_pg_inherits*> pg_inherits_rows;
+    std::vector<FormData_pg_am*> pg_am_rows;
+    std::vector<FormData_pg_tablespace*> pg_tablespace_rows;
+    std::vector<FormData_pg_trigger*> pg_trigger_rows;
+    std::vector<FormData_pg_rewrite*> pg_rewrite_rows;
+    Oid next_oid = kFirstNormalObjectId;
+
+    ~CatalogSnapshot() {
+        DeleteSnapshotRows(pg_class_rows);
+        DeleteSnapshotRows(pg_attribute_rows);
+        DeleteSnapshotRows(pg_type_rows);
+        DeleteSnapshotRows(pg_operator_rows);
+        DeleteSnapshotRows(pg_proc_rows);
+        DeleteSnapshotRows(pg_cast_rows);
+        DeleteSnapshotRows(pg_aggregate_rows);
+        DeleteSnapshotRows(pg_collation_rows);
+        DeleteSnapshotRows(pg_namespace_rows);
+        DeleteSnapshotRows(pg_database_rows);
+        DeleteSnapshotRows(pg_index_rows);
+        DeleteSnapshotRows(pg_constraint_rows);
+        DeleteSnapshotRows(pg_attrdef_rows);
+        DeleteSnapshotRows(pg_depend_rows);
+        DeleteSnapshotRows(pg_statistic_rows);
+        DeleteSnapshotRows(pg_inherits_rows);
+        DeleteSnapshotRows(pg_am_rows);
+        DeleteSnapshotRows(pg_tablespace_rows);
+        DeleteSnapshotRows(pg_trigger_rows);
+        DeleteSnapshotRows(pg_rewrite_rows);
+    }
+};
+
+void Catalog::TakeSnapshot() {
+    DiscardSnapshot();  // discard any existing snapshot first
+    snapshot_ = new CatalogSnapshot();
+    CopyUserRowsToSnapshot(pg_class_rows_, snapshot_->pg_class_rows, &FormData_pg_class::oid);
+    CopyUserRowsToSnapshot(pg_attribute_rows_, snapshot_->pg_attribute_rows,
+                           &FormData_pg_attribute::attrelid);
+    CopyUserRowsToSnapshot(pg_type_rows_, snapshot_->pg_type_rows, &FormData_pg_type::oid);
+    CopyUserRowsToSnapshot(pg_operator_rows_, snapshot_->pg_operator_rows,
+                           &FormData_pg_operator::oid);
+    CopyUserRowsToSnapshot(pg_proc_rows_, snapshot_->pg_proc_rows, &FormData_pg_proc::oid);
+    CopyUserRowsToSnapshot(pg_cast_rows_, snapshot_->pg_cast_rows, &FormData_pg_cast::oid);
+    CopyUserRowsToSnapshot(pg_aggregate_rows_, snapshot_->pg_aggregate_rows,
+                           &FormData_pg_aggregate::aggfnoid);
+    CopyUserRowsToSnapshot(pg_collation_rows_, snapshot_->pg_collation_rows,
+                           &FormData_pg_collation::oid);
+    CopyUserRowsToSnapshot(pg_namespace_rows_, snapshot_->pg_namespace_rows,
+                           &FormData_pg_namespace::oid);
+    CopyUserRowsToSnapshot(pg_database_rows_, snapshot_->pg_database_rows,
+                           &FormData_pg_database::oid);
+    CopyUserRowsToSnapshot(pg_index_rows_, snapshot_->pg_index_rows,
+                           &FormData_pg_index::indexrelid);
+    CopyUserRowsToSnapshot(pg_constraint_rows_, snapshot_->pg_constraint_rows,
+                           &FormData_pg_constraint::oid);
+    CopyUserRowsToSnapshot(pg_attrdef_rows_, snapshot_->pg_attrdef_rows, &FormData_pg_attrdef::oid);
+    CopyUserRowsToSnapshot(pg_depend_rows_, snapshot_->pg_depend_rows, &FormData_pg_depend::objid);
+    CopyUserRowsToSnapshot(pg_statistic_rows_, snapshot_->pg_statistic_rows,
+                           &FormData_pg_statistic::starelid);
+    CopyUserRowsToSnapshot(pg_inherits_rows_, snapshot_->pg_inherits_rows,
+                           &FormData_pg_inherits::inhrelid);
+    CopyUserRowsToSnapshot(pg_am_rows_, snapshot_->pg_am_rows, &FormData_pg_am::oid);
+    CopyUserRowsToSnapshot(pg_tablespace_rows_, snapshot_->pg_tablespace_rows,
+                           &FormData_pg_tablespace::oid);
+    CopyUserRowsToSnapshot(pg_trigger_rows_, snapshot_->pg_trigger_rows, &FormData_pg_trigger::oid);
+    CopyUserRowsToSnapshot(pg_rewrite_rows_, snapshot_->pg_rewrite_rows, &FormData_pg_rewrite::oid);
+    snapshot_->next_oid = next_oid_;
+}
+
+void Catalog::RestoreSnapshot() {
+    if (snapshot_ == nullptr) {
+        return;
+    }
+    // Free all current user rows (built-in rows are preserved).
+    FreeUserRows(pg_class_rows_, &FormData_pg_class::oid);
+    FreeUserRows(pg_attribute_rows_, &FormData_pg_attribute::attrelid);
+    FreeUserRows(pg_type_rows_, &FormData_pg_type::oid);
+    FreeUserRows(pg_operator_rows_, &FormData_pg_operator::oid);
+    FreeUserRows(pg_proc_rows_, &FormData_pg_proc::oid);
+    FreeUserRows(pg_cast_rows_, &FormData_pg_cast::oid);
+    FreeUserRows(pg_aggregate_rows_, &FormData_pg_aggregate::aggfnoid);
+    FreeUserRows(pg_collation_rows_, &FormData_pg_collation::oid);
+    FreeUserRows(pg_namespace_rows_, &FormData_pg_namespace::oid);
+    FreeUserRows(pg_database_rows_, &FormData_pg_database::oid);
+    FreeUserRows(pg_index_rows_, &FormData_pg_index::indexrelid);
+    FreeUserRows(pg_constraint_rows_, &FormData_pg_constraint::oid);
+    FreeUserRows(pg_attrdef_rows_, &FormData_pg_attrdef::oid);
+    FreeUserRows(pg_depend_rows_, &FormData_pg_depend::objid);
+    FreeUserRows(pg_statistic_rows_, &FormData_pg_statistic::starelid);
+    FreeUserRows(pg_inherits_rows_, &FormData_pg_inherits::inhrelid);
+    FreeUserRows(pg_am_rows_, &FormData_pg_am::oid);
+    FreeUserRows(pg_tablespace_rows_, &FormData_pg_tablespace::oid);
+    FreeUserRows(pg_trigger_rows_, &FormData_pg_trigger::oid);
+    FreeUserRows(pg_rewrite_rows_, &FormData_pg_rewrite::oid);
+    // Deep-copy snapshot rows back into the live vectors.
+    RestoreUserRows(snapshot_->pg_class_rows, pg_class_rows_);
+    RestoreUserRows(snapshot_->pg_attribute_rows, pg_attribute_rows_);
+    RestoreUserRows(snapshot_->pg_type_rows, pg_type_rows_);
+    RestoreUserRows(snapshot_->pg_operator_rows, pg_operator_rows_);
+    RestoreUserRows(snapshot_->pg_proc_rows, pg_proc_rows_);
+    RestoreUserRows(snapshot_->pg_cast_rows, pg_cast_rows_);
+    RestoreUserRows(snapshot_->pg_aggregate_rows, pg_aggregate_rows_);
+    RestoreUserRows(snapshot_->pg_collation_rows, pg_collation_rows_);
+    RestoreUserRows(snapshot_->pg_namespace_rows, pg_namespace_rows_);
+    RestoreUserRows(snapshot_->pg_database_rows, pg_database_rows_);
+    RestoreUserRows(snapshot_->pg_index_rows, pg_index_rows_);
+    RestoreUserRows(snapshot_->pg_constraint_rows, pg_constraint_rows_);
+    RestoreUserRows(snapshot_->pg_attrdef_rows, pg_attrdef_rows_);
+    RestoreUserRows(snapshot_->pg_depend_rows, pg_depend_rows_);
+    RestoreUserRows(snapshot_->pg_statistic_rows, pg_statistic_rows_);
+    RestoreUserRows(snapshot_->pg_inherits_rows, pg_inherits_rows_);
+    RestoreUserRows(snapshot_->pg_am_rows, pg_am_rows_);
+    RestoreUserRows(snapshot_->pg_tablespace_rows, pg_tablespace_rows_);
+    RestoreUserRows(snapshot_->pg_trigger_rows, pg_trigger_rows_);
+    RestoreUserRows(snapshot_->pg_rewrite_rows, pg_rewrite_rows_);
+    // Note: next_oid_ is intentionally NOT restored. Restoring it would cause
+    // the next CREATE TABLE to reuse an OID whose physical storage file still
+    // exists on disk (the MVP has no WAL redo / pendingDeletes mechanism to
+    // clean up files from rolled-back DDL). An OID gap after ROLLBACK is
+    // acceptable and consistent with the MVP's "no WAL" durability model.
+    dirty_ = false;  // catalog now matches the pre-transaction state
+}
+
+void Catalog::DiscardSnapshot() {
+    if (snapshot_ == nullptr) {
+        return;
+    }
+    delete snapshot_;
+    snapshot_ = nullptr;
+}
+
+void Catalog::CommitDirty() {
+    if (dirty_ && !persist_path_.empty()) {
+        Save(persist_path_);
+        dirty_ = false;
+    }
+}
+
+void Catalog::PreWrite() {
+    // Only track dirty state when a transaction snapshot is active. Outside
+    // a transaction (e.g., bootstrap), writes don't need rollback tracking.
+    if (snapshot_ != nullptr) {
+        dirty_ = true;
+    }
 }
 
 // --- Persistence helpers (A-3) ---
