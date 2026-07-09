@@ -27,6 +27,7 @@
 #include "storage/bufmgr.hpp"
 #include "storage/bufpage.hpp"
 #include "transaction/heap_tuple.hpp"
+#include "transaction/multixact.hpp"
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
 #include "transaction/visibility.hpp"
@@ -423,6 +424,66 @@ void heap_delete(Relation relation, const ItemPointerData& tid) {
     CommandId cid = GetCurrentCommandId();
     HeapTupleHeaderSetXmax(header, xid);
     HeapTupleHeaderSetCid(header, cid);
+
+    MarkBufferDirty(buffer);
+    ReleaseBuffer(buffer);
+
+    CommandCounterIncrement();
+}
+
+void heap_lock_tuple(Relation relation, const ItemPointerData& tid,
+                     pgcpp::transaction::RowLockStrength lock_strength) {
+    using namespace pgcpp::transaction;
+    BlockNumber block_num = tid.ip_blkid;
+    OffsetNumber offset = tid.ip_posid;
+
+    relation->rd_smgr = RelationGetSmgr(relation);
+    Buffer buffer =
+        ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
+    Page page = BufferGetPage(buffer);
+
+    auto* item_id = PageGetItemId(page, offset);
+    HeapTupleHeaderData* header =
+        reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
+
+    TransactionId xid = GetCurrentTransactionId();
+
+    if (lock_strength == RowLockStrength::kForUpdate ||
+        lock_strength == RowLockStrength::kForNoKeyUpdate) {
+        // Exclusive row lock: set t_xmax = current XID directly.
+        // kHeapXmaxLocked (LOCK_ONLY) must be set so the visibility check
+        // treats this as a lock, not a delete (tuple remains visible).
+        HeapTupleHeaderSetXmax(header, xid);
+        header->t_infomask |= kHeapXmaxLocked;
+        header->t_infomask |= kHeapXmaxExclusiveLock;
+        header->t_infomask &= ~kHeapXmaxInvalid;
+        if (lock_strength == RowLockStrength::kForUpdate) {
+            header->t_infomask2 |= kHeapKeysUpdated;
+        }
+    } else {
+        // Shared row lock (FOR SHARE / FOR KEY SHARE): use MultiXactId.
+        MultiXactMember member;
+        member.xid = xid;
+        member.status = static_cast<uint8_t>(lock_strength);
+
+        MultiXactId new_multi;
+        if ((header->t_infomask & kHeapXmaxLocked) != 0 && header->t_xmax != kInvalidMultiXactId) {
+            // Expand existing multixact.
+            new_multi = MultiXactIdExpand(header->t_xmax, xid, member.status);
+        } else {
+            // Create a new multixact with just this one member.
+            new_multi = MultiXactIdCreate({member});
+        }
+
+        HeapTupleHeaderSetXmax(header, new_multi);
+        header->t_infomask |= kHeapXmaxLocked;
+        header->t_infomask &= ~kHeapXmaxInvalid;
+        if (lock_strength == RowLockStrength::kForShare) {
+            header->t_infomask |= kHeapXmaxShrLock;
+        } else {
+            header->t_infomask |= kHeapXmaxKeyshrLock;
+        }
+    }
 
     MarkBufferDirty(buffer);
     ReleaseBuffer(buffer);

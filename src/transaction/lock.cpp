@@ -165,4 +165,41 @@ int GetLockCount() {
     return static_cast<int>(HeldLocks().size());
 }
 
+// --- Row-level lock strength helpers ---
+
+// Map row lock strength to relation-level LockMode.
+// PostgreSQL: FOR UPDATE/NO KEY UPDATE → RowExclusiveLock; FOR SHARE → RowShareLock.
+LockMode RowLockStrengthToLockMode(RowLockStrength strength) {
+    switch (strength) {
+        case RowLockStrength::kForUpdate:
+        case RowLockStrength::kForNoKeyUpdate:
+            return LockMode::kRowExclusiveLock;
+        case RowLockStrength::kForShare:
+        case RowLockStrength::kForKeyShare:
+            return LockMode::kRowShareLock;
+    }
+    return LockMode::kNoLock;
+}
+
+// Row lock strength conflict matrix.
+// Based on PostgreSQL's table_tuple_lock_conflicts[]:
+//   FOR KEY SHARE conflicts with FOR UPDATE, FOR NO KEY UPDATE
+//   FOR SHARE conflicts with FOR UPDATE, FOR NO KEY UPDATE
+//   FOR NO KEY UPDATE conflicts with FOR UPDATE, FOR NO KEY UPDATE, FOR SHARE, FOR KEY SHARE
+//   FOR UPDATE conflicts with everything (including itself)
+bool RowLockStrengthConflicts(RowLockStrength a, RowLockStrength b) {
+    int s1 = static_cast<int>(a);
+    int s2 = static_cast<int>(b);
+    // FOR UPDATE (3) conflicts with everything.
+    if (s1 == 3 || s2 == 3) {
+        return true;
+    }
+    // FOR NO KEY UPDATE (2) conflicts with FOR NO KEY UPDATE, FOR SHARE, FOR KEY SHARE.
+    if (s1 == 2 || s2 == 2) {
+        return true;
+    }
+    // FOR SHARE (1) and FOR KEY SHARE (0) don't conflict with each other.
+    return false;
+}
+
 }  // namespace pgcpp::transaction

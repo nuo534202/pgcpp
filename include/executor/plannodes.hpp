@@ -19,6 +19,7 @@
 #include "catalog/catalog.hpp"
 #include "parser/parsenodes.hpp"
 #include "parser/primnodes.hpp"
+#include "transaction/lock.hpp"  // RowLockStrength
 
 namespace pgcpp::executor {
 
@@ -48,6 +49,8 @@ enum class PlanType {
     kMergeAppend,      // merge multiple sorted children (ORDER BY over UNION ALL)
     kBitmapIndexScan,  // build a TID bitmap from an index scan
     kBitmapHeapScan,   // fetch heap tuples by TID bitmap
+    // --- P1-8 additions ---
+    kLockRows,  // row-level locking (SELECT FOR UPDATE/SHARE)
 };
 
 // Plan — base struct for all plan nodes.
@@ -270,6 +273,23 @@ struct BitmapIndexScan : Plan {
 struct BitmapHeapScan : Plan {
     BitmapHeapScan() { type = PlanType::kBitmapHeapScan; }
     int scanrelid = 0;  // 1-based range table index of the heap relation
+};
+
+// --- P1-8: row-level locking ---
+
+// LockRows — row-level locking for SELECT FOR UPDATE/SHARE.
+//
+// Wraps a child plan. For each tuple produced by the child, acquires a
+// row lock of the specified strength on the underlying heap tuple by
+// calling heap_lock_tuple. The tuple is then passed through to the parent
+// unchanged.
+//
+// In single-process pgcpp, the lock always succeeds (no blocking).
+struct LockRows : Plan {
+    LockRows() { type = PlanType::kLockRows; }
+    int lockRelid = 0;  // 1-based range table index of the relation to lock
+    pgcpp::transaction::RowLockStrength lockStrength =
+        pgcpp::transaction::RowLockStrength::kForUpdate;
 };
 
 }  // namespace pgcpp::executor

@@ -239,3 +239,61 @@ TEST_F(LockTest, LockModeStrongerReturnsStronger) {
               LockMode::kExclusiveLock);
     EXPECT_EQ(LockModeStronger(LockMode::kShareLock, LockMode::kShareLock), LockMode::kShareLock);
 }
+
+// --- Row-level lock strength (P1-8) ---
+
+using pgcpp::transaction::RowLockStrength;
+using pgcpp::transaction::RowLockStrengthConflicts;
+using pgcpp::transaction::RowLockStrengthToLockMode;
+
+TEST_F(LockTest, RowLockStrengthForUpdateMapsToRowExclusive) {
+    EXPECT_EQ(RowLockStrengthToLockMode(RowLockStrength::kForUpdate), LockMode::kRowExclusiveLock);
+    EXPECT_EQ(RowLockStrengthToLockMode(RowLockStrength::kForNoKeyUpdate),
+              LockMode::kRowExclusiveLock);
+}
+
+TEST_F(LockTest, RowLockStrengthForShareMapsToRowShare) {
+    EXPECT_EQ(RowLockStrengthToLockMode(RowLockStrength::kForShare), LockMode::kRowShareLock);
+    EXPECT_EQ(RowLockStrengthToLockMode(RowLockStrength::kForKeyShare), LockMode::kRowShareLock);
+}
+
+TEST_F(LockTest, RowLockForUpdateConflictsWithAll) {
+    EXPECT_TRUE(RowLockStrengthConflicts(RowLockStrength::kForUpdate, RowLockStrength::kForUpdate));
+    EXPECT_TRUE(RowLockStrengthConflicts(RowLockStrength::kForUpdate, RowLockStrength::kForShare));
+    EXPECT_TRUE(
+        RowLockStrengthConflicts(RowLockStrength::kForUpdate, RowLockStrength::kForNoKeyUpdate));
+    EXPECT_TRUE(
+        RowLockStrengthConflicts(RowLockStrength::kForUpdate, RowLockStrength::kForKeyShare));
+}
+
+TEST_F(LockTest, RowLockForNoKeyUpdateConflictsWithAllExceptShareKeySharePair) {
+    EXPECT_TRUE(
+        RowLockStrengthConflicts(RowLockStrength::kForNoKeyUpdate, RowLockStrength::kForUpdate));
+    EXPECT_TRUE(RowLockStrengthConflicts(RowLockStrength::kForNoKeyUpdate,
+                                         RowLockStrength::kForNoKeyUpdate));
+    EXPECT_TRUE(
+        RowLockStrengthConflicts(RowLockStrength::kForNoKeyUpdate, RowLockStrength::kForShare));
+    EXPECT_TRUE(
+        RowLockStrengthConflicts(RowLockStrength::kForNoKeyUpdate, RowLockStrength::kForKeyShare));
+}
+
+TEST_F(LockTest, RowLockShareAndKeyShareDoNotConflict) {
+    EXPECT_FALSE(RowLockStrengthConflicts(RowLockStrength::kForShare, RowLockStrength::kForShare));
+    EXPECT_FALSE(
+        RowLockStrengthConflicts(RowLockStrength::kForKeyShare, RowLockStrength::kForKeyShare));
+    EXPECT_FALSE(
+        RowLockStrengthConflicts(RowLockStrength::kForShare, RowLockStrength::kForKeyShare));
+    EXPECT_FALSE(
+        RowLockStrengthConflicts(RowLockStrength::kForKeyShare, RowLockStrength::kForShare));
+}
+
+TEST_F(LockTest, RowLockConflictMatrixIsSymmetric) {
+    for (int i = 0; i <= 3; ++i) {
+        for (int j = 0; j <= 3; ++j) {
+            RowLockStrength a = static_cast<RowLockStrength>(i);
+            RowLockStrength b = static_cast<RowLockStrength>(j);
+            EXPECT_EQ(RowLockStrengthConflicts(a, b), RowLockStrengthConflicts(b, a))
+                << "Asymmetric row lock conflict at strengths " << i << " and " << j;
+        }
+    }
+}

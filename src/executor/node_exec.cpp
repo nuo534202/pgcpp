@@ -24,6 +24,7 @@
 #include "executor/node_hashjoin.hpp"
 #include "executor/node_indexscan.hpp"
 #include "executor/node_limit.hpp"
+#include "executor/node_lockrows.hpp"
 #include "executor/node_material.hpp"
 #include "executor/node_mergeappend.hpp"
 #include "executor/node_mergejoin.hpp"
@@ -121,6 +122,9 @@ PlanState* CreatePlanState(Plan* plan, EState* state) {
         }
         case PlanType::kBitmapHeapScan: {
             return makePallocNode<BitmapHeapScanState>(plan, state);
+        }
+        case PlanType::kLockRows: {
+            return makePallocNode<LockRowsState>(plan, state);
         }
     }
     return nullptr;

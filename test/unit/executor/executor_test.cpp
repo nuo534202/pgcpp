@@ -47,6 +47,7 @@
 #include "storage/bufmgr.hpp"
 #include "storage/smgr.hpp"
 #include "transaction/heap_tuple.hpp"
+#include "transaction/lock.hpp"
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
 #include "transaction/xact.hpp"
@@ -104,6 +105,7 @@ using pgcpp::executor::ExprContext;
 using pgcpp::executor::Group;
 using pgcpp::executor::HashJoin;
 using pgcpp::executor::Limit;
+using pgcpp::executor::LockRows;
 using pgcpp::executor::MakeTupleTableSlot;
 using pgcpp::executor::Material;
 using pgcpp::executor::MergeAppend;
@@ -2349,6 +2351,124 @@ TEST_F(ExecutorTest, BitmapScan_IndexToHeap) {
     EXPECT_EQ(results[0].second, 30);
     ExecutorFinish(qd);
     ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P1-8: LockRows — SELECT FOR UPDATE
+// ===========================================================================
+
+TEST_F(ExecutorTest, LockRows_ForUpdateLocksTuples) {
+    // Create a relation with 3 rows.
+    Oid relid = kFirstNormalObjectId;
+    auto attrs = MakeIntIntSchema(relid);
+    Relation rel = CreateTestRelation(relid, "t1", attrs);
+    InsertIntIntRow(rel, 1, 100);
+    InsertIntIntRow(rel, 2, 200);
+    InsertIntIntRow(rel, 3, 300);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    // Build SeqScan child plan.
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    // Build LockRows parent plan (FOR UPDATE on relation 1).
+    auto* lr_plan = makePallocNode<LockRows>();
+    lr_plan->lefttree = seqplan;
+    lr_plan->lockRelid = 1;
+    lr_plan->lockStrength = pgcpp::transaction::RowLockStrength::kForUpdate;
+    lr_plan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    lr_plan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = lr_plan;
+
+    ExecutorStart(qd);
+
+    // Collect all tuples — LockRows should pass them through unchanged.
+    std::vector<std::pair<int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt32(slot->tts_values[1]));
+    }
+    EXPECT_EQ(results.size(), 3u);
+
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+
+    // Verify each tuple was locked: t_infomask should carry kHeapXmaxExclusiveLock.
+    rel = RelationOpen(relid);
+    HeapScanDesc scan = heap_beginscan(rel, nullptr);
+    int locked_count = 0;
+    HeapTuple tup = nullptr;
+    while ((tup = heap_getnext(scan)) != nullptr) {
+        if ((tup->t_data->t_infomask & pgcpp::transaction::kHeapXmaxExclusiveLock) != 0) {
+            ++locked_count;
+        }
+    }
+    heap_endscan(scan);
+    RelationClose(rel);
+    EXPECT_EQ(locked_count, 3);
+}
+
+TEST_F(ExecutorTest, LockRows_ForShareUsesMultiXact) {
+    // Create a relation with 2 rows.
+    Oid relid = kFirstNormalObjectId;
+    auto attrs = MakeIntIntSchema(relid);
+    Relation rel = CreateTestRelation(relid, "t1", attrs);
+    InsertIntIntRow(rel, 10, 20);
+    InsertIntIntRow(rel, 30, 40);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    // Build SeqScan + LockRows (FOR SHARE).
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* lr_plan = makePallocNode<LockRows>();
+    lr_plan->lefttree = seqplan;
+    lr_plan->lockRelid = 1;
+    lr_plan->lockStrength = pgcpp::transaction::RowLockStrength::kForShare;
+    lr_plan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    lr_plan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = lr_plan;
+
+    ExecutorStart(qd);
+    std::vector<std::pair<int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt32(slot->tts_values[1]));
+    }
+    EXPECT_EQ(results.size(), 2u);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+
+    // FOR SHARE should set the kHeapXmaxLocked + kHeapXmaxShrLock flags.
+    rel = RelationOpen(relid);
+    HeapScanDesc scan = heap_beginscan(rel, nullptr);
+    int shared_locked = 0;
+    HeapTuple tup = nullptr;
+    while ((tup = heap_getnext(scan)) != nullptr) {
+        if ((tup->t_data->t_infomask & pgcpp::transaction::kHeapXmaxLocked) != 0 &&
+            (tup->t_data->t_infomask & pgcpp::transaction::kHeapXmaxShrLock) != 0) {
+            ++shared_locked;
+        }
+    }
+    heap_endscan(scan);
+    RelationClose(rel);
+    EXPECT_EQ(shared_locked, 2);
 }
 
 }  // namespace

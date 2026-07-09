@@ -24,6 +24,7 @@
 #include "storage/bufmgr.hpp"
 #include "storage/bufpage.hpp"
 #include "transaction/heap_tuple.hpp"
+#include "transaction/lock.hpp"  // RowLockStrength
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
 #include "transaction/xact.hpp"
@@ -120,6 +121,21 @@ pgcpp::transaction::ItemPointerData heap_insert(Relation relation,
 // The tuple is not physically removed (that's VACUUM's job); it becomes
 // invisible to new snapshots.
 void heap_delete(Relation relation, const pgcpp::transaction::ItemPointerData& tid);
+
+// heap_lock_tuple — lock a tuple for SELECT FOR UPDATE/SHARE.
+//
+// Modifies the tuple header to record a row-level lock:
+//   - FOR UPDATE / FOR NO KEY UPDATE: sets t_xmax = current XID,
+//     sets kHeapXmaxExclusiveLock flag (exclusive lock).
+//   - FOR SHARE: creates/expands a MultiXactId with current XID,
+//     sets kHeapXmaxLocked | kHeapXmaxShrLock flags (shared lock).
+//   - FOR KEY SHARE: creates/expands a MultiXactId with current XID,
+//     sets kHeapXmaxLocked | kHeapXmaxKeyshrLock flags (key-only shared lock).
+//
+// In single-process pgcpp, the lock always succeeds (no blocking).
+// The tuple is marked dirty in the buffer so the change persists.
+void heap_lock_tuple(Relation relation, const pgcpp::transaction::ItemPointerData& tid,
+                     pgcpp::transaction::RowLockStrength lock_strength);
 
 // heap_update — replace a tuple with a new version.
 //

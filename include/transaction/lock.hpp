@@ -129,4 +129,28 @@ void ResetLockManager();
 // GetLockCount — return the number of locks currently held.
 int GetLockCount();
 
+// --- Row-level lock strength (SELECT FOR UPDATE / SHARE / KEY SHARE) ---
+//
+// These correspond to PostgreSQL's LockTupleMode enum. Each strength
+// determines how the tuple header is modified by heap_lock_tuple.
+//   kForUpdate      — exclusive row lock (SELECT FOR UPDATE)
+//   kForNoKeyUpdate — exclusive row lock, no key columns (SELECT FOR NO KEY UPDATE)
+//   kForShare       — shared row lock (SELECT FOR SHARE)
+//   kForKeyShare    — shared key-only lock (SELECT FOR KEY SHARE)
+enum class RowLockStrength : int {
+    kForKeyShare = 0,  // weakest
+    kForShare = 1,
+    kForNoKeyUpdate = 2,
+    kForUpdate = 3,  // strongest
+};
+
+// RowLockStrengthToLockMode — map a row lock strength to the corresponding
+// relation-level LockMode (used for the relation-level lock acquired by
+// SELECT FOR UPDATE/SHARE).
+LockMode RowLockStrengthToLockMode(RowLockStrength strength);
+
+// RowLockStrengthConflicts — check if two row lock strengths conflict.
+// A conflict means the two locks cannot coexist on the same tuple.
+bool RowLockStrengthConflicts(RowLockStrength a, RowLockStrength b);
+
 }  // namespace pgcpp::transaction

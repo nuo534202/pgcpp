@@ -143,6 +143,13 @@ bool HeapTupleSatisfiesMVCC(HeapTupleHeaderData* tup, const SnapshotData& snapsh
         return true;
     }
 
+    // If xmax is a locker (LOCK_ONLY), the tuple is locked, not deleted.
+    // It remains visible regardless of the locker's transaction status.
+    // This handles SELECT FOR UPDATE/SHARE/KEY SHARE row locks.
+    if ((tup->t_infomask & kHeapXmaxLocked) != 0) {
+        return true;
+    }
+
     // Check hint flags for t_xmax.
     XactStatus xmax_status = HeapTupleHeaderGetXmaxStatus(tup);
 
