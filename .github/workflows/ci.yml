@@ -94,3 +94,29 @@ jobs:
 
       - name: Test (UBSan)
         run: ctest --test-dir build-ubsan --output-on-failure
+
+  # -----------------------------------------------------------------------
+  # Job 4: ThreadSanitizer
+  # -----------------------------------------------------------------------
+  tsan:
+    name: TSan
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake bison gcc-11 g++-11
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+
+      - name: Configure (TSan)
+        run: cmake -S . -B build-tsan -DENABLE_TSAN=ON -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+      - name: Build (TSan)
+        run: cmake --build build-tsan -j$(nproc)
+
+      - name: Test (TSan)
+        run: ctest --test-dir build-tsan --output-on-failure
