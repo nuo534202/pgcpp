@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <vector>
 
 #include "access/rel.hpp"
@@ -29,6 +30,17 @@
 namespace pgcpp::executor {
 
 class PlanState;
+
+// WorkTableState — working table for a recursive CTE (WITH RECURSIVE).
+//
+// A RecursiveUnion populates `tuples` before each recursive iteration; a
+// WorkTableScan reads them. `index` tracks the read position. Registered on
+// the EState under a wtParam key so the WorkTableScan can locate its parent
+// RecursiveUnion's working table.
+struct WorkTableState {
+    std::vector<TupleTableSlot*> tuples;
+    size_t index = 0;
+};
 
 // EState — per-query executor state.
 struct EState {
@@ -49,6 +61,11 @@ struct EState {
 
     // Tuple table slots allocated during execution (for cleanup).
     std::vector<TupleTableSlot*> es_tupleTable;
+
+    // Working-table registry for recursive CTEs (WITH RECURSIVE).
+    // Keyed by wtParam; a RecursiveUnion registers its WorkTableState here
+    // and the corresponding WorkTableScan looks it up.
+    std::map<int, WorkTableState*> es_worktables;
 
     EState() = default;
     ~EState();

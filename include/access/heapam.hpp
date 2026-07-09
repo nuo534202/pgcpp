@@ -169,6 +169,16 @@ void heap_endscan(HeapScanDesc scan);
 // heap_rescan — restart a scan from the beginning.
 void heap_rescan(HeapScanDesc scan);
 
+// heap_fetch_by_tid — fetch a tuple by its TID (block + offset).
+//
+// Reads the buffer page at the TID's block number, extracts the item at the
+// given offset, and returns a deep copy (caller must heap_freetuple it).
+// Returns nullptr if the item is unused/dead. Does not perform full MVCC
+// visibility checks (simplification: tuples inserted by the current
+// transaction are visible to the same transaction).
+pgcpp::transaction::HeapTuple heap_fetch_by_tid(Relation relation,
+                                                const pgcpp::transaction::ItemPointerData& tid);
+
 // --- Tuple formation ---
 
 // heap_form_tuple — build a HeapTuple from column values.

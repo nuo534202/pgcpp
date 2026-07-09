@@ -40,6 +40,8 @@
 #include "executor/exec_main.hpp"
 #include "executor/exec_utils.hpp"
 #include "executor/node_exec.hpp"
+#include "executor/node_memoize.hpp"
+#include "executor/parallel.hpp"
 #include "executor/plannodes.hpp"
 #include "executor/tupletable.hpp"
 #include "parser/parsenodes.hpp"
@@ -75,6 +77,7 @@ using pgcpp::catalog::BootstrapCatalog;
 using pgcpp::catalog::Catalog;
 using pgcpp::catalog::FormData_pg_attribute;
 using pgcpp::catalog::FormData_pg_class;
+using pgcpp::catalog::FormData_pg_proc;
 using pgcpp::catalog::GetCatalog;
 using pgcpp::catalog::kFirstNormalObjectId;
 using pgcpp::catalog::kInvalidOid;
@@ -90,7 +93,10 @@ using pgcpp::executor::BitmapHeapScan;
 using pgcpp::executor::BitmapIndexScan;
 using pgcpp::executor::BuildTupleDescFromTargetList;
 using pgcpp::executor::CreateExprContext;
+using pgcpp::executor::CreateParallelContext;
 using pgcpp::executor::CteScan;
+using pgcpp::executor::DestroyParallelContext;
+using pgcpp::executor::EnterParallelMode;
 using pgcpp::executor::EState;
 using pgcpp::executor::ExecEndNode;
 using pgcpp::executor::ExecEvalExpr;
@@ -101,30 +107,45 @@ using pgcpp::executor::ExecutorEnd;
 using pgcpp::executor::ExecutorFinish;
 using pgcpp::executor::ExecutorRun;
 using pgcpp::executor::ExecutorStart;
+using pgcpp::executor::ExitParallelMode;
 using pgcpp::executor::ExprContext;
+using pgcpp::executor::FunctionScan;
+using pgcpp::executor::Gather;
+using pgcpp::executor::GatherMerge;
 using pgcpp::executor::Group;
 using pgcpp::executor::HashJoin;
+using pgcpp::executor::IncrementalSort;
+using pgcpp::executor::IsInParallelMode;
+using pgcpp::executor::LaunchParallelWorkers;
 using pgcpp::executor::Limit;
 using pgcpp::executor::LockRows;
 using pgcpp::executor::MakeTupleTableSlot;
 using pgcpp::executor::Material;
+using pgcpp::executor::Memoize;
+using pgcpp::executor::MemoizeState;
 using pgcpp::executor::MergeAppend;
 using pgcpp::executor::MergeJoin;
 using pgcpp::executor::ModifyTable;
 using pgcpp::executor::NestLoop;
+using pgcpp::executor::ParallelContext;
 using pgcpp::executor::Plan;
 using pgcpp::executor::PlanState;
 using pgcpp::executor::PlanType;
+using pgcpp::executor::ProjectSet;
 using pgcpp::executor::QueryDesc;
+using pgcpp::executor::RecursiveUnion;
 using pgcpp::executor::ResetExprContext;
 using pgcpp::executor::Result;
 using pgcpp::executor::SeqScan;
 using pgcpp::executor::SetOp;
 using pgcpp::executor::Sort;
 using pgcpp::executor::SubqueryScan;
+using pgcpp::executor::TidScan;
 using pgcpp::executor::TupleTableSlot;
 using pgcpp::executor::Unique;
+using pgcpp::executor::ValuesScan;
 using pgcpp::executor::WindowAgg;
+using pgcpp::executor::WorkTableScan;
 using pgcpp::memory::AllocSetContext;
 using pgcpp::memory::palloc;
 using pgcpp::memory::pfree;
@@ -136,6 +157,7 @@ using pgcpp::parser::CaseExpr;
 using pgcpp::parser::CaseWhen;
 using pgcpp::parser::CmdType;
 using pgcpp::parser::Const;
+using pgcpp::parser::FuncExpr;
 using pgcpp::parser::JoinType;
 using pgcpp::parser::kInnerVar;
 using pgcpp::parser::kOuterVar;
@@ -156,6 +178,7 @@ using pgcpp::transaction::BeginTransactionBlock;
 using pgcpp::transaction::EndTransactionBlock;
 using pgcpp::transaction::HeapTuple;
 using pgcpp::transaction::InitializeTransactionSystem;
+using pgcpp::transaction::ItemPointerData;
 using pgcpp::transaction::MakeSnapshot;
 using pgcpp::transaction::ResetTransactionState;
 using pgcpp::transaction::SnapshotData;
@@ -186,6 +209,9 @@ constexpr Oid kSumInt4Oid = 2108;
 constexpr Oid kAvgInt4Oid = 2107;
 constexpr Oid kMinInt4Oid = 2131;
 constexpr Oid kMaxInt4Oid = 2116;
+
+// Test OID for generate_series (not in bootstrap catalog; registered per-test).
+constexpr Oid kGenerateSeriesOid = 9999;
 
 class ExecutorTest : public ::testing::Test {
 protected:
@@ -425,6 +451,29 @@ protected:
     static void RunShell(const std::string& cmd) {
         int rc = std::system(cmd.c_str());
         (void)rc;
+    }
+
+    // Helper: register a generate_series(int4,int4) proc in the catalog.
+    void RegisterGenerateSeries() {
+        auto* proc = makePallocNode<FormData_pg_proc>();
+        proc->oid = kGenerateSeriesOid;
+        proc->proname = "generate_series";
+        proc->prorettype = kInt4Oid;
+        proc->proretset = true;
+        proc->pronargs = 2;
+        proc->proargtypes = {kInt4Oid, kInt4Oid};
+        catalog_->InsertProc(proc);
+    }
+
+    // Helper: create a FuncExpr for generate_series(start, end).
+    FuncExpr* MakeGenerateSeries(Node* start, Node* end) {
+        auto* fn = makePallocNode<FuncExpr>();
+        fn->funcid = kGenerateSeriesOid;
+        fn->funcresulttype = kInt4Oid;
+        fn->funcretset = true;
+        fn->args.push_back(start);
+        fn->args.push_back(end);
+        return fn;
     }
 
     AllocSetContext* context_ = nullptr;
@@ -2469,6 +2518,433 @@ TEST_F(ExecutorTest, LockRows_ForShareUsesMultiXact) {
     heap_endscan(scan);
     RelationClose(rel);
     EXPECT_EQ(shared_locked, 2);
+}
+
+// ===========================================================================
+// P2-2: ValuesScan — scan a VALUES list
+// ===========================================================================
+
+TEST_F(ExecutorTest, ValuesScan_ThreeRows) {
+    // Build a ValuesScan plan: VALUES (1,10), (2,20), (3,30).
+    auto* vsplan = makePallocNode<ValuesScan>();
+    vsplan->scanrelid = 1;
+    vsplan->rows.push_back({MakeInt4Const(1), MakeInt4Const(10)});
+    vsplan->rows.push_back({MakeInt4Const(2), MakeInt4Const(20)});
+    vsplan->rows.push_back({MakeInt4Const(3), MakeInt4Const(30)});
+    vsplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    vsplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({});
+    qd->plan = vsplan;
+
+    ExecutorStart(qd);
+    std::vector<std::pair<int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt32(slot->tts_values[1]));
+    }
+    ASSERT_EQ(results.size(), 3u);
+    EXPECT_EQ(results[0].first, 1);
+    EXPECT_EQ(results[0].second, 10);
+    EXPECT_EQ(results[1].first, 2);
+    EXPECT_EQ(results[1].second, 20);
+    EXPECT_EQ(results[2].first, 3);
+    EXPECT_EQ(results[2].second, 30);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P2-2: TidScan — scan by specific TIDs
+// ===========================================================================
+
+TEST_F(ExecutorTest, TidScan_FetchByTid) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    InsertIntIntRow(rel, 10, 100);
+    InsertIntIntRow(rel, 20, 200);
+    InsertIntIntRow(rel, 30, 300);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    // Collect TIDs via a heap scan.
+    rel = RelationOpen(relid);
+    std::vector<ItemPointerData> tids;
+    {
+        HeapScanDesc scan = heap_beginscan(rel, pgcpp::transaction::GetActiveSnapshot());
+        HeapTuple tup = nullptr;
+        while ((tup = heap_getnext(scan)) != nullptr) {
+            tids.push_back(tup->t_self);
+        }
+        heap_endscan(scan);
+    }
+    ASSERT_EQ(tids.size(), 3u);
+    RelationClose(rel);
+
+    // Build TidScan plan targeting the first and third TIDs.
+    auto* tidplan = makePallocNode<TidScan>();
+    tidplan->scanrelid = 1;
+    tidplan->tids.push_back(tids[0]);
+    tidplan->tids.push_back(tids[2]);
+    tidplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    tidplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = tidplan;
+
+    ExecutorStart(qd);
+    std::vector<std::pair<int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt32(slot->tts_values[1]));
+    }
+    ASSERT_EQ(results.size(), 2u);
+    EXPECT_EQ(results[0].first, 10);
+    EXPECT_EQ(results[0].second, 100);
+    EXPECT_EQ(results[1].first, 30);
+    EXPECT_EQ(results[1].second, 300);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P2-2: FunctionScan — scan rows from a set-returning function
+// ===========================================================================
+
+TEST_F(ExecutorTest, FunctionScan_GenerateSeries) {
+    RegisterGenerateSeries();
+
+    // Build FunctionScan: SELECT * FROM generate_series(1, 5).
+    auto* fsplan = makePallocNode<FunctionScan>();
+    fsplan->scanrelid = 1;
+    fsplan->functions.push_back(MakeGenerateSeries(MakeInt4Const(1), MakeInt4Const(5)));
+    fsplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "v"));
+
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({});
+    qd->plan = fsplan;
+
+    ExecutorStart(qd);
+    std::vector<int> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(results.size(), 5u);
+    EXPECT_EQ(results[0], 1);
+    EXPECT_EQ(results[1], 2);
+    EXPECT_EQ(results[2], 3);
+    EXPECT_EQ(results[3], 4);
+    EXPECT_EQ(results[4], 5);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P2-2: ProjectSet — project target list with SRFs
+// ===========================================================================
+
+TEST_F(ExecutorTest, ProjectSet_SRFExpandsRows) {
+    RegisterGenerateSeries();
+
+    // Child: Result producing one row with Const(0).
+    auto* child = makePallocNode<Result>();
+    child->targetlist.push_back(MakeTargetEntry(MakeInt4Const(0), 1, "x"));
+
+    // ProjectSet: targetlist = [generate_series(1, 3)].
+    auto* ps_plan = makePallocNode<ProjectSet>();
+    ps_plan->lefttree = child;
+    ps_plan->targetlist.push_back(
+        MakeTargetEntry(MakeGenerateSeries(MakeInt4Const(1), MakeInt4Const(3)), 1, "v"));
+
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({});
+    qd->plan = ps_plan;
+
+    ExecutorStart(qd);
+    std::vector<int> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(results.size(), 3u);
+    EXPECT_EQ(results[0], 1);
+    EXPECT_EQ(results[1], 2);
+    EXPECT_EQ(results[2], 3);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P2-2: Memoize — cache inner-side lookup results
+// ===========================================================================
+
+TEST_F(ExecutorTest, Memoize_CacheHitReplaysRows) {
+    // Child: Result producing one row (10, 20).
+    auto* child = makePallocNode<Result>();
+    child->targetlist.push_back(MakeTargetEntry(MakeInt4Const(10), 1, "a"));
+    child->targetlist.push_back(MakeTargetEntry(MakeInt4Const(20), 2, "b"));
+
+    // Memoize: param_exprs = [Const(42)] (constant key → always hits cache).
+    auto* mplan = makePallocNode<Memoize>();
+    mplan->lefttree = child;
+    mplan->param_exprs.push_back(MakeInt4Const(42));
+    mplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    mplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* estate = makePallocNode<EState>();
+    estate->es_query_cxt = context_;
+    PlanState* ps = ExecInitNode(mplan, estate);
+    ASSERT_NE(ps, nullptr);
+    auto* ms = static_cast<MemoizeState*>(ps);
+
+    // First call: cache miss → drain child → emit (10, 20).
+    TupleTableSlot* slot1 = ps->ExecProcNode();
+    ASSERT_NE(slot1, nullptr);
+    EXPECT_EQ(DatumGetInt32(slot1->tts_values[0]), 10);
+    EXPECT_EQ(DatumGetInt32(slot1->tts_values[1]), 20);
+
+    // Second call: entry exhausted → nullptr.
+    EXPECT_EQ(ps->ExecProcNode(), nullptr);
+
+    // Third call: cache hit (same key) → replay (10, 20) without re-executing child.
+    TupleTableSlot* slot3 = ps->ExecProcNode();
+    ASSERT_NE(slot3, nullptr);
+    EXPECT_EQ(DatumGetInt32(slot3->tts_values[0]), 10);
+    EXPECT_EQ(DatumGetInt32(slot3->tts_values[1]), 20);
+
+    // Fourth call: exhausted again → nullptr.
+    EXPECT_EQ(ps->ExecProcNode(), nullptr);
+
+    // Verify only one cache entry was created (key=42).
+    EXPECT_EQ(ms->ms_cache.size(), 1u);
+
+    ExecEndNode(ps);
+    destroyPallocNode(estate);
+}
+
+// ===========================================================================
+// P2-2: IncrementalSort — sort exploiting a presorted prefix
+// ===========================================================================
+
+TEST_F(ExecutorTest, IncrementalSort_SortsByFullKeys) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    // Insert rows where column a is sorted but b is not.
+    InsertIntIntRow(rel, 1, 30);
+    InsertIntIntRow(rel, 1, 10);
+    InsertIntIntRow(rel, 2, 20);
+    InsertIntIntRow(rel, 2, 5);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* iplan = makePallocNode<IncrementalSort>();
+    iplan->lefttree = seqplan;
+    iplan->presortedColIdx = {1};  // column a already sorted
+    iplan->sortColIdx = {1, 2};    // sort by (a, b)
+    iplan->sortOperators = {kInt4LtOp, kInt4LtOp};
+    iplan->nullsFirst = {false, false};
+    iplan->reverse = {false, false};
+    iplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    iplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = iplan;
+
+    ExecutorStart(qd);
+    std::vector<std::pair<int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt32(slot->tts_values[1]));
+    }
+    ASSERT_EQ(results.size(), 4u);
+    // Expect sorted by (a, b): (1,10), (1,30), (2,5), (2,20).
+    EXPECT_EQ(results[0].first, 1);
+    EXPECT_EQ(results[0].second, 10);
+    EXPECT_EQ(results[1].first, 1);
+    EXPECT_EQ(results[1].second, 30);
+    EXPECT_EQ(results[2].first, 2);
+    EXPECT_EQ(results[2].second, 5);
+    EXPECT_EQ(results[3].first, 2);
+    EXPECT_EQ(results[3].second, 20);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P2-2: RecursiveUnion + WorkTableScan — WITH RECURSIVE counter
+// ===========================================================================
+
+TEST_F(ExecutorTest, RecursiveUnion_CounterCTE) {
+    // Seed: Result producing (1).
+    auto* seed = makePallocNode<Result>();
+    seed->targetlist.push_back(MakeTargetEntry(MakeInt4Const(1), 1, "n"));
+
+    // Recursive term: WorkTableScan with qual (n < 5) and projection (n+1).
+    auto* wtscan = makePallocNode<WorkTableScan>();
+    wtscan->wtParam = 1;
+    wtscan->scanrelid = 1;
+    wtscan->targetlist.push_back(MakeTargetEntry(
+        MakeOpExpr(kInt4PlusOp, kInt4Oid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(1)), 1, "n"));
+    wtscan->qual = MakeOpExpr(kInt4LtOp, kBoolOid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(5));
+
+    // RecursiveUnion: lefttree=seed, righttree=recursive term.
+    auto* ruplan = makePallocNode<RecursiveUnion>();
+    ruplan->lefttree = seed;
+    ruplan->righttree = wtscan;
+    ruplan->wtParam = 1;
+    ruplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "n"));
+
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({});
+    qd->plan = ruplan;
+
+    ExecutorStart(qd);
+    std::vector<int> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    // Expect 1, 2, 3, 4, 5.
+    ASSERT_EQ(results.size(), 5u);
+    EXPECT_EQ(results[0], 1);
+    EXPECT_EQ(results[1], 2);
+    EXPECT_EQ(results[2], 3);
+    EXPECT_EQ(results[3], 4);
+    EXPECT_EQ(results[4], 5);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P2-2: Gather — serial passthrough (nworkers=0)
+// ===========================================================================
+
+TEST_F(ExecutorTest, Gather_SerialPassthrough) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    InsertIntIntRow(rel, 1, 10);
+    InsertIntIntRow(rel, 2, 20);
+    InsertIntIntRow(rel, 3, 30);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* gplan = makePallocNode<Gather>();
+    gplan->lefttree = seqplan;
+    gplan->num_workers = 0;
+    gplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    gplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = gplan;
+
+    ExecutorStart(qd);
+    std::vector<std::pair<int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt32(slot->tts_values[1]));
+    }
+    ASSERT_EQ(results.size(), 3u);
+    EXPECT_EQ(results[0].first, 1);
+    EXPECT_EQ(results[0].second, 10);
+    EXPECT_EQ(results[1].first, 2);
+    EXPECT_EQ(results[1].second, 20);
+    EXPECT_EQ(results[2].first, 3);
+    EXPECT_EQ(results[2].second, 30);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P2-2: GatherMerge — serial passthrough + sort
+// ===========================================================================
+
+TEST_F(ExecutorTest, GatherMerge_SerialSortedPassthrough) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    InsertIntIntRow(rel, 3, 300);
+    InsertIntIntRow(rel, 1, 100);
+    InsertIntIntRow(rel, 4, 400);
+    InsertIntIntRow(rel, 2, 200);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* gmplan = makePallocNode<GatherMerge>();
+    gmplan->lefttree = seqplan;
+    gmplan->num_workers = 0;
+    gmplan->sortColIdx = {1};
+    gmplan->sortOperators = {kInt4LtOp};
+    gmplan->nullsFirst = {false};
+    gmplan->reverse = {false};
+    gmplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    gmplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = gmplan;
+
+    ExecutorStart(qd);
+    std::vector<int> a_values;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        a_values.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(a_values.size(), 4u);
+    EXPECT_EQ(a_values[0], 1);
+    EXPECT_EQ(a_values[1], 2);
+    EXPECT_EQ(a_values[2], 3);
+    EXPECT_EQ(a_values[3], 4);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P2-2: Parallel framework — serial stub
+// ===========================================================================
+
+TEST_F(ExecutorTest, ParallelMode_EnterExit) {
+    EXPECT_FALSE(IsInParallelMode());
+    EnterParallelMode();
+    EXPECT_TRUE(IsInParallelMode());
+    ExitParallelMode();
+    EXPECT_FALSE(IsInParallelMode());
+}
+
+TEST_F(ExecutorTest, ParallelContext_LaunchReturnsZero) {
+    ParallelContext* pc = CreateParallelContext(/*nworkers=*/4);
+    ASSERT_NE(pc, nullptr);
+    EXPECT_EQ(pc->nworkers_requested, 4);
+    int launched = LaunchParallelWorkers(pc);
+    EXPECT_EQ(launched, 0);
+    EXPECT_EQ(pc->nworkers_launched, 0);
+    DestroyParallelContext(pc);
 }
 
 }  // namespace

@@ -806,6 +806,36 @@ void InvalidateAllVisibilityCaches() {
     }
 }
 
+HeapTuple heap_fetch_by_tid(Relation relation, const ItemPointerData& tid) {
+    BlockNumber block_num = tid.ip_blkid;
+    OffsetNumber offset = tid.ip_posid;
+
+    relation->rd_smgr = RelationGetSmgr(relation);
+    Buffer buffer =
+        ReadBuffer(relation->rd_smgr, ForkNumber::kMain, block_num, ReadBufferMode::kNormal);
+    Page page = BufferGetPage(buffer);
+
+    auto* item_id = PageGetItemId(page, offset);
+    // If the line pointer is unused/dead, there is no tuple here.
+    if (item_id == nullptr || pgcpp::storage::ItemIdGetLength(item_id) == 0) {
+        ReleaseBuffer(buffer);
+        return nullptr;
+    }
+
+    HeapTupleHeaderData* header =
+        reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
+
+    // Build a deep copy so the caller owns the tuple (independent of buffer).
+    HeapTupleData temp;
+    temp.t_len = pgcpp::storage::ItemIdGetLength(item_id);
+    temp.t_self = tid;
+    temp.t_data = header;
+
+    HeapTuple copy = heap_copytuple(&temp);
+    ReleaseBuffer(buffer);
+    return copy;
+}
+
 // --- heaptuple.c P0 extensions (Task 15.8.1) ---
 
 void heap_fill_tuple(TupleDesc tupdesc, const Datum* values, const bool* isnull, char* data,

@@ -34,6 +34,14 @@ EState::~EState() {
     }
     es_open_relations.clear();
 
+    // Free working-table registry (recursive CTE). The WorkTableState objects
+    // are palloc'd; their tuple slots are owned by es_tupleTable and freed
+    // above, so only the holders themselves are destroyed here.
+    for (auto& kv : es_worktables) {
+        destroyPallocNode(kv.second);
+    }
+    es_worktables.clear();
+
     // The per-query memory context is owned by the caller (ExecutorEnd);
     // we do not delete it here to avoid double-free.
 }

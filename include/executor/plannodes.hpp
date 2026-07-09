@@ -19,7 +19,8 @@
 #include "catalog/catalog.hpp"
 #include "parser/parsenodes.hpp"
 #include "parser/primnodes.hpp"
-#include "transaction/lock.hpp"  // RowLockStrength
+#include "transaction/heap_tuple.hpp"  // ItemPointerData
+#include "transaction/lock.hpp"        // RowLockStrength
 
 namespace pgcpp::executor {
 
@@ -51,6 +52,17 @@ enum class PlanType {
     kBitmapHeapScan,   // fetch heap tuples by TID bitmap
     // --- P1-8 additions ---
     kLockRows,  // row-level locking (SELECT FOR UPDATE/SHARE)
+    // --- P2-2 additions ---
+    kValuesScan,       // scan a VALUES list
+    kTidScan,          // scan by specific TIDs
+    kFunctionScan,     // scan rows from a set-returning function
+    kProjectSet,       // project target list with set-returning functions
+    kMemoize,          // cache inner-side results keyed by parameters
+    kIncrementalSort,  // sort by full keys, input presorted on prefix
+    kRecursiveUnion,   // WITH RECURSIVE (seed ∪ recursive until fixpoint)
+    kWorkTableScan,    // scan the recursive CTE working table
+    kGather,           // parallel query: gather tuples from workers
+    kGatherMerge,      // parallel query: gather and merge sorted tuples
 };
 
 // Plan — base struct for all plan nodes.
@@ -290,6 +302,125 @@ struct LockRows : Plan {
     int lockRelid = 0;  // 1-based range table index of the relation to lock
     pgcpp::transaction::RowLockStrength lockStrength =
         pgcpp::transaction::RowLockStrength::kForUpdate;
+};
+
+// --- P2-2: new plan node types ---
+
+// ValuesScan — scan a VALUES list.
+//
+// Each row in `rows` is a list of expression nodes (one per output column).
+// The executor evaluates each row's expressions to produce output tuples.
+struct ValuesScan : Plan {
+    ValuesScan() { type = PlanType::kValuesScan; }
+    std::vector<std::vector<pgcpp::parser::Node*>> rows;  // one expr-list per row
+    int scanrelid = 0;                                    // 1-based range table index
+};
+
+// TidScan — scan a heap relation by specific TIDs.
+//
+// Fetches each tuple at the listed TIDs directly (by block+offset), applies
+// the qual filter, and projects the target list.
+struct TidScan : Plan {
+    TidScan() { type = PlanType::kTidScan; }
+    int scanrelid = 0;  // 1-based range table index
+    std::vector<pgcpp::transaction::ItemPointerData> tids;
+};
+
+// FunctionScan — scan rows produced by set-returning functions.
+//
+// Each entry in `functions` is a FuncExpr that returns a set (e.g.
+// generate_series). When funcordinality is true, a row number column is
+// appended (pgcpp simplification: ordinality not implemented).
+struct FunctionScan : Plan {
+    FunctionScan() { type = PlanType::kFunctionScan; }
+    int scanrelid = 0;                            // 1-based range table index
+    std::vector<pgcpp::parser::Node*> functions;  // FuncExpr nodes (SRFs)
+    bool funcordinality = false;
+};
+
+// ProjectSet — project a target list containing set-returning functions.
+//
+// For each input tuple (from lefttree), evaluates the target list. SRF
+// expressions may produce multiple values; the node returns one output row
+// per combination. When a target entry is not an SRF, its value repeats for
+// each SRF-produced row.
+struct ProjectSet : Plan {
+    ProjectSet() { type = PlanType::kProjectSet; }
+};
+
+// Memoize — cache inner-side lookup results keyed by parameter values.
+//
+// Used above a parameterized inner scan in a Nested Loop. `param_exprs` are
+// evaluated in the outer tuple's context to form the lookup key. On a hit,
+// cached rows are replayed; on a miss, the child is executed and its output
+// cached under the new key.
+struct Memoize : Plan {
+    Memoize() { type = PlanType::kMemoize; }
+    std::vector<pgcpp::parser::Node*> param_exprs;  // key expressions (outer ctx)
+};
+
+// IncrementalSort — sort by full sort keys, exploiting an existing prefix sort.
+//
+// `presortedColIdx` lists the 1-based attribute numbers already sorted in the
+// input. The node reads runs of tuples sharing the same prefix values, fully
+// sorts each run on the remaining keys, and emits the sorted runs in order.
+struct IncrementalSort : Plan {
+    IncrementalSort() { type = PlanType::kIncrementalSort; }
+    std::vector<int> presortedColIdx;                // already-sorted prefix keys
+    std::vector<int> sortColIdx;                     // full sort keys (1-based)
+    std::vector<pgcpp::catalog::Oid> sortOperators;  // comparison operator OIDs
+    std::vector<bool> nullsFirst;                    // NULLS FIRST/LAST per column
+    std::vector<bool> reverse;                       // DESC per column
+};
+
+// RecursiveUnion — WITH RECURSIVE execution.
+//
+// lefttree is the seed (non-recursive) term; righttree is the recursive term.
+// On each iteration the recursive term is re-scanned with the current working
+// table as input. New rows are added to the result and become the next
+// working table. Iteration stops when the recursive term produces no new rows.
+// `wtParam` identifies the working table that WorkTableScan nodes inside the
+// recursive term read from.
+struct RecursiveUnion : Plan {
+    RecursiveUnion() { type = PlanType::kRecursiveUnion; }
+    int wtParam = 0;               // working-table id (links to WorkTableScan)
+    std::vector<int> regenColIdx;  // 1-based attr numbers for duplicate removal
+};
+
+// WorkTableScan — scan the working table of a RecursiveUnion.
+//
+// Reads tuples from the working table registered under `wtParam` on the
+// EState. The RecursiveUnion owning that wtParam populates the working table
+// before each recursive iteration.
+struct WorkTableScan : Plan {
+    WorkTableScan() { type = PlanType::kWorkTableScan; }
+    int wtParam = 0;    // working-table id (matches a RecursiveUnion)
+    int scanrelid = 0;  // 1-based range table index
+};
+
+// Gather — parallel query leader node.
+//
+// Runs the child plan (lefttree) and returns its tuples. In pgcpp's
+// single-process model (std::thread is forbidden), workers are not launched;
+// the leader executes the child directly (nworkers = 0 path), matching
+// PostgreSQL's serial fallback.
+struct Gather : Plan {
+    Gather() { type = PlanType::kGather; }
+    int num_workers = 0;  // requested workers (0 = serial)
+};
+
+// GatherMerge — parallel query leader node that merges sorted worker output.
+//
+// Like Gather, but assumes each worker produces sorted output and merges the
+// streams. In single-process pgcpp the child is executed directly and its
+// output is returned (already sorted by the child).
+struct GatherMerge : Plan {
+    GatherMerge() { type = PlanType::kGatherMerge; }
+    int num_workers = 0;                             // requested workers (0 = serial)
+    std::vector<int> sortColIdx;                     // 1-based attr numbers to sort by
+    std::vector<pgcpp::catalog::Oid> sortOperators;  // comparison operator OIDs
+    std::vector<bool> nullsFirst;                    // NULLS FIRST/LAST per column
+    std::vector<bool> reverse;                       // DESC per column
 };
 
 }  // namespace pgcpp::executor

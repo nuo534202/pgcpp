@@ -19,23 +19,32 @@
 #include "executor/node_bitmap_heapscan.hpp"
 #include "executor/node_bitmap_indexscan.hpp"
 #include "executor/node_ctescan.hpp"
+#include "executor/node_functionscan.hpp"
+#include "executor/node_gather.hpp"
 #include "executor/node_group.hpp"
 #include "executor/node_hash.hpp"
 #include "executor/node_hashjoin.hpp"
+#include "executor/node_incrementalsort.hpp"
 #include "executor/node_indexscan.hpp"
 #include "executor/node_limit.hpp"
 #include "executor/node_lockrows.hpp"
 #include "executor/node_material.hpp"
+#include "executor/node_memoize.hpp"
 #include "executor/node_mergeappend.hpp"
 #include "executor/node_mergejoin.hpp"
 #include "executor/node_modify_table.hpp"
 #include "executor/node_nestloop.hpp"
+#include "executor/node_projectset.hpp"
+#include "executor/node_recursiveunion.hpp"
 #include "executor/node_seqscan.hpp"
 #include "executor/node_setop.hpp"
 #include "executor/node_sort.hpp"
 #include "executor/node_subqueryscan.hpp"
+#include "executor/node_tidscan.hpp"
 #include "executor/node_unique.hpp"
+#include "executor/node_valuesscan.hpp"
 #include "executor/node_windowagg.hpp"
+#include "executor/node_worktablescan.hpp"
 #include "executor/tupletable.hpp"
 
 namespace pgcpp::executor {
@@ -125,6 +134,37 @@ PlanState* CreatePlanState(Plan* plan, EState* state) {
         }
         case PlanType::kLockRows: {
             return makePallocNode<LockRowsState>(plan, state);
+        }
+        // --- P2-2: missing executor nodes (batch 2) ---
+        case PlanType::kValuesScan: {
+            return makePallocNode<ValuesScanState>(plan, state);
+        }
+        case PlanType::kTidScan: {
+            return makePallocNode<TidScanState>(plan, state);
+        }
+        case PlanType::kFunctionScan: {
+            return makePallocNode<FunctionScanState>(plan, state);
+        }
+        case PlanType::kProjectSet: {
+            return makePallocNode<ProjectSetState>(plan, state);
+        }
+        case PlanType::kMemoize: {
+            return makePallocNode<MemoizeState>(plan, state);
+        }
+        case PlanType::kIncrementalSort: {
+            return makePallocNode<IncrementalSortState>(plan, state);
+        }
+        case PlanType::kRecursiveUnion: {
+            return makePallocNode<RecursiveUnionState>(plan, state);
+        }
+        case PlanType::kWorkTableScan: {
+            return makePallocNode<WorkTableScanState>(plan, state);
+        }
+        case PlanType::kGather: {
+            return makePallocNode<GatherState>(plan, state);
+        }
+        case PlanType::kGatherMerge: {
+            return makePallocNode<GatherMergeState>(plan, state);
         }
     }
     return nullptr;
