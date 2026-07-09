@@ -197,6 +197,8 @@ SeqScan* create_seqscan_plan(PlannerInfo* root, SeqScanPath* path, std::vector<T
     scan->scanrelid = (path->parent_rel != nullptr) ? path->parent_rel->relindex : path->relid;
     scan->targetlist = std::move(tlist);
     scan->qual = CombineQuals(scan_clauses);
+    scan->startup_cost = path->startup_cost;
+    scan->total_cost = path->total_cost;
     scan->plan_rows = static_cast<int>(path->rows);
     scan->plan_width = path->width;
     return scan;
@@ -212,6 +214,8 @@ IndexScan* create_indexscan_plan(PlannerInfo* root, IndexPath* path,
     scan->targetlist = std::move(tlist);
     // Non-index quals (residual) go into the plan's qual field.
     scan->qual = CombineQuals(scan_clauses);
+    scan->startup_cost = path->startup_cost;
+    scan->total_cost = path->total_cost;
     scan->plan_rows = static_cast<int>(path->rows);
     scan->plan_width = path->width;
     return scan;

@@ -78,8 +78,10 @@ struct Plan {
     pgcpp::parser::Node* qual = nullptr;
     Plan* lefttree = nullptr;
     Plan* righttree = nullptr;
-    int plan_rows = 0;   // estimated number of output rows
-    int plan_width = 0;  // estimated average row width
+    double startup_cost = 0.0;  // cost before first tuple (PG Cost)
+    double total_cost = 0.0;    // total cost for all tuples (PG Cost)
+    int plan_rows = 0;          // estimated number of output rows
+    int plan_width = 0;         // estimated average row width
 
     virtual ~Plan() = default;
 };
