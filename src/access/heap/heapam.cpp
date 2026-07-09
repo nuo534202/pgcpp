@@ -20,7 +20,9 @@
 #include <vector>
 
 #include "access/rel.hpp"
+#include "access/toast.hpp"
 #include "catalog/pg_attribute.hpp"
+#include "catalog/pg_class.hpp"
 #include "common/containers/node.hpp"
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
@@ -33,6 +35,7 @@
 #include "transaction/visibility.hpp"
 #include "transaction/xact.hpp"
 #include "types/datum.hpp"
+#include "types/varlena.hpp"
 
 namespace pgcpp::access {
 using pgcpp::nodes::destroyPallocNode;
@@ -41,6 +44,7 @@ using pgcpp::nodes::makePallocNode;
 namespace {
 
 using pgcpp::catalog::AttAlign;
+using pgcpp::catalog::RelKind;
 using pgcpp::memory::palloc;
 using pgcpp::memory::pfree;
 using pgcpp::storage::BlockNumber;
@@ -88,6 +92,8 @@ using pgcpp::transaction::SnapshotData;
 using pgcpp::transaction::TransactionId;
 using pgcpp::types::Datum;
 using pgcpp::types::DatumGetTextP;
+using pgcpp::types::VARATT_IS_COMPRESSED;
+using pgcpp::types::VARATT_IS_EXTERNAL;
 using pgcpp::types::VARSIZE;
 
 // Initialize a new page and extend the relation by one block.
@@ -258,8 +264,16 @@ void heap_deform_tuple(HeapTuple tuple, TupleDesc tupdesc, Datum* values, bool* 
 
         if (attr.attlen == -1) {
             // varlena: Datum points into the tuple.
-            values[i] = Datum(data + offset);
+            Datum raw = Datum(data + offset);
             offset += static_cast<uint32_t>(VARSIZE(data + offset));
+            // Detoast external TOAST pointers and compressed inline values.
+            // Normal varlena values are returned as-is (pointing into tuple).
+            const char* raw_text = DatumGetTextP(raw);
+            if (VARATT_IS_EXTERNAL(raw_text) || VARATT_IS_COMPRESSED(raw_text)) {
+                values[i] = detoast_attr(raw);
+            } else {
+                values[i] = raw;
+            }
         } else if (attr.attbyval) {
             // by-value: copy attlen bytes into the Datum.
             Datum d = 0;
@@ -302,7 +316,12 @@ Datum heap_getattr(HeapTuple tuple, int attnum, TupleDesc tupdesc, bool* isnull)
             offset = att_align(offset, attr.attalign);
 
             if (attr.attlen == -1) {
-                return Datum(data + offset);
+                Datum raw = Datum(data + offset);
+                const char* raw_text = DatumGetTextP(raw);
+                if (VARATT_IS_EXTERNAL(raw_text) || VARATT_IS_COMPRESSED(raw_text)) {
+                    return detoast_attr(raw);
+                }
+                return raw;
             } else if (attr.attbyval) {
                 Datum d = 0;
                 std::memcpy(&d, data + offset, attr.attlen);
@@ -402,6 +421,42 @@ static ItemPointerData heap_insert_internal(Relation relation, HeapTuple tup) {
 }
 
 ItemPointerData heap_insert(Relation relation, HeapTuple tup) {
+    // TOAST: compress and/or move large varlena values out of line.
+    // Skip TOAST tables (relkind = 't') to prevent infinite recursion.
+    TupleDesc tupdesc = relation->rd_att;
+    if (tupdesc != nullptr && relation->rd_rel != nullptr &&
+        relation->rd_rel->relkind != RelKind::kToastValue) {
+        int natts = tupdesc->natts;
+        std::vector<Datum> values(natts);
+        bool* isnull = static_cast<bool*>(palloc(sizeof(bool) * natts));
+        heap_deform_tuple(tup, tupdesc, values.data(), isnull);
+
+        // Save original Datums to detect if toast_insert_or_update changed any.
+        std::vector<Datum> orig_values = values;
+
+        toast_insert_or_update(relation, values.data(), isnull, tupdesc);
+
+        bool changed = false;
+        for (int i = 0; i < natts; i++) {
+            if (values[i] != orig_values[i]) {
+                changed = true;
+                break;
+            }
+        }
+
+        if (changed) {
+            // Re-form the tuple with toasted values (external pointers or
+            // compressed inline). heap_form_tuple copies all data, so it's
+            // safe to free the old tuple data afterward.
+            HeapTuple new_tup = heap_form_tuple(tupdesc, values.data(), isnull);
+            pfree(tup->t_data);
+            tup->t_data = new_tup->t_data;
+            tup->t_len = new_tup->t_len;
+            destroyPallocNode(new_tup);
+        }
+        pfree(isnull);
+    }
+
     ItemPointerData tid = heap_insert_internal(relation, tup);
     CommandCounterIncrement();
     return tid;
@@ -419,6 +474,24 @@ void heap_delete(Relation relation, const ItemPointerData& tid) {
     auto* item_id = PageGetItemId(page, offset);
     HeapTupleHeaderData* header =
         reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
+
+    // TOAST: delete out-of-line chunks for external varlena columns.
+    // Skip TOAST tables (relkind = 't') to prevent infinite recursion.
+    TupleDesc tupdesc = relation->rd_att;
+    if (tupdesc != nullptr && relation->rd_rel != nullptr &&
+        relation->rd_rel->relkind != RelKind::kToastValue) {
+        HeapTupleData temp_tuple;
+        temp_tuple.t_data = header;
+        temp_tuple.t_len = pgcpp::storage::ItemIdGetLength(item_id);
+        temp_tuple.t_self = tid;
+
+        int natts = tupdesc->natts;
+        std::vector<Datum> values(natts);
+        bool* isnull = static_cast<bool*>(palloc(sizeof(bool) * natts));
+        heap_deform_tuple(&temp_tuple, tupdesc, values.data(), isnull);
+        toast_delete_tuple(relation, values.data(), isnull, tupdesc);
+        pfree(isnull);
+    }
 
     TransactionId xid = GetCurrentTransactionId();
     CommandId cid = GetCurrentCommandId();
@@ -492,6 +565,33 @@ void heap_lock_tuple(Relation relation, const ItemPointerData& tid,
 }
 
 ItemPointerData heap_update(Relation relation, const ItemPointerData& otid, HeapTuple tup) {
+    // TOAST: compress/move large varlena values in the new tuple.
+    TupleDesc tupdesc = relation->rd_att;
+    if (tupdesc != nullptr && relation->rd_rel != nullptr &&
+        relation->rd_rel->relkind != RelKind::kToastValue) {
+        int natts = tupdesc->natts;
+        std::vector<Datum> values(natts);
+        bool* isnull = static_cast<bool*>(palloc(sizeof(bool) * natts));
+        heap_deform_tuple(tup, tupdesc, values.data(), isnull);
+        std::vector<Datum> orig_values = values;
+        toast_insert_or_update(relation, values.data(), isnull, tupdesc);
+        bool changed = false;
+        for (int i = 0; i < natts; i++) {
+            if (values[i] != orig_values[i]) {
+                changed = true;
+                break;
+            }
+        }
+        if (changed) {
+            HeapTuple new_tup = heap_form_tuple(tupdesc, values.data(), isnull);
+            pfree(tup->t_data);
+            tup->t_data = new_tup->t_data;
+            tup->t_len = new_tup->t_len;
+            destroyPallocNode(new_tup);
+        }
+        pfree(isnull);
+    }
+
     // Insert the new tuple first (without CID increment).
     ItemPointerData new_tid = heap_insert_internal(relation, tup);
 
@@ -507,6 +607,21 @@ ItemPointerData heap_update(Relation relation, const ItemPointerData& otid, Heap
     auto* item_id = PageGetItemId(page, offset);
     HeapTupleHeaderData* header =
         reinterpret_cast<HeapTupleHeaderData*>(PageGetItem(page, item_id));
+
+    // TOAST: delete old tuple's out-of-line chunks.
+    if (tupdesc != nullptr && relation->rd_rel != nullptr &&
+        relation->rd_rel->relkind != RelKind::kToastValue) {
+        HeapTupleData temp_tuple;
+        temp_tuple.t_data = header;
+        temp_tuple.t_len = pgcpp::storage::ItemIdGetLength(item_id);
+        temp_tuple.t_self = otid;
+        int natts = tupdesc->natts;
+        std::vector<Datum> old_values(natts);
+        bool* old_isnull = static_cast<bool*>(palloc(sizeof(bool) * natts));
+        heap_deform_tuple(&temp_tuple, tupdesc, old_values.data(), old_isnull);
+        toast_delete_tuple(relation, old_values.data(), old_isnull, tupdesc);
+        pfree(old_isnull);
+    }
 
     TransactionId xid = GetCurrentTransactionId();
     CommandId cid = GetCurrentCommandId();

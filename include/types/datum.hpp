@@ -103,10 +103,18 @@ inline Datum TextPGetDatum(void* x) {
 inline const char* VARDATA(const char* text) {
     return text + sizeof(int32_t);
 }
+// VARSIZE — total inline size of any varlena value (including header).
+// Handles three storage modes (see types/varlena.hpp):
+//   - Normal: header value (bits 0-29)
+//   - Compressed inline: header with bit 30 cleared (bits 0-29)
+//   - External TOAST pointer: sizeof(varatt_external) = 16
 inline int VARSIZE(const char* text) {
-    int32_t len;
-    std::memcpy(&len, text, sizeof(len));
-    return len;
+    uint32_t hdr;
+    std::memcpy(&hdr, text, sizeof(hdr));
+    if ((hdr & 0x80000000u) != 0) {
+        return 16;  // sizeof(varatt_external) — external TOAST pointer
+    }
+    return static_cast<int>(hdr & 0x3FFFFFFFu);  // clear compression bit
 }
 inline int VARSIZE_DATA(const char* text) {
     return static_cast<int>(VARSIZE(text) - sizeof(int32_t));
