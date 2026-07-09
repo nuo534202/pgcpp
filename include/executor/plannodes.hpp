@@ -42,6 +42,12 @@ enum class PlanType {
     kMergeJoin,     // merge join on sorted inputs
     kCteScan,       // scan a CTE
     kWindowAgg,     // window aggregate (OVER clause)
+    // --- P1-7 additions ---
+    kGroup,            // GROUP BY without aggregates (sorted input)
+    kSetOp,            // INTERSECT / EXCEPT
+    kMergeAppend,      // merge multiple sorted children (ORDER BY over UNION ALL)
+    kBitmapIndexScan,  // build a TID bitmap from an index scan
+    kBitmapHeapScan,   // fetch heap tuples by TID bitmap
 };
 
 // Plan — base struct for all plan nodes.
@@ -192,6 +198,78 @@ struct WindowAgg : Plan {
     std::vector<int> partColIdx;   // 1-based attr numbers of PARTITION BY columns
     std::vector<int> ordColIdx;    // 1-based attribute numbers of ORDER BY columns
     std::vector<bool> ordReverse;  // DESC per ORDER BY column
+};
+
+// --- P1-7: new plan node types ---
+
+// Group — GROUP BY without aggregate functions.
+//
+// Assumes the child produces tuples already sorted on groupColIdx columns
+// so identical groups are adjacent. Emits the first tuple of each group;
+// subsequent tuples in the same group are skipped. This is the simple-form
+// analogue of Agg with Strategy::kSorted and no Aggref in the target list.
+struct Group : Plan {
+    Group() { type = PlanType::kGroup; }
+    std::vector<int> groupColIdx;  // 1-based attr numbers of GROUP BY columns
+};
+
+// SetOp — INTERSECT / EXCEPT execution.
+//
+// Takes a single sorted child (typically an Append of the two inputs with a
+// flag column appended). The flag column (flagColIdx, 1-based) is 0 for rows
+// from the left input and 1 for rows from the right input. Groups on
+// colIdx columns and applies the set operation:
+//   - INTERSECT: emit one row per group present in both inputs (DISTINCT: once;
+//     ALL: min(leftCount, rightCount) copies).
+//   - EXCEPT: emit one row per group present in left but not right (DISTINCT:
+//     once if leftCount > 0 and rightCount == 0; ALL: leftCount - rightCount).
+struct SetOp : Plan {
+    enum class Cmd { kIntersect, kExcept };
+    enum class Strategy { kSorted, kHashed };
+    SetOp() { type = PlanType::kSetOp; }
+    Cmd cmd = Cmd::kIntersect;
+    Strategy strategy = Strategy::kSorted;
+    bool all = false;         // ALL (preserve duplicates) vs DISTINCT
+    std::vector<int> colIdx;  // 1-based attr numbers to compare on
+    int flagColIdx = 0;       // 1-based attr number of the flag column
+    int firstFlag = 0;        // flag value of the first (left) input
+};
+
+// MergeAppend — merge multiple sorted children into one sorted stream.
+//
+// Like Append, but all children must produce tuples sorted on the merge keys.
+// A k-way merge (using a heap) combines them into a single sorted output.
+// Used for ORDER BY over UNION ALL when each child is already sorted.
+struct MergeAppend : Plan {
+    MergeAppend() { type = PlanType::kMergeAppend; }
+    std::vector<Plan*> merge_plans;                  // child plans (sorted)
+    std::vector<int> sortColIdx;                     // 1-based attr numbers to sort by
+    std::vector<pgcpp::catalog::Oid> sortOperators;  // comparison operator OIDs
+    std::vector<bool> nullsFirst;                    // NULLS FIRST/LAST per column
+    std::vector<bool> reverse;                       // DESC per column
+};
+
+// BitmapIndexScan — build a TID bitmap from an index scan.
+//
+// Scans a B-tree index using the index quals and collects all matching TIDs
+// into a bitmap (vector of ItemPointerData). The bitmap is consumed by the
+// parent BitmapHeapScan. This node produces no tuples itself; its output is
+// the shared TID list.
+struct BitmapIndexScan : Plan {
+    BitmapIndexScan() { type = PlanType::kBitmapIndexScan; }
+    int scanrelid = 0;                            // 1-based range table index
+    pgcpp::catalog::Oid indexid = 0;              // index relation OID
+    std::vector<pgcpp::parser::Node*> indexqual;  // index scan qualifiers
+};
+
+// BitmapHeapScan — fetch heap tuples by TID bitmap.
+//
+// The lefttree must be a BitmapIndexScan. This node reads the TID bitmap
+// from the child, fetches each heap tuple by TID, applies the residual qual,
+// and projects the target list.
+struct BitmapHeapScan : Plan {
+    BitmapHeapScan() { type = PlanType::kBitmapHeapScan; }
+    int scanrelid = 0;  // 1-based range table index of the heap relation
 };
 
 }  // namespace pgcpp::executor

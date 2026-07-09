@@ -16,16 +16,21 @@
 #include "executor/exec_utils.hpp"
 #include "executor/node_agg.hpp"
 #include "executor/node_append.hpp"
+#include "executor/node_bitmap_heapscan.hpp"
+#include "executor/node_bitmap_indexscan.hpp"
 #include "executor/node_ctescan.hpp"
+#include "executor/node_group.hpp"
 #include "executor/node_hash.hpp"
 #include "executor/node_hashjoin.hpp"
 #include "executor/node_indexscan.hpp"
 #include "executor/node_limit.hpp"
 #include "executor/node_material.hpp"
+#include "executor/node_mergeappend.hpp"
 #include "executor/node_mergejoin.hpp"
 #include "executor/node_modify_table.hpp"
 #include "executor/node_nestloop.hpp"
 #include "executor/node_seqscan.hpp"
+#include "executor/node_setop.hpp"
 #include "executor/node_sort.hpp"
 #include "executor/node_subqueryscan.hpp"
 #include "executor/node_unique.hpp"
@@ -100,6 +105,22 @@ PlanState* CreatePlanState(Plan* plan, EState* state) {
         }
         case PlanType::kWindowAgg: {
             return makePallocNode<WindowAggState>(plan, state);
+        }
+        // --- P1-7: missing executor nodes (batch 1) ---
+        case PlanType::kGroup: {
+            return makePallocNode<GroupState>(plan, state);
+        }
+        case PlanType::kSetOp: {
+            return makePallocNode<SetOpState>(plan, state);
+        }
+        case PlanType::kMergeAppend: {
+            return makePallocNode<MergeAppendState>(plan, state);
+        }
+        case PlanType::kBitmapIndexScan: {
+            return makePallocNode<BitmapIndexScanState>(plan, state);
+        }
+        case PlanType::kBitmapHeapScan: {
+            return makePallocNode<BitmapHeapScanState>(plan, state);
         }
     }
     return nullptr;

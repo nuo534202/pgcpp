@@ -21,6 +21,8 @@
 #include <string>
 
 #include "access/heapam.hpp"
+#include "access/indexam.hpp"
+#include "access/nbtree.hpp"
 #include "access/rel.hpp"
 #include "catalog/bootstrap_catalog.hpp"
 #include "catalog/catalog.hpp"
@@ -83,6 +85,8 @@ using pgcpp::catalog::SetSysCache;
 using pgcpp::catalog::SysCache;
 using pgcpp::executor::Agg;
 using pgcpp::executor::Append;
+using pgcpp::executor::BitmapHeapScan;
+using pgcpp::executor::BitmapIndexScan;
 using pgcpp::executor::BuildTupleDescFromTargetList;
 using pgcpp::executor::CreateExprContext;
 using pgcpp::executor::CteScan;
@@ -97,10 +101,12 @@ using pgcpp::executor::ExecutorFinish;
 using pgcpp::executor::ExecutorRun;
 using pgcpp::executor::ExecutorStart;
 using pgcpp::executor::ExprContext;
+using pgcpp::executor::Group;
 using pgcpp::executor::HashJoin;
 using pgcpp::executor::Limit;
 using pgcpp::executor::MakeTupleTableSlot;
 using pgcpp::executor::Material;
+using pgcpp::executor::MergeAppend;
 using pgcpp::executor::MergeJoin;
 using pgcpp::executor::ModifyTable;
 using pgcpp::executor::NestLoop;
@@ -111,6 +117,7 @@ using pgcpp::executor::QueryDesc;
 using pgcpp::executor::ResetExprContext;
 using pgcpp::executor::Result;
 using pgcpp::executor::SeqScan;
+using pgcpp::executor::SetOp;
 using pgcpp::executor::Sort;
 using pgcpp::executor::SubqueryScan;
 using pgcpp::executor::TupleTableSlot;
@@ -1938,6 +1945,408 @@ TEST_F(ExecutorTest, WindowAgg_RunningSumWithPartition) {
     EXPECT_EQ(std::get<0>(results[3]), 2);
     EXPECT_EQ(std::get<1>(results[3]), 200);
     EXPECT_EQ(std::get<2>(results[3]), 300);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P1-7: Group node — GROUP BY without aggregates on sorted input
+// ===========================================================================
+
+TEST_F(ExecutorTest, Group_EmitsFirstTuplePerGroup) {
+    Oid relid = kFirstNormalObjectId;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+    // Insert: (1,10), (1,11), (2,20), (2,21), (3,30)
+    // Sorted on column a, groups = {1, 2, 3}.
+    InsertIntIntRow(rel, 1, 10);
+    InsertIntIntRow(rel, 1, 11);
+    InsertIntIntRow(rel, 2, 20);
+    InsertIntIntRow(rel, 2, 21);
+    InsertIntIntRow(rel, 3, 30);
+    CommitAndStartNew();
+    RelationClose(rel);
+
+    // SeqScan → Sort on a → Group on a.
+    auto* seqplan = makePallocNode<SeqScan>();
+    seqplan->scanrelid = 1;
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    seqplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* sortplan = makePallocNode<Sort>();
+    sortplan->lefttree = seqplan;
+    sortplan->sortColIdx = {1};
+    sortplan->sortOperators = {kInt4LtOp};
+    sortplan->nullsFirst = {false};
+    sortplan->reverse = {false};
+    sortplan->limit = -1;
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* groupplan = makePallocNode<Group>();
+    groupplan->lefttree = sortplan;
+    groupplan->groupColIdx = {1};  // GROUP BY a
+    groupplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    groupplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = groupplan;
+
+    ExecutorStart(qd);
+    std::vector<int> a_values;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        a_values.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(a_values.size(), 3u);
+    EXPECT_EQ(a_values[0], 1);
+    EXPECT_EQ(a_values[1], 2);
+    EXPECT_EQ(a_values[2], 3);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P1-7: SetOp node — INTERSECT DISTINCT on sorted input with flag column
+// ===========================================================================
+
+TEST_F(ExecutorTest, SetOp_IntersectDistinct) {
+    // Two inputs merged into one sorted stream with a flag column (col 3):
+    //   left (flag=0):  (1,10,0), (2,20,0), (3,30,0)
+    //   right (flag=1): (2,200,1), (3,300,1), (4,400,1)
+    // Sorted on col 1 (a): groups {1,2,3,4}.
+    // INTERSECT DISTINCT → groups present in both = {2, 3}.
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    InsertIntIntRow(rel1, 1, 10);
+    InsertIntIntRow(rel1, 2, 20);
+    InsertIntIntRow(rel1, 3, 30);
+    InsertIntIntRow(rel2, 2, 200);
+    InsertIntIntRow(rel2, 3, 300);
+    InsertIntIntRow(rel2, 4, 400);
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    // Left scan (varno=1) projects (a, b, flag=0).
+    auto* left_scan = makePallocNode<SeqScan>();
+    left_scan->scanrelid = 1;
+    left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+    left_scan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(0), 3, "flag"));
+
+    // Right scan (varno=2) projects (a, b, flag=1).
+    auto* right_scan = makePallocNode<SeqScan>();
+    right_scan->scanrelid = 2;
+    right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
+    right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
+    right_scan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(1), 3, "flag"));
+
+    // Append the two scans, then sort on col 1 (a).
+    auto* appendplan = makePallocNode<Append>();
+    appendplan->append_plans.push_back(left_scan);
+    appendplan->append_plans.push_back(right_scan);
+    appendplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    appendplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+    appendplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 3, kInt4Oid), 3, "flag"));
+
+    auto* sortplan = makePallocNode<Sort>();
+    sortplan->lefttree = appendplan;
+    sortplan->sortColIdx = {1};
+    sortplan->sortOperators = {kInt4LtOp};
+    sortplan->nullsFirst = {false};
+    sortplan->reverse = {false};
+    sortplan->limit = -1;
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 3, kInt4Oid), 3, "flag"));
+
+    // SetOp: INTERSECT DISTINCT, group on col 1, flag col = 3, firstFlag = 0.
+    auto* setopplan = makePallocNode<SetOp>();
+    setopplan->lefttree = sortplan;
+    setopplan->cmd = SetOp::Cmd::kIntersect;
+    setopplan->strategy = SetOp::Strategy::kSorted;
+    setopplan->all = false;
+    setopplan->colIdx = {1};
+    setopplan->flagColIdx = 3;
+    setopplan->firstFlag = 0;
+    setopplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    setopplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte1 = MakeRTE(relid1);
+    auto* rte2 = MakeRTE(relid2);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte1, rte2});
+    qd->plan = setopplan;
+
+    ExecutorStart(qd);
+    std::vector<int> a_values;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        a_values.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(a_values.size(), 2u);
+    EXPECT_EQ(a_values[0], 2);
+    EXPECT_EQ(a_values[1], 3);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P1-7: SetOp node — EXCEPT DISTINCT
+// ===========================================================================
+
+TEST_F(ExecutorTest, SetOp_ExceptDistinct) {
+    // Left (flag=0): 1, 2, 3
+    // Right (flag=1): 2, 3, 4
+    // EXCEPT DISTINCT → groups in left but not right = {1}.
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    InsertIntIntRow(rel1, 1, 10);
+    InsertIntIntRow(rel1, 2, 20);
+    InsertIntIntRow(rel1, 3, 30);
+    InsertIntIntRow(rel2, 2, 200);
+    InsertIntIntRow(rel2, 3, 300);
+    InsertIntIntRow(rel2, 4, 400);
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    auto* left_scan = makePallocNode<SeqScan>();
+    left_scan->scanrelid = 1;
+    left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    left_scan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+    left_scan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(0), 3, "flag"));
+
+    auto* right_scan = makePallocNode<SeqScan>();
+    right_scan->scanrelid = 2;
+    right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
+    right_scan->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
+    right_scan->targetlist.push_back(MakeTargetEntry(MakeInt4Const(1), 3, "flag"));
+
+    auto* appendplan = makePallocNode<Append>();
+    appendplan->append_plans.push_back(left_scan);
+    appendplan->append_plans.push_back(right_scan);
+    appendplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    appendplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+    appendplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 3, kInt4Oid), 3, "flag"));
+
+    auto* sortplan = makePallocNode<Sort>();
+    sortplan->lefttree = appendplan;
+    sortplan->sortColIdx = {1};
+    sortplan->sortOperators = {kInt4LtOp};
+    sortplan->nullsFirst = {false};
+    sortplan->reverse = {false};
+    sortplan->limit = -1;
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+    sortplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 3, kInt4Oid), 3, "flag"));
+
+    auto* setopplan = makePallocNode<SetOp>();
+    setopplan->lefttree = sortplan;
+    setopplan->cmd = SetOp::Cmd::kExcept;
+    setopplan->strategy = SetOp::Strategy::kSorted;
+    setopplan->all = false;
+    setopplan->colIdx = {1};
+    setopplan->flagColIdx = 3;
+    setopplan->firstFlag = 0;
+    setopplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    setopplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte1 = MakeRTE(relid1);
+    auto* rte2 = MakeRTE(relid2);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte1, rte2});
+    qd->plan = setopplan;
+
+    ExecutorStart(qd);
+    std::vector<int> a_values;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        a_values.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(a_values.size(), 1u);
+    EXPECT_EQ(a_values[0], 1);
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P1-7: MergeAppend — k-way merge of two sorted children
+// ===========================================================================
+
+TEST_F(ExecutorTest, MergeAppend_MergesTwoSortedChildren) {
+    // Child 1 sorted: (1), (3), (5)
+    // Child 2 sorted: (2), (4), (6)
+    // MergeAppend on col 1 ASC → (1),(2),(3),(4),(5),(6).
+    Oid relid1 = kFirstNormalObjectId;
+    Oid relid2 = kFirstNormalObjectId + 1;
+    Relation rel1 = CreateTestRelation(relid1, "t1", MakeIntIntSchema(relid1));
+    Relation rel2 = CreateTestRelation(relid2, "t2", MakeIntIntSchema(relid2));
+    // t1: (1,10), (3,30), (5,50) — already sorted on a.
+    InsertIntIntRow(rel1, 1, 10);
+    InsertIntIntRow(rel1, 3, 30);
+    InsertIntIntRow(rel1, 5, 50);
+    // t2: (2,20), (4,40), (6,60) — already sorted on a.
+    InsertIntIntRow(rel2, 2, 20);
+    InsertIntIntRow(rel2, 4, 40);
+    InsertIntIntRow(rel2, 6, 60);
+    CommitAndStartNew();
+    RelationClose(rel1);
+    RelationClose(rel2);
+
+    // Child 1: SeqScan(t1) → Sort(a).
+    auto* scan1 = makePallocNode<SeqScan>();
+    scan1->scanrelid = 1;
+    scan1->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    scan1->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* sort1 = makePallocNode<Sort>();
+    sort1->lefttree = scan1;
+    sort1->sortColIdx = {1};
+    sort1->sortOperators = {kInt4LtOp};
+    sort1->nullsFirst = {false};
+    sort1->reverse = {false};
+    sort1->limit = -1;
+    sort1->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    sort1->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    // Child 2: SeqScan(t2) → Sort(a).
+    auto* scan2 = makePallocNode<SeqScan>();
+    scan2->scanrelid = 2;
+    scan2->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
+    scan2->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
+
+    auto* sort2 = makePallocNode<Sort>();
+    sort2->lefttree = scan2;
+    sort2->sortColIdx = {1};
+    sort2->sortOperators = {kInt4LtOp};
+    sort2->nullsFirst = {false};
+    sort2->reverse = {false};
+    sort2->limit = -1;
+    sort2->targetlist.push_back(MakeTargetEntry(MakeVar(2, 1, kInt4Oid), 1, "a"));
+    sort2->targetlist.push_back(MakeTargetEntry(MakeVar(2, 2, kInt4Oid), 2, "b"));
+
+    // MergeAppend on col 1 ASC.
+    auto* maplan = makePallocNode<MergeAppend>();
+    maplan->merge_plans.push_back(sort1);
+    maplan->merge_plans.push_back(sort2);
+    maplan->sortColIdx = {1};
+    maplan->sortOperators = {kInt4LtOp};
+    maplan->nullsFirst = {false};
+    maplan->reverse = {false};
+    maplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    maplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte1 = MakeRTE(relid1);
+    auto* rte2 = MakeRTE(relid2);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte1, rte2});
+    qd->plan = maplan;
+
+    ExecutorStart(qd);
+    std::vector<int> a_values;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        a_values.push_back(DatumGetInt32(slot->tts_values[0]));
+    }
+    ASSERT_EQ(a_values.size(), 6u);
+    // Merged output should be 1..6 in ascending order.
+    for (int i = 0; i < 6; i++) {
+        EXPECT_EQ(a_values[i], i + 1);
+    }
+    ExecutorFinish(qd);
+    ExecutorEnd(qd);
+}
+
+// ===========================================================================
+// P1-7: BitmapIndexScan + BitmapHeapScan — index-driven heap fetch
+// ===========================================================================
+
+TEST_F(ExecutorTest, BitmapScan_IndexToHeap) {
+    // Create a heap relation with rows, build a B-tree index on column a,
+    // then use BitmapIndexScan ( equality qual a = 3 ) → BitmapHeapScan to
+    // fetch the matching heap tuple(s).
+    Oid relid = kFirstNormalObjectId;
+    Oid indexid = kFirstNormalObjectId + 1;
+    Relation rel = CreateTestRelation(relid, "t1", MakeIntIntSchema(relid));
+
+    // Insert rows: (1,10), (2,20), (3,30), (4,40), (5,50).
+    InsertIntIntRow(rel, 1, 10);
+    InsertIntIntRow(rel, 2, 20);
+    InsertIntIntRow(rel, 3, 30);
+    InsertIntIntRow(rel, 4, 40);
+    InsertIntIntRow(rel, 5, 50);
+    CommitAndStartNew();
+
+    // Build a B-tree index on column a. We populate it by scanning the heap
+    // and inserting each (key, tid) into the index.
+    auto* idx_class_row = makePallocNode<FormData_pg_class>();
+    idx_class_row->oid = indexid;
+    idx_class_row->relname = "idx_t1_a";
+    idx_class_row->relfilenode = indexid;
+    idx_class_row->relkind = RelKind::kIndex;
+    idx_class_row->relpersistence = RelPersistence::kPermanent;
+    idx_class_row->relam = pgcpp::access::kBTreeAmOid;
+    catalog_->InsertClass(idx_class_row);
+    pgcpp::access::RelationCreateStorage(indexid, false);
+    Relation idxrel = RelationOpen(indexid);
+    ASSERT_NE(idxrel, nullptr);
+    pgcpp::access::btbuild(idxrel, pgcpp::access::BTKeyKind::kInt32);
+
+    // Scan the heap and insert (a, tid) into the index.
+    {
+        HeapScanDesc hscan = heap_beginscan(rel, pgcpp::transaction::GetActiveSnapshot());
+        HeapTuple tup = nullptr;
+        while ((tup = heap_getnext(hscan)) != nullptr) {
+            int32_t key = 0;
+            bool isnull = false;
+            Datum d = pgcpp::access::heap_getattr(tup, 1, rel->rd_att, &isnull);
+            key = DatumGetInt32(d);
+            pgcpp::access::btinsert(idxrel, pgcpp::access::BTKeyKind::kInt32, &key, sizeof(int32_t),
+                                    tup->t_self);
+        }
+        heap_endscan(hscan);
+    }
+    RelationClose(idxrel);
+    RelationClose(rel);
+
+    // Build the plan: BitmapHeapScan( lefttree = BitmapIndexScan(a = 3) ).
+    auto* idxplan = makePallocNode<BitmapIndexScan>();
+    idxplan->scanrelid = 1;  // range table index of the heap relation
+    idxplan->indexid = indexid;
+    // Index qual: a = 3 (Var attno=1, Const=3, int4eq).
+    idxplan->indexqual.push_back(
+        MakeOpExpr(kInt4EqOp, kBoolOid, MakeVar(1, 1, kInt4Oid), MakeInt4Const(3)));
+    idxplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    idxplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* heapplan = makePallocNode<BitmapHeapScan>();
+    heapplan->lefttree = idxplan;
+    heapplan->scanrelid = 1;
+    heapplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 1, kInt4Oid), 1, "a"));
+    heapplan->targetlist.push_back(MakeTargetEntry(MakeVar(1, 2, kInt4Oid), 2, "b"));
+
+    auto* rte = MakeRTE(relid);
+    auto* qd = makePallocNode<QueryDesc>();
+    qd->query = MakeSelectQuery({rte});
+    qd->plan = heapplan;
+
+    ExecutorStart(qd);
+    std::vector<std::pair<int, int>> results;
+    TupleTableSlot* slot = nullptr;
+    while ((slot = ExecutorRun(qd)) != nullptr) {
+        results.emplace_back(DatumGetInt32(slot->tts_values[0]),
+                             DatumGetInt32(slot->tts_values[1]));
+    }
+    ASSERT_EQ(results.size(), 1u);
+    EXPECT_EQ(results[0].first, 3);
+    EXPECT_EQ(results[0].second, 30);
     ExecutorFinish(qd);
     ExecutorEnd(qd);
 }
