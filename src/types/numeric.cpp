@@ -698,7 +698,7 @@ char* numeric_out(Datum value) {
     for (int g = 0; g < total_groups; ++g) {
         int pos = (int_groups - 1) - g;
         int16_t d = v.DigitAt(pos);
-        char buf[5];
+        char buf[8];
         std::snprintf(buf, sizeof(buf), "%04d", static_cast<int>(d));
         digits_str.append(buf);
     }
