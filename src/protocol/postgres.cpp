@@ -38,6 +38,7 @@
 #include "parser/parser.hpp"
 #include "parser/primnodes.hpp"
 #include "protocol/utility.hpp"
+#include "rewrite/rewrite_handler.hpp"
 #include "server/postmaster.hpp"
 #include "transaction/xact.hpp"
 #include "types/builtins.hpp"
@@ -299,6 +300,10 @@ void Backend::exec_simple_query(const std::string& query_string) {
             }
 
             Query* query = queries.front();
+
+            // Apply query rewrite (view expansion, RLS policies).
+            query = pgcpp::rewrite::QueryRewrite(query);
+
             std::string tag;
             if (query->command_type == CmdType::kUtility) {
                 tag = ProcessUtility(query->utility_stmt, sink_);
@@ -461,6 +466,11 @@ void Backend::HandleParse(const std::string& stmt_name, const std::string& query
     PG_TRY() {
         std::vector<RawStmt*> raw_stmts = pgcpp::parser::raw_parser(query);
         std::vector<Query*> queries = pgcpp::parser::parse_analyze(raw_stmts, query.c_str());
+
+        // Apply query rewrite (view expansion, RLS policies) to each query.
+        for (auto* q : queries) {
+            pgcpp::rewrite::QueryRewrite(q);
+        }
 
         // Replace any existing prepared statement with the same name.
         auto it = prepared_statements_.find(stmt_name);
