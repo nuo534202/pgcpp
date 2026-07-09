@@ -131,7 +131,7 @@ bool pglz_compress(const char* source, int slen, char* dest, int* result_len) {
     int pos = 0;
     while (pos < slen) {
         // Accumulate up to 8 items with a control byte.
-        char ctrl = 0;
+        unsigned char ctrl = 0;
         std::vector<char> items;
 
         for (int bit = 0; bit < 8 && pos < slen; ++bit) {
@@ -145,7 +145,7 @@ bool pglz_compress(const char* source, int slen, char* dest, int* result_len) {
                     int mlen = find_match_len(source, prev, pos, slen);
                     if (mlen >= kMinMatch) {
                         // Emit a match.
-                        ctrl |= (1 << (7 - bit));
+                        ctrl |= static_cast<unsigned char>(1u << (7 - bit));
                         int offset = pos - prev - 1;           // 0-based offset
                         int length_nibble = mlen - kMinMatch;  // 0-15
                         char b1 = static_cast<char>((length_nibble << 4) | ((offset >> 8) & 0x0F));
@@ -170,7 +170,7 @@ bool pglz_compress(const char* source, int slen, char* dest, int* result_len) {
             }
         }
 
-        output.push_back(ctrl);
+        output.push_back(static_cast<char>(ctrl));
         output.insert(output.end(), items.begin(), items.end());
     }
 
