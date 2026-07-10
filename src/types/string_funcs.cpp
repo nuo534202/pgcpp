@@ -16,6 +16,8 @@
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
 #include "types/builtins.hpp"
+#include "utils/mb/mbutils.hpp"
+#include "utils/mb/wchar.hpp"
 
 namespace pgcpp::types {
 
@@ -134,7 +136,12 @@ bool IsAsciiSpace(unsigned char c) {
 Datum text_length(Datum value) {
     const char* text = DatumGetTextP(value);
     int data_len = VARSIZE_DATA(text);
-    return Int32GetDatum(data_len);
+    // Count characters (not bytes) using the database encoding.
+    // For single-byte encodings this equals the byte count; for UTF-8
+    // it correctly handles multi-byte characters.
+    int char_count = pgcpp::utils::PgMbstrlenWithLen(pgcpp::utils::GetDatabaseEncoding(),
+                                                     VARDATA(text), data_len);
+    return Int32GetDatum(char_count);
 }
 
 // --- LIKE ---
