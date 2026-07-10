@@ -3135,7 +3135,9 @@ VacuumStmt:
         {
             VacuumStmt* n = makeNode<VacuumStmt>();
             n->is_vacuumcmd = true;
-            (void)$2; (void)$3; (void)$4;
+            n->full = ($2 != 0);
+            n->freeze = ($3 != 0);
+            (void)$4;
             n->options = std::move($5);
             $$ = n;
         }
@@ -3143,7 +3145,9 @@ VacuumStmt:
         {
             VacuumStmt* n = makeNode<VacuumStmt>();
             n->is_vacuumcmd = true;
-            (void)$2; (void)$3; (void)$4;
+            n->full = ($2 != 0);
+            n->freeze = ($3 != 0);
+            (void)$4;
             n->options = std::move($5);
             n->rels = std::move($6);
             $$ = n;

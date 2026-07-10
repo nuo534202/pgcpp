@@ -1666,6 +1666,8 @@ public:
     std::vector<Node*> options;  // list of DefElem
     std::vector<Node*> rels;     // list of VacuumRelation (empty = all)
     bool is_vacuumcmd = false;   // false for ANALYZE
+    bool full = false;           // VACUUM FULL (table rewrite)
+    bool freeze = false;         // VACUUM FREEZE (aggressive tuple freezing)
 };
 
 // VariableSetStmt — SET / RESET

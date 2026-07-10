@@ -15,9 +15,18 @@
 #include <utility>
 #include <vector>
 
+#include "commands/vacuum.hpp"
+#include "common/containers/node.hpp"
+#include "parser/parsenodes.hpp"
 #include "server/interrupt.hpp"
 
 namespace pgcpp::server {
+
+using pgcpp::commands::ExecVacuum;
+using pgcpp::commands::VacuumStats;
+using pgcpp::nodes::makePallocNode;
+using pgcpp::parser::RangeVar;
+using pgcpp::parser::VacuumStmt;
 
 namespace {
 
@@ -104,13 +113,24 @@ int AutoVacuumLauncherMain(int max_workers) {
 }
 
 int AutoVacuumWorkerMain(const AutoVacuumWorkItem& item) {
-    // pgcpp simplification: VACUUM/ANALYZE are no-ops that return success
-    // (the underlying commands module already handles them eagerly). The
-    // worker's role is to record the work item execution in stats.
+    // pgcpp simplification: the worker runs synchronously in the launcher's
+    // context (no fork). It builds a VacuumStmt targeting the work item's
+    // table and delegates to ExecVacuum, which performs the actual dead-
+    // tuple reclamation, freezing, and relfrozenxid advancement.
     // Returns 0 on success, non-zero on error.
-    if (item.database.empty() || item.table.empty()) {
+    if (item.table.empty()) {
         return 1;
     }
+
+    auto* stmt = makePallocNode<VacuumStmt>();
+    auto* rv = makePallocNode<RangeVar>();
+    rv->relname = item.table;
+    stmt->rels.push_back(rv);
+    stmt->is_vacuumcmd = item.is_vacuum || !item.is_analyze;
+    stmt->freeze = item.freeze;
+
+    VacuumStats stats;
+    ExecVacuum(stmt, &stats);
     return 0;
 }
 

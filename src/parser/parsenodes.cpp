@@ -1221,7 +1221,8 @@ bool VacuumStmt::Equals(const Node& other) const {
     if (other.GetTag() != GetTag())
         return false;
     const auto& o = static_cast<const VacuumStmt&>(other);
-    return EqVec(options, o.options) && EqVec(rels, o.rels) && is_vacuumcmd == o.is_vacuumcmd;
+    return EqVec(options, o.options) && EqVec(rels, o.rels) && is_vacuumcmd == o.is_vacuumcmd &&
+           full == o.full && freeze == o.freeze;
 }
 
 Node* VariableSetStmt::Clone() const {

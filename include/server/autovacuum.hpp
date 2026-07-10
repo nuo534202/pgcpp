@@ -25,6 +25,7 @@ struct AutoVacuumWorkItem {
     std::string table;            // table name (qualified)
     bool is_analyze = false;      // true=ANALYZE only, false=VACUUM (+ANALYZE)
     bool is_vacuum = false;       // true=VACUUM
+    bool freeze = false;          // true=VACUUM FREEZE (wraparound protection)
     int64_t scheduled_at_ms = 0;  // timestamp when queued
 };
 
