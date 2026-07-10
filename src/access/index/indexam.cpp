@@ -11,7 +11,12 @@
 
 #include <string>
 
+#include "access/brin.hpp"
+#include "access/gin.hpp"
+#include "access/gist.hpp"
+#include "access/hash.hpp"
 #include "access/nbtree.hpp"
+#include "access/spgist.hpp"
 #include "catalog/catalog.hpp"
 #include "common/error/elog.hpp"
 #include "storage/bufmgr.hpp"
@@ -24,10 +29,40 @@ using pgcpp::transaction::ItemPointerData;
 
 namespace {
 
-// The B-tree AM routine table. Filled in with the nbtree function pointers.
+// The B-tree AM routine table.
 const IndexAmRoutine kBtreeAmRoutine = {
     kBTreeAmOid, &btcanreturn, &btinsert, &btbeginscan, &btgettuple,
     &btrescan,   &btendscan,   &btbuild,  &btgetbitmap,
+};
+
+// The hash AM routine table.
+const IndexAmRoutine kHashAmRoutine = {
+    kHashAmOid,  &hashcanreturn, &hashinsert, &hashbeginscan, &hashgettuple,
+    &hashrescan, &hashendscan,   &hashbuild,  &hashgetbitmap,
+};
+
+// The GIN AM routine table.
+const IndexAmRoutine kGinAmRoutine = {
+    kGinAmOid,  &gincanreturn, &gininsert, &ginbeginscan, &gingettuple,
+    &ginrescan, &ginendscan,   &ginbuild,  &gingetbitmap,
+};
+
+// The GiST AM routine table.
+const IndexAmRoutine kGistAmRoutine = {
+    kGistAmOid,  &gistcanreturn, &gistinsert, &gistbeginscan, &gistgettuple,
+    &gistrescan, &gistendscan,   &gistbuild,  &gistgetbitmap,
+};
+
+// The BRIN AM routine table.
+const IndexAmRoutine kBrinAmRoutine = {
+    kBrinAmOid,  &brincanreturn, &brininsert, &brinbeginscan, &bringettuple,
+    &brinrescan, &brinendscan,   &brinbuild,  &bringetbitmap,
+};
+
+// The SP-GiST AM routine table.
+const IndexAmRoutine kSpgistAmRoutine = {
+    kSpgistAmOid,  &spgistcanreturn, &spgistinsert, &spgistbeginscan, &spgistgettuple,
+    &spgistrescan, &spgistendscan,   &spgistbuild,  &spgistgetbitmap,
 };
 
 }  // namespace
@@ -36,6 +71,16 @@ const IndexAmRoutine* LookupAmRoutine(Oid amoid) {
     switch (amoid) {
         case kBTreeAmOid:
             return &kBtreeAmRoutine;
+        case kHashAmOid:
+            return &kHashAmRoutine;
+        case kGinAmOid:
+            return &kGinAmRoutine;
+        case kGistAmOid:
+            return &kGistAmRoutine;
+        case kBrinAmOid:
+            return &kBrinAmRoutine;
+        case kSpgistAmOid:
+            return &kSpgistAmRoutine;
         default:
             return nullptr;
     }

@@ -10,6 +10,7 @@
 #include "executor/node_bitmap_indexscan.hpp"
 
 #include "access/heapam.hpp"
+#include "access/indexam.hpp"
 #include "access/nbtpage.hpp"
 #include "access/nbtree.hpp"
 #include "access/rel.hpp"
@@ -130,7 +131,7 @@ void BitmapIndexScanState::ExecInit() {
         }
     }
 
-    biss_scanDesc = pgcpp::access::btbeginscan(biss_index, key_kind, &scan_key);
+    biss_scanDesc = pgcpp::access::index_beginscan(biss_index, key_kind, &scan_key);
 
     // A result slot is still required by the executor framework even though
     // this node emits no tuples; build it from the target list.
@@ -150,14 +151,14 @@ TupleTableSlot* BitmapIndexScanState::ExecProcNode() {
 
     // Drain the entire index scan into the TID vector.
     tids.clear();
-    pgcpp::access::btgetbitmap(biss_scanDesc, &tids);
+    pgcpp::access::index_getbitmap(biss_scanDesc, &tids);
     bitmap_built = true;
     return nullptr;
 }
 
 void BitmapIndexScanState::ExecEnd() {
     if (biss_scanDesc != nullptr) {
-        pgcpp::access::btendscan(biss_scanDesc);
+        pgcpp::access::index_endscan(biss_scanDesc);
         biss_scanDesc = nullptr;
     }
     biss_relation = nullptr;
@@ -173,7 +174,7 @@ void BitmapIndexScanState::ExecEnd() {
 
 void BitmapIndexScanState::ExecReScan() {
     if (biss_scanDesc != nullptr) {
-        pgcpp::access::btrescan(biss_scanDesc, nullptr);
+        pgcpp::access::index_rescan(biss_scanDesc, nullptr);
     }
     tids.clear();
     bitmap_built = false;

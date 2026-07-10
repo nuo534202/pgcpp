@@ -7,10 +7,12 @@
 #include <cstdint>
 #include <string>
 
+#include "access/indexam.hpp"
 #include "access/nbtree.hpp"
 #include "access/rel.hpp"
 #include "catalog/catalog.hpp"
 #include "catalog/lsyscache.hpp"
+#include "catalog/pg_am.hpp"
 #include "catalog/pg_attribute.hpp"
 #include "catalog/pg_class.hpp"
 #include "catalog/pg_index.hpp"
@@ -23,8 +25,14 @@
 
 namespace pgcpp::commands {
 
-using pgcpp::access::btbuild;
 using pgcpp::access::BTKeyKind;
+using pgcpp::access::index_build;
+using pgcpp::access::kBrinAmOid;
+using pgcpp::access::kBTreeAmOid;
+using pgcpp::access::kGinAmOid;
+using pgcpp::access::kGistAmOid;
+using pgcpp::access::kHashAmOid;
+using pgcpp::access::kSpgistAmOid;
 using pgcpp::access::Relation;
 using pgcpp::access::RelationClose;
 using pgcpp::access::RelationCreateStorage;
@@ -32,6 +40,7 @@ using pgcpp::access::RelationOpen;
 using pgcpp::catalog::AttAlign;
 using pgcpp::catalog::AttStorage;
 using pgcpp::catalog::Catalog;
+using pgcpp::catalog::FormData_pg_am;
 using pgcpp::catalog::FormData_pg_attribute;
 using pgcpp::catalog::FormData_pg_class;
 using pgcpp::catalog::FormData_pg_index;
@@ -109,6 +118,35 @@ std::string DefineIndex(IndexStmt* stmt) {
         ereport(pgcpp::error::LogLevel::kError, "relation \"" + idxname + "\" already exists");
     }
 
+    // Resolve the access method: use the one named in stmt->access_method,
+    // or default to btree when unspecified (e.g. CREATE INDEX without USING).
+    std::string am_name = stmt->access_method;
+    if (am_name.empty())
+        am_name = "btree";
+    const FormData_pg_am* am_row = cat->GetAmByName(am_name);
+    Oid am_oid;
+    if (am_row != nullptr) {
+        am_oid = am_row->oid;
+    } else {
+        // Fallback for catalogs that were not bootstrapped with pg_am rows:
+        // resolve well-known AM names to their canonical OIDs.
+        if (am_name == "btree")
+            am_oid = kBTreeAmOid;
+        else if (am_name == "hash")
+            am_oid = kHashAmOid;
+        else if (am_name == "gist")
+            am_oid = kGistAmOid;
+        else if (am_name == "gin")
+            am_oid = kGinAmOid;
+        else if (am_name == "brin")
+            am_oid = kBrinAmOid;
+        else if (am_name == "spgist")
+            am_oid = kSpgistAmOid;
+        else
+            ereport(pgcpp::error::LogLevel::kError,
+                    "access method \"" + am_name + "\" does not exist");
+    }
+
     auto* class_row = makePallocNode<FormData_pg_class>();
     class_row->relname = idxname;
     class_row->relnamespace = 2200;
@@ -116,6 +154,7 @@ std::string DefineIndex(IndexStmt* stmt) {
     class_row->relpersistence = RelPersistence::kPermanent;
     class_row->relnatts = static_cast<int16_t>(stmt->index_params.size());
     class_row->relispopulated = true;
+    class_row->relam = am_oid;  // record the AM on the index relation
     Oid index_oid = cat->InsertClass(class_row);
     class_row->relfilenode = index_oid;
 
@@ -154,7 +193,7 @@ std::string DefineIndex(IndexStmt* stmt) {
     RelationCreateStorage(index_oid, false);
     Relation index_rel = RelationOpen(index_oid);
     if (index_rel != nullptr) {
-        btbuild(index_rel, key_kind);
+        index_build(index_rel, key_kind);
         RelationClose(index_rel);
     }
 

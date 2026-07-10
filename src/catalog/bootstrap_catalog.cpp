@@ -12,6 +12,7 @@
 
 #include "catalog/catalog.hpp"
 #include "catalog/pg_aggregate.hpp"
+#include "catalog/pg_am.hpp"
 #include "catalog/pg_cast.hpp"
 #include "catalog/pg_collation.hpp"
 #include "catalog/pg_operator.hpp"
@@ -194,6 +195,23 @@ static FormData_pg_collation* MakeCollation(Oid oid, const char* name, CollProvi
     coll->collprovider = provider;
     // collisdeterministic (true) and collencoding (-1) keep their defaults.
     return coll;
+}
+
+// MakeAm — create a pg_am row for a built-in index access method.
+static FormData_pg_am* MakeAm(Oid oid, const char* name, bool canorder, bool canbackward,
+                              bool canmulticol, bool searchnulls, bool clusterable,
+                              bool caninclude) {
+    auto* am = makePallocNode<FormData_pg_am>();
+    am->oid = oid;
+    am->amname = name;
+    am->amtype = AmType::kIndex;
+    am->amcanorder = canorder;
+    am->amcanbackward = canbackward;
+    am->amcanmulticol = canmulticol;
+    am->amsearchnulls = searchnulls;
+    am->amclusterable = clusterable;
+    am->amcaninclude = caninclude;
+    return am;
 }
 
 void BootstrapCatalog(Catalog* cat) {
@@ -514,6 +532,29 @@ void BootstrapCatalog(Catalog* cat) {
     cat->InsertCollation(MakeCollation(kDefaultCollationOid, "default", CollProvider::kDefault));
     cat->InsertCollation(MakeCollation(kC_COLLATION_OID, "C", CollProvider::kLibc));
     cat->InsertCollation(MakeCollation(kPOSIX_COLLATION_OID, "POSIX", CollProvider::kLibc));
+
+    // --- Access methods (pg_am) ---
+    // Register all six built-in index access methods with their PostgreSQL
+    // OIDs and capability flags. The AM OID is stored on each index's
+    // pg_class.relam and resolved by LookupAmRoutine at query time.
+    cat->InsertAm(MakeAm(403, "btree", /*canorder=*/true, /*canbackward=*/true,
+                         /*canmulticol=*/true, /*searchnulls=*/true,
+                         /*clusterable=*/true, /*caninclude=*/true));
+    cat->InsertAm(MakeAm(405, "hash", /*canorder=*/false, /*canbackward=*/true,
+                         /*canmulticol=*/false, /*searchnulls=*/true,
+                         /*clusterable=*/false, /*caninclude=*/false));
+    cat->InsertAm(MakeAm(783, "gist", /*canorder=*/false, /*canbackward=*/true,
+                         /*canmulticol=*/true, /*searchnulls=*/true,
+                         /*clusterable=*/false, /*caninclude=*/false));
+    cat->InsertAm(MakeAm(2742, "gin", /*canorder=*/false, /*canbackward=*/false,
+                         /*canmulticol=*/true, /*searchnulls=*/true,
+                         /*clusterable=*/false, /*caninclude=*/false));
+    cat->InsertAm(MakeAm(3580, "brin", /*canorder=*/false, /*canbackward=*/false,
+                         /*canmulticol=*/true, /*searchnulls=*/true,
+                         /*clusterable=*/false, /*caninclude=*/false));
+    cat->InsertAm(MakeAm(4000, "spgist", /*canorder=*/false, /*canbackward=*/true,
+                         /*canmulticol=*/false, /*searchnulls=*/true,
+                         /*clusterable=*/false, /*caninclude=*/false));
 }
 
 }  // namespace pgcpp::catalog

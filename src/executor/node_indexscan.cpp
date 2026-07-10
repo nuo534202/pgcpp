@@ -10,6 +10,7 @@
 #include <new>
 
 #include "access/heapam.hpp"
+#include "access/indexam.hpp"
 #include "access/nbtpage.hpp"
 #include "access/nbtree.hpp"
 #include "access/rel.hpp"
@@ -149,8 +150,8 @@ void IndexScanState::ExecInit() {
         }
     }
 
-    // Start the B-tree scan.
-    iss_scanDesc = pgcpp::access::btbeginscan(iss_index, key_kind, &scan_key);
+    // Start the index scan via the generic AM dispatch.
+    iss_scanDesc = pgcpp::access::index_beginscan(iss_index, key_kind, &scan_key);
 
     // Create the result slot from the target list.
     auto* result_desc = BuildTupleDescFromTargetList(idxplan->targetlist);
@@ -165,7 +166,7 @@ void IndexScanState::ExecInit() {
 TupleTableSlot* IndexScanState::ExecProcNode() {
     for (;;) {
         // Get the next matching TID from the index.
-        if (!pgcpp::access::btgettuple(iss_scanDesc)) {
+        if (!pgcpp::access::index_getnext_tid(iss_scanDesc)) {
             return nullptr;  // scan exhausted
         }
 
@@ -206,7 +207,7 @@ TupleTableSlot* IndexScanState::ExecProcNode() {
 
 void IndexScanState::ExecEnd() {
     if (iss_scanDesc != nullptr) {
-        pgcpp::access::btendscan(iss_scanDesc);
+        pgcpp::access::index_endscan(iss_scanDesc);
         iss_scanDesc = nullptr;
     }
     iss_relation = nullptr;
@@ -220,7 +221,7 @@ void IndexScanState::ExecEnd() {
 
 void IndexScanState::ExecReScan() {
     if (iss_scanDesc != nullptr) {
-        pgcpp::access::btrescan(iss_scanDesc, nullptr);
+        pgcpp::access::index_rescan(iss_scanDesc, nullptr);
     }
 }
 

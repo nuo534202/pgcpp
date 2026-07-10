@@ -62,6 +62,10 @@ struct BTScanDescData {
 
     // The current tuple being returned (tid of the matching heap tuple).
     pgcpp::transaction::ItemPointerData curr_tid;
+
+    // Opaque per-AM scan state (e.g. hash bucket chain, GIN posting list
+    // position, BRIN revmap cursor).  Owned by the AM; freed in amendscan.
+    void* opaque = nullptr;
 };
 
 // BTScanDesc — pointer to a BTScanDescData.
