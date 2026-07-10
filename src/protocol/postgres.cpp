@@ -44,6 +44,7 @@
 #include "types/builtins.hpp"
 #include "types/datetime.hpp"
 #include "types/datum.hpp"
+#include "utils/cache/plancache.hpp"
 
 namespace pgcpp::protocol {
 
@@ -97,6 +98,8 @@ using pgcpp::types::kTextOid;
 using pgcpp::types::kTimestampOid;
 using pgcpp::types::kVarcharOid;
 using pgcpp::types::TextDatumToString;
+using pgcpp::utils::CachedPlan;
+using pgcpp::utils::CachedPlanSource;
 
 namespace {
 
@@ -237,6 +240,12 @@ Oid GetExprTypeOid(Node* expr) {
 
 // --- Backend ---
 
+PreparedStatement::~PreparedStatement() {
+    for (auto* ps : plan_sources) {
+        delete ps;
+    }
+}
+
 Backend::Backend(OutputSink* sink) : sink_(sink) {}
 
 Backend::~Backend() {
@@ -331,9 +340,11 @@ void Backend::exec_simple_query(const std::string& query_string) {
     sink_->SendMessage(BuildReadyForQuery(GetCurrentTransactionStatus()));
 }
 
-std::string Backend::ExecuteQuery(Query* query, bool send_row_description) {
-    // Plan the query.
-    Plan* plan = planner(query);
+std::string Backend::ExecuteQuery(Query* query, Plan* plan, bool send_row_description) {
+    // Plan the query if no pre-built plan was provided (simple query path).
+    if (plan == nullptr) {
+        plan = planner(query);
+    }
 
     // Create a QueryDesc.
     auto* qd = makePallocNode<QueryDesc>();
@@ -484,6 +495,11 @@ void Backend::HandleParse(const std::string& stmt_name, const std::string& query
         stmt->queries = queries;
         stmt->param_types = param_types;
         stmt->has_results = !queries.empty() && queries[0]->command_type == CmdType::kSelect;
+        // Create a plan source for each query (lazy — plans are built on
+        // first Execute and cached for subsequent uses).
+        for (auto* q : queries) {
+            stmt->plan_sources.push_back(new CachedPlanSource(q, query));
+        }
         prepared_statements_[stmt_name] = stmt;
 
         sink_->SendMessage(BuildParseComplete());
@@ -614,9 +630,17 @@ void Backend::HandleExecute(const std::string& portal_name, int /*max_rows*/) {
             if (tag.empty())
                 tag = "UTILITY";
         } else {
+            // Use the plan cache: get a cached plan (re-plans if invalidated
+            // by DDL since the last execution).
+            CachedPlanSource* plan_source = portal->stmt->plan_sources[portal->query_index];
+            CachedPlan* cached_plan = plan_source->GetCachedPlan();
+            if (cached_plan == nullptr) {
+                ereport(pgcpp::error::LogLevel::kError, "planning failed");
+            }
             // Extended query protocol: RowDescription is sent via Describe,
             // not during Execute.
-            tag = ExecuteQuery(query, /*send_row_description=*/false);
+            tag = ExecuteQuery(query, cached_plan->plan(),
+                               /*send_row_description=*/false);
         }
 
         CommitTransactionCommand();

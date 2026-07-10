@@ -28,6 +28,7 @@
 #include "common/containers/node.hpp"
 #include "parser/parsenodes.hpp"
 #include "transaction/xact.hpp"
+#include "utils/cache/inval.hpp"
 
 namespace pgcpp::protocol {
 
@@ -118,8 +119,9 @@ std::string ProcessUtility(Node* stmt, OutputSink* sink) {
     if (stmt == nullptr)
         return "";
 
+    std::string tag;
     switch (stmt->GetTag()) {
-        // --- Transaction & GUC (handled inline) -------------------------
+        // --- Transaction & GUC (handled inline, NOT DDL) --------------
         case NodeTag::kTransactionStmt:
             return ProcessTransactionStmt(static_cast<TransactionStmt*>(stmt));
         case NodeTag::kVariableSetStmt:
@@ -127,23 +129,29 @@ std::string ProcessUtility(Node* stmt, OutputSink* sink) {
 
         // --- Table / Index DDL (commands/tablecmds, indexcmds) --------
         case NodeTag::kCreateStmt:
-            return DefineRelation(static_cast<CreateStmt*>(stmt));
+            tag = DefineRelation(static_cast<CreateStmt*>(stmt));
+            break;
         case NodeTag::kDropStmt:
-            return RemoveRelations(static_cast<DropStmt*>(stmt));
+            tag = RemoveRelations(static_cast<DropStmt*>(stmt));
+            break;
         case NodeTag::kAlterTableStmt:
-            return AlterTable(static_cast<AlterTableStmt*>(stmt));
+            tag = AlterTable(static_cast<AlterTableStmt*>(stmt));
+            break;
         case NodeTag::kRenameStmt:
-            return RenameRelation(static_cast<RenameStmt*>(stmt));
+            tag = RenameRelation(static_cast<RenameStmt*>(stmt));
+            break;
         case NodeTag::kTruncateStmt:
-            return ExecuteTruncate(static_cast<TruncateStmt*>(stmt));
+            tag = ExecuteTruncate(static_cast<TruncateStmt*>(stmt));
+            break;
         case NodeTag::kIndexStmt:
-            return DefineIndex(static_cast<IndexStmt*>(stmt));
+            tag = DefineIndex(static_cast<IndexStmt*>(stmt));
+            break;
 
-        // --- COPY (commands/copy) -------------------------------------
+        // --- COPY (commands/copy, NOT DDL) ---------------------------
         case NodeTag::kCopyStmt:
             return DoCopy(static_cast<CopyStmt*>(stmt));
 
-        // --- VACUUM / ANALYZE (commands/vacuum, analyze) -------------
+        // --- VACUUM / ANALYZE (commands/vacuum, analyze, NOT DDL) ----
         case NodeTag::kVacuumStmt: {
             auto* v = static_cast<VacuumStmt*>(stmt);
             return v->is_vacuumcmd ? ExecVacuum(v) : AnalyzeCommand(v);
@@ -151,31 +159,40 @@ std::string ProcessUtility(Node* stmt, OutputSink* sink) {
 
         // --- Sequence / View / Trigger (commands/*) -------------------
         case NodeTag::kCreateSeqStmt:
-            return DefineSequence(static_cast<CreateSeqStmt*>(stmt));
+            tag = DefineSequence(static_cast<CreateSeqStmt*>(stmt));
+            break;
         case NodeTag::kViewStmt:
-            return DefineView(static_cast<ViewStmt*>(stmt));
+            tag = DefineView(static_cast<ViewStmt*>(stmt));
+            break;
         case NodeTag::kCreateTrigStmt:
-            return CreateTrigger(static_cast<CreateTrigStmt*>(stmt));
+            tag = CreateTrigger(static_cast<CreateTrigStmt*>(stmt));
+            break;
 
-        // --- EXPLAIN (commands/explain) -------------------------------
+        // --- EXPLAIN (commands/explain, NOT DDL) ---------------------
         case NodeTag::kExplainStmt:
             return ExplainQuery(static_cast<ExplainStmt*>(stmt), sink);
 
         // --- Database / Schema / Tablespace (commands/*) -------------
         case NodeTag::kCreatedbStmt:
-            return createdb(static_cast<CreatedbStmt*>(stmt));
+            tag = createdb(static_cast<CreatedbStmt*>(stmt));
+            break;
         case NodeTag::kDropdbStmt:
-            return dropdb(static_cast<DropdbStmt*>(stmt));
+            tag = dropdb(static_cast<DropdbStmt*>(stmt));
+            break;
         case NodeTag::kCreateSchemaStmt:
-            return CreateSchemaCommand(static_cast<CreateSchemaStmt*>(stmt));
+            tag = CreateSchemaCommand(static_cast<CreateSchemaStmt*>(stmt));
+            break;
         case NodeTag::kCreateTableSpaceStmt:
-            return CreateTableSpace(static_cast<CreateTableSpaceStmt*>(stmt));
+            tag = CreateTableSpace(static_cast<CreateTableSpaceStmt*>(stmt));
+            break;
         case NodeTag::kDropTableSpaceStmt:
-            return DropTableSpace(static_cast<DropTableSpaceStmt*>(stmt));
+            tag = DropTableSpace(static_cast<DropTableSpaceStmt*>(stmt));
+            break;
 
         // --- Function / Type / Operator / OpClass / Aggregate --------
         case NodeTag::kCreateFunctionStmt:
-            return CreateFunction(static_cast<CreateFunctionStmt*>(stmt));
+            tag = CreateFunction(static_cast<CreateFunctionStmt*>(stmt));
+            break;
         // Note: CREATE TYPE / OPERATOR / OPERATOR CLASS / AGGREGATE are
         // parsed as CreateStmt in PostgreSQL (they share the grammar
         // production). We can't distinguish them from CREATE TABLE by node
@@ -185,6 +202,12 @@ std::string ProcessUtility(Node* stmt, OutputSink* sink) {
         default:
             return "";
     }
+
+    // DDL succeeded — invalidate cached plans by bumping the catalog
+    // generation counter. Non-DDL commands (transaction, GUC, COPY, VACUUM,
+    // EXPLAIN) return early above and don't reach this point.
+    pgcpp::utils::IncrementCatalogGeneration();
+    return tag;
 }
 
 std::string CreateCommandTag(Node* stmt) {

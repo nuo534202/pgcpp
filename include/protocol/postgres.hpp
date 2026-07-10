@@ -45,6 +45,10 @@ namespace pgcpp::server {
 class SocketSink;
 }  // namespace pgcpp::server
 
+namespace pgcpp::utils {
+class CachedPlanSource;
+}  // namespace pgcpp::utils
+
 namespace pgcpp::protocol {
 
 // PreparedStatement — a parsed statement in the extended query protocol.
@@ -56,8 +60,11 @@ namespace pgcpp::protocol {
 struct PreparedStatement {
     std::string name;
     std::vector<pgcpp::parser::Query*> queries;
+    std::vector<pgcpp::utils::CachedPlanSource*> plan_sources;
     std::vector<pgcpp::catalog::Oid> param_types;
     bool has_results = false;  // true if the first query is a SELECT
+
+    ~PreparedStatement();
 };
 
 // Portal — a bound, ready-to-execute statement.
@@ -142,10 +149,13 @@ public:
 private:
     // Execute a single analyzed Query and send result messages.
     // Returns the command tag (e.g., "SELECT 3", "INSERT 0 1").
+    // If plan is nullptr, plans the query internally (simple query path).
+    // If plan is provided (from the plan cache), uses it directly.
     // If send_row_description is true, sends RowDescription before DataRows
     // (used by the simple query protocol; the extended query protocol sends
     // RowDescription via Describe instead).
-    std::string ExecuteQuery(pgcpp::parser::Query* query, bool send_row_description = true);
+    std::string ExecuteQuery(pgcpp::parser::Query* query, pgcpp::executor::Plan* plan = nullptr,
+                             bool send_row_description = true);
 
     // Send a RowDescription for a SELECT query's target list.
     void SendRowDescription(pgcpp::parser::Query* query);
