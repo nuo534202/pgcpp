@@ -11,7 +11,9 @@ class CreateFunctionStmt;
 
 namespace pgcpp::commands {
 
-// CreateFunction — execute CREATE FUNCTION. Stub.
+// CreateFunction — execute CREATE FUNCTION.
+// Parses options (LANGUAGE, AS, volatility, strict), builds a pg_proc row,
+// and persists it via the Catalog.
 std::string CreateFunction(parser::CreateFunctionStmt* stmt);
 
 }  // namespace pgcpp::commands

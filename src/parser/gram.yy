@@ -3976,8 +3976,13 @@ CreateFunctionStmt:
             n->funcname = std::move($4);
             n->parameters = std::move($5);
             n->return_type = static_cast<TypeName*>($6);
-            (void)$7;
-            n->options = std::move($8);
+            auto fn_options = std::move($8);
+            // Convert func_as (AS Sconst list) into a DefElem and prepend.
+            if (!$7.empty()) {
+                DefElem* as_elem = makeDefElem("as", $7[0], @1);
+                fn_options.insert(fn_options.begin(), as_elem);
+            }
+            n->options = std::move(fn_options);
             (void)$9;
             $$ = n;
         }
@@ -3989,8 +3994,12 @@ CreateFunctionStmt:
             n->replace = $2;
             n->funcname = std::move($4);
             n->parameters = std::move($5);
-            (void)$6;
-            n->options = std::move($7);
+            auto proc_options = std::move($7);
+            if (!$6.empty()) {
+                DefElem* as_elem = makeDefElem("as", $6[0], @1);
+                proc_options.insert(proc_options.begin(), as_elem);
+            }
+            n->options = std::move(proc_options);
             (void)$8;
             $$ = n;
         }
