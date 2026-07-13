@@ -165,8 +165,7 @@ static const BuiltinEntry kBuiltinTable[] = {
     {3665, fmgr_text_concat, "concat"},
 };
 
-static constexpr int kBuiltinTableSize =
-    sizeof(kBuiltinTable) / sizeof(kBuiltinTable[0]);
+static constexpr int kBuiltinTableSize = sizeof(kBuiltinTable) / sizeof(kBuiltinTable[0]);
 
 // Lookup a PgFunction by OID in the builtin table.
 static PgFunction LookupBuiltinByOid(Oid oid) {
@@ -240,9 +239,7 @@ bool fmgr_info(Oid funcid, FmgrInfo* finfo) {
 
 // --- FunctionCall ---
 
-Datum FunctionCall(const FmgrInfo* finfo,
-                   const std::vector<Datum>& args,
-                   bool* isnull) {
+Datum FunctionCall(const FmgrInfo* finfo, const std::vector<Datum>& args, bool* isnull) {
     if (isnull != nullptr)
         *isnull = false;
 
@@ -273,10 +270,8 @@ Datum FunctionCall(const FmgrInfo* finfo,
     return 0;
 }
 
-Datum FunctionCallWithNulls(const FmgrInfo* finfo,
-                            const std::vector<Datum>& args,
-                            const std::vector<bool>& isnulls,
-                            bool* isnull) {
+Datum FunctionCallWithNulls(const FmgrInfo* finfo, const std::vector<Datum>& args,
+                            const std::vector<bool>& isnulls, bool* isnull) {
     if (isnull != nullptr)
         *isnull = false;
 
@@ -304,9 +299,7 @@ Datum FunctionCallWithNulls(const FmgrInfo* finfo,
         fc.nargs = static_cast<int>(std::min(args.size(), size_t(10)));
         for (int i = 0; i < fc.nargs; ++i) {
             fc.arg[i] = args[i];
-            fc.isnull[i] = (i < static_cast<int>(isnulls.size()))
-                               ? isnulls[i]
-                               : false;
+            fc.isnull[i] = (i < static_cast<int>(isnulls.size())) ? isnulls[i] : false;
         }
         fc.result = finfo->fn_addr(fc);
         fc.isnull_result = false;

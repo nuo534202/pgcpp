@@ -97,24 +97,18 @@ void ParseOptions(const std::vector<Node*>& options, FormData_pg_proc* row) {
         const auto* de = static_cast<const DefElem*>(opt);
 
         if (de->defname == "language") {
-            if (de->arg != nullptr &&
-                de->arg->GetTag() == NodeTag::kString) {
-                std::string lang =
-                    static_cast<const Value*>(de->arg)->GetString();
+            if (de->arg != nullptr && de->arg->GetTag() == NodeTag::kString) {
+                std::string lang = static_cast<const Value*>(de->arg)->GetString();
                 row->prolang = ResolveLanguageOid(lang);
             }
         } else if (de->defname == "as") {
             // AS Sconst — the function body source text (SQL or C symbol).
-            if (de->arg != nullptr &&
-                de->arg->GetTag() == NodeTag::kString) {
-                row->prosrc =
-                    static_cast<const Value*>(de->arg)->GetString();
+            if (de->arg != nullptr && de->arg->GetTag() == NodeTag::kString) {
+                row->prosrc = static_cast<const Value*>(de->arg)->GetString();
             }
         } else if (de->defname == "volatility") {
-            if (de->arg != nullptr &&
-                de->arg->GetTag() == NodeTag::kString) {
-                std::string vol =
-                    static_cast<const Value*>(de->arg)->GetString();
+            if (de->arg != nullptr && de->arg->GetTag() == NodeTag::kString) {
+                std::string vol = static_cast<const Value*>(de->arg)->GetString();
                 if (vol == "immutable")
                     row->provolatile = ProVolatile::kImmutable;
                 else if (vol == "stable")
@@ -124,10 +118,8 @@ void ParseOptions(const std::vector<Node*>& options, FormData_pg_proc* row) {
             }
         } else if (de->defname == "strict") {
             // STRICT flag: arg is an Integer Value (1 = strict).
-            if (de->arg != nullptr &&
-                de->arg->GetTag() == NodeTag::kInteger) {
-                row->proisstrict =
-                    static_cast<const Value*>(de->arg)->GetInteger() != 0;
+            if (de->arg != nullptr && de->arg->GetTag() == NodeTag::kInteger) {
+                row->proisstrict = static_cast<const Value*>(de->arg)->GetInteger() != 0;
             }
         }
         // Other options (parallel, cost, rows, security_definer, leakproof,
@@ -144,8 +136,7 @@ std::string CreateFunction(CreateFunctionStmt* stmt) {
     // Extract function name.
     std::string proname = ExtractLastName(stmt->funcname);
     if (proname.empty()) {
-        ereport(pgcpp::error::LogLevel::kError,
-                "CREATE FUNCTION: no function name given");
+        ereport(pgcpp::error::LogLevel::kError, "CREATE FUNCTION: no function name given");
         return "CREATE FUNCTION";
     }
 

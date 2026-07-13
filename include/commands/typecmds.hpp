@@ -6,13 +6,14 @@
 #include <string>
 
 namespace pgcpp::parser {
-class CreateStmt;
+class CreateTypeStmt;
 }  // namespace pgcpp::parser
 
 namespace pgcpp::commands {
 
-// DefineType — execute CREATE TYPE. Stub (pgcpp has no user-defined
-// type system yet).
-std::string DefineType(parser::CreateStmt* stmt);
+// DefineType — execute CREATE TYPE ... AS ENUM.
+// Registers a pg_type row with typtype=kEnum and stores enum labels
+// in the typdefault field as a comma-separated string.
+std::string DefineType(parser::CreateTypeStmt* stmt);
 
 }  // namespace pgcpp::commands

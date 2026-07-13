@@ -474,6 +474,10 @@ static inline char keyMatchToChar(int match) {
 %type <Node*> CreateRoleStmt AlterRoleStmt DropRoleStmt GrantStmt RevokeStmt
 %type <Node*> CopyStmt RefreshMatViewStmt CreateTableSpaceStmt DropTableSpaceStmt
 %type <Node*> CreatedbStmt DropdbStmt AlterDatabaseStmt
+%type <Node*> CreateTypeStmt CreateDomainStmt CreateCastStmt
+%type <std::vector<Node*>> enum_label_list
+%type <bool> opt_domain_constraints domain_constraint
+%type <pgcpp::catalog::CastContext> opt_cast_context
 %type <Node*> alter_table_cmd analyze_option create_as_target
 %type <Node*> func_arg func_arg_info opt_createfunc_return_type
 %type <std::vector<Node*>> func_as
@@ -612,8 +616,92 @@ stmt:
     | CreatedbStmt
     | DropdbStmt
     | AlterDatabaseStmt
+    | CreateTypeStmt
+    | CreateDomainStmt
+    | CreateCastStmt
     | /* empty */
         { $$ = nullptr; }
+;
+
+// CREATE TYPE name AS ENUM ('label', ...)
+CreateTypeStmt:
+      CREATE TYPE_P any_name AS ENUM_P '(' enum_label_list ')'
+        {
+            CreateTypeStmt* n = makeNode<CreateTypeStmt>();
+            n->type_name = std::move($3);
+            for (Node* label_node : $7) {
+                auto* v = dynamic_cast<Value*>(label_node);
+                if (v != nullptr)
+                    n->labels.push_back(v->GetString());
+            }
+            $$ = n;
+        }
+;
+
+enum_label_list:
+      Sconst
+        { $$.push_back(makeString($1)); }
+    | enum_label_list ',' Sconst
+        { $1.push_back(makeString($3)); $$ = std::move($1); }
+;
+
+// CREATE DOMAIN name AS type [constraints]
+CreateDomainStmt:
+      CREATE DOMAIN_P any_name AS Typename opt_domain_constraints
+        {
+            CreateDomainStmt* n = makeNode<CreateDomainStmt>();
+            n->domainname = std::move($3);
+            n->type_name = static_cast<TypeName*>($5);
+            // Simplified: only NOT NULL constraint is supported.
+            n->not_null = $6;
+            $$ = n;
+        }
+;
+
+opt_domain_constraints:
+      /* empty */
+        { $$ = false; }
+    | opt_domain_constraints domain_constraint
+        { $$ = $1 || $2; }
+;
+
+domain_constraint:
+      NOT NULL_P
+        { $$ = true; }
+    | NULL_P
+        { $$ = false; }
+;
+
+// CREATE CAST (source_type AS target_type) WITH FUNCTION func_name | WITHOUT FUNCTION
+CreateCastStmt:
+      CREATE CAST '(' Typename AS Typename ')' WITH FUNCTION function_name opt_cast_context
+        {
+            CreateCastStmt* n = makeNode<CreateCastStmt>();
+            n->sourcetype = static_cast<TypeName*>($4);
+            n->targettype = static_cast<TypeName*>($6);
+            n->func = std::move($10);
+            n->without_function = false;
+            n->context = $11;
+            $$ = n;
+        }
+    | CREATE CAST '(' Typename AS Typename ')' WITHOUT FUNCTION opt_cast_context
+        {
+            CreateCastStmt* n = makeNode<CreateCastStmt>();
+            n->sourcetype = static_cast<TypeName*>($4);
+            n->targettype = static_cast<TypeName*>($6);
+            n->without_function = true;
+            n->context = $10;
+            $$ = n;
+        }
+;
+
+opt_cast_context:
+      /* empty */
+        { $$ = pgcpp::catalog::CastContext::kExplicit; }
+    | AS ASSIGNMENT
+        { $$ = pgcpp::catalog::CastContext::kAssignment; }
+    | AS IMPLICIT_P
+        { $$ = pgcpp::catalog::CastContext::kImplicit; }
 ;
 
 // SELECT statement.

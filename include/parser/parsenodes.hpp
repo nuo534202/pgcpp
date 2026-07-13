@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "catalog/pg_cast.hpp"
 #include "common/containers/node.hpp"
 
 namespace pgcpp::parser {
@@ -473,6 +474,9 @@ class DropTableSpaceStmt;
 class CreatedbStmt;
 class DropdbStmt;
 class AlterDatabaseStmt;
+class CreateTypeStmt;
+class CreateDomainStmt;
+class CreateCastStmt;
 class Constraint;
 
 // ---------------------------------------------------------------------------
@@ -2125,6 +2129,46 @@ public:
 
     std::string dbname;
     std::vector<Node*> options;  // list of DefElem
+};
+
+// CreateTypeStmt — CREATE TYPE (simplified: AS ENUM only).
+class CreateTypeStmt : public Node {
+public:
+    CreateTypeStmt() : Node(pgcpp::nodes::NodeTag::kCreateTypeStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::vector<Node*> type_name;     // qualified type name (list of String)
+    std::vector<std::string> labels;  // enum labels (for AS ENUM)
+};
+
+// CreateDomainStmt — CREATE DOMAIN
+class CreateDomainStmt : public Node {
+public:
+    CreateDomainStmt() : Node(pgcpp::nodes::NodeTag::kCreateDomainStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::vector<Node*> domainname;  // qualified domain name (list of String)
+    TypeName* type_name = nullptr;  // base type
+    bool not_null = false;          // NOT NULL constraint
+};
+
+// CreateCastStmt — CREATE CAST
+class CreateCastStmt : public Node {
+public:
+    CreateCastStmt() : Node(pgcpp::nodes::NodeTag::kCreateCastStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    TypeName* sourcetype = nullptr;  // source type
+    TypeName* targettype = nullptr;  // target type
+    std::vector<Node*> func;         // cast function name (empty if WITHOUT FUNCTION)
+    bool without_function = false;   // WITHOUT FUNCTION?
+    pgcpp::catalog::CastContext context = pgcpp::catalog::CastContext::kExplicit;
 };
 
 // ---------------------------------------------------------------------------

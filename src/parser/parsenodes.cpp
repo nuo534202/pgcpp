@@ -1686,6 +1686,52 @@ bool AlterDatabaseStmt::Equals(const Node& other) const {
 }
 
 // ===========================================================================
+// CreateTypeStmt / CreateDomainStmt / CreateCastStmt
+// ===========================================================================
+
+Node* CreateTypeStmt::Clone() const {
+    auto* copy = makePallocNode<CreateTypeStmt>(*this);
+    copy->type_name = CloneVec(type_name);
+    return copy;
+}
+
+bool CreateTypeStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateTypeStmt&>(other);
+    return labels == o.labels && EqVec(type_name, o.type_name);
+}
+
+Node* CreateDomainStmt::Clone() const {
+    auto* copy = makePallocNode<CreateDomainStmt>(*this);
+    copy->domainname = CloneVec(domainname);
+    copy->type_name = static_cast<TypeName*>(CloneNode(type_name));
+    return copy;
+}
+
+bool CreateDomainStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateDomainStmt&>(other);
+    return not_null == o.not_null && EqVec(domainname, o.domainname);
+}
+
+Node* CreateCastStmt::Clone() const {
+    auto* copy = makePallocNode<CreateCastStmt>(*this);
+    copy->sourcetype = static_cast<TypeName*>(CloneNode(sourcetype));
+    copy->targettype = static_cast<TypeName*>(CloneNode(targettype));
+    copy->func = CloneVec(func);
+    return copy;
+}
+
+bool CreateCastStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateCastStmt&>(other);
+    return without_function == o.without_function && context == o.context && EqVec(func, o.func);
+}
+
+// ===========================================================================
 // Query tree
 // ===========================================================================
 

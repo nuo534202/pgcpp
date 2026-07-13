@@ -13,8 +13,10 @@
 #include <string>
 
 #include "commands/analyze.hpp"
+#include "commands/castcmds.hpp"
 #include "commands/copy.hpp"
 #include "commands/dbcommands.hpp"
+#include "commands/domaincmds.hpp"
 #include "commands/explain.hpp"
 #include "commands/functioncmds.hpp"
 #include "commands/indexcmds.hpp"
@@ -23,6 +25,7 @@
 #include "commands/tablecmds.hpp"
 #include "commands/tablespace.hpp"
 #include "commands/trigger.hpp"
+#include "commands/typecmds.hpp"
 #include "commands/vacuum.hpp"
 #include "commands/view.hpp"
 #include "common/containers/node.hpp"
@@ -34,14 +37,17 @@ namespace pgcpp::protocol {
 
 using pgcpp::commands::AlterTable;
 using pgcpp::commands::AnalyzeCommand;
+using pgcpp::commands::CreateCast;
 using pgcpp::commands::createdb;
 using pgcpp::commands::CreateFunction;
 using pgcpp::commands::CreateSchemaCommand;
 using pgcpp::commands::CreateTableSpace;
 using pgcpp::commands::CreateTrigger;
+using pgcpp::commands::DefineDomain;
 using pgcpp::commands::DefineIndex;
 using pgcpp::commands::DefineRelation;
 using pgcpp::commands::DefineSequence;
+using pgcpp::commands::DefineType;
 using pgcpp::commands::DefineView;
 using pgcpp::commands::DoCopy;
 using pgcpp::commands::dropdb;
@@ -54,13 +60,16 @@ using pgcpp::commands::RenameRelation;
 using pgcpp::nodes::NodeTag;
 using pgcpp::parser::AlterTableStmt;
 using pgcpp::parser::CopyStmt;
+using pgcpp::parser::CreateCastStmt;
 using pgcpp::parser::CreatedbStmt;
+using pgcpp::parser::CreateDomainStmt;
 using pgcpp::parser::CreateFunctionStmt;
 using pgcpp::parser::CreateSchemaStmt;
 using pgcpp::parser::CreateSeqStmt;
 using pgcpp::parser::CreateStmt;
 using pgcpp::parser::CreateTableSpaceStmt;
 using pgcpp::parser::CreateTrigStmt;
+using pgcpp::parser::CreateTypeStmt;
 using pgcpp::parser::DropdbStmt;
 using pgcpp::parser::DropStmt;
 using pgcpp::parser::DropTableSpaceStmt;
@@ -193,6 +202,15 @@ std::string ProcessUtility(Node* stmt, OutputSink* sink) {
         case NodeTag::kCreateFunctionStmt:
             tag = CreateFunction(static_cast<CreateFunctionStmt*>(stmt));
             break;
+        case NodeTag::kCreateTypeStmt:
+            tag = DefineType(static_cast<CreateTypeStmt*>(stmt));
+            break;
+        case NodeTag::kCreateDomainStmt:
+            tag = DefineDomain(static_cast<CreateDomainStmt*>(stmt));
+            break;
+        case NodeTag::kCreateCastStmt:
+            tag = CreateCast(static_cast<CreateCastStmt*>(stmt));
+            break;
         // Note: CREATE TYPE / OPERATOR / OPERATOR CLASS / AGGREGATE are
         // parsed as CreateStmt in PostgreSQL (they share the grammar
         // production). We can't distinguish them from CREATE TABLE by node
@@ -284,6 +302,12 @@ std::string CreateCommandTag(Node* stmt) {
             return "DROP TABLESPACE";
         case NodeTag::kCreateFunctionStmt:
             return "CREATE FUNCTION";
+        case NodeTag::kCreateTypeStmt:
+            return "CREATE TYPE";
+        case NodeTag::kCreateDomainStmt:
+            return "CREATE DOMAIN";
+        case NodeTag::kCreateCastStmt:
+            return "CREATE CAST";
         default:
             return "";
     }

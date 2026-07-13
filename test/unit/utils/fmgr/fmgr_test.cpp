@@ -55,12 +55,12 @@ using pgcpp::types::MakeTextDatum;
 using pgcpp::types::TextDatumToString;
 
 // Builtin function OIDs (from bootstrap_catalog.cpp).
-constexpr Oid kAbsOid = 1398;       // abs(int4)
-constexpr Oid kRoundOid = 1700;     // round(float8)
-constexpr Oid kCeilOid = 2308;      // ceil(float8)
-constexpr Oid kFloorOid = 2311;     // floor(float8)
-constexpr Oid kModOid = 941;        // mod(int4, int4)
-constexpr Oid kLengthOid = 1311;    // length(text)
+constexpr Oid kAbsOid = 1398;     // abs(int4)
+constexpr Oid kRoundOid = 1700;   // round(float8)
+constexpr Oid kCeilOid = 2308;    // ceil(float8)
+constexpr Oid kFloorOid = 2311;   // floor(float8)
+constexpr Oid kModOid = 941;      // mod(int4, int4)
+constexpr Oid kLengthOid = 1311;  // length(text)
 
 class FmgrTest : public ::testing::Test {
 protected:
@@ -170,10 +170,8 @@ TEST_F(FmgrTest, StrictFunctionNullArgReturnsNull) {
     EXPECT_TRUE(finfo.fn_strict);
 
     bool isnull = false;
-    Datum result = FunctionCallWithNulls(&finfo,
-                                          {Int32GetDatum(0)},
-                                          {true},  // arg[0] is NULL
-                                          &isnull);
+    Datum result = FunctionCallWithNulls(&finfo, {Int32GetDatum(0)}, {true},  // arg[0] is NULL
+                                         &isnull);
     EXPECT_TRUE(isnull);
     (void)result;
 }
@@ -183,10 +181,7 @@ TEST_F(FmgrTest, StrictFunctionNoNullArgsReturnsValue) {
     ASSERT_TRUE(fmgr_info(kAbsOid, &finfo));
 
     bool isnull = false;
-    Datum result = FunctionCallWithNulls(&finfo,
-                                          {Int32GetDatum(-7)},
-                                          {false},
-                                          &isnull);
+    Datum result = FunctionCallWithNulls(&finfo, {Int32GetDatum(-7)}, {false}, &isnull);
     EXPECT_FALSE(isnull);
     EXPECT_EQ(DatumGetInt32(result), 7);
 }

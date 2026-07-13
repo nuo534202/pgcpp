@@ -61,11 +61,11 @@ struct FunctionCallInfo {
 // FmgrInfo — cached function metadata + dispatch pointer.
 // The executor fills this once (via fmgr_info) and reuses it for every call.
 struct FmgrInfo {
-    pgcpp::catalog::Oid fn_oid = 0;  // pg_proc OID
-    PgFunction fn_addr = nullptr;    // C function pointer (internal/C only)
+    pgcpp::catalog::Oid fn_oid = 0;       // pg_proc OID
+    PgFunction fn_addr = nullptr;         // C function pointer (internal/C only)
     pgcpp::catalog::Oid fn_language = 0;  // pg_language OID
-    bool fn_strict = true;  // if true, return NULL when any arg is NULL
-    std::string fn_name;    // proname (for SQL dispatch / error messages)
+    bool fn_strict = true;                // if true, return NULL when any arg is NULL
+    std::string fn_name;                  // proname (for SQL dispatch / error messages)
 
     // True if fn_addr is set (internal or C language function with a
     // registered builtin handler). False for SQL-language functions.
@@ -79,33 +79,29 @@ bool fmgr_info(pgcpp::catalog::Oid funcid, FmgrInfo* finfo);
 // FunctionCall — call a function via its FmgrInfo.
 // Handles strict-function NULL short-circuiting.
 pgcpp::types::Datum FunctionCall(const FmgrInfo* finfo,
-                                  const std::vector<pgcpp::types::Datum>& args,
-                                  bool* isnull = nullptr);
+                                 const std::vector<pgcpp::types::Datum>& args,
+                                 bool* isnull = nullptr);
 
 // FunctionCallWithNulls — call a function with explicit NULL flags.
-pgcpp::types::Datum FunctionCallWithNulls(
-    const FmgrInfo* finfo,
-    const std::vector<pgcpp::types::Datum>& args,
-    const std::vector<bool>& isnulls,
-    bool* isnull = nullptr);
+pgcpp::types::Datum FunctionCallWithNulls(const FmgrInfo* finfo,
+                                          const std::vector<pgcpp::types::Datum>& args,
+                                          const std::vector<bool>& isnulls, bool* isnull = nullptr);
 
 // DirectFunctionCall1/2/3 — call a C function pointer directly (no OID
 // lookup, no strict check). Used internally by operator implementations.
 pgcpp::types::Datum DirectFunctionCall1(PgFunction func, pgcpp::types::Datum arg1);
 pgcpp::types::Datum DirectFunctionCall2(PgFunction func, pgcpp::types::Datum arg1,
-                                         pgcpp::types::Datum arg2);
+                                        pgcpp::types::Datum arg2);
 pgcpp::types::Datum DirectFunctionCall3(PgFunction func, pgcpp::types::Datum arg1,
-                                         pgcpp::types::Datum arg2,
-                                         pgcpp::types::Datum arg3);
+                                        pgcpp::types::Datum arg2, pgcpp::types::Datum arg3);
 
 // OidFunctionCall1/2/3 — look up a function by OID and call it.
 // Convenience wrappers combining fmgr_info + FunctionCall.
 pgcpp::types::Datum OidFunctionCall1(pgcpp::catalog::Oid funcid, pgcpp::types::Datum arg1);
 pgcpp::types::Datum OidFunctionCall2(pgcpp::catalog::Oid funcid, pgcpp::types::Datum arg1,
-                                      pgcpp::types::Datum arg2);
+                                     pgcpp::types::Datum arg2);
 pgcpp::types::Datum OidFunctionCall3(pgcpp::catalog::Oid funcid, pgcpp::types::Datum arg1,
-                                      pgcpp::types::Datum arg2,
-                                      pgcpp::types::Datum arg3);
+                                     pgcpp::types::Datum arg2, pgcpp::types::Datum arg3);
 
 // LookupBuiltinFunction — find a C function pointer by function name.
 // Returns nullptr if no builtin is registered for the name.

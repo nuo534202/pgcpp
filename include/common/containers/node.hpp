@@ -144,6 +144,10 @@ enum class NodeTag : int {
     kCreatedbStmt,
     kDropdbStmt,
     kAlterDatabaseStmt,
+    // P2-10 SQL language additions
+    kCreateTypeStmt,
+    kCreateDomainStmt,
+    kCreateCastStmt,
     // Transformed expression node types (primnodes.h)
     kAggref,
     kNullTest,
