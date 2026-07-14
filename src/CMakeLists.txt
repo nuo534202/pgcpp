@@ -60,6 +60,23 @@ target_include_directories(pgcpp_core
 # Apply warning flags from the root CMakeLists.txt
 target_compile_options(pgcpp_core PRIVATE -Wall -Wextra -Wpedantic)
 
+# LLVM JIT linkage (P3-6): when ENABLE_LLVM_JIT=ON and LLVM was found,
+# add the PGCPP_LLVM_JIT compile definition, LLVM include path, and link
+# LLVM libraries. The llvm_jit.cpp file uses #ifdef PGCPP_LLVM_JIT to
+# conditionally compile the real LLVM code vs the stub.
+if(ENABLE_LLVM_JIT AND LLVM_FOUND)
+    target_compile_definitions(pgcpp_core PRIVATE PGCPP_LLVM_JIT)
+    target_include_directories(pgcpp_core PRIVATE ${LLVM_INCLUDE_DIR})
+    target_link_directories(pgcpp_core PRIVATE ${LLVM_LIB_DIR})
+    target_link_libraries(pgcpp_core PRIVATE ${LLVM_LIBS} ${LLVM_SYSTEM_LIBS})
+    # Suppress LLVM header warnings (LLVM headers are not warning-clean with -Wall).
+    set_source_files_properties(
+        "${CMAKE_CURRENT_SOURCE_DIR}/jit/llvm_jit.cpp"
+        PROPERTIES
+            COMPILE_OPTIONS "-Wno-unused-parameter;-Wno-old-style-cast;-Wno-sign-compare"
+    )
+endif()
+
 # Generated Bison code triggers various warnings; suppress them.
 set_source_files_properties(
     ${BISON_pgcpp_parser_OUTPUTS}

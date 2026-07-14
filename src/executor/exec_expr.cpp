@@ -16,6 +16,7 @@
 #include "common/error/elog.hpp"
 #include "common/memory/alloc_set.hpp"
 #include "common/memory/memory_context.hpp"
+#include "jit/jit.hpp"
 #include "parser/parsenodes.hpp"
 #include "parser/primnodes.hpp"
 #include "types/datetime.hpp"
@@ -621,6 +622,25 @@ bool ExecQual(Node* qual, ExprContext* econtext) {
     if (qual == nullptr) {
         return true;  // No qual = all tuples pass.
     }
+
+    // JIT fast path: if JIT is enabled, try to use a compiled expression.
+    if (pgcpp::jit::IsJitEnabled()) {
+        auto* jit_ctx = pgcpp::jit::GetCachedJitContext(qual);
+        if (jit_ctx == nullptr) {
+            // Not yet compiled — attempt compilation (result is cached).
+            jit_ctx = pgcpp::jit::JitCompileExpr(qual);
+        }
+        if (jit_ctx != nullptr) {
+            bool isNull = false;
+            Datum result = pgcpp::jit::JitEvalExpr(jit_ctx, econtext, &isNull);
+            if (isNull) {
+                return false;  // NULL qual = tuple doesn't pass.
+            }
+            return DatumGetBool(result);
+        }
+    }
+
+    // Interpreter fallback.
     bool isNull = false;
     Datum result = ExecEvalExpr(qual, econtext, &isNull);
     if (isNull) {
@@ -634,7 +654,24 @@ void ExecProject(const std::vector<TargetEntry*>& targetlist, ExprContext* econt
     int natts = result_slot->Natts();
     for (int i = 0; i < natts && i < static_cast<int>(targetlist.size()); i++) {
         bool isNull = false;
-        Datum value = ExecEvalExpr(targetlist[i]->expr, econtext, &isNull);
+        Datum value;
+
+        // JIT fast path for this target entry's expression.
+        if (pgcpp::jit::IsJitEnabled()) {
+            auto* jit_ctx = pgcpp::jit::GetCachedJitContext(targetlist[i]->expr);
+            if (jit_ctx == nullptr) {
+                jit_ctx = pgcpp::jit::JitCompileExpr(targetlist[i]->expr);
+            }
+            if (jit_ctx != nullptr) {
+                value = pgcpp::jit::JitEvalExpr(jit_ctx, econtext, &isNull);
+                result_slot->tts_values[i] = value;
+                result_slot->tts_isnull[i] = isNull;
+                continue;
+            }
+        }
+
+        // Interpreter fallback.
+        value = ExecEvalExpr(targetlist[i]->expr, econtext, &isNull);
         result_slot->tts_values[i] = value;
         result_slot->tts_isnull[i] = isNull;
     }
