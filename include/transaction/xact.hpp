@@ -70,6 +70,15 @@ enum class TBlockState {
     kSubAbortRestart,  // abort during subtransaction restart
 };
 
+// IsolationLevel — transaction isolation level (PostgreSQL's XactIsoLevel).
+// pgcpp defaults to READ COMMITTED, matching PostgreSQL.
+enum class IsolationLevel {
+    kReadUncommitted,  // effectively same as READ COMMITTED
+    kReadCommitted,
+    kRepeatableRead,
+    kSerializable,  // SSI — requires predicate locks + conflict detection
+};
+
 // TransactionStateData — per-transaction state record.
 //
 // These form a stack: the top of the stack is the current (sub)transaction.
@@ -84,6 +93,9 @@ struct TransactionStateData {
     int nesting_level = 0;
     CommandId command_id = kFirstCommandId;
     CommandId command_id_before_subxact = kFirstCommandId;
+    IsolationLevel isolation_level = IsolationLevel::kReadCommitted;
+    bool read_only = false;
+    bool deferrable = false;
     TransactionStateData* parent = nullptr;
 };
 
@@ -194,5 +206,39 @@ TransactionId GetTopLevelTransactionId();
 // GetTopLevelTransactionIdIfAny — return the top-level XID, or
 // InvalidTransactionId if none.
 TransactionId GetTopLevelTransactionIdIfAny();
+
+// --- Isolation level ---
+
+// GetTransactionIsolationLevel — return the current transaction's isolation
+// level (defaults to READ COMMITTED).
+IsolationLevel GetTransactionIsolationLevel();
+
+// SetTransactionIsolationLevel — set the isolation level for the current
+// transaction. Must be called before any data access (PostgreSQL allows
+// SET TRANSACTION ISOLATION LEVEL only at the start of a transaction block).
+void SetTransactionIsolationLevel(IsolationLevel level);
+
+// SetTransactionReadOnly — mark the current transaction READ ONLY (or not).
+// Applied from BEGIN TRANSACTION READ ONLY.
+void SetTransactionReadOnly(bool read_only);
+
+// SetTransactionDeferrable — mark the current transaction DEFERRABLE (or
+// not). Applied from BEGIN TRANSACTION DEFERRABLE. Only meaningful for
+// SERIALIZABLE READ ONLY DEFERRABLE transactions.
+void SetTransactionDeferrable(bool deferrable);
+
+// GetTransactionReadOnly — return the current transaction's READ ONLY flag.
+bool GetTransactionReadOnly();
+
+// GetTransactionDeferrable — return the current transaction's DEFERRABLE flag.
+bool GetTransactionDeferrable();
+
+// ParseIsolationLevelName — convert a string name (e.g. "serializable",
+// "repeatable read") to an IsolationLevel enum value. Returns
+// kReadCommitted for unrecognized names (matching PostgreSQL's default).
+IsolationLevel ParseIsolationLevelName(const std::string& name);
+
+// IsolationLevelName — convert an IsolationLevel to its string name.
+std::string IsolationLevelName(IsolationLevel level);
 
 }  // namespace pgcpp::transaction

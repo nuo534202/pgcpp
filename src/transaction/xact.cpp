@@ -699,4 +699,94 @@ bool TransactionIdIsCurrentTransactionId(TransactionId xid) {
     return false;
 }
 
+// --- Isolation level ---
+
+IsolationLevel GetTransactionIsolationLevel() {
+    TransactionState s = CurrentState();
+    if (s == nullptr)
+        return IsolationLevel::kReadCommitted;
+    // Walk up to the top-level transaction (isolation level is set per
+    // top-level transaction, not per subtransaction).
+    while (s->parent != nullptr) {
+        s = s->parent;
+    }
+    return s->isolation_level;
+}
+
+void SetTransactionIsolationLevel(IsolationLevel level) {
+    TransactionState s = CurrentState();
+    if (s == nullptr)
+        return;
+    // Set on the top-level transaction (subtransactions inherit).
+    while (s->parent != nullptr) {
+        s = s->parent;
+    }
+    s->isolation_level = level;
+}
+
+void SetTransactionReadOnly(bool read_only) {
+    TransactionState s = CurrentState();
+    if (s == nullptr)
+        return;
+    while (s->parent != nullptr) {
+        s = s->parent;
+    }
+    s->read_only = read_only;
+}
+
+void SetTransactionDeferrable(bool deferrable) {
+    TransactionState s = CurrentState();
+    if (s == nullptr)
+        return;
+    while (s->parent != nullptr) {
+        s = s->parent;
+    }
+    s->deferrable = deferrable;
+}
+
+bool GetTransactionReadOnly() {
+    TransactionState s = CurrentState();
+    if (s == nullptr)
+        return false;
+    while (s->parent != nullptr) {
+        s = s->parent;
+    }
+    return s->read_only;
+}
+
+bool GetTransactionDeferrable() {
+    TransactionState s = CurrentState();
+    if (s == nullptr)
+        return false;
+    while (s->parent != nullptr) {
+        s = s->parent;
+    }
+    return s->deferrable;
+}
+
+IsolationLevel ParseIsolationLevelName(const std::string& name) {
+    if (name == "serializable")
+        return IsolationLevel::kSerializable;
+    if (name == "repeatable read")
+        return IsolationLevel::kRepeatableRead;
+    if (name == "read uncommitted")
+        return IsolationLevel::kReadUncommitted;
+    // Default to READ COMMITTED (includes "read committed" and unknown names).
+    return IsolationLevel::kReadCommitted;
+}
+
+std::string IsolationLevelName(IsolationLevel level) {
+    switch (level) {
+        case IsolationLevel::kReadUncommitted:
+            return "read uncommitted";
+        case IsolationLevel::kReadCommitted:
+            return "read committed";
+        case IsolationLevel::kRepeatableRead:
+            return "repeatable read";
+        case IsolationLevel::kSerializable:
+            return "serializable";
+    }
+    return "read committed";
+}
+
 }  // namespace pgcpp::transaction

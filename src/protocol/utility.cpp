@@ -85,6 +85,35 @@ using pgcpp::parser::ViewStmt;
 
 namespace {
 
+// ApplyTransactionOptions — apply DefElems produced by the grammar's
+// opt_transaction_mode_list (ISOLATION LEVEL, READ ONLY, DEFERRABLE)
+// to the current transaction. Called right after BeginTransactionBlock.
+void ApplyTransactionOptions(const std::vector<pgcpp::parser::Node*>& options) {
+    for (pgcpp::parser::Node* opt : options) {
+        auto* def = dynamic_cast<pgcpp::parser::DefElem*>(opt);
+        if (def == nullptr || def->arg == nullptr) {
+            continue;
+        }
+        if (def->defname == "transaction_isolation") {
+            const auto* v = dynamic_cast<const pgcpp::nodes::Value*>(def->arg);
+            if (v != nullptr) {
+                pgcpp::transaction::SetTransactionIsolationLevel(
+                    pgcpp::transaction::ParseIsolationLevelName(v->GetString()));
+            }
+        } else if (def->defname == "transaction_read_only") {
+            const auto* v = dynamic_cast<const pgcpp::nodes::Value*>(def->arg);
+            if (v != nullptr) {
+                pgcpp::transaction::SetTransactionReadOnly(v->GetInteger() != 0);
+            }
+        } else if (def->defname == "transaction_deferrable") {
+            const auto* v = dynamic_cast<const pgcpp::nodes::Value*>(def->arg);
+            if (v != nullptr) {
+                pgcpp::transaction::SetTransactionDeferrable(v->GetInteger() != 0);
+            }
+        }
+    }
+}
+
 // ProcessTransactionStmt — BEGIN / COMMIT / ROLLBACK.
 // (Transaction control lives in the transaction module; this is a thin
 // wrapper kept here because tcop/utility.c also dispatches these inline.)
@@ -93,6 +122,7 @@ std::string ProcessTransactionStmt(TransactionStmt* stmt) {
         case TransactionStmt::Kind::kBegin:
         case TransactionStmt::Kind::kStart:
             pgcpp::transaction::BeginTransactionBlock();
+            ApplyTransactionOptions(stmt->options);
             return "BEGIN";
         case TransactionStmt::Kind::kCommit:
             pgcpp::transaction::EndTransactionBlock();
