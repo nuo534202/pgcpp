@@ -14,7 +14,6 @@
 //   - Single-process (no distributed commit)
 //   - No resource owners (memory contexts handle cleanup)
 //   - No GUC nesting
-//   - No prepared transactions (2PC)
 #include "transaction/xact.hpp"
 
 #include <cstdio>
@@ -29,6 +28,7 @@
 #include "storage/ipc/proc.hpp"
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
+#include "transaction/twophase.hpp"
 
 namespace pgcpp::transaction {
 
@@ -492,10 +492,70 @@ void AbortTransactionBlock() {
     }
 }
 
-bool PrepareTransactionBlock(const std::string& /*gid*/) {
-    // 2PC not implemented in pgcpp.
-    ereport(pgcpp::error::LogLevel::kWarning, "prepared transactions are not supported in pgcpp");
-    return false;
+bool PrepareTransactionBlock(const std::string& gid) {
+    TransactionState s = CurrentState();
+    if (s == nullptr) {
+        ereport(pgcpp::error::LogLevel::kError,
+                "PREPARE TRANSACTION can only be used in transaction blocks");
+    }
+
+    // Reject if subtransactions are open (PostgreSQL behavior).
+    if (s->parent != nullptr) {
+        ereport(pgcpp::error::LogLevel::kError,
+                "cannot PREPARE a transaction that has performed subtransactions");
+    }
+
+    // Walk up to top-level for state capture (subtransactions are rejected
+    // above, so s is already top-level, but be defensive).
+    TransactionState top = s;
+    while (top->parent != nullptr) {
+        top = top->parent;
+    }
+
+    // Force XID assignment so the prepared transaction has a valid XID
+    // to track in the CLOG and pg_twophase/.
+    if (!TransactionIdIsValid(top->transaction_id)) {
+        top->transaction_id = AllocateNextTransactionId();
+        pgcpp::storage::PGXACT* pgxact = pgcpp::storage::GetMyPgXact();
+        if (pgxact != nullptr) {
+            pgxact->xid = top->transaction_id;
+        }
+    }
+
+    // Capture the prepared-transaction state. SaveTwoPhaseState throws
+    // ereport(ERROR) on duplicate GID (which we let propagate).
+    TwoPhaseState state;
+    state.gid = gid;
+    state.xid = top->transaction_id;
+    state.isolation_level = top->isolation_level;
+    state.read_only = top->read_only;
+    state.deferrable = top->deferrable;
+    SaveTwoPhaseState(state);
+
+    // Clean up the backend's transaction state WITHOUT committing or
+    // aborting the XID. The XID stays "in-progress" in the CLOG until
+    // COMMIT PREPARED / ROLLBACK PREPARED.
+    //
+    // Catalog (DDL) changes are committed at this point (visible to
+    // subsequent transactions). This is a simplification — real PostgreSQL
+    // defers catalog commit to COMMIT PREPARED and can undo on ROLLBACK
+    // PREPARED via WAL replay.
+    top->state = TransState::kPrepare;
+
+    pgcpp::storage::PGXACT* pgxact = pgcpp::storage::GetMyPgXact();
+    if (pgxact != nullptr) {
+        pgxact->xid = pgcpp::transaction::kInvalidTransactionId;
+    }
+    ResetTransactionSnapshot();
+
+    pgcpp::catalog::Catalog* cat = pgcpp::catalog::GetCatalog();
+    if (cat != nullptr) {
+        cat->CommitDirty();
+        cat->DiscardSnapshot();
+    }
+
+    PopState();
+    return true;
 }
 
 void StartTransactionCommand() {

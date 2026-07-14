@@ -30,6 +30,7 @@
 #include "commands/view.hpp"
 #include "common/containers/node.hpp"
 #include "parser/parsenodes.hpp"
+#include "transaction/twophase.hpp"
 #include "transaction/xact.hpp"
 #include "utils/cache/inval.hpp"
 
@@ -114,9 +115,9 @@ void ApplyTransactionOptions(const std::vector<pgcpp::parser::Node*>& options) {
     }
 }
 
-// ProcessTransactionStmt — BEGIN / COMMIT / ROLLBACK.
-// (Transaction control lives in the transaction module; this is a thin
-// wrapper kept here because tcop/utility.c also dispatches these inline.)
+// ProcessTransactionStmt — BEGIN / COMMIT / ROLLBACK / PREPARE / COMMIT PREPARED / ROLLBACK
+// PREPARED. (Transaction control lives in the transaction module; this is a thin wrapper kept here
+// because tcop/utility.c also dispatches these inline.)
 std::string ProcessTransactionStmt(TransactionStmt* stmt) {
     switch (stmt->kind) {
         case TransactionStmt::Kind::kBegin:
@@ -130,6 +131,15 @@ std::string ProcessTransactionStmt(TransactionStmt* stmt) {
         case TransactionStmt::Kind::kRollback:
             pgcpp::transaction::AbortTransactionBlock();
             return "ROLLBACK";
+        case TransactionStmt::Kind::kPrepare:
+            pgcpp::transaction::PrepareTransactionBlock(stmt->gid);
+            return "PREPARE TRANSACTION";
+        case TransactionStmt::Kind::kCommitPrepared:
+            pgcpp::transaction::CommitPreparedTransaction(stmt->gid);
+            return "COMMIT PREPARED";
+        case TransactionStmt::Kind::kRollbackPrepared:
+            pgcpp::transaction::RollbackPreparedTransaction(stmt->gid);
+            return "ROLLBACK PREPARED";
         default:
             return "";
     }
@@ -272,6 +282,12 @@ std::string CreateCommandTag(Node* stmt) {
                     return "COMMIT";
                 case TransactionStmt::Kind::kRollback:
                     return "ROLLBACK";
+                case TransactionStmt::Kind::kPrepare:
+                    return "PREPARE TRANSACTION";
+                case TransactionStmt::Kind::kCommitPrepared:
+                    return "COMMIT PREPARED";
+                case TransactionStmt::Kind::kRollbackPrepared:
+                    return "ROLLBACK PREPARED";
                 default:
                     return "BEGIN";
             }

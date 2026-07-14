@@ -158,8 +158,13 @@ bool EndTransactionBlock();
 // AbortTransactionBlock — called when a ROLLBACK is received.
 void AbortTransactionBlock();
 
-// PrepareTransactionBlock — 2PC prepare (not implemented in pgcpp).
-// Returns false.
+// PrepareTransactionBlock — 2PC prepare. Captures the current transaction's
+// state (XID, isolation level, flags) into a TwoPhaseState record, persists
+// it to pg_twophase/, and pops the transaction state stack WITHOUT committing
+// or aborting. The XID remains "in-progress" in the CLOG until COMMIT
+// PREPARED or ROLLBACK PREPARED is issued.
+// Returns true on success, false on validation failure (no active block,
+// subtransactions open, duplicate GID).
 bool PrepareTransactionBlock(const std::string& gid);
 
 // --- Per-command control (autocommit) ---
