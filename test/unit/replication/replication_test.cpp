@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -105,11 +106,15 @@ using pgcpp::replication::ReplicationSlotAcquire;
 using pgcpp::replication::ReplicationSlotAdvance;
 using pgcpp::replication::ReplicationSlotCount;
 using pgcpp::replication::ReplicationSlotCreate;
+using pgcpp::replication::ReplicationSlotCtlData;
 using pgcpp::replication::ReplicationSlotDrop;
+using pgcpp::replication::ReplicationSlotFlushSlots;
 using pgcpp::replication::ReplicationSlotInit;
+using pgcpp::replication::ReplicationSlotLoadSlots;
 using pgcpp::replication::ReplicationSlotLookup;
 using pgcpp::replication::ReplicationSlotPersist;
 using pgcpp::replication::ReplicationSlotRelease;
+using pgcpp::replication::ReplicationSlotResetPersistence;
 using pgcpp::replication::ReploriginAdvance;
 using pgcpp::replication::ReploriginCount;
 using pgcpp::replication::ReploriginCreate;
@@ -125,6 +130,7 @@ using pgcpp::replication::ReploriginSessionReset;
 using pgcpp::replication::ReploriginSessionSet;
 using pgcpp::replication::RepOriginId;
 using pgcpp::replication::SerializeLogicalMessage;
+using pgcpp::replication::SetReplicationSlotDirectory;
 using pgcpp::replication::SlotPersistence;
 using pgcpp::replication::SlotPersistenceName;
 using pgcpp::replication::SlotType;
@@ -137,8 +143,11 @@ using pgcpp::replication::SyncRepConfigInit;
 using pgcpp::replication::SyncRepConfigParse;
 using pgcpp::replication::SyncRepConfigReset;
 using pgcpp::replication::SyncRepConfigUpdate;
+using pgcpp::replication::SyncRepCountAcked;
 using pgcpp::replication::SyncRepGetWaiters;
+using pgcpp::replication::SyncRepIsSatisfied;
 using pgcpp::replication::SyncRepIsSyncStandby;
+using pgcpp::replication::SyncRepReleaseWaiters;
 using pgcpp::replication::SyncRepSyncMethod;
 using pgcpp::replication::SyncRepWaitForLSN;
 using pgcpp::replication::WalLevel;
@@ -169,6 +178,7 @@ using pgcpp::replication::WalSndReplyMessage;
 using pgcpp::replication::WalSndSetState;
 using pgcpp::replication::WalSndState;
 using pgcpp::replication::WalSndStats;
+using pgcpp::replication::WalSndStreamWal;
 using pgcpp::replication::WalSndUpdateLsn;
 using pgcpp::replication::WalSndWaitForWal;
 using pgcpp::replication::WalSndWakeup;
@@ -180,6 +190,19 @@ using pgcpp::transaction::ResetWal;
 using pgcpp::transaction::XLogRecPtr;
 
 namespace {
+
+// Helper: create a fresh temp directory. Returns the path.
+std::string MakeTempDir(const std::string& name) {
+    std::string path = "/tmp/" + name;
+    std::filesystem::remove_all(path);
+    std::filesystem::create_directory(path);
+    return path;
+}
+
+// Helper: remove a directory.
+void RemoveTempDir(const std::string& path) {
+    std::filesystem::remove_all(path);
+}
 
 // ReplicationTest — AllocSetContext fixture used by all replication tests.
 //
@@ -1428,4 +1451,361 @@ TEST_F(ReplicationTest, BackupStateName) {
     EXPECT_STREQ(BackupStateName(BackupState::kRunning), "running");
     EXPECT_STREQ(BackupStateName(BackupState::kDone), "done");
     EXPECT_STREQ(BackupStateName(BackupState::kCancelled), "cancelled");
+}
+
+// ===========================================================================
+// Part 13: WalSndStreamWal — physical replication streaming loop
+// ===========================================================================
+
+TEST_F(ReplicationTest, WalSndStreamWalTransitionsStartupToStreaming) {
+    int idx = WalSndAlloc(7, "streamer");
+    ASSERT_GE(idx, 0);
+    WalSnd* s = WalSndGetByIndex(idx);
+    ASSERT_NE(s, nullptr);
+    EXPECT_EQ(s->state, WalSndState::kStartup);
+
+    // No WAL has been inserted yet, so streaming reads nothing but still
+    // transitions the state kStartup -> kCatchup -> kStreaming.
+    int sent = WalSndStreamWal(idx, /*start_lsn=*/0, /*max_records=*/0);
+    EXPECT_EQ(sent, 0);
+    EXPECT_EQ(s->state, WalSndState::kStreaming);
+}
+
+TEST_F(ReplicationTest, WalSndStreamWalSendsEmittedRecords) {
+    int idx = WalSndAlloc(7, "streamer");
+    ASSERT_GE(idx, 0);
+
+    // Capture the insert position before emitting so we know the exact LSN
+    // of the first record (XLogReadRecord reads at a precise LSN).
+    XLogRecPtr start = GetXLogInsertRecPtr();
+    XLogRecPtr lsn1 = LogLogicalMessage(/*transactional=*/false, "p1", "hello");
+    XLogRecPtr lsn2 = LogLogicalMessage(/*transactional=*/false, "p2", "world");
+    ASSERT_GT(lsn1, 0u);
+    ASSERT_GT(lsn2, lsn1);
+    EXPECT_EQ(start, lsn1);  // first record is written at the current insert ptr
+
+    WalSnd* s = WalSndGetByIndex(idx);
+    ASSERT_NE(s, nullptr);
+    XLogRecPtr before = s->sent_ptr;
+
+    int sent = WalSndStreamWal(idx, start, /*max_records=*/0);
+    EXPECT_EQ(sent, 2);
+    // sent_ptr must have advanced past both records.
+    EXPECT_GT(s->sent_ptr, before);
+    EXPECT_GE(s->sent_ptr, lsn2);
+    EXPECT_EQ(s->state, WalSndState::kStreaming);
+}
+
+TEST_F(ReplicationTest, WalSndStreamWalHonorsMaxRecords) {
+    int idx = WalSndAlloc(7, "capped");
+    ASSERT_GE(idx, 0);
+
+    XLogRecPtr start = GetXLogInsertRecPtr();
+    LogLogicalMessage(false, "p", "m1");
+    LogLogicalMessage(false, "p", "m2");
+    LogLogicalMessage(false, "p", "m3");
+
+    int sent = WalSndStreamWal(idx, start, /*max_records=*/2);
+    EXPECT_EQ(sent, 2);
+}
+
+TEST_F(ReplicationTest, WalSndStreamWalInvalidIndexErrors) {
+    EXPECT_FALSE(NoError([&] { WalSndStreamWal(-1, 0, 0); }));
+}
+
+TEST_F(ReplicationTest, WalSndStreamWalFromInsertPtrReadsAllRecords) {
+    int idx = WalSndAlloc(7, "from_start");
+    ASSERT_GE(idx, 0);
+
+    XLogRecPtr start = GetXLogInsertRecPtr();
+    LogLogicalMessage(false, "p", "a");
+    LogLogicalMessage(false, "p", "b");
+
+    int sent = WalSndStreamWal(idx, start, /*max_records=*/0);
+    EXPECT_EQ(sent, 2);
+}
+
+// ===========================================================================
+// Part 14: SyncRep ACK checking (CountAcked / IsSatisfied / ReleaseWaiters)
+// ===========================================================================
+
+TEST_F(ReplicationTest, SyncRepCountAckedZeroWhenNoStandbysConfigured) {
+    // Default fixture state: SyncRepConfigInit sets num_sync=0.
+    EXPECT_EQ(SyncRepCountAcked(100u), 0);
+}
+
+TEST_F(ReplicationTest, SyncRepIsSatisfiedWhenNumSyncZero) {
+    // num_sync=0 means "no sync standbys required" — always satisfied.
+    EXPECT_TRUE(SyncRepIsSatisfied(100u));
+}
+
+TEST_F(ReplicationTest, SyncRepCountAckedCountsMatchingFlushedStandbys) {
+    // Configure two sync standbys by name.
+    ASSERT_TRUE(
+        SyncRepConfigUpdate({"sb_a", "sb_b"}, /*num_sync=*/2, SyncRepSyncMethod::kPriority));
+
+    // Allocate two walsenders with matching application_names.
+    int a = WalSndAlloc(11, "sb_a");
+    int b = WalSndAlloc(12, "sb_b");
+    ASSERT_GE(a, 0);
+    ASSERT_GE(b, 0);
+
+    // Neither has flushed yet.
+    EXPECT_EQ(SyncRepCountAcked(1000u), 0);
+    EXPECT_FALSE(SyncRepIsSatisfied(1000u));
+
+    // sb_a flushes up to 500 — acked for lsn=500, not for lsn=1000.
+    WalSnd* sa = WalSndGetByIndex(a);
+    sa->flush_ptr = 500;
+    EXPECT_EQ(SyncRepCountAcked(500u), 1);
+    EXPECT_FALSE(SyncRepIsSatisfied(1000u));
+
+    // sb_b flushes up to 1000 — now sb_b is acked for 1000, but sb_a (500)
+    // is not, so still only 1 acked for lsn=1000.
+    WalSnd* sb = WalSndGetByIndex(b);
+    sb->flush_ptr = 1000;
+    EXPECT_EQ(SyncRepCountAcked(1000u), 1);
+    EXPECT_FALSE(SyncRepIsSatisfied(1000u));
+
+    // sb_a also flushes to 1000 — now both acked, satisfied.
+    sa->flush_ptr = 1000;
+    EXPECT_EQ(SyncRepCountAcked(1000u), 2);
+    EXPECT_TRUE(SyncRepIsSatisfied(1000u));
+}
+
+TEST_F(ReplicationTest, SyncRepCountAckedWildcardMatchesAnyName) {
+    ASSERT_TRUE(SyncRepConfigUpdate({"*"}, /*num_sync=*/1, SyncRepSyncMethod::kPriority));
+    int idx = WalSndAlloc(7, "any_name");
+    ASSERT_GE(idx, 0);
+    WalSnd* s = WalSndGetByIndex(idx);
+    s->flush_ptr = 200;
+    EXPECT_EQ(SyncRepCountAcked(200u), 1);
+    EXPECT_TRUE(SyncRepIsSatisfied(200u));
+}
+
+TEST_F(ReplicationTest, SyncRepCountAckedRequiresFlushGeLsn) {
+    ASSERT_TRUE(SyncRepConfigUpdate({"sb"}, 1, SyncRepSyncMethod::kPriority));
+    int idx = WalSndAlloc(7, "sb");
+    ASSERT_GE(idx, 0);
+    WalSnd* s = WalSndGetByIndex(idx);
+    s->flush_ptr = 100;
+    // flush_ptr (100) < lsn (200) — not acked.
+    EXPECT_EQ(SyncRepCountAcked(200u), 0);
+    EXPECT_FALSE(SyncRepIsSatisfied(200u));
+    // flush_ptr (100) >= lsn (100) — acked.
+    EXPECT_EQ(SyncRepCountAcked(100u), 1);
+    EXPECT_TRUE(SyncRepIsSatisfied(100u));
+}
+
+TEST_F(ReplicationTest, SyncRepReleaseWaitersIsNoOp) {
+    // SyncRepReleaseWaiters is a no-op in single-process mode; just verify
+    // it doesn't throw and leaves the waiter count untouched.
+    EXPECT_EQ(SyncRepGetWaiters(), 0);
+    SyncRepReleaseWaiters(12345u);
+    EXPECT_EQ(SyncRepGetWaiters(), 0);
+}
+
+TEST_F(ReplicationTest, SyncRepWaitForLsnStillReturnsLsn) {
+    // Even with sync standbys configured, WaitForLSN returns the LSN
+    // (pgcpp can't block) and leaves no lingering waiter.
+    ASSERT_TRUE(SyncRepConfigUpdate({"sb"}, 1, SyncRepSyncMethod::kPriority));
+    EXPECT_EQ(SyncRepWaitForLSN(99999u), 99999u);
+    EXPECT_EQ(SyncRepGetWaiters(), 0);
+}
+
+// ===========================================================================
+// Part 15: Replication slot persistence (pg_replslot/)
+// ===========================================================================
+//
+// A separate fixture is used because slot persistence requires a temp
+// directory. The base ReplicationTest fixture does not set a directory
+// (persistence is a no-op there), so existing slot tests are unaffected.
+
+class ReplicationSlotPersistenceTest : public ::testing::Test {
+protected:
+    std::string dir_;
+
+    void SetUp() override {
+        pgcpp::error::InitErrorSubsystem();
+        context_ = pgcpp::memory::AllocSetContext::Create("repl_slot_persist_ctx");
+        pgcpp::memory::SetCurrentMemoryContext(context_);
+
+        ResetWal();
+        InitializeWal();
+
+        WalSndInit();
+        WalRcvInit();
+        ReplicationSlotInit();
+        SyncRepConfigInit();
+
+        dir_ = MakeTempDir("pgcpp_replslot_test");
+        SetReplicationSlotDirectory(dir_);
+    }
+
+    void TearDown() override {
+        ReplicationSlotResetPersistence();
+        SetReplicationSlotDirectory("");  // detach from the directory
+        RemoveTempDir(dir_);
+
+        pgcpp::memory::SetCurrentMemoryContext(nullptr);
+        if (context_ != nullptr) {
+            context_->Delete();
+        }
+    }
+
+    pgcpp::memory::MemoryContext* context_ = nullptr;
+};
+
+TEST_F(ReplicationSlotPersistenceTest, CreateWritesStateFile) {
+    ASSERT_TRUE(ReplicationSlotCreate("disk_slot", SlotType::kPhysical,
+                                      SlotPersistence::kPersistent, "", ""));
+    std::string state_file = dir_ + "/disk_slot/state";
+    EXPECT_TRUE(std::filesystem::exists(state_file));
+}
+
+TEST_F(ReplicationSlotPersistenceTest, DropRemovesStateDir) {
+    ASSERT_TRUE(
+        ReplicationSlotCreate("dropme", SlotType::kPhysical, SlotPersistence::kPersistent, "", ""));
+    std::string slot_dir = dir_ + "/dropme";
+    EXPECT_TRUE(std::filesystem::exists(slot_dir));
+
+    ASSERT_TRUE(ReplicationSlotDrop("dropme"));
+    EXPECT_FALSE(std::filesystem::exists(slot_dir));
+}
+
+TEST_F(ReplicationSlotPersistenceTest, LoadRecoversFromDisk) {
+    ASSERT_TRUE(ReplicationSlotCreate("recover", SlotType::kLogical, SlotPersistence::kPersistent,
+                                      "pgoutput", "postgres"));
+    const ReplicationSlot* before = ReplicationSlotLookup("recover");
+    ASSERT_NE(before, nullptr);
+    XLogRecPtr restart = before->restart_lsn;
+    XLogRecPtr flush = before->confirmed_flush_lsn;
+
+    // Simulate a restart: clear in-memory state, then reload from disk.
+    ReplicationSlotInit();
+    EXPECT_EQ(ReplicationSlotCount(), 0);
+
+    ReplicationSlotLoadSlots();
+    EXPECT_EQ(ReplicationSlotCount(), 1);
+    const ReplicationSlot* after = ReplicationSlotLookup("recover");
+    ASSERT_NE(after, nullptr);
+    EXPECT_EQ(after->name, "recover");
+    EXPECT_EQ(after->type, SlotType::kLogical);
+    EXPECT_EQ(after->persistence, SlotPersistence::kPersistent);
+    EXPECT_EQ(after->plugin, "pgoutput");
+    EXPECT_EQ(after->database, "postgres");
+    EXPECT_EQ(after->restart_lsn, restart);
+    EXPECT_EQ(after->confirmed_flush_lsn, flush);
+    EXPECT_FALSE(after->dirty);
+}
+
+TEST_F(ReplicationSlotPersistenceTest, AdvancePersistsNewLsn) {
+    ASSERT_TRUE(
+        ReplicationSlotCreate("adv", SlotType::kPhysical, SlotPersistence::kPersistent, "", ""));
+    XLogRecPtr new_lsn = ReplicationSlotAdvance("adv", /*upto=*/12345u);
+    EXPECT_EQ(new_lsn, 12345u);
+
+    // Reload from disk — the advanced LSN must survive.
+    ReplicationSlotInit();
+    ReplicationSlotLoadSlots();
+    const ReplicationSlot* s = ReplicationSlotLookup("adv");
+    ASSERT_NE(s, nullptr);
+    EXPECT_EQ(s->restart_lsn, 12345u);
+}
+
+TEST_F(ReplicationSlotPersistenceTest, FlushSlotsWritesDirtySlots) {
+    // Create a slot directly in memory without going through the persisted
+    // create path by using a fresh slot name; ReplicationSlotCreate already
+    // writes the file, so we test FlushSlots by mutating then reloading.
+    ASSERT_TRUE(ReplicationSlotCreate("flush_me", SlotType::kPhysical, SlotPersistence::kPersistent,
+                                      "", ""));
+
+    // Advance mutates the slot (marks dirty + writes file). Clear the file
+    // to prove FlushSlots rewrites it.
+    std::string state_file = dir_ + "/flush_me/state";
+    ASSERT_TRUE(std::filesystem::exists(state_file));
+    std::filesystem::remove(state_file);
+    EXPECT_FALSE(std::filesystem::exists(state_file));
+
+    // Mark dirty and flush.
+    ReplicationSlotCtlData* ctl = GetReplicationSlotCtl();
+    ctl->slots["flush_me"].dirty = true;
+    ReplicationSlotFlushSlots();
+    EXPECT_TRUE(std::filesystem::exists(state_file));
+    EXPECT_FALSE(ctl->slots["flush_me"].dirty);
+}
+
+TEST_F(ReplicationSlotPersistenceTest, FlushSlotsSkipsCleanSlots) {
+    ASSERT_TRUE(
+        ReplicationSlotCreate("clean", SlotType::kPhysical, SlotPersistence::kPersistent, "", ""));
+    // LoadSlots marks slots as not dirty; ReplicationSlotCreate already wrote.
+    ReplicationSlotCtlData* ctl = GetReplicationSlotCtl();
+    ctl->slots["clean"].dirty = false;
+    // Capture the file's last-write time; FlushSlots should not rewrite it.
+    std::string state_file = dir_ + "/clean/state";
+    auto t1 = std::filesystem::last_write_time(state_file);
+    ReplicationSlotFlushSlots();
+    auto t2 = std::filesystem::last_write_time(state_file);
+    EXPECT_EQ(t1, t2);
+}
+
+TEST_F(ReplicationSlotPersistenceTest, ResetPersistenceClearsMemoryAndDisk) {
+    ASSERT_TRUE(
+        ReplicationSlotCreate("r1", SlotType::kPhysical, SlotPersistence::kPersistent, "", ""));
+    ASSERT_TRUE(
+        ReplicationSlotCreate("r2", SlotType::kPhysical, SlotPersistence::kPersistent, "", ""));
+    EXPECT_EQ(ReplicationSlotCount(), 2);
+    EXPECT_TRUE(std::filesystem::exists(dir_ + "/r1/state"));
+    EXPECT_TRUE(std::filesystem::exists(dir_ + "/r2/state"));
+
+    ReplicationSlotResetPersistence();
+    EXPECT_EQ(ReplicationSlotCount(), 0);
+    EXPECT_FALSE(std::filesystem::exists(dir_ + "/r1"));
+    EXPECT_FALSE(std::filesystem::exists(dir_ + "/r2"));
+}
+
+TEST_F(ReplicationSlotPersistenceTest, LoadFromMissingDirectoryIsNoOp) {
+    // Point to a nonexistent directory and load — should not error and
+    // leave memory empty.
+    SetReplicationSlotDirectory("/tmp/pgcpp_replslot_nonexistent_dir");
+    ReplicationSlotLoadSlots();
+    EXPECT_EQ(ReplicationSlotCount(), 0);
+    // Restore for TearDown.
+    SetReplicationSlotDirectory(dir_);
+}
+
+TEST_F(ReplicationSlotPersistenceTest, MultipleSlotsPersistAndRecover) {
+    ASSERT_TRUE(ReplicationSlotCreate("multi_a", SlotType::kPhysical, SlotPersistence::kPersistent,
+                                      "", ""));
+    ASSERT_TRUE(ReplicationSlotCreate("multi_b", SlotType::kLogical, SlotPersistence::kPersistent,
+                                      "pgoutput", "db1"));
+
+    ReplicationSlotInit();
+    EXPECT_EQ(ReplicationSlotCount(), 0);
+
+    ReplicationSlotLoadSlots();
+    EXPECT_EQ(ReplicationSlotCount(), 2);
+
+    const ReplicationSlot* a = ReplicationSlotLookup("multi_a");
+    ASSERT_NE(a, nullptr);
+    EXPECT_EQ(a->type, SlotType::kPhysical);
+
+    const ReplicationSlot* b = ReplicationSlotLookup("multi_b");
+    ASSERT_NE(b, nullptr);
+    EXPECT_EQ(b->type, SlotType::kLogical);
+    EXPECT_EQ(b->plugin, "pgoutput");
+    EXPECT_EQ(b->database, "db1");
+}
+
+TEST_F(ReplicationSlotPersistenceTest, TemporarySlotAlsoPersistsWhileDirSet) {
+    // pgcpp persists all slots to disk when a directory is configured,
+    // regardless of the persistence flag (the flag is informational in
+    // single-process mode). Verify a temporary slot can be reloaded.
+    ASSERT_TRUE(
+        ReplicationSlotCreate("temp", SlotType::kPhysical, SlotPersistence::kTemporary, "", ""));
+    ReplicationSlotInit();
+    ReplicationSlotLoadSlots();
+    const ReplicationSlot* s = ReplicationSlotLookup("temp");
+    ASSERT_NE(s, nullptr);
+    EXPECT_EQ(s->persistence, SlotPersistence::kTemporary);
 }

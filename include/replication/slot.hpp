@@ -107,4 +107,28 @@ ReplicationSlotCtlData* GetReplicationSlotCtl();
 const char* SlotTypeName(SlotType t);
 const char* SlotPersistenceName(SlotPersistence p);
 
+// --- Persistence (pg_replslot/) ---
+//
+// Following the twophase.cpp pattern: slots are kept in-memory and
+// optionally persisted to <dir>/<slot_name>/state as text key=value lines.
+// If no directory is set (the default), persistence calls are no-ops and
+// the slot store is purely in-memory.
+
+// SetReplicationSlotDirectory — set the base directory for slot persistence.
+// Called once at server startup with <data_dir>/pg_replslot. If the
+// directory does not exist, it is created on first save.
+void SetReplicationSlotDirectory(const std::string& dir);
+
+// ReplicationSlotLoadSlots — load all persistent slots from disk into
+// memory. Called at startup. A missing directory is not an error.
+void ReplicationSlotLoadSlots();
+
+// ReplicationSlotFlushSlots — persist all dirty slots to disk.
+// Called on shutdown.
+void ReplicationSlotFlushSlots();
+
+// ReplicationSlotResetPersistence — clear in-memory state AND remove
+// on-disk slot files (for testing).
+void ReplicationSlotResetPersistence();
+
 }  // namespace pgcpp::replication

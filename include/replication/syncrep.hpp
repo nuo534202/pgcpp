@@ -60,7 +60,10 @@ const SyncRepConfig* SyncRepConfigGet();
 bool SyncRepConfigParse(const std::string& text);
 
 // SyncRepWaitForLSN — block until enough standbys have acknowledged `lsn`.
-// In pgcpp this is a stub that just records the wait and returns.
+// In pgcpp (single-process), this cannot truly block. It checks
+// SyncRepIsSatisfied once: if enough sync standbys have ACK'd, it returns
+// immediately; otherwise it still returns (no blocking) but the caller
+// can inspect SyncRepIsSatisfied to know whether the wait was satisfied.
 // Returns the LSN we waited for.
 transaction::XLogRecPtr SyncRepWaitForLSN(transaction::XLogRecPtr lsn);
 
@@ -71,5 +74,20 @@ int SyncRepGetWaiters();
 // SyncRepIsSyncStandby — true if the given standby name is part of the
 // current config.
 bool SyncRepIsSyncStandby(const std::string& application_name);
+
+// SyncRepCountAcked — count how many sync standbys have acknowledged
+// (flush_ptr >= lsn). Walks the WalSnd array matching application_name
+// against the configured standby_names. Wildcard "*" matches any standby.
+int SyncRepCountAcked(transaction::XLogRecPtr lsn);
+
+// SyncRepIsSatisfied — true if enough sync standbys have ACK'd `lsn`
+// (i.e. SyncRepCountAcked >= num_sync). If num_sync == 0 (no sync
+// standbys configured), always returns true.
+bool SyncRepIsSatisfied(transaction::XLogRecPtr lsn);
+
+// SyncRepReleaseWaiters — called when a standby ACKs to wake any backends
+// waiting in SyncRepWaitForLSN. In pgcpp (single-process, no latches),
+// this is a no-op but is part of the API for completeness.
+void SyncRepReleaseWaiters(transaction::XLogRecPtr lsn);
 
 }  // namespace pgcpp::replication

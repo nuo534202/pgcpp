@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "common/error/elog.hpp"
+#include "replication/walsender.hpp"
 #include "transaction/xlog.hpp"
 
 namespace pgcpp::replication {
@@ -158,17 +159,57 @@ bool SyncRepConfigParse(const std::string& text) {
 }
 
 transaction::XLogRecPtr SyncRepWaitForLSN(transaction::XLogRecPtr lsn) {
-    // Stubbed: PG blocks on a latch waiting for standbys to ACK; pgcpp
-    // just records the wait briefly and returns. We still record that a
-    // waiter exists transiently so tests can observe the call shape.
+    // PG blocks on a latch waiting for standbys to ACK; pgcpp is
+    // single-process so we check once and return. We still record that
+    // a waiter exists transiently so tests can observe the call shape.
     ++Waiters();
+    (void)SyncRepIsSatisfied(lsn);
     --Waiters();
-    (void)lsn;
     return lsn;
 }
 
 int SyncRepGetWaiters() {
     return Waiters();
+}
+
+int SyncRepCountAcked(transaction::XLogRecPtr lsn) {
+    const SyncRepConfig* c = SyncRepConfigGet();
+    if (c->standby_names.empty() || c->num_sync == 0) {
+        return 0;
+    }
+
+    WalSndCtlData* ctl = GetWalSndCtl();
+    if (ctl == nullptr) {
+        return 0;
+    }
+
+    int count = 0;
+    for (const auto& name : c->standby_names) {
+        // Find the WalSnd whose application_name matches this config entry.
+        // Wildcard "*" matches any standby.
+        for (const auto& s : ctl->walsenders) {
+            bool match = (name == "*") || (s.application_name == name);
+            if (match && s.flush_ptr >= lsn) {
+                ++count;
+                break;  // only count the first match per config entry
+            }
+        }
+    }
+    return count;
+}
+
+bool SyncRepIsSatisfied(transaction::XLogRecPtr lsn) {
+    const SyncRepConfig* c = SyncRepConfigGet();
+    if (c->num_sync == 0) {
+        return true;  // no sync standbys configured
+    }
+    return SyncRepCountAcked(lsn) >= c->num_sync;
+}
+
+void SyncRepReleaseWaiters(transaction::XLogRecPtr /*lsn*/) {
+    // In PG, this wakes backends blocked in SyncRepWaitForLSN via latches.
+    // pgcpp is single-process with no blocking, so there's nothing to wake.
+    // The function exists for API completeness.
 }
 
 bool SyncRepIsSyncStandby(const std::string& application_name) {

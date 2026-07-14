@@ -65,4 +65,12 @@ struct WalSndStats {
 
 WalSndStats GetWalSndStats();
 
+// WalSndStreamWal — physical replication streaming loop (PG: WalSndLoop).
+// Reads WAL records from `start_lsn` via the WAL reader and "sends" each
+// record to the standby by updating the sender's sent_ptr via WalSndWriteData.
+// Transitions the sender state: kStartup → kCatchup → kStreaming.
+// Stops at end-of-WAL or after `max_records` (0 = unlimited).
+// Returns the number of records streamed, or -1 on error (invalid sender).
+int WalSndStreamWal(int sender_idx, transaction::XLogRecPtr start_lsn, int max_records);
+
 }  // namespace pgcpp::replication

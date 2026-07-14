@@ -8,6 +8,7 @@
 
 #include "common/error/elog.hpp"
 #include "transaction/xlog.hpp"
+#include "transaction/xlogreader.hpp"
 
 namespace pgcpp::replication {
 
@@ -100,6 +101,44 @@ WalSndStats GetWalSndStats() {
             stats.max_apply_lsn = s.apply_ptr;
     }
     return stats;
+}
+
+int WalSndStreamWal(int sender_idx, transaction::XLogRecPtr start_lsn, int max_records) {
+    WalSnd* s = WalSndGetByIndex(sender_idx);
+    if (s == nullptr) {
+        ereport(LogLevel::kError, "WalSndStreamWal: invalid sender index");
+        return -1;
+    }
+
+    // Transition kStartup → kCatchup (sending historic WAL).
+    if (s->state == WalSndState::kStartup) {
+        s->state = WalSndState::kCatchup;
+    }
+
+    transaction::XLogReaderState* reader = transaction::XLogReaderAlloc();
+    transaction::XLogRecPtr lsn = start_lsn;
+    int sent = 0;
+
+    while (transaction::XLogReadRecord(reader, &lsn)) {
+        // reader->current_lsn is the LSN of the record just read;
+        // lsn (updated by XLogReadRecord) is the start of the next record
+        // (= current_lsn + xl_tot_len). We "send" [current_lsn, lsn).
+        WalSndWriteData(sender_idx, reader->current_lsn, lsn, /*reply_requested=*/false);
+        ++sent;
+
+        if (max_records > 0 && sent >= max_records) {
+            break;
+        }
+    }
+
+    transaction::XLogReaderFree(reader);
+
+    // Transition kCatchup → kStreaming (caught up to live WAL).
+    if (s->state == WalSndState::kCatchup) {
+        s->state = WalSndState::kStreaming;
+    }
+
+    return sent;
 }
 
 }  // namespace pgcpp::replication
