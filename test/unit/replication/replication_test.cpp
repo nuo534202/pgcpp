@@ -31,6 +31,7 @@
 #include "replication/backup.hpp"
 #include "replication/launcher.hpp"
 #include "replication/logical.hpp"
+#include "replication/logicalproto.hpp"
 #include "replication/origin.hpp"
 #include "replication/replutil.hpp"
 #include "replication/slot.hpp"
@@ -89,9 +90,14 @@ using pgcpp::replication::LogicalRepWorkerRemove;
 using pgcpp::replication::LogicalRepWorkerReset;
 using pgcpp::replication::LogicalRepWorkerType;
 using pgcpp::replication::LogicalShippingMain;
+using pgcpp::replication::LogLogicalMessage;
+using pgcpp::replication::ParseLogicalMessage;
 using pgcpp::replication::PgCreateReplicationSlot;
 using pgcpp::replication::PgCreateReplicationSlotResult;
 using pgcpp::replication::PgDropReplicationSlot;
+using pgcpp::replication::PgLogicalEmitMessage;
+using pgcpp::replication::PgLogicalSlotGetChanges;
+using pgcpp::replication::PgLogicalSlotPeekChanges;
 using pgcpp::replication::PgReplicationSlotAdvance;
 using pgcpp::replication::PgReplicationSlotAdvanceToCurrent;
 using pgcpp::replication::ReplicationSlot;
@@ -118,6 +124,7 @@ using pgcpp::replication::ReploriginSessionLsn;
 using pgcpp::replication::ReploriginSessionReset;
 using pgcpp::replication::ReploriginSessionSet;
 using pgcpp::replication::RepOriginId;
+using pgcpp::replication::SerializeLogicalMessage;
 using pgcpp::replication::SlotPersistence;
 using pgcpp::replication::SlotPersistenceName;
 using pgcpp::replication::SlotType;
@@ -166,6 +173,7 @@ using pgcpp::replication::WalSndUpdateLsn;
 using pgcpp::replication::WalSndWaitForWal;
 using pgcpp::replication::WalSndWakeup;
 using pgcpp::replication::WalSndWriteData;
+using pgcpp::replication::xl_logical_message;
 using pgcpp::transaction::GetXLogInsertRecPtr;
 using pgcpp::transaction::InitializeWal;
 using pgcpp::transaction::ResetWal;
@@ -759,13 +767,42 @@ TEST_F(ReplicationTest, CreateDecodingContextRejectsPhysicalSlot) {
     EXPECT_FALSE(NoError([&] { CreateDecodingContext("phys", LogicalDecodingOptions{}); }));
 }
 
-TEST_F(ReplicationTest, LogicalShippingMainEmitsBeginCommitPairs) {
+TEST_F(ReplicationTest, LogicalShippingMainDecodesEmittedMessages) {
+    // Create a logical slot. Its restart_lsn is the current WAL insert ptr.
     LogicalDecodingContext ctx =
         CreateInitDecodingContext("pgoutput", "ship", "postgres", LogicalDecodingOptions{});
-    int emitted = LogicalShippingMain(ctx, /*max_messages=*/3);
-    EXPECT_EQ(emitted, 6);  // 3 BEGIN + 3 COMMIT
-    EXPECT_EQ(ctx.messages.size(), 6u);
-    EXPECT_GT(ctx.end_lsn, 0u);
+    ASSERT_TRUE(ctx.prepared);
+
+    // Emit two logical messages to the WAL after the slot was created.
+    // These land at LSN > slot.restart_lsn and will be picked up by the
+    // decoding loop.
+    XLogRecPtr lsn1 = LogLogicalMessage(/*transactional=*/false, "p1", "hello");
+    XLogRecPtr lsn2 = LogLogicalMessage(/*transactional=*/false, "p2", "world");
+    ASSERT_GT(lsn1, 0u);
+    ASSERT_GT(lsn2, lsn1);
+
+    int emitted = LogicalShippingMain(ctx, /*max_messages=*/0);
+    EXPECT_EQ(emitted, 2);
+    ASSERT_EQ(ctx.messages.size(), 2u);
+    EXPECT_NE(ctx.messages[0].find("MESSAGE"), std::string::npos);
+    EXPECT_NE(ctx.messages[0].find("p1"), std::string::npos);
+    EXPECT_NE(ctx.messages[0].find("hello"), std::string::npos);
+    EXPECT_NE(ctx.messages[1].find("p2"), std::string::npos);
+    EXPECT_GT(ctx.end_lsn, lsn2);
+}
+
+TEST_F(ReplicationTest, LogicalShippingMainHonorsMaxMessages) {
+    LogicalDecodingContext ctx =
+        CreateInitDecodingContext("pgoutput", "ship_max", "postgres", LogicalDecodingOptions{});
+    ASSERT_TRUE(ctx.prepared);
+
+    LogLogicalMessage(false, "p", "m1");
+    LogLogicalMessage(false, "p", "m2");
+    LogLogicalMessage(false, "p", "m3");
+
+    int emitted = LogicalShippingMain(ctx, /*max_messages=*/2);
+    EXPECT_EQ(emitted, 2);
+    EXPECT_EQ(ctx.messages.size(), 2u);
 }
 
 TEST_F(ReplicationTest, LogicalShippingMainRejectsUnpreparedContext) {
@@ -798,6 +835,204 @@ TEST_F(ReplicationTest, LogicalDecodingResetClearsActiveContext) {
     ASSERT_NE(p, nullptr);
     EXPECT_FALSE(p->prepared);
     EXPECT_TRUE(p->slot_name.empty());
+}
+
+// ===========================================================================
+// Part 7b: Logical message WAL records (logicalproto)
+// ===========================================================================
+
+TEST_F(ReplicationTest, SerializeParseRoundTripPreservesFields) {
+    xl_logical_message in;
+    in.db_id = 12345;
+    in.transactional = true;
+    in.prefix = "myplugin";
+    in.message = "hello world";
+    std::vector<uint8_t> buf = SerializeLogicalMessage(in);
+    ASSERT_FALSE(buf.empty());
+
+    xl_logical_message out;
+    ASSERT_TRUE(ParseLogicalMessage(buf.data(), buf.size(), out));
+    EXPECT_EQ(out.db_id, in.db_id);
+    EXPECT_EQ(out.transactional, in.transactional);
+    EXPECT_EQ(out.prefix, in.prefix);
+    EXPECT_EQ(out.message, in.message);
+}
+
+TEST_F(ReplicationTest, SerializeLayoutMatchesSpec) {
+    xl_logical_message msg;
+    msg.db_id = 1;
+    msg.transactional = false;
+    msg.prefix = "p";
+    msg.message = "m";
+    std::vector<uint8_t> buf = SerializeLogicalMessage(msg);
+    // Layout: db_id(4) + transactional(1) + prefix_size(4) + message_size(4)
+    //         + prefix(1) + message(1) = 15
+    ASSERT_EQ(buf.size(), 15u);
+    EXPECT_EQ(buf[4], 0);  // transactional = false
+}
+
+TEST_F(ReplicationTest, ParseRejectsTruncatedHeader) {
+    std::vector<uint8_t> too_short(10, 0);  // less than 4+1+4+4=13
+    xl_logical_message out;
+    EXPECT_FALSE(ParseLogicalMessage(too_short.data(), too_short.size(), out));
+}
+
+TEST_F(ReplicationTest, ParseRejectsTruncatedPayload) {
+    xl_logical_message msg;
+    msg.prefix = "longprefix";
+    msg.message = "longmessage";
+    std::vector<uint8_t> buf = SerializeLogicalMessage(msg);
+    // Truncate the payload portion.
+    buf.resize(buf.size() - 5);
+    xl_logical_message out;
+    EXPECT_FALSE(ParseLogicalMessage(buf.data(), buf.size(), out));
+}
+
+TEST_F(ReplicationTest, ParseHandlesNullData) {
+    xl_logical_message out;
+    EXPECT_FALSE(ParseLogicalMessage(nullptr, 100, out));
+}
+
+TEST_F(ReplicationTest, ParseHandlesEmptyPrefixAndMessage) {
+    xl_logical_message in;
+    in.prefix = "";
+    in.message = "";
+    std::vector<uint8_t> buf = SerializeLogicalMessage(in);
+    xl_logical_message out;
+    ASSERT_TRUE(ParseLogicalMessage(buf.data(), buf.size(), out));
+    EXPECT_TRUE(out.prefix.empty());
+    EXPECT_TRUE(out.message.empty());
+}
+
+TEST_F(ReplicationTest, LogLogicalMessageWritesWalAndReturnsLsn) {
+    XLogRecPtr before = GetXLogInsertRecPtr();
+    XLogRecPtr lsn = LogLogicalMessage(false, "test", "payload");
+    XLogRecPtr after = GetXLogInsertRecPtr();
+    EXPECT_GT(lsn, 0u);
+    EXPECT_GE(lsn, before);
+    EXPECT_LT(lsn, after);  // WAL insert pointer advanced
+}
+
+TEST_F(ReplicationTest, LogLogicalMessageTransactionalFlag) {
+    XLogRecPtr lsn = LogLogicalMessage(/*transactional=*/true, "txn", "data");
+    EXPECT_GT(lsn, 0u);
+}
+
+// ===========================================================================
+// Part 7c: SQL-facing logical decoding functions
+// ===========================================================================
+
+TEST_F(ReplicationTest, PgLogicalEmitMessageReturnsLsn) {
+    XLogRecPtr lsn = PgLogicalEmitMessage(false, "p", "hello");
+    EXPECT_GT(lsn, 0u);
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotGetChangesRequiresExistingSlot) {
+    EXPECT_FALSE(
+        NoError([&] { (void)PgLogicalSlotGetChanges("nonexistent", /*upto_lsn=*/0, /*max=*/0); }));
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotGetChangesRequiresLogicalSlot) {
+    ASSERT_TRUE(
+        ReplicationSlotCreate("phys", SlotType::kPhysical, SlotPersistence::kPersistent, "", ""));
+    EXPECT_FALSE(
+        NoError([&] { (void)PgLogicalSlotGetChanges("phys", /*upto_lsn=*/0, /*max=*/0); }));
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotGetChangesDecodesAndAdvances) {
+    // Create a logical slot — its restart_lsn = current WAL insert ptr.
+    ASSERT_TRUE(ReplicationSlotCreate("log_slot", SlotType::kLogical, SlotPersistence::kPersistent,
+                                      "pgoutput", "postgres"));
+    const ReplicationSlot* s_before = ReplicationSlotLookup("log_slot");
+    ASSERT_NE(s_before, nullptr);
+    XLogRecPtr slot_lsn_before = s_before->confirmed_flush_lsn;
+
+    // Emit two logical messages after the slot was created.
+    PgLogicalEmitMessage(false, "p", "m1");
+    PgLogicalEmitMessage(false, "p", "m2");
+
+    // Get changes — should decode both messages.
+    std::vector<std::string> changes =
+        PgLogicalSlotGetChanges("log_slot", /*upto_lsn=*/0, /*max=*/0);
+    ASSERT_EQ(changes.size(), 2u);
+    EXPECT_NE(changes[0].find("MESSAGE"), std::string::npos);
+    EXPECT_NE(changes[0].find("m1"), std::string::npos);
+    EXPECT_NE(changes[1].find("m2"), std::string::npos);
+
+    // confirmed_flush_lsn should have advanced past the decoded records.
+    const ReplicationSlot* s_after = ReplicationSlotLookup("log_slot");
+    ASSERT_NE(s_after, nullptr);
+    EXPECT_GT(s_after->confirmed_flush_lsn, slot_lsn_before);
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotGetChangesWithMaxMessages) {
+    ASSERT_TRUE(ReplicationSlotCreate("log_max", SlotType::kLogical, SlotPersistence::kPersistent,
+                                      "pgoutput", "postgres"));
+    PgLogicalEmitMessage(false, "p", "a");
+    PgLogicalEmitMessage(false, "p", "b");
+    PgLogicalEmitMessage(false, "p", "c");
+
+    std::vector<std::string> changes =
+        PgLogicalSlotGetChanges("log_max", /*upto_lsn=*/0, /*max=*/2);
+    EXPECT_EQ(changes.size(), 2u);
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotGetChangesOnEmptyWalReturnsNothing) {
+    ASSERT_TRUE(ReplicationSlotCreate("log_empty", SlotType::kLogical, SlotPersistence::kPersistent,
+                                      "pgoutput", "postgres"));
+    std::vector<std::string> changes =
+        PgLogicalSlotGetChanges("log_empty", /*upto_lsn=*/0, /*max=*/0);
+    EXPECT_TRUE(changes.empty());
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotPeekChangesDoesNotAdvance) {
+    ASSERT_TRUE(ReplicationSlotCreate("log_peek", SlotType::kLogical, SlotPersistence::kPersistent,
+                                      "pgoutput", "postgres"));
+    const ReplicationSlot* s_before = ReplicationSlotLookup("log_peek");
+    ASSERT_NE(s_before, nullptr);
+    XLogRecPtr lsn_before = s_before->confirmed_flush_lsn;
+
+    PgLogicalEmitMessage(false, "p", "peek_msg");
+
+    // Peek — should return the message but NOT advance confirmed_flush_lsn.
+    std::vector<std::string> peeked =
+        PgLogicalSlotPeekChanges("log_peek", /*upto_lsn=*/0, /*max=*/0);
+    ASSERT_EQ(peeked.size(), 1u);
+    EXPECT_NE(peeked[0].find("peek_msg"), std::string::npos);
+
+    const ReplicationSlot* s_after = ReplicationSlotLookup("log_peek");
+    ASSERT_NE(s_after, nullptr);
+    EXPECT_EQ(s_after->confirmed_flush_lsn, lsn_before);  // unchanged
+
+    // Now GetChanges — should still see the message (slot didn't advance).
+    std::vector<std::string> got = PgLogicalSlotGetChanges("log_peek", /*upto_lsn=*/0, /*max=*/0);
+    ASSERT_EQ(got.size(), 1u);
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotPeekChangesRequiresLogicalSlot) {
+    ASSERT_TRUE(
+        ReplicationSlotCreate("phys2", SlotType::kPhysical, SlotPersistence::kPersistent, "", ""));
+    EXPECT_FALSE(
+        NoError([&] { (void)PgLogicalSlotPeekChanges("phys2", /*upto_lsn=*/0, /*max=*/0); }));
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotPeekChangesRequiresExistingSlot) {
+    EXPECT_FALSE(
+        NoError([&] { (void)PgLogicalSlotPeekChanges("nonexistent", /*upto_lsn=*/0, /*max=*/0); }));
+}
+
+TEST_F(ReplicationTest, PgLogicalSlotGetChangesSubsequentCallIsEmpty) {
+    ASSERT_TRUE(ReplicationSlotCreate("log_inc", SlotType::kLogical, SlotPersistence::kPersistent,
+                                      "pgoutput", "postgres"));
+    PgLogicalEmitMessage(false, "p", "only");
+
+    // First call decodes the message and advances confirmed_flush_lsn.
+    std::vector<std::string> first = PgLogicalSlotGetChanges("log_inc", /*upto_lsn=*/0, /*max=*/0);
+    ASSERT_EQ(first.size(), 1u);
+
+    // Second call should see no new messages (slot advanced past them).
+    std::vector<std::string> second = PgLogicalSlotGetChanges("log_inc", /*upto_lsn=*/0, /*max=*/0);
+    EXPECT_TRUE(second.empty());
 }
 
 // ===========================================================================

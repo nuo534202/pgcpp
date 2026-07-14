@@ -1,10 +1,15 @@
-// logical.h — Logical decoding context.
+// logical.h — Logical decoding context and slot change extraction.
 //
 // Converted from PostgreSQL 15's src/backend/replication/logical/ logical.c
 // (LogicalDecodingContext and the CreateInitDecodingContext /
-// CreateDecodingContext entry points). The actual decoding loop is
-// stubbed: pgcpp does not yet replay WAL through an output plugin, so
-// LogicalShippingMain returns immediately after constructing a context.
+// CreateDecodingContext entry points).
+//
+// LogicalShippingMain reads WAL records from the slot's start_lsn and decodes
+// them into human-readable messages via a simple built-in output plugin
+// (similar to PG's test_decoding). Currently decodes:
+//   - kRmgrLogicalMsgId records → "message: <prefix>: <payload>"
+//   - kRmgrXactId records (commit) → "commit: xid=<xid> lsn=<lsn>"
+// Other record types are skipped.
 //
 // A LogicalDecodingContext bundles:
 //   - the output plugin name ("pgoutput" by default),
@@ -61,9 +66,10 @@ LogicalDecodingContext CreateDecodingContext(const std::string& slot_name,
                                              LogicalDecodingOptions options);
 
 // LogicalShippingMain — main loop of the logical shipping process
-// (PG: LogicalStreamingMain / walsender+logical mode). Stub: returns
-// immediately with the prepared context (no actual decoding performed).
-// `max_messages` is honored only as a cap on synthesized messages.
+// (PG: LogicalStreamingMain / walsender+logical mode). Reads WAL records
+// from ctx.start_lsn, decodes logical-relevant records into messages, and
+// appends them to ctx.messages. Stops at end-of-WAL or after `max_messages`
+// decoded messages (0 = unlimited). Returns the number of messages emitted.
 int LogicalShippingMain(LogicalDecodingContext& ctx, int max_messages);
 
 // LogicalDecodingReset — clear all in-process decoding state (for tests).
@@ -74,8 +80,31 @@ void LogicalDecodingReset();
 LogicalDecodingContext* GetLogicalDecodingContext();
 
 // DecodingEmitMessage — push a synthesized message into the context's
-// output buffer. Used by the (stubbed) decoding loop.
+// output buffer. Used by the decoding loop.
 void DecodingEmitMessage(LogicalDecodingContext& ctx, LogicalRepMsgType type,
                          const std::string& payload);
+
+// --- SQL-facing logical decoding functions ---
+//
+// These mirror PostgreSQL's pg_logical_emit_message, pg_logical_slot_get_changes,
+// and pg_logical_slot_peek_changes SQL functions.
+
+// PgLogicalEmitMessage — write a logical message to the WAL and return its LSN.
+// Wraps LogLogicalMessage.
+transaction::XLogRecPtr PgLogicalEmitMessage(bool transactional, const std::string& prefix,
+                                             const std::string& message);
+
+// PgLogicalSlotGetChanges — decode changes from a logical slot, advancing
+// confirmed_flush_lsn to the last decoded LSN. Returns the decoded messages.
+// On error (missing slot, slot is physical), calls ereport(ERROR).
+std::vector<std::string> PgLogicalSlotGetChanges(const std::string& slot_name,
+                                                 transaction::XLogRecPtr upto_lsn,
+                                                 int max_messages);
+
+// PgLogicalSlotPeekChanges — like PgLogicalSlotGetChanges but does NOT advance
+// confirmed_flush_lsn. The slot's position is unchanged after the call.
+std::vector<std::string> PgLogicalSlotPeekChanges(const std::string& slot_name,
+                                                  transaction::XLogRecPtr upto_lsn,
+                                                  int max_messages);
 
 }  // namespace pgcpp::replication
