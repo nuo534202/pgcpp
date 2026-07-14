@@ -19,6 +19,7 @@
 #include "executor/node_bitmap_heapscan.hpp"
 #include "executor/node_bitmap_indexscan.hpp"
 #include "executor/node_ctescan.hpp"
+#include "executor/node_foreignscan.hpp"
 #include "executor/node_functionscan.hpp"
 #include "executor/node_gather.hpp"
 #include "executor/node_group.hpp"
@@ -165,6 +166,10 @@ PlanState* CreatePlanState(Plan* plan, EState* state) {
         }
         case PlanType::kGatherMerge: {
             return makePallocNode<GatherMergeState>(plan, state);
+        }
+        // --- P3-5: FDW scan ---
+        case PlanType::kForeignScan: {
+            return makePallocNode<ForeignScanState>(plan, state);
         }
     }
     return nullptr;

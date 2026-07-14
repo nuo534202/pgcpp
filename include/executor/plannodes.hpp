@@ -63,6 +63,8 @@ enum class PlanType {
     kWorkTableScan,    // scan the recursive CTE working table
     kGather,           // parallel query: gather tuples from workers
     kGatherMerge,      // parallel query: gather and merge sorted tuples
+    // --- P3-5 additions ---
+    kForeignScan,  // scan a foreign table via FDW callbacks
 };
 
 // Plan — base struct for all plan nodes.
@@ -423,6 +425,20 @@ struct GatherMerge : Plan {
     std::vector<pgcpp::catalog::Oid> sortOperators;  // comparison operator OIDs
     std::vector<bool> nullsFirst;                    // NULLS FIRST/LAST per column
     std::vector<bool> reverse;                       // DESC per column
+};
+
+// --- P3-5: Foreign Data Wrapper scan ---
+
+// ForeignScan — scan a foreign table via FDW callbacks.
+//
+// The executor looks up the foreign table's server OID in the FDW catalog,
+// resolves the FDW handler name (e.g., "file_fdw"), and calls the handler's
+// BeginForeignScan / IterateForeignScan / ReScanForeignScan / EndForeignScan
+// callbacks. The handler stores its private state in ForeignScanState::fdw_state.
+struct ForeignScan : Plan {
+    ForeignScan() { type = PlanType::kForeignScan; }
+    pgcpp::catalog::Oid fs_relid = pgcpp::catalog::kInvalidOid;  // foreign table pg_class OID
+    int scanrelid = 0;                                           // 1-based range table index
 };
 
 }  // namespace pgcpp::executor
