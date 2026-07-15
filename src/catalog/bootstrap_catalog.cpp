@@ -15,6 +15,7 @@
 #include "catalog/pg_am.hpp"
 #include "catalog/pg_cast.hpp"
 #include "catalog/pg_collation.hpp"
+#include "catalog/pg_language.hpp"
 #include "catalog/pg_operator.hpp"
 #include "catalog/pg_proc.hpp"
 #include "common/containers/node.hpp"
@@ -553,8 +554,42 @@ void BootstrapCatalog(Catalog* cat) {
                          /*canmulticol=*/true, /*searchnulls=*/true,
                          /*clusterable=*/false, /*caninclude=*/false));
     cat->InsertAm(MakeAm(4000, "spgist", /*canorder=*/false, /*canbackward=*/true,
-                         /*canmulticol=*/false, /*searchnulls=*/true,
+                         /*multicol=*/false, /*searchnulls=*/true,
                          /*clusterable=*/false, /*caninclude=*/false));
+
+    // --- Languages ---
+    //
+    // The four standard languages: internal, c, sql (built-in, untrusted,
+    // not PLs) and plpgsql (trusted PL, registered here so CREATE FUNCTION
+    // ... LANGUAGE plpgsql works out of the box). OIDs match PostgreSQL's
+    // pg_language.dat.
+    auto* internal_lang = makePallocNode<FormData_pg_language>();
+    internal_lang->oid = 12;
+    internal_lang->lanname = "internal";
+    internal_lang->lanpltrusted = false;
+    internal_lang->lanispl = false;
+    cat->InsertLanguage(internal_lang);
+
+    auto* c_lang = makePallocNode<FormData_pg_language>();
+    c_lang->oid = 13;
+    c_lang->lanname = "c";
+    c_lang->lanpltrusted = false;
+    c_lang->lanispl = false;
+    cat->InsertLanguage(c_lang);
+
+    auto* sql_lang = makePallocNode<FormData_pg_language>();
+    sql_lang->oid = 14;
+    sql_lang->lanname = "sql";
+    sql_lang->lanpltrusted = false;
+    sql_lang->lanispl = false;
+    cat->InsertLanguage(sql_lang);
+
+    auto* plpgsql_lang = makePallocNode<FormData_pg_language>();
+    plpgsql_lang->oid = 100;
+    plpgsql_lang->lanname = "plpgsql";
+    plpgsql_lang->lanpltrusted = true;
+    plpgsql_lang->lanispl = true;
+    cat->InsertLanguage(plpgsql_lang);
 }
 
 }  // namespace pgcpp::catalog

@@ -38,6 +38,7 @@ struct FormData_pg_am;
 struct FormData_pg_tablespace;
 struct FormData_pg_trigger;
 struct FormData_pg_rewrite;
+struct FormData_pg_language;
 
 // Catalog — the in-memory system catalog registry.
 //
@@ -229,6 +230,17 @@ public:
     bool DeleteRewrite(Oid oid);
     std::size_t DeleteRewritesForRelid(Oid ev_class);
 
+    // --- pg_language accessors ---
+
+    // Insert a pg_language row. Returns the OID (or row.oid if set).
+    Oid InsertLanguage(FormData_pg_language* row);
+    // Look up a pg_language by OID.
+    const FormData_pg_language* GetLanguageByOid(Oid oid) const;
+    // Look up a pg_language by name (case-sensitive).
+    const FormData_pg_language* GetLanguageByName(const std::string& name) const;
+    // Delete a pg_language by OID. Returns false if not found.
+    bool DeleteLanguage(Oid oid);
+
     // --- OID assignment ---
 
     // Allocate the next OID (PostgreSQL GetNewOid equivalent for catalog).
@@ -315,6 +327,7 @@ private:
     std::vector<FormData_pg_tablespace*> pg_tablespace_rows_;
     std::vector<FormData_pg_trigger*> pg_trigger_rows_;
     std::vector<FormData_pg_rewrite*> pg_rewrite_rows_;
+    std::vector<FormData_pg_language*> pg_language_rows_;
     Oid next_oid_ = kFirstNormalObjectId;
 
     // P1-2: transactional catalog state.

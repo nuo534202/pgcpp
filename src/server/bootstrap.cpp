@@ -21,6 +21,7 @@
 #include "common/error/elog.hpp"
 #include "common/memory/alloc_set.hpp"
 #include "common/memory/memory_context.hpp"
+#include "pl/plpgsql/plpgsql.hpp"
 #include "storage/bufmgr.hpp"
 #include "storage/smgr.hpp"
 #include "transaction/snapshot.hpp"
@@ -41,6 +42,7 @@ using pgcpp::error::LogLevel;
 using pgcpp::memory::AllocSetContext;
 using pgcpp::memory::MemoryContext;
 using pgcpp::memory::SetCurrentMemoryContext;
+using pgcpp::pl::plpgsql::RegisterPlPgsqlHandler;
 using pgcpp::storage::InitBufferPool;
 using pgcpp::storage::SetStorageBaseDir;
 using pgcpp::storage::ShutdownBufferPool;
@@ -119,6 +121,10 @@ BootstrapResult BootstrapCluster(const std::string& data_dir) {
     Catalog* catalog = new Catalog();
     SetCatalog(catalog);
     BootstrapCatalog(catalog);
+
+    // Register the built-in PL/pgSQL handler so CREATE FUNCTION ... LANGUAGE
+    // plpgsql and DO blocks can dispatch to it via fmgr.
+    RegisterPlPgsqlHandler();
 
     SysCache* syscache = new SysCache();
     SetSysCache(syscache);

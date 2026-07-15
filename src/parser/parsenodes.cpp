@@ -1492,6 +1492,47 @@ bool AlterFunctionStmt::Equals(const Node& other) const {
     return EqVec(funcname, o.funcname) && EqVec(args, o.args) && EqVec(actions, o.actions);
 }
 
+Node* CreateLanguageStmt::Clone() const {
+    auto* copy = makePallocNode<CreateLanguageStmt>(*this);
+    copy->plhandler = CloneVec(plhandler);
+    copy->inline_handler = CloneVec(inline_handler);
+    copy->validator = CloneVec(validator);
+    return copy;
+}
+
+bool CreateLanguageStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateLanguageStmt&>(other);
+    return replace == o.replace && trusted == o.trusted && lanname == o.lanname &&
+           EqVec(plhandler, o.plhandler) && EqVec(inline_handler, o.inline_handler) &&
+           EqVec(validator, o.validator);
+}
+
+Node* DropLanguageStmt::Clone() const {
+    auto* copy = makePallocNode<DropLanguageStmt>(*this);
+    return copy;
+}
+
+bool DropLanguageStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const DropLanguageStmt&>(other);
+    return lanname == o.lanname && missing_ok == o.missing_ok;
+}
+
+Node* DoStmt::Clone() const {
+    auto* copy = makePallocNode<DoStmt>(*this);
+    return copy;
+}
+
+bool DoStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const DoStmt&>(other);
+    return code == o.code && lanname == o.lanname;
+}
+
 Node* CreateTrigStmt::Clone() const {
     auto* copy = makePallocNode<CreateTrigStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));

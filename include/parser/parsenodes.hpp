@@ -1940,6 +1940,48 @@ public:
 // DropFunctionStmt — DROP FUNCTION (uses DropStmt, but kept for clarity)
 // Note: PostgreSQL uses DropStmt for DROP FUNCTION. No separate node.
 
+// CreateLanguageStmt — CREATE [TRUSTED] [PROCEDURAL] LANGUAGE name
+//   [HANDLER handler_fn] [INLINE inline_fn] [VALIDATOR validator_fn]
+class CreateLanguageStmt : public Node {
+public:
+    CreateLanguageStmt() : Node(pgcpp::nodes::NodeTag::kCreateLanguageStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    bool replace = false;          // CREATE OR REPLACE
+    bool trusted = false;          // TRUSTED keyword
+    std::string lanname;           // language name (unqualified)
+    std::vector<Node*> plhandler;  // qualified handler function name
+    std::vector<Node*> inline_handler;
+    std::vector<Node*> validator;
+};
+
+// DropLanguageStmt — DROP LANGUAGE (uses DropStmt in PostgreSQL; here a
+// dedicated node keeps the implementation simple).
+class DropLanguageStmt : public Node {
+public:
+    DropLanguageStmt() : Node(pgcpp::nodes::NodeTag::kDropLanguageStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string lanname;
+    bool missing_ok = false;  // IF EXISTS
+};
+
+// DoStmt — DO [LANGUAGE lang] 'code'
+class DoStmt : public Node {
+public:
+    DoStmt() : Node(pgcpp::nodes::NodeTag::kDoStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string code;     // inline code block
+    std::string lanname;  // language name (default "plpgsql")
+};
+
 // CreateTrigStmt — CREATE TRIGGER
 class CreateTrigStmt : public Node {
 public:

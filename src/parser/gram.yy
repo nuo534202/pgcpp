@@ -471,6 +471,9 @@ static inline char keyMatchToChar(int match) {
 %type <Node*> CheckPointStmt ReindexStmt DeallocateStmt PrepareStmt ExecuteStmt
 %type <Node*> LoadStmt CallStmt RenameStmt AlterOwnerStmt CreateSeqStmt AlterSeqStmt
 %type <Node*> CreateFunctionStmt AlterFunctionStmt CreateTrigStmt
+%type <Node*> CreateLanguageStmt DropLanguageStmt DoStmt
+%type <std::vector<Node*>> opt_language_handler opt_language_inline opt_language_validator
+%type <bool> opt_trusted opt_procedural
 %type <Node*> CreateRoleStmt AlterRoleStmt DropRoleStmt GrantStmt RevokeStmt
 %type <Node*> CopyStmt RefreshMatViewStmt CreateTableSpaceStmt DropTableSpaceStmt
 %type <Node*> CreatedbStmt DropdbStmt AlterDatabaseStmt
@@ -604,6 +607,9 @@ stmt:
     | CreateFunctionStmt
     | AlterFunctionStmt
     | CreateTrigStmt
+    | CreateLanguageStmt
+    | DropLanguageStmt
+    | DoStmt
     | CreateRoleStmt
     | AlterRoleStmt
     | DropRoleStmt
@@ -4420,6 +4426,89 @@ trigger_func_arg:
     | FCONST
     | Sconst
     | ColLabel
+;
+
+// ===========================================================================
+// CreateLanguageStmt / DropLanguageStmt / DoStmt
+// ===========================================================================
+
+CreateLanguageStmt:
+      CREATE opt_or_replace opt_trusted opt_procedural LANGUAGE name
+          opt_language_handler opt_language_inline opt_language_validator
+        {
+            CreateLanguageStmt* n = makeNode<CreateLanguageStmt>();
+            n->replace = $2;
+            n->trusted = $3;
+            n->lanname = $6;
+            n->plhandler = $7;
+            n->inline_handler = $8;
+            n->validator = $9;
+            $$ = n;
+        }
+;
+
+opt_trusted:
+      TRUSTED                       { $$ = true; }
+    | /* empty */                   { $$ = false; }
+;
+
+opt_procedural:
+      PROCEDURAL                    { $$ = true; }
+    | /* empty */                   { $$ = false; }
+;
+
+// HANDLER handler_fn_name — name may be qualified (schema.func).
+opt_language_handler:
+      HANDLER function_name         { $$ = std::move($2); }
+    | /* empty */                   { $$ = {}; }
+;
+
+opt_language_inline:
+      INLINE_P function_name        { $$ = std::move($2); }
+    | /* empty */                   { $$ = {}; }
+;
+
+opt_language_validator:
+      VALIDATOR function_name       { $$ = std::move($2); }
+    | /* empty */                   { $$ = {}; }
+;
+
+DropLanguageStmt:
+      DROP LANGUAGE name opt_drop_behavior
+        {
+            DropLanguageStmt* n = makeNode<DropLanguageStmt>();
+            n->lanname = $3;
+            // DROP IF EXISTS is handled via the IF_P keyword variant.
+            n->missing_ok = false;
+            (void)$4;
+            $$ = n;
+        }
+    | DROP LANGUAGE IF_P EXISTS name opt_drop_behavior
+        {
+            DropLanguageStmt* n = makeNode<DropLanguageStmt>();
+            n->lanname = $5;
+            n->missing_ok = true;
+            (void)$6;
+            $$ = n;
+        }
+;
+
+// DO [LANGUAGE lang] 'code' — anonymous code block.
+DoStmt:
+      DO Sconst
+        {
+            DoStmt* n = makeNode<DoStmt>();
+            n->code = $2;
+            n->lanname = "plpgsql";
+            $$ = n;
+        }
+    | DO LANGUAGE nonreservedword_or_sconst Sconst
+        {
+            DoStmt* n = makeNode<DoStmt>();
+            n->code = $4;
+            n->lanname = $3;
+            $$ = n;
+        }
 ;
 
 // ===========================================================================

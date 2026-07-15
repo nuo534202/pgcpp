@@ -131,6 +131,10 @@ enum class NodeTag : int {
     kCreateFunctionStmt,
     kAlterFunctionStmt,
     kDropFunctionStmt,
+    // P3-7 PL/pgSQL + PL language framework
+    kCreateLanguageStmt,
+    kDropLanguageStmt,
+    kDoStmt,
     kCreateTrigStmt,
     kCreateRoleStmt,
     kAlterRoleStmt,

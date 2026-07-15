@@ -20,6 +20,7 @@
 #include "commands/explain.hpp"
 #include "commands/functioncmds.hpp"
 #include "commands/indexcmds.hpp"
+#include "commands/languagecmds.hpp"
 #include "commands/schemacmds.hpp"
 #include "commands/sequence.hpp"
 #include "commands/tablecmds.hpp"
@@ -41,6 +42,7 @@ using pgcpp::commands::AnalyzeCommand;
 using pgcpp::commands::CreateCast;
 using pgcpp::commands::createdb;
 using pgcpp::commands::CreateFunction;
+using pgcpp::commands::CreateLanguage;
 using pgcpp::commands::CreateSchemaCommand;
 using pgcpp::commands::CreateTableSpace;
 using pgcpp::commands::CreateTrigger;
@@ -50,8 +52,10 @@ using pgcpp::commands::DefineRelation;
 using pgcpp::commands::DefineSequence;
 using pgcpp::commands::DefineType;
 using pgcpp::commands::DefineView;
+using pgcpp::commands::DoBlock;
 using pgcpp::commands::DoCopy;
 using pgcpp::commands::dropdb;
+using pgcpp::commands::DropLanguage;
 using pgcpp::commands::DropTableSpace;
 using pgcpp::commands::ExecuteTruncate;
 using pgcpp::commands::ExecVacuum;
@@ -65,13 +69,16 @@ using pgcpp::parser::CreateCastStmt;
 using pgcpp::parser::CreatedbStmt;
 using pgcpp::parser::CreateDomainStmt;
 using pgcpp::parser::CreateFunctionStmt;
+using pgcpp::parser::CreateLanguageStmt;
 using pgcpp::parser::CreateSchemaStmt;
 using pgcpp::parser::CreateSeqStmt;
 using pgcpp::parser::CreateStmt;
 using pgcpp::parser::CreateTableSpaceStmt;
 using pgcpp::parser::CreateTrigStmt;
 using pgcpp::parser::CreateTypeStmt;
+using pgcpp::parser::DoStmt;
 using pgcpp::parser::DropdbStmt;
+using pgcpp::parser::DropLanguageStmt;
 using pgcpp::parser::DropStmt;
 using pgcpp::parser::DropTableSpaceStmt;
 using pgcpp::parser::ExplainStmt;
@@ -242,6 +249,16 @@ std::string ProcessUtility(Node* stmt, OutputSink* sink) {
         case NodeTag::kCreateFunctionStmt:
             tag = CreateFunction(static_cast<CreateFunctionStmt*>(stmt));
             break;
+        // --- PL language framework (CREATE/DROP LANGUAGE, DO) ----------
+        case NodeTag::kCreateLanguageStmt:
+            tag = CreateLanguage(static_cast<CreateLanguageStmt*>(stmt));
+            break;
+        case NodeTag::kDropLanguageStmt:
+            tag = DropLanguage(static_cast<DropLanguageStmt*>(stmt));
+            break;
+        case NodeTag::kDoStmt:
+            tag = DoBlock(static_cast<DoStmt*>(stmt));
+            break;
         case NodeTag::kCreateTypeStmt:
             tag = DefineType(static_cast<CreateTypeStmt*>(stmt));
             break;
@@ -348,6 +365,12 @@ std::string CreateCommandTag(Node* stmt) {
             return "DROP TABLESPACE";
         case NodeTag::kCreateFunctionStmt:
             return "CREATE FUNCTION";
+        case NodeTag::kCreateLanguageStmt:
+            return "CREATE LANGUAGE";
+        case NodeTag::kDropLanguageStmt:
+            return "DROP LANGUAGE";
+        case NodeTag::kDoStmt:
+            return "DO";
         case NodeTag::kCreateTypeStmt:
             return "CREATE TYPE";
         case NodeTag::kCreateDomainStmt:

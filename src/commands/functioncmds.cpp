@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "catalog/catalog.hpp"
+#include "catalog/pg_language.hpp"
 #include "catalog/pg_proc.hpp"
 #include "catalog/pg_type.hpp"
 #include "common/containers/node.hpp"
@@ -28,6 +29,7 @@ using pgcpp::catalog::ProKind;
 using pgcpp::catalog::ProVolatile;
 using pgcpp::fmgr::kCLanguageOid;
 using pgcpp::fmgr::kInternalLanguageOid;
+using pgcpp::fmgr::kPlPgsqlLanguageOid;
 using pgcpp::fmgr::kSqlLanguageOid;
 using pgcpp::nodes::makePallocNode;
 using pgcpp::nodes::Node;
@@ -58,6 +60,15 @@ Oid ResolveLanguageOid(const std::string& langname) {
         return kCLanguageOid;
     if (langname == "sql")
         return kSqlLanguageOid;
+    if (langname == "plpgsql")
+        return kPlPgsqlLanguageOid;
+    // Fall back to catalog lookup for user-created languages.
+    Catalog* cat = GetCatalog();
+    if (cat != nullptr) {
+        const auto* lang = cat->GetLanguageByName(langname);
+        if (lang != nullptr)
+            return lang->oid;
+    }
     return pgcpp::catalog::kInvalidOid;
 }
 

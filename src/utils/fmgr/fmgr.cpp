@@ -17,6 +17,7 @@
 
 #include "catalog/catalog.hpp"
 #include "catalog/pg_proc.hpp"
+#include "pl/pl_handler.hpp"
 #include "types/builtins.hpp"
 #include "types/string_funcs.hpp"
 
@@ -197,6 +198,7 @@ bool fmgr_info(Oid funcid, FmgrInfo* finfo) {
     finfo->fn_language = 0;
     finfo->fn_strict = true;
     finfo->fn_name.clear();
+    finfo->fn_pl_handler = nullptr;
 
     Catalog* cat = GetCatalog();
     if (cat == nullptr)
@@ -229,6 +231,11 @@ bool fmgr_info(Oid funcid, FmgrInfo* finfo) {
     } else if (lang == kSqlLanguageOid) {
         // SQL language: no C handler; execution is via SQL parsing.
         finfo->fn_addr = nullptr;
+    } else {
+        // Procedural language (plpgsql, etc.): look up a registered PL
+        // handler by language OID. fn_addr remains nullptr; FunctionCall
+        // dispatches to fn_pl_handler->call_cb when invoked.
+        finfo->fn_pl_handler = pgcpp::pl::LookupPlHandler(lang);
     }
 
     // fn_addr may be nullptr for SQL functions or unregistered builtins;
@@ -252,14 +259,23 @@ Datum FunctionCall(const FmgrInfo* finfo, const std::vector<Datum>& args, bool* 
     // Note: in this non-nulls variant, all args are non-NULL by convention,
     // so the strict-NULL check is not applicable (see FunctionCallWithNulls).
 
+    FunctionCallInfo fc;
+    fc.flinfo = finfo;
+    fc.nargs = static_cast<int>(std::min(args.size(), size_t(10)));
+    for (int i = 0; i < fc.nargs; ++i)
+        fc.arg[i] = args[i];
+
     if (finfo->fn_addr != nullptr) {
-        FunctionCallInfo fc;
-        fc.flinfo = finfo;
-        fc.nargs = static_cast<int>(std::min(args.size(), size_t(10)));
-        for (int i = 0; i < fc.nargs; ++i)
-            fc.arg[i] = args[i];
         fc.result = finfo->fn_addr(fc);
         fc.isnull_result = false;
+        return fc.result;
+    }
+
+    // Procedural language function: dispatch to the PL handler.
+    if (finfo->fn_pl_handler != nullptr && finfo->fn_pl_handler->call_cb != nullptr) {
+        fc.result = finfo->fn_pl_handler->call_cb(fc);
+        if (fc.isnull_result && isnull != nullptr)
+            *isnull = true;
         return fc.result;
     }
 
@@ -293,16 +309,25 @@ Datum FunctionCallWithNulls(const FmgrInfo* finfo, const std::vector<Datum>& arg
         }
     }
 
+    FunctionCallInfo fc;
+    fc.flinfo = finfo;
+    fc.nargs = static_cast<int>(std::min(args.size(), size_t(10)));
+    for (int i = 0; i < fc.nargs; ++i) {
+        fc.arg[i] = args[i];
+        fc.isnull[i] = (i < static_cast<int>(isnulls.size())) ? isnulls[i] : false;
+    }
+
     if (finfo->fn_addr != nullptr) {
-        FunctionCallInfo fc;
-        fc.flinfo = finfo;
-        fc.nargs = static_cast<int>(std::min(args.size(), size_t(10)));
-        for (int i = 0; i < fc.nargs; ++i) {
-            fc.arg[i] = args[i];
-            fc.isnull[i] = (i < static_cast<int>(isnulls.size())) ? isnulls[i] : false;
-        }
         fc.result = finfo->fn_addr(fc);
         fc.isnull_result = false;
+        return fc.result;
+    }
+
+    // Procedural language function: dispatch to the PL handler.
+    if (finfo->fn_pl_handler != nullptr && finfo->fn_pl_handler->call_cb != nullptr) {
+        fc.result = finfo->fn_pl_handler->call_cb(fc);
+        if (fc.isnull_result && isnull != nullptr)
+            *isnull = true;
         return fc.result;
     }
 

@@ -26,6 +26,12 @@
 #include "catalog/catalog.hpp"
 #include "types/datum.hpp"
 
+// Forward declaration: PL handler interface (defined in pl/pl_handler.hpp).
+// FmgrInfo stores a pointer to the handler for procedural-language functions.
+namespace pgcpp::pl {
+struct PlHandler;
+}
+
 namespace pgcpp::fmgr {
 
 // Language OIDs (PostgreSQL standard values from pg_language).
@@ -33,6 +39,10 @@ namespace pgcpp::fmgr {
 constexpr pgcpp::catalog::Oid kInternalLanguageOid = 12;
 constexpr pgcpp::catalog::Oid kCLanguageOid = 13;
 constexpr pgcpp::catalog::Oid kSqlLanguageOid = 14;
+// plpgsql language OID. PostgreSQL assigns this dynamically at initdb time;
+// pgcpp pins it to 100 (matching BootstrapCatalog's pg_language row) so
+// fmgr_info can dispatch PL/pgSQL calls without consulting the catalog.
+constexpr pgcpp::catalog::Oid kPlPgsqlLanguageOid = 100;
 
 // PgFunction — pointer to a built-in function that takes a FunctionCallInfo
 // and returns a Datum. This is the C-function calling convention shared by
@@ -67,9 +77,16 @@ struct FmgrInfo {
     bool fn_strict = true;                // if true, return NULL when any arg is NULL
     std::string fn_name;                  // proname (for SQL dispatch / error messages)
 
-    // True if fn_addr is set (internal or C language function with a
-    // registered builtin handler). False for SQL-language functions.
-    bool has_handler() const { return fn_addr != nullptr; }
+    // PL handler pointer (procedural languages only). When non-null and
+    // fn_addr is null, FunctionCall dispatches to fn_pl_handler->call_cb.
+    // Set by fmgr_info when the function's language is a registered PL.
+    const pgcpp::pl::PlHandler* fn_pl_handler = nullptr;
+
+    // True if a call can be dispatched — either via fn_addr (internal/C
+    // language with a registered builtin) or via fn_pl_handler (a
+    // registered procedural language like plpgsql). False for SQL-language
+    // functions, which have no C handler in pgcpp's MVP.
+    bool has_handler() const { return fn_addr != nullptr || fn_pl_handler != nullptr; }
 };
 
 // fmgr_info — look up a function by OID and fill FmgrInfo.
