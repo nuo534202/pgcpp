@@ -401,8 +401,8 @@ TEST_F(TsearchTest, ToTsVectorStems) {
     for (const auto& e : vec.entries) {
         lexemes.push_back(e.lexeme);
     }
-    // "running" -> SimpleDict strips "ing" -> "runn"
-    EXPECT_NE(std::find(lexemes.begin(), lexemes.end(), "runn"), lexemes.end());
+    // "running" -> Snowball (Porter) stems -> "run"
+    EXPECT_NE(std::find(lexemes.begin(), lexemes.end(), "run"), lexemes.end());
     // "cats" -> "cat"
     EXPECT_NE(std::find(lexemes.begin(), lexemes.end(), "cat"), lexemes.end());
 }

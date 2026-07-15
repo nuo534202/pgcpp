@@ -1,7 +1,8 @@
 // to_tsquery.cpp — text → tsquery pipeline.
 //
 // 1. Tokenize the input text (TokenizeText).
-// 2. Apply the per-config dictionary chain (same as ToTsVector).
+// 2. Apply the per-config dictionary chain (via TsearchConfigRegistry, same as
+//    ToTsVector).
 // 3. AND every surviving lexeme together into a single TsQueryData tree.
 //
 // The result mirrors PG's to_tsquery() when called with a list of words
@@ -12,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include "tsearch/dict.hpp"
+#include "tsearch/ts_config.hpp"
 #include "tsearch/wparser.hpp"
 #include "types/ts_types.hpp"
 
@@ -27,18 +28,13 @@ namespace {
 std::vector<std::string> LexicalizeTokens(const std::vector<Token>& tokens,
                                           std::string_view config) {
     std::vector<std::string> out;
-    bool drop_stop = (config == "english");
-    SimpleDict stemmer;
-    StopWordsDict stopper;
+    auto chain = GetTsearchConfigRegistry().BuildChain(config);
     for (const Token& tok : tokens) {
-        if (drop_stop) {
-            Lexeme stop_check = stopper.Lexicalize(tok.text);
-            if (stop_check.is_stop) {
-                continue;
-            }
+        auto lexeme = ApplyDictionaryChain(chain, tok.text);
+        if (!lexeme.has_value()) {
+            continue;  // stop word
         }
-        Lexeme lex = stemmer.Lexicalize(tok.text);
-        out.push_back(std::move(lex.text));
+        out.push_back(std::move(lexeme->text));
     }
     return out;
 }

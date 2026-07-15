@@ -39,6 +39,10 @@ struct FormData_pg_tablespace;
 struct FormData_pg_trigger;
 struct FormData_pg_rewrite;
 struct FormData_pg_language;
+struct FormData_pg_ts_dict;
+struct FormData_pg_ts_cfg;
+struct FormData_pg_ts_template;
+struct FormData_pg_ts_parser;
 
 // Catalog — the in-memory system catalog registry.
 //

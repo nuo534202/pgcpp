@@ -9,9 +9,11 @@
 
 #include "tsearch/dict.hpp"
 #include "tsearch/ispell.hpp"
+#include "tsearch/snowball.hpp"
 #include "tsearch/thesaurus.hpp"
 #include "tsearch/to_tsquery.hpp"
 #include "tsearch/to_tsvector.hpp"
+#include "tsearch/ts_config.hpp"
 #include "tsearch/ts_typanalyze.hpp"
 #include "tsearch/ts_utils.hpp"
 #include "tsearch/tsquery_parser.hpp"

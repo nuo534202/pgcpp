@@ -1,9 +1,9 @@
 // to_tsvector.cpp — text → tsvector pipeline.
 //
 // 1. Tokenize the input text (TokenizeText).
-// 2. Apply a per-config dictionary chain:
-//    - "simple": lowercase only, keep all tokens.
-//    - "english" (default): lowercase + SimpleDict stemming + stop-word removal.
+// 2. Build the dictionary chain for `config` via TsearchConfigRegistry and
+//    apply it to each token (stop words are dropped; surviving lexemes are
+//    transformed by the chain).
 // 3. Build a TsVectorData with deduplicated lexemes and 1-based positions,
 //    sorted ascending by lexeme (matching PG's on-disk format).
 
@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-#include "tsearch/dict.hpp"
+#include "tsearch/ts_config.hpp"
 #include "tsearch/wparser.hpp"
 #include "types/ts_types.hpp"
 
@@ -25,23 +25,18 @@ using pgcpp::types::TsWordEntry;
 
 namespace {
 
-// Run the dictionary chain appropriate for `config`. Returns the surviving
+// Run the dictionary chain for `config` over the tokens. Returns the surviving
 // lexemes with their original token positions.
 std::map<std::string, std::vector<int32_t>> BuildLexemeMap(const std::vector<Token>& tokens,
                                                            std::string_view config) {
     std::map<std::string, std::vector<int32_t>> lexemes;
-    bool drop_stop = (config == "english");
-    SimpleDict stemmer;
-    StopWordsDict stopper;
+    auto chain = GetTsearchConfigRegistry().BuildChain(config);
     for (const Token& tok : tokens) {
-        if (drop_stop) {
-            Lexeme stop_check = stopper.Lexicalize(tok.text);
-            if (stop_check.is_stop) {
-                continue;
-            }
+        auto lexeme = ApplyDictionaryChain(chain, tok.text);
+        if (!lexeme.has_value()) {
+            continue;  // stop word
         }
-        Lexeme lex = stemmer.Lexicalize(tok.text);
-        lexemes[lex.text].push_back(tok.position);
+        lexemes[lexeme->text].push_back(tok.position);
     }
     return lexemes;
 }
