@@ -37,6 +37,7 @@
 #include "protocol/hba.hpp"
 #include "protocol/postgres.hpp"
 #include "protocol/pqformat.hpp"
+#include "stats/stats_bootstrap.hpp"
 #include "storage/bufmgr.hpp"
 #include "storage/ipc/lwlock.hpp"
 #include "storage/ipc/proc.hpp"
@@ -392,6 +393,10 @@ void InitializeServerSubsystems(const std::string& data_dir) {
 
     // Relcache.
     InitializeRelcache();
+
+    // P3-9: register the pg_stat_* virtual views in the catalog so they
+    // can be resolved by name and scanned via the stats virtual scan.
+    pgcpp::stats::BootstrapStatsViews(g_state.catalog);
 
     // B-2: load pg_hba.conf and pg_authid for client authentication.
     // Missing files are not errors (default to trust / empty store).

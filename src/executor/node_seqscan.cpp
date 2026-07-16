@@ -5,6 +5,11 @@
 // SeqScan reads tuples from a heap relation in physical order, applies
 // the qual filter (WHERE clause), and projects the target list to
 // produce output tuples.
+//
+// P3-9: When the scanned relation is a pg_stat_* view (detected via
+// IsStatsView), the scan uses the virtual StatsScanDesc instead of a
+// HeapScanDesc. This allows SELECT * FROM pg_stat_database etc. to work
+// without a physical heap file.
 #include "executor/node_seqscan.hpp"
 
 #include <new>
@@ -20,6 +25,8 @@
 #include "executor/plannodes.hpp"
 #include "executor/tupletable.hpp"
 #include "parser/parsenodes.hpp"
+#include "stats/stats_collector.hpp"
+#include "stats/stats_view.hpp"
 #include "transaction/heap_tuple.hpp"
 
 namespace pgcpp::executor {
@@ -34,6 +41,12 @@ using pgcpp::access::RelationOpen;
 using pgcpp::access::TupleDesc;
 using pgcpp::memory::palloc;
 using pgcpp::parser::RangeTblEntry;
+using pgcpp::stats::GetStatsCollector;
+using pgcpp::stats::IsStatsView;
+using pgcpp::stats::StatsBeginScan;
+using pgcpp::stats::StatsEndScan;
+using pgcpp::stats::StatsGetNext;
+using pgcpp::stats::StatsScanDesc;
 using pgcpp::transaction::HeapTuple;
 
 void SeqScanState::ExecInit() {
@@ -57,8 +70,14 @@ void SeqScanState::ExecInit() {
     ss_ScanTupleSlot = TupleTableSlot::Make(ss_relation->rd_att);
     state->es_tupleTable.push_back(ss_ScanTupleSlot);
 
-    // Start the heap scan.
-    ss_scanDesc = heap_beginscan(ss_relation, state->es_snapshot);
+    // P3-9: Check if this is a pg_stat_* view. If so, use the virtual scan
+    // instead of a heap scan.
+    if (IsStatsView(static_cast<pgcpp::catalog::Oid>(rte->relid))) {
+        ss_stats_scan = StatsBeginScan(static_cast<pgcpp::catalog::Oid>(rte->relid));
+    } else {
+        // Start the heap scan.
+        ss_scanDesc = heap_beginscan(ss_relation, state->es_snapshot);
+    }
 
     // Create the result tuple slot from the target list.
     TupleDesc result_desc = BuildTupleDescFromTargetList(seqplan->targetlist);
@@ -72,14 +91,28 @@ void SeqScanState::ExecInit() {
 
 TupleTableSlot* SeqScanState::ExecProcNode() {
     for (;;) {
-        // Fetch the next tuple from the heap scan.
-        HeapTuple tuple = heap_getnext(ss_scanDesc);
+        HeapTuple tuple = nullptr;
+
+        if (ss_stats_scan != nullptr) {
+            // P3-9: virtual scan for pg_stat_* views.
+            tuple = StatsGetNext(ss_stats_scan);
+        } else {
+            // Fetch the next tuple from the heap scan.
+            tuple = heap_getnext(ss_scanDesc);
+        }
+
         if (tuple == nullptr) {
+            // P3-9: report seq scan stats for real heap relations.
+            if (ss_stats_scan == nullptr && ss_relation != nullptr &&
+                ss_relation->rd_id != pgcpp::catalog::kInvalidOid) {
+                GetStatsCollector().ReportSeqScan(ss_relation->rd_id, ss_tuples_returned);
+            }
             return nullptr;  // scan exhausted
         }
 
         // Store the tuple in the scan slot (deforms it).
         ss_ScanTupleSlot->StoreTuple(tuple, false);
+        ++ss_tuples_returned;
 
         // Reset the per-tuple memory context.
         ResetExprContext(ps_ExprContext);
@@ -96,6 +129,10 @@ TupleTableSlot* SeqScanState::ExecProcNode() {
 }
 
 void SeqScanState::ExecEnd() {
+    if (ss_stats_scan != nullptr) {
+        StatsEndScan(ss_stats_scan);
+        ss_stats_scan = nullptr;
+    }
     if (ss_scanDesc != nullptr) {
         heap_endscan(ss_scanDesc);
         ss_scanDesc = nullptr;
@@ -112,6 +149,10 @@ void SeqScanState::ExecEnd() {
 void SeqScanState::ExecReScan() {
     if (ss_scanDesc != nullptr) {
         heap_rescan(ss_scanDesc);
+    }
+    if (ss_stats_scan != nullptr) {
+        // Restart the virtual scan from the beginning.
+        ss_stats_scan->next_index = 0;
     }
 }
 

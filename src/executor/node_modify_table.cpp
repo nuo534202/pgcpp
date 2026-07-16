@@ -28,6 +28,7 @@
 #include "executor/plannodes.hpp"
 #include "executor/tupletable.hpp"
 #include "parser/parsenodes.hpp"
+#include "stats/stats_collector.hpp"
 #include "transaction/heap_tuple.hpp"
 
 namespace pgcpp::executor {
@@ -188,6 +189,9 @@ TupleTableSlot* ModifyTableState::ExecProcNode() {
                 heap_insert(mt_relation, tup);
                 heap_freetuple(tup);
 
+                // P3-9: report INSERT stats.
+                pgcpp::stats::GetStatsCollector().ReportInsert(mt_relation->rd_id, 1);
+
                 // Return the inserted tuple (for RETURNING).
                 return ps_ResultTupleSlot;
             }
@@ -210,6 +214,8 @@ TupleTableSlot* ModifyTableState::ExecProcNode() {
                 }
                 ItemPointerData tid = scan_tuple->t_self;
                 heap_delete(mt_relation, tid);
+                // P3-9: report DELETE stats.
+                pgcpp::stats::GetStatsCollector().ReportDelete(mt_relation->rd_id, 1);
                 // DELETE without RETURNING produces no output row; continue
                 // to the next child tuple. Returning nullptr here would
                 // prematurely signal "no more tuples" to ExecutorRun, which
@@ -240,6 +246,8 @@ TupleTableSlot* ModifyTableState::ExecProcNode() {
                                                     ps_ResultTupleSlot->tts_isnull);
                 heap_update(mt_relation, otid, new_tup);
                 heap_freetuple(new_tup);
+                // P3-9: report UPDATE stats.
+                pgcpp::stats::GetStatsCollector().ReportUpdate(mt_relation->rd_id, 1);
                 // UPDATE without RETURNING produces no output row; continue
                 // to the next child tuple (see DELETE comment above).
                 continue;

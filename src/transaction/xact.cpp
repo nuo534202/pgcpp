@@ -25,6 +25,7 @@
 #include "catalog/catalog.hpp"
 #include "catalog/syscache.hpp"
 #include "common/error/elog.hpp"
+#include "stats/stats_collector.hpp"
 #include "storage/ipc/proc.hpp"
 #include "transaction/snapshot.hpp"
 #include "transaction/transam.hpp"
@@ -138,6 +139,9 @@ void CommitTransaction() {
         cat->DiscardSnapshot();
     }
 
+    // P3-9: report commit to the statistics collector (pg_stat_database).
+    pgcpp::stats::ReportCommitCurrentDb();
+
     PopState();
 }
 
@@ -176,6 +180,9 @@ void AbortTransaction() {
             sc->Invalidate();
         }
     }
+
+    // P3-9: report abort to the statistics collector (pg_stat_database).
+    pgcpp::stats::ReportAbortCurrentDb();
 
     PopState();
 }
