@@ -1533,6 +1533,32 @@ bool DoStmt::Equals(const Node& other) const {
     return code == o.code && lanname == o.lanname;
 }
 
+Node* CreateExtensionStmt::Clone() const {
+    auto* copy = makePallocNode<CreateExtensionStmt>(*this);
+    return copy;
+}
+
+bool CreateExtensionStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateExtensionStmt&>(other);
+    return if_not_exists == o.if_not_exists && extname == o.extname && schema == o.schema &&
+           version == o.version && cascade == o.cascade;
+}
+
+Node* DropExtensionStmt::Clone() const {
+    auto* copy = makePallocNode<DropExtensionStmt>(*this);
+    copy->extnames = extnames;  // vector<string> is trivially copyable
+    return copy;
+}
+
+bool DropExtensionStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const DropExtensionStmt&>(other);
+    return extnames == o.extnames && missing_ok == o.missing_ok && cascade == o.cascade;
+}
+
 Node* CreateTrigStmt::Clone() const {
     auto* copy = makePallocNode<CreateTrigStmt>(*this);
     copy->relation = static_cast<RangeVar*>(CloneNode(relation));

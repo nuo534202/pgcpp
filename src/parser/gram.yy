@@ -472,6 +472,10 @@ static inline char keyMatchToChar(int match) {
 %type <Node*> LoadStmt CallStmt RenameStmt AlterOwnerStmt CreateSeqStmt AlterSeqStmt
 %type <Node*> CreateFunctionStmt AlterFunctionStmt CreateTrigStmt
 %type <Node*> CreateLanguageStmt DropLanguageStmt DoStmt
+%type <Node*> CreateExtensionStmt DropExtensionStmt
+%type <bool> opt_extension_with opt_extension_cascade
+%type <std::string> opt_extension_schema opt_extension_version
+%type <std::vector<std::string>> extension_list
 %type <std::vector<Node*>> opt_language_handler opt_language_inline opt_language_validator
 %type <bool> opt_trusted opt_procedural
 %type <Node*> CreateRoleStmt AlterRoleStmt DropRoleStmt GrantStmt RevokeStmt
@@ -610,6 +614,8 @@ stmt:
     | CreateLanguageStmt
     | DropLanguageStmt
     | DoStmt
+    | CreateExtensionStmt
+    | DropExtensionStmt
     | CreateRoleStmt
     | AlterRoleStmt
     | DropRoleStmt
@@ -4508,6 +4514,103 @@ DoStmt:
             n->code = $4;
             n->lanname = $3;
             $$ = n;
+        }
+;
+
+// ===========================================================================
+// CreateExtensionStmt / DropExtensionStmt
+// ===========================================================================
+
+CreateExtensionStmt:
+      CREATE EXTENSION name opt_extension_with opt_extension_schema
+          opt_extension_version opt_extension_cascade
+        {
+            CreateExtensionStmt* n = makeNode<CreateExtensionStmt>();
+            n->if_not_exists = false;
+            n->extname = $3;
+            (void)$4;  // optional WITH keyword (no semantic value)
+            n->schema = $5;
+            n->version = $6;
+            n->cascade = $7;
+            $$ = n;
+        }
+    | CREATE EXTENSION IF_P NOT EXISTS name opt_extension_with opt_extension_schema
+          opt_extension_version opt_extension_cascade
+        {
+            CreateExtensionStmt* n = makeNode<CreateExtensionStmt>();
+            n->if_not_exists = true;
+            n->extname = $6;
+            (void)$7;  // optional WITH keyword
+            n->schema = $8;
+            n->version = $9;
+            n->cascade = $10;
+            $$ = n;
+        }
+;
+
+// Optional WITH keyword (PostgreSQL allows "CREATE EXTENSION name WITH SCHEMA ...")
+opt_extension_with:
+      WITH                   { $$ = true; }
+    | /* empty */            { $$ = false; }
+;
+
+opt_extension_schema:
+      SCHEMA name            { $$ = $2; }
+    | /* empty */            { $$ = ""; }
+;
+
+opt_extension_version:
+      VERSION_P Sconst       { $$ = $2; }
+    | /* empty */            { $$ = ""; }
+;
+
+opt_extension_cascade:
+      CASCADE                { $$ = true; }
+    | /* empty */            { $$ = false; }
+;
+
+DropExtensionStmt:
+      DROP EXTENSION name opt_drop_behavior
+        {
+            DropExtensionStmt* n = makeNode<DropExtensionStmt>();
+            n->extnames = {$3};
+            n->missing_ok = false;
+            n->cascade = ($4 == pgcpp::parser::DropBehavior::kCascade);
+            $$ = n;
+        }
+    | DROP EXTENSION IF_P EXISTS name opt_drop_behavior
+        {
+            DropExtensionStmt* n = makeNode<DropExtensionStmt>();
+            n->extnames = {$5};
+            n->missing_ok = true;
+            n->cascade = ($6 == pgcpp::parser::DropBehavior::kCascade);
+            $$ = n;
+        }
+    | DROP EXTENSION extension_list opt_drop_behavior
+        {
+            DropExtensionStmt* n = makeNode<DropExtensionStmt>();
+            n->extnames = std::move($3);
+            n->missing_ok = false;
+            n->cascade = ($4 == pgcpp::parser::DropBehavior::kCascade);
+            $$ = n;
+        }
+    | DROP EXTENSION IF_P EXISTS extension_list opt_drop_behavior
+        {
+            DropExtensionStmt* n = makeNode<DropExtensionStmt>();
+            n->extnames = std::move($5);
+            n->missing_ok = true;
+            n->cascade = ($6 == pgcpp::parser::DropBehavior::kCascade);
+            $$ = n;
+        }
+;
+
+extension_list:
+      name
+        { $$ = {$1}; }
+    | extension_list ',' name
+        {
+            $$ = std::move($1);
+            $$.push_back($3);
         }
 ;
 

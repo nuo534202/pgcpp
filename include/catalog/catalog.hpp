@@ -43,6 +43,7 @@ struct FormData_pg_ts_dict;
 struct FormData_pg_ts_cfg;
 struct FormData_pg_ts_template;
 struct FormData_pg_ts_parser;
+struct FormData_pg_extension;
 
 // Catalog — the in-memory system catalog registry.
 //
@@ -245,6 +246,19 @@ public:
     // Delete a pg_language by OID. Returns false if not found.
     bool DeleteLanguage(Oid oid);
 
+    // --- pg_extension accessors ---
+
+    // Insert a pg_extension row. Returns the OID (or row.oid if set).
+    Oid InsertExtension(FormData_pg_extension* row);
+    // Look up a pg_extension by OID.
+    const FormData_pg_extension* GetExtensionByOid(Oid oid) const;
+    // Look up a pg_extension by name (case-sensitive).
+    const FormData_pg_extension* GetExtensionByName(const std::string& name) const;
+    // All pg_extension rows (for pg_extension list views).
+    std::vector<const FormData_pg_extension*> GetAllExtensions() const;
+    // Delete a pg_extension by OID. Returns false if not found.
+    bool DeleteExtension(Oid oid);
+
     // --- OID assignment ---
 
     // Allocate the next OID (PostgreSQL GetNewOid equivalent for catalog).
@@ -332,6 +346,7 @@ private:
     std::vector<FormData_pg_trigger*> pg_trigger_rows_;
     std::vector<FormData_pg_rewrite*> pg_rewrite_rows_;
     std::vector<FormData_pg_language*> pg_language_rows_;
+    std::vector<FormData_pg_extension*> pg_extension_rows_;
     Oid next_oid_ = kFirstNormalObjectId;
 
     // P1-2: transactional catalog state.

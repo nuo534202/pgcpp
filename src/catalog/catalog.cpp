@@ -23,6 +23,7 @@
 #include "catalog/pg_constraint.hpp"
 #include "catalog/pg_database.hpp"
 #include "catalog/pg_depend.hpp"
+#include "catalog/pg_extension.hpp"
 #include "catalog/pg_index.hpp"
 #include "catalog/pg_inherits.hpp"
 #include "catalog/pg_language.hpp"
@@ -956,6 +957,55 @@ bool Catalog::DeleteLanguage(Oid oid) {
     return true;
 }
 
+// --- pg_extension accessors ---
+
+Oid Catalog::InsertExtension(FormData_pg_extension* row) {
+    PreWrite();
+    if (row == nullptr) {
+        ereport(error::LogLevel::kError, "Catalog::InsertExtension: row is null");
+    }
+    if (row->oid == kInvalidOid) {
+        row->oid = AllocateOid();
+    }
+    pg_extension_rows_.push_back(row);
+    return row->oid;
+}
+
+const FormData_pg_extension* Catalog::GetExtensionByOid(Oid oid) const {
+    for (const auto* row : pg_extension_rows_) {
+        if (row->oid == oid)
+            return row;
+    }
+    return nullptr;
+}
+
+const FormData_pg_extension* Catalog::GetExtensionByName(const std::string& name) const {
+    for (const auto* row : pg_extension_rows_) {
+        if (row->extname == name)
+            return row;
+    }
+    return nullptr;
+}
+
+std::vector<const FormData_pg_extension*> Catalog::GetAllExtensions() const {
+    std::vector<const FormData_pg_extension*> result;
+    result.reserve(pg_extension_rows_.size());
+    for (const auto* row : pg_extension_rows_) {
+        result.push_back(row);
+    }
+    return result;
+}
+
+bool Catalog::DeleteExtension(Oid oid) {
+    PreWrite();
+    auto it = std::find_if(pg_extension_rows_.begin(), pg_extension_rows_.end(),
+                           [oid](const FormData_pg_extension* r) { return r->oid == oid; });
+    if (it == pg_extension_rows_.end())
+        return false;
+    pg_extension_rows_.erase(it);
+    return true;
+}
+
 // --- P1-2: Transactional catalog snapshot ---
 //
 // pgcpp does not implement per-row MVCC on catalog tables. Instead, the
@@ -1046,6 +1096,7 @@ struct Catalog::CatalogSnapshot {
     std::vector<FormData_pg_trigger*> pg_trigger_rows;
     std::vector<FormData_pg_rewrite*> pg_rewrite_rows;
     std::vector<FormData_pg_language*> pg_language_rows;
+    std::vector<FormData_pg_extension*> pg_extension_rows;
     Oid next_oid = kFirstNormalObjectId;
 
     ~CatalogSnapshot() {
@@ -1070,6 +1121,7 @@ struct Catalog::CatalogSnapshot {
         DeleteSnapshotRows(pg_trigger_rows);
         DeleteSnapshotRows(pg_rewrite_rows);
         DeleteSnapshotRows(pg_language_rows);
+        DeleteSnapshotRows(pg_extension_rows);
     }
 };
 
@@ -1109,6 +1161,8 @@ void Catalog::TakeSnapshot() {
     CopyUserRowsToSnapshot(pg_rewrite_rows_, snapshot_->pg_rewrite_rows, &FormData_pg_rewrite::oid);
     CopyUserRowsToSnapshot(pg_language_rows_, snapshot_->pg_language_rows,
                            &FormData_pg_language::oid);
+    CopyUserRowsToSnapshot(pg_extension_rows_, snapshot_->pg_extension_rows,
+                           &FormData_pg_extension::oid);
     snapshot_->next_oid = next_oid_;
 }
 
@@ -1138,6 +1192,7 @@ void Catalog::RestoreSnapshot() {
     FreeUserRows(pg_trigger_rows_, &FormData_pg_trigger::oid);
     FreeUserRows(pg_rewrite_rows_, &FormData_pg_rewrite::oid);
     FreeUserRows(pg_language_rows_, &FormData_pg_language::oid);
+    FreeUserRows(pg_extension_rows_, &FormData_pg_extension::oid);
     // Deep-copy snapshot rows back into the live vectors.
     RestoreUserRows(snapshot_->pg_class_rows, pg_class_rows_);
     RestoreUserRows(snapshot_->pg_attribute_rows, pg_attribute_rows_);
@@ -1160,6 +1215,7 @@ void Catalog::RestoreSnapshot() {
     RestoreUserRows(snapshot_->pg_trigger_rows, pg_trigger_rows_);
     RestoreUserRows(snapshot_->pg_rewrite_rows, pg_rewrite_rows_);
     RestoreUserRows(snapshot_->pg_language_rows, pg_language_rows_);
+    RestoreUserRows(snapshot_->pg_extension_rows, pg_extension_rows_);
     // Note: next_oid_ is intentionally NOT restored. Restoring it would cause
     // the next CREATE TABLE to reuse an OID whose physical storage file still
     // exists on disk (the MVP has no WAL redo / pendingDeletes mechanism to
@@ -1676,6 +1732,17 @@ std::vector<std::string> Ser(const FormData_pg_rewrite& r) {
 std::vector<std::string> Ser(const FormData_pg_language& r) {
     return {Fmt(r.oid),           Fmt(r.lanname),      Fmt(r.lanpltrusted), Fmt(r.lanplcallfoid),
             Fmt(r.laninlinefoid), Fmt(r.lanvalidator), Fmt(r.lanispl)};
+}
+
+std::vector<std::string> Ser(const FormData_pg_extension& r) {
+    return {Fmt(r.oid),
+            Fmt(r.extname),
+            Fmt(r.extowner),
+            Fmt(r.extnamespace),
+            Fmt(r.extrelocatable),
+            Fmt(r.extversion),
+            FmtOidVec(r.extconfig),
+            FmtStrVec(r.extcondition)};
 }
 
 // --- Per-struct deserializers ---
@@ -2517,6 +2584,26 @@ FormData_pg_language* DeserPgLanguage(const std::vector<std::string>& f) {
     return makePallocNode<FormData_pg_language>(t);
 }
 
+FormData_pg_extension* DeserPgExtension(const std::vector<std::string>& f) {
+    if (f.size() < 8)
+        return nullptr;
+    FormData_pg_extension t;
+    if (!ParseU32(f[0], t.oid))
+        return nullptr;
+    t.extname = f[1];
+    if (!ParseU32(f[2], t.extowner))
+        return nullptr;
+    if (!ParseU32(f[3], t.extnamespace))
+        return nullptr;
+    if (f[4] != "0" && f[4] != "1")
+        return nullptr;
+    t.extrelocatable = f[4] == "1";
+    t.extversion = f[5];
+    t.extconfig = ParseOidVec(f[6]);
+    t.extcondition = ParseStrVec(f[7]);
+    return makePallocNode<FormData_pg_extension>(t);
+}
+
 }  // namespace
 
 // --- Catalog: persistence (A-3) ---
@@ -2722,6 +2809,15 @@ bool Catalog::Save(const std::string& path) const {
         }
         return body;
     };
+    auto emit_extension = [&]() {
+        std::string body;
+        for (const auto* r : pg_extension_rows_) {
+            if (r->oid < kFirstNormalObjectId)
+                continue;
+            body += JoinTab(Ser(*r)) + '\n';
+        }
+        return body;
+    };
 
     write_section("[pg_class]", emit_class());
     write_section("[pg_attribute]", emit_attr());
@@ -2744,6 +2840,7 @@ bool Catalog::Save(const std::string& path) const {
     write_section("[pg_trigger]", emit_trigger());
     write_section("[pg_rewrite]", emit_rewrite());
     write_section("[pg_language]", emit_language());
+    write_section("[pg_extension]", emit_extension());
 
     out.flush();
     return out.good();
@@ -2845,6 +2942,9 @@ bool Catalog::Load(const std::string& path) {
         } else if (section == "[pg_language]") {
             if (auto* r = DeserPgLanguage(fields))
                 InsertLanguage(r);
+        } else if (section == "[pg_extension]") {
+            if (auto* r = DeserPgExtension(fields))
+                InsertExtension(r);
         }
     }
 

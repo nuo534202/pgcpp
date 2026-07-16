@@ -160,6 +160,8 @@ const char* PlanTypeName(PlanType t) {
             return "Gather";
         case PlanType::kGatherMerge:
             return "Gather Merge";
+        case PlanType::kForeignScan:
+            return "Foreign Scan";
     }
     return "Unknown";
 }

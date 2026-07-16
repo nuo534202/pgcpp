@@ -1982,6 +1982,35 @@ public:
     std::string lanname;  // language name (default "plpgsql")
 };
 
+// CreateExtensionStmt — CREATE EXTENSION name [WITH] [SCHEMA schema]
+//   [VERSION version] [CASCADE]
+class CreateExtensionStmt : public Node {
+public:
+    CreateExtensionStmt() : Node(pgcpp::nodes::NodeTag::kCreateExtensionStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    bool if_not_exists = false;  // CREATE IF NOT EXISTS
+    std::string extname;         // extension name (unqualified)
+    std::string schema;          // target schema (empty = default)
+    std::string version;         // requested version (empty = default)
+    bool cascade = false;        // CASCADE (install dependencies)
+};
+
+// DropExtensionStmt — DROP EXTENSION name [IF EXISTS] [CASCADE|RESTRICT]
+class DropExtensionStmt : public Node {
+public:
+    DropExtensionStmt() : Node(pgcpp::nodes::NodeTag::kDropExtensionStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::vector<std::string> extnames;  // extensions to drop
+    bool missing_ok = false;            // IF EXISTS
+    bool cascade = false;               // CASCADE (drop dependent objects)
+};
+
 // CreateTrigStmt — CREATE TRIGGER
 class CreateTrigStmt : public Node {
 public:

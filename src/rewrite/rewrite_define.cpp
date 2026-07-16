@@ -109,6 +109,7 @@ bool IsViewRelation(int relid) {
 // --- Helper: create a pg_rewrite entry for a view (_RETURN rule) ---
 
 Oid CreateViewRewriteRule(int view_relid, const std::string& view_name) {
+    (void)view_name;  // reserved for future naming validation
     if (GetCatalog() == nullptr)
         return 0;
     auto* rule = makePallocNode<FormData_pg_rewrite>();

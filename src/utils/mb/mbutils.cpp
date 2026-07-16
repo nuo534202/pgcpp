@@ -103,8 +103,8 @@ std::string Utf8ToGbk(std::string_view src) {
         } else if (cp >= 0x4E00 && cp < 0x4E00 + (0x7F * 0xBF)) {
             // Inverse of the approximate mapping above.
             uint32_t offset = cp - 0x4E00;
-            unsigned char c1 = 0x81 + (offset / 0xBF);
-            unsigned char c2 = 0x40 + (offset % 0xBF);
+            unsigned char c1 = static_cast<unsigned char>(0x81 + (offset / 0xBF));
+            unsigned char c2 = static_cast<unsigned char>(0x40 + (offset % 0xBF));
             result += static_cast<char>(c1);
             result += static_cast<char>(c2);
         } else {

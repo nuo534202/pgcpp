@@ -18,6 +18,7 @@
 #include "commands/dbcommands.hpp"
 #include "commands/domaincmds.hpp"
 #include "commands/explain.hpp"
+#include "commands/extensioncmds.hpp"
 #include "commands/functioncmds.hpp"
 #include "commands/indexcmds.hpp"
 #include "commands/languagecmds.hpp"
@@ -41,6 +42,7 @@ using pgcpp::commands::AlterTable;
 using pgcpp::commands::AnalyzeCommand;
 using pgcpp::commands::CreateCast;
 using pgcpp::commands::createdb;
+using pgcpp::commands::CreateExtension;
 using pgcpp::commands::CreateFunction;
 using pgcpp::commands::CreateLanguage;
 using pgcpp::commands::CreateSchemaCommand;
@@ -55,6 +57,7 @@ using pgcpp::commands::DefineView;
 using pgcpp::commands::DoBlock;
 using pgcpp::commands::DoCopy;
 using pgcpp::commands::dropdb;
+using pgcpp::commands::DropExtension;
 using pgcpp::commands::DropLanguage;
 using pgcpp::commands::DropTableSpace;
 using pgcpp::commands::ExecuteTruncate;
@@ -68,6 +71,7 @@ using pgcpp::parser::CopyStmt;
 using pgcpp::parser::CreateCastStmt;
 using pgcpp::parser::CreatedbStmt;
 using pgcpp::parser::CreateDomainStmt;
+using pgcpp::parser::CreateExtensionStmt;
 using pgcpp::parser::CreateFunctionStmt;
 using pgcpp::parser::CreateLanguageStmt;
 using pgcpp::parser::CreateSchemaStmt;
@@ -78,6 +82,7 @@ using pgcpp::parser::CreateTrigStmt;
 using pgcpp::parser::CreateTypeStmt;
 using pgcpp::parser::DoStmt;
 using pgcpp::parser::DropdbStmt;
+using pgcpp::parser::DropExtensionStmt;
 using pgcpp::parser::DropLanguageStmt;
 using pgcpp::parser::DropStmt;
 using pgcpp::parser::DropTableSpaceStmt;
@@ -259,6 +264,13 @@ std::string ProcessUtility(Node* stmt, OutputSink* sink) {
         case NodeTag::kDoStmt:
             tag = DoBlock(static_cast<DoStmt*>(stmt));
             break;
+        // --- Extension mechanism (CREATE/DROP EXTENSION) -------------
+        case NodeTag::kCreateExtensionStmt:
+            tag = CreateExtension(static_cast<CreateExtensionStmt*>(stmt));
+            break;
+        case NodeTag::kDropExtensionStmt:
+            tag = DropExtension(static_cast<DropExtensionStmt*>(stmt));
+            break;
         case NodeTag::kCreateTypeStmt:
             tag = DefineType(static_cast<CreateTypeStmt*>(stmt));
             break;
@@ -371,6 +383,10 @@ std::string CreateCommandTag(Node* stmt) {
             return "DROP LANGUAGE";
         case NodeTag::kDoStmt:
             return "DO";
+        case NodeTag::kCreateExtensionStmt:
+            return "CREATE EXTENSION";
+        case NodeTag::kDropExtensionStmt:
+            return "DROP EXTENSION";
         case NodeTag::kCreateTypeStmt:
             return "CREATE TYPE";
         case NodeTag::kCreateDomainStmt:

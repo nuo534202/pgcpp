@@ -135,6 +135,9 @@ enum class NodeTag : int {
     kCreateLanguageStmt,
     kDropLanguageStmt,
     kDoStmt,
+    // P3-10 CREATE EXTENSION mechanism
+    kCreateExtensionStmt,
+    kDropExtensionStmt,
     kCreateTrigStmt,
     kCreateRoleStmt,
     kAlterRoleStmt,
