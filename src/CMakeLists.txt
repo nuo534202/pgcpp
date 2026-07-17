@@ -39,6 +39,7 @@ list(REMOVE_ITEM PGCPP_CORE_SOURCES
 # a separate pgcpp_client static library below (D-4 layering fix).
 file(GLOB PGCPP_CLIENT_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/tools/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/libpq/*.cpp"
 )
 list(REMOVE_ITEM PGCPP_CORE_SOURCES ${PGCPP_CLIENT_SOURCES})
 # Append Bison generated source (lives in the build tree, not src/).
@@ -88,9 +89,10 @@ set_source_files_properties(
 # pgcpp_client — client-side tool library (M13)
 #
 # Contains the library functions for psql, pg_dump, pg_isready, etc.
-# (located in src/tools/*.cpp). These are linked into the thin CLI
-# executables in tools/<name>/<name>.cpp. Kept separate from pgcpp_core
-# so the server library does not carry client-side code (D-4 fix).
+# (located in src/tools/*.cpp) and the libpq client library (P3-11,
+# src/libpq/*.cpp). These are linked into the thin CLI executables in
+# tools/<name>/<name>.cpp. Kept separate from pgcpp_core so the server
+# library does not carry client-side code (D-4 fix).
 # ---------------------------------------------------------------------------
 add_library(pgcpp_client STATIC ${PGCPP_CLIENT_SOURCES})
 target_compile_features(pgcpp_client PUBLIC cxx_std_20)

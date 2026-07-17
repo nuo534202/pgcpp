@@ -694,13 +694,17 @@ void BackendMain(int client_fd) {
     }
 
     // Send BackendKeyData (type 'K', payload: int32 pid, int32 key).
+    // Both fields MUST be in network byte order (big-endian) per the
+    // frontend/backend protocol spec. Without htonl() the client reads a
+    // byte-swapped value — usually still positive (so tests passed by luck),
+    // but negative whenever the PID's low byte has its high bit set.
     {
         char key_msg[13];
         key_msg[0] = 'K';
         int32_t key_len = htonl(12);
         std::memcpy(&key_msg[1], &key_len, 4);
-        int32_t pid = static_cast<int32_t>(getpid());
-        int32_t key = 0;  // cancellation key (unused)
+        int32_t pid = htonl(static_cast<int32_t>(getpid()));
+        int32_t key = htonl(0);  // cancellation key (unused)
         std::memcpy(&key_msg[5], &pid, 4);
         std::memcpy(&key_msg[9], &key, 4);
         WriteAll(client_fd, key_msg, 13);
