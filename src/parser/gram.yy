@@ -268,11 +268,11 @@ static inline char keyMatchToChar(int match) {
 %token MONTH_P MOVE NAME_P NAMES NEW NEXT NFC NFD NFKC NFKD NO NOCREATEDB NOCREATEROLE NOREPLICATION NOSUPERUSER NOTHING NOTIFY
 %token NOWAIT NULLS_P OBJECT_P OF OFF OIDS OLD OPERATOR OPTION OPTIONS
 %token ORDINALITY OTHERS OVER OVERRIDING OWNED OWNER PARALLEL PARAMETER PARSER
-%token PARTIAL PARTITION PASSING PASSWORD PLANS POLICY PRECEDING PREPARE
+%token PARTIAL PARTITION PASSING PASSWORD PERMISSIVE PLANS POLICY PRECEDING PREPARE
 %token PREPARED PRESERVE PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROCEDURES
 %token PROGRAM PUBLICATION QUOTE RANGE READ REASSIGN RECHECK RECURSIVE REF_P
 %token REFERENCING REFRESH REINDEX RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA
-%token REPLICATION RESET RESTART RESTRICT RETURN RETURNS REVOKE ROLE ROLLBACK
+%token REPLICATION RESET RESTART RESTRICT RESTRICTIVE RETURN RETURNS REVOKE ROLE ROLLBACK
 %token ROLLUP ROUTINE ROUTINES ROWS RULE SAVEPOINT SCHEMA SCHEMAS SCROLL
 %token SEARCH SECOND_P SECURITY SEQUENCE SEQUENCES SERIALIZABLE SERVER SESSION
 %token SET SETS SETTINGS SHARE SHOW SIMPLE SKIP SNAPSHOT SQL_P STABLE STANDALONE_P START
@@ -483,6 +483,23 @@ static inline char keyMatchToChar(int match) {
 %type <Node*> CreatedbStmt DropdbStmt AlterDatabaseStmt
 %type <Node*> CreateTypeStmt CreateDomainStmt CreateCastStmt
 %type <std::vector<Node*>> enum_label_list
+// P3-13 SQL language remaining items
+%type <Node*> CreatePolicyStmt AlterPolicyStmt DropPolicyStmt
+%type <Node*> CreatePublicationStmt AlterPublicationStmt DropPublicationStmt
+%type <Node*> CreateSubscriptionStmt AlterSubscriptionStmt DropSubscriptionStmt
+%type <Node*> CreateForeignTableStmt CreateServerStmt AlterServerStmt DropServerStmt
+%type <Node*> CreateRuleStmt AlterRuleStmt DropRuleStmt
+%type <Node*> SecLabelStmt AlterSystemStmt ImportForeignSchemaStmt
+%type <pgcpp::parser::PolicyKind> policy_cmd
+%type <pgcpp::parser::AlterPublicationStmt::Action> alter_publication_action
+%type <pgcpp::parser::ImportForeignSchemaStmt::Kind> import_foreign_schema_kind
+%type <bool> opt_permissive opt_replace_rule opt_instead opt_nothing
+%type <Node*> opt_policy_qual_clause opt_policy_check_clause
+%type <std::vector<Node*>> opt_role_list_for_policy opt_publication_tables opt_server_options
+%type <std::vector<Node*>> opt_with_clause_def_list
+%type <std::vector<std::string>> publication_name_list publication_name_list_for_sub
+%type <std::string> opt_security_label_provider opt_server_type opt_server_version
+%type <int> rule_event
 %type <bool> opt_domain_constraints domain_constraint
 %type <pgcpp::catalog::CastContext> opt_cast_context
 %type <Node*> alter_table_cmd analyze_option create_as_target
@@ -631,6 +648,26 @@ stmt:
     | CreateTypeStmt
     | CreateDomainStmt
     | CreateCastStmt
+    // P3-13 SQL language remaining items
+    | CreatePolicyStmt
+    | AlterPolicyStmt
+    | DropPolicyStmt
+    | CreatePublicationStmt
+    | AlterPublicationStmt
+    | DropPublicationStmt
+    | CreateSubscriptionStmt
+    | AlterSubscriptionStmt
+    | DropSubscriptionStmt
+    | CreateForeignTableStmt
+    | CreateServerStmt
+    | AlterServerStmt
+    | DropServerStmt
+    | CreateRuleStmt
+    | AlterRuleStmt
+    | DropRuleStmt
+    | SecLabelStmt
+    | AlterSystemStmt
+    | ImportForeignSchemaStmt
     | /* empty */
         { $$ = nullptr; }
 ;
@@ -714,6 +751,653 @@ opt_cast_context:
         { $$ = pgcpp::catalog::CastContext::kAssignment; }
     | AS IMPLICIT_P
         { $$ = pgcpp::catalog::CastContext::kImplicit; }
+;
+
+// ===========================================================================
+// P3-13 — SQL language remaining items
+// ===========================================================================
+
+// --- CREATE / ALTER / DROP POLICY -------------------------------------------
+
+opt_permissive:
+      /* empty */
+        { $$ = true; }    // default: PERMISSIVE
+    | AS PERMISSIVE
+        { $$ = true; }
+    | AS RESTRICTIVE
+        { $$ = false; }
+;
+
+policy_cmd:
+      ALL
+        { $$ = pgcpp::parser::PolicyKind::kAll; }
+    | SELECT
+        { $$ = pgcpp::parser::PolicyKind::kSelect; }
+    | INSERT
+        { $$ = pgcpp::parser::PolicyKind::kInsert; }
+    | UPDATE
+        { $$ = pgcpp::parser::PolicyKind::kUpdate; }
+    | DELETE_P
+        { $$ = pgcpp::parser::PolicyKind::kDelete; }
+;
+
+opt_role_list_for_policy:
+      /* empty */
+        { $$ = {}; }
+    | TO role_list
+        { $$ = std::move($2); }
+;
+
+role_list:
+      RoleSpec
+        { $$.push_back($1); }
+    | role_list ',' RoleSpec
+        { $1.push_back($3); $$ = std::move($1); }
+;
+
+opt_role_list:
+      /* empty */
+        { $$ = {}; }
+    | role_list
+        { $$ = std::move($1); }
+;
+
+CreatePolicyStmt:
+      CREATE opt_or_replace POLICY name ON qualified_name opt_permissive
+          FOR policy_cmd opt_role_list_for_policy
+          opt_policy_qual_clause opt_policy_check_clause
+        {
+            auto* n = makeNode<CreatePolicyStmt>();
+            n->replace = $2;
+            n->policy_name = $4;
+            n->table = static_cast<RangeVar*>($6);
+            n->permissive = $7;
+            n->cmd = $9;
+            n->roles = std::move($10);
+            // qual / with_check are parsed as raw expressions; store them as Node*.
+            n->qual = $11;
+            n->with_check = $12;
+            $$ = n;
+        }
+;
+
+AlterPolicyStmt:
+      ALTER POLICY name ON qualified_name opt_role_list_for_policy
+          opt_policy_qual_clause opt_policy_check_clause
+        {
+            auto* n = makeNode<AlterPolicyStmt>();
+            n->policy_name = $3;
+            n->table = static_cast<RangeVar*>($5);
+            n->roles = std::move($6);
+            n->qual = $7;
+            n->with_check = $8;
+            $$ = n;
+        }
+;
+
+DropPolicyStmt:
+      DROP POLICY IF_P EXISTS name ON qualified_name opt_drop_behavior
+        {
+            auto* n = makeNode<DropPolicyStmt>();
+            n->policy_name = $5;
+            n->table = static_cast<RangeVar*>($7);
+            n->missing_ok = true;
+            n->behavior = $8;
+            $$ = n;
+        }
+    | DROP POLICY name ON qualified_name opt_drop_behavior
+        {
+            auto* n = makeNode<DropPolicyStmt>();
+            n->policy_name = $3;
+            n->table = static_cast<RangeVar*>($5);
+            n->missing_ok = false;
+            n->behavior = $6;
+            $$ = n;
+        }
+;
+
+// Local variants of USING (...) / WITH CHECK (...) to avoid coupling with the
+// DELETE-grammar opt_using_clause (which returns a vector<Node*>).
+opt_policy_qual_clause:
+      /* empty */
+        { $$ = nullptr; }
+    | USING '(' a_expr ')'
+        { $$ = $3; }
+;
+
+opt_policy_check_clause:
+      /* empty */
+        { $$ = nullptr; }
+    | WITH CHECK '(' a_expr ')'
+        { $$ = $4; }
+;
+
+// --- CREATE / ALTER / DROP PUBLATION ----------------------------------------
+
+opt_publication_tables:
+      /* empty */
+        { $$ = {}; }
+    | FOR TABLE qualified_name_list
+        { $$ = std::move($3); }
+;
+
+CreatePublicationStmt:
+      CREATE PUBLICATION name opt_publication_tables opt_with_clause_def_list
+        {
+            auto* n = makeNode<CreatePublicationStmt>();
+            n->pubname = $3;
+            // Distinguish FOR ALL TABLES by checking the empty-tables + flag case.
+            // We use a heuristic: if neither FOR TABLE nor FOR ALL TABLES was given,
+            // publications is empty and for_all_tables is false.
+            // The grammar disambiguates via the alternative below.
+            n->publications = std::move($4);
+            n->for_all_tables = false;
+            n->options = std::move($5);
+            $$ = n;
+        }
+    | CREATE PUBLICATION name FOR ALL TABLES opt_with_clause_def_list
+        {
+            auto* n = makeNode<CreatePublicationStmt>();
+            n->pubname = $3;
+            n->publications = {};
+            n->for_all_tables = true;
+            n->options = std::move($7);
+            $$ = n;
+        }
+;
+
+opt_with_clause_def_list:
+      /* empty */
+        { $$ = {}; }
+    | WITH '(' reloption_list ')'
+        { $$ = std::move($3); }
+;
+
+alter_publication_action:
+      ADD_P
+        { $$ = pgcpp::parser::AlterPublicationStmt::Action::kAdd; }
+    | SET
+        { $$ = pgcpp::parser::AlterPublicationStmt::Action::kSet; }
+    | DROP
+        { $$ = pgcpp::parser::AlterPublicationStmt::Action::kDrop; }
+;
+
+AlterPublicationStmt:
+      ALTER PUBLICATION name alter_publication_action TABLE qualified_name_list
+        {
+            auto* n = makeNode<AlterPublicationStmt>();
+            n->pubname = $3;
+            n->action = $4;
+            n->tables = std::move($6);
+            $$ = n;
+        }
+    | ALTER PUBLICATION name SET '(' reloption_list ')'
+        {
+            auto* n = makeNode<AlterPublicationStmt>();
+            n->pubname = $3;
+            n->action = pgcpp::parser::AlterPublicationStmt::Action::kSet;
+            n->options = std::move($6);
+            $$ = n;
+        }
+;
+
+DropPublicationStmt:
+      DROP PUBLICATION IF_P EXISTS name opt_drop_behavior
+        {
+            auto* n = makeNode<DropPublicationStmt>();
+            n->pubnames.push_back($5);
+            n->missing_ok = true;
+            n->behavior = $6;
+            $$ = n;
+        }
+    | DROP PUBLICATION name opt_drop_behavior
+        {
+            auto* n = makeNode<DropPublicationStmt>();
+            n->pubnames.push_back($3);
+            n->missing_ok = false;
+            n->behavior = $4;
+            $$ = n;
+        }
+    | DROP PUBLICATION publication_name_list opt_drop_behavior
+        {
+            auto* n = makeNode<DropPublicationStmt>();
+            n->pubnames = std::move($3);
+            n->missing_ok = false;
+            n->behavior = $4;
+            $$ = n;
+        }
+    | DROP PUBLICATION IF_P EXISTS publication_name_list opt_drop_behavior
+        {
+            auto* n = makeNode<DropPublicationStmt>();
+            n->pubnames = std::move($5);
+            n->missing_ok = true;
+            n->behavior = $6;
+            $$ = n;
+        }
+;
+
+publication_name_list:
+      name
+        { $$.push_back($1); }
+    | publication_name_list ',' name
+        { $1.push_back($3); $$ = std::move($1); }
+;
+
+// --- CREATE / ALTER / DROP SUBSCRIPTION -------------------------------------
+
+publication_name_list_for_sub:
+      /* empty */
+        { $$ = {}; }
+    | PUBLICATION publication_name_list
+        { $$ = std::move($2); }
+;
+
+CreateSubscriptionStmt:
+      CREATE SUBSCRIPTION name CONNECTION Sconst publication_name_list_for_sub
+          opt_with_clause_def_list
+        {
+            auto* n = makeNode<CreateSubscriptionStmt>();
+            n->subname = $3;
+            n->conninfo = $5;
+            n->publications = std::move($6);
+            n->options = std::move($7);
+            $$ = n;
+        }
+;
+
+// --- CREATE / ALTER / DROP SUBSCRIPTION -------------------------------------
+
+AlterSubscriptionStmt:
+      ALTER SUBSCRIPTION name CONNECTION Sconst
+        {
+            auto* n = makeNode<AlterSubscriptionStmt>();
+            n->subname = $3;
+            n->kind = pgcpp::parser::AlterSubscriptionStmt::Kind::kConnection;
+            n->conninfo = $5;
+            $$ = n;
+        }
+    | ALTER SUBSCRIPTION name SET PUBLICATION publication_name_list opt_with_clause_def_list
+        {
+            auto* n = makeNode<AlterSubscriptionStmt>();
+            n->subname = $3;
+            n->kind = pgcpp::parser::AlterSubscriptionStmt::Kind::kSetPublication;
+            n->publications = std::move($6);
+            n->options = std::move($7);
+            $$ = n;
+        }
+    | ALTER SUBSCRIPTION name REFRESH PUBLICATION opt_with_clause_def_list
+        {
+            auto* n = makeNode<AlterSubscriptionStmt>();
+            n->subname = $3;
+            n->kind = pgcpp::parser::AlterSubscriptionStmt::Kind::kRefreshPublication;
+            n->options = std::move($6);
+            $$ = n;
+        }
+    | ALTER SUBSCRIPTION name ENABLE_P
+        {
+            auto* n = makeNode<AlterSubscriptionStmt>();
+            n->subname = $3;
+            n->kind = pgcpp::parser::AlterSubscriptionStmt::Kind::kEnable;
+            $$ = n;
+        }
+    | ALTER SUBSCRIPTION name DISABLE_P
+        {
+            auto* n = makeNode<AlterSubscriptionStmt>();
+            n->subname = $3;
+            n->kind = pgcpp::parser::AlterSubscriptionStmt::Kind::kDisable;
+            $$ = n;
+        }
+    | ALTER SUBSCRIPTION name SET '(' reloption_list ')'
+        {
+            auto* n = makeNode<AlterSubscriptionStmt>();
+            n->subname = $3;
+            n->kind = pgcpp::parser::AlterSubscriptionStmt::Kind::kSetOptions;
+            n->options = std::move($6);
+            $$ = n;
+        }
+;
+
+DropSubscriptionStmt:
+      DROP SUBSCRIPTION IF_P EXISTS name opt_drop_behavior
+        {
+            auto* n = makeNode<DropSubscriptionStmt>();
+            n->subname = $5;
+            n->missing_ok = true;
+            n->behavior = $6;
+            $$ = n;
+        }
+    | DROP SUBSCRIPTION name opt_drop_behavior
+        {
+            auto* n = makeNode<DropSubscriptionStmt>();
+            n->subname = $3;
+            n->missing_ok = false;
+            n->behavior = $4;
+            $$ = n;
+        }
+;
+
+// --- CREATE FOREIGN TABLE / SERVER / IMPORT FOREIGN SCHEMA ------------------
+
+CreateForeignTableStmt:
+      CREATE opt_or_replace FOREIGN TABLE qualified_name '(' opt_table_element_list ')'
+          SERVER name opt_server_options
+        {
+            auto* n = makeNode<CreateForeignTableStmt>();
+            n->relation = static_cast<RangeVar*>($5);
+            n->tableElts = std::move($7);
+            n->servername = $10;
+            n->options = std::move($11);
+            $$ = n;
+        }
+    | CREATE opt_or_replace FOREIGN TABLE IF_P NOT EXISTS qualified_name
+          '(' opt_table_element_list ')' SERVER name opt_server_options
+        {
+            auto* n = makeNode<CreateForeignTableStmt>();
+            n->if_not_exists = true;
+            n->relation = static_cast<RangeVar*>($8);
+            n->tableElts = std::move($10);
+            n->servername = $13;
+            n->options = std::move($14);
+            $$ = n;
+        }
+;
+
+opt_server_options:
+      /* empty */
+        { $$ = {}; }
+    | OPTIONS '(' reloption_list ')'
+        { $$ = std::move($3); }
+;
+
+opt_server_type:
+      /* empty */
+        { $$ = ""; }
+    | TYPE_P Sconst
+        { $$ = $2; }
+;
+
+opt_server_version:
+      /* empty */
+        { $$ = ""; }
+    | VERSION_P Sconst
+        { $$ = $2; }
+;
+
+CreateServerStmt:
+      CREATE SERVER name opt_server_type opt_server_version FOREIGN DATA_P WRAPPER name
+          opt_server_options
+        {
+            auto* n = makeNode<CreateServerStmt>();
+            n->servername = $3;
+            n->servertype = $4;
+            n->version = $5;
+            n->fdwname = $9;
+            n->options = std::move($10);
+            $$ = n;
+        }
+    | CREATE SERVER IF_P NOT EXISTS name opt_server_type opt_server_version
+          FOREIGN DATA_P WRAPPER name opt_server_options
+        {
+            auto* n = makeNode<CreateServerStmt>();
+            n->if_not_exists = true;
+            n->servername = $6;
+            n->servertype = $7;
+            n->version = $8;
+            n->fdwname = $12;
+            n->options = std::move($13);
+            $$ = n;
+        }
+    | CREATE SERVER name opt_server_type opt_server_version FOREIGN DATA_P WRAPPER name
+          OWNER TO RoleSpec opt_server_options
+        {
+            auto* n = makeNode<CreateServerStmt>();
+            n->servername = $3;
+            n->servertype = $4;
+            n->version = $5;
+            n->fdwname = $9;
+            n->owner = static_cast<RoleSpec*>($12);
+            n->options = std::move($13);
+            $$ = n;
+        }
+;
+
+AlterServerStmt:
+      ALTER SERVER name opt_server_version opt_server_options
+        {
+            auto* n = makeNode<AlterServerStmt>();
+            n->servername = $3;
+            n->kind = pgcpp::parser::AlterServerStmt::Kind::kAlterOptions;
+            n->version = $4;
+            n->has_version = !$4.empty();
+            n->options = std::move($5);
+            $$ = n;
+        }
+    | ALTER SERVER name OWNER TO RoleSpec
+        {
+            auto* n = makeNode<AlterServerStmt>();
+            n->servername = $3;
+            n->kind = pgcpp::parser::AlterServerStmt::Kind::kChangeOwner;
+            n->owner = static_cast<RoleSpec*>($6);
+            $$ = n;
+        }
+;
+
+DropServerStmt:
+      DROP SERVER IF_P EXISTS name opt_drop_behavior
+        {
+            auto* n = makeNode<DropServerStmt>();
+            n->servernames.push_back($5);
+            n->missing_ok = true;
+            n->behavior = $6;
+            $$ = n;
+        }
+    | DROP SERVER name opt_drop_behavior
+        {
+            auto* n = makeNode<DropServerStmt>();
+            n->servernames.push_back($3);
+            n->missing_ok = false;
+            n->behavior = $4;
+            $$ = n;
+        }
+;
+
+import_foreign_schema_kind:
+      LIMIT TO
+        { $$ = pgcpp::parser::ImportForeignSchemaStmt::Kind::kLimitTo; }
+    | EXCEPT
+        { $$ = pgcpp::parser::ImportForeignSchemaStmt::Kind::kExcept; }
+;
+
+ImportForeignSchemaStmt:
+      IMPORT_P FOREIGN SCHEMA name FROM SERVER name INTO name opt_server_options
+        {
+            auto* n = makeNode<ImportForeignSchemaStmt>();
+            n->remote_schema = $4;
+            n->server_name = $7;
+            n->local_schema = $9;
+            n->options = std::move($10);
+            $$ = n;
+        }
+    | IMPORT_P FOREIGN SCHEMA name import_foreign_schema_kind '(' qualified_name_list ')'
+          FROM SERVER name INTO name opt_server_options
+        {
+            auto* n = makeNode<ImportForeignSchemaStmt>();
+            n->remote_schema = $4;
+            n->kind = $5;
+            n->table_list = std::move($7);
+            n->server_name = $11;
+            n->local_schema = $13;
+            n->options = std::move($14);
+            $$ = n;
+        }
+;
+
+// --- CREATE / ALTER / DROP RULE ---------------------------------------------
+
+rule_event:
+      SELECT
+        { $$ = static_cast<int>(pgcpp::parser::CmdType::kSelect); }
+    | INSERT
+        { $$ = static_cast<int>(pgcpp::parser::CmdType::kInsert); }
+    | UPDATE
+        { $$ = static_cast<int>(pgcpp::parser::CmdType::kUpdate); }
+    | DELETE_P
+        { $$ = static_cast<int>(pgcpp::parser::CmdType::kDelete); }
+;
+
+opt_replace_rule:
+      /* empty */
+        { $$ = false; }
+    | OR REPLACE
+        { $$ = true; }
+;
+
+opt_instead:
+      /* empty */
+        { $$ = false; }
+    | INSTEAD
+        { $$ = true; }
+;
+
+opt_nothing:
+      /* empty */
+        { $$ = false; }
+    | NOTHING
+        { $$ = true; }
+;
+
+CreateRuleStmt:
+      CREATE opt_replace_rule RULE name AS ON rule_event TO qualified_name
+          opt_where_clause DO opt_instead opt_nothing
+        {
+            auto* n = makeNode<CreateRuleStmt>();
+            n->replace = $2;
+            n->rule_name = $4;
+            n->event = $7;
+            n->relation = static_cast<RangeVar*>($9);
+            n->where_clause = $10;
+            // $11 is DO; $12 is opt_instead; $13 is opt_nothing
+            n->instead = $12;
+            n->nothing = $13;
+            $$ = n;
+        }
+    | CREATE opt_replace_rule RULE name AS ON rule_event TO qualified_name
+          opt_where_clause DO INSTEAD SelectStmt
+        {
+            auto* n = makeNode<CreateRuleStmt>();
+            n->replace = $2;
+            n->rule_name = $4;
+            n->event = $7;
+            n->relation = static_cast<RangeVar*>($9);
+            n->where_clause = $10;
+            n->instead = true;
+            n->actions.push_back($13);
+            $$ = n;
+        }
+;
+
+AlterRuleStmt:
+      ALTER RULE name ON qualified_name DO NOTHING
+        {
+            auto* n = makeNode<AlterRuleStmt>();
+            n->rule_name = $3;
+            n->relation = static_cast<RangeVar*>($5);
+            n->nothing = true;
+            $$ = n;
+        }
+    | ALTER RULE name ON qualified_name DO INSTEAD SelectStmt
+        {
+            auto* n = makeNode<AlterRuleStmt>();
+            n->rule_name = $3;
+            n->relation = static_cast<RangeVar*>($5);
+            n->action = $8;
+            $$ = n;
+        }
+;
+
+DropRuleStmt:
+      DROP RULE IF_P EXISTS name ON qualified_name opt_drop_behavior
+        {
+            auto* n = makeNode<DropRuleStmt>();
+            n->rule_names.push_back($5);
+            n->relation = static_cast<RangeVar*>($7);
+            n->missing_ok = true;
+            n->behavior = $8;
+            $$ = n;
+        }
+    | DROP RULE name ON qualified_name opt_drop_behavior
+        {
+            auto* n = makeNode<DropRuleStmt>();
+            n->rule_names.push_back($3);
+            n->relation = static_cast<RangeVar*>($5);
+            n->missing_ok = false;
+            n->behavior = $6;
+            $$ = n;
+        }
+;
+
+// --- SECURITY LABEL ---------------------------------------------------------
+
+opt_security_label_provider:
+      /* empty */
+        { $$ = ""; }
+    | FOR name
+        { $$ = $2; }
+;
+
+SecLabelStmt:
+      SECURITY LABEL opt_security_label_provider ON qualified_name IS Sconst
+        {
+            auto* n = makeNode<SecLabelStmt>();
+            auto* rv = static_cast<RangeVar*>($5);
+            n->provider = $3;
+            n->objtype = pgcpp::parser::ObjectType::kTable;
+            // Encode the qualified_name as a list of String Value nodes.
+            if (!rv->catalogname.empty())
+                n->object.push_back(makeString(rv->catalogname));
+            n->object.push_back(makeString(rv->relname));
+            n->label = $7;
+            $$ = n;
+        }
+    | SECURITY LABEL opt_security_label_provider ON qualified_name IS NULL_P
+        {
+            auto* n = makeNode<SecLabelStmt>();
+            auto* rv = static_cast<RangeVar*>($5);
+            n->provider = $3;
+            n->objtype = pgcpp::parser::ObjectType::kTable;
+            if (!rv->catalogname.empty())
+                n->object.push_back(makeString(rv->catalogname));
+            n->object.push_back(makeString(rv->relname));
+            // Empty label => remove the security label.
+            n->label = "";
+            $$ = n;
+        }
+;
+
+// --- ALTER SYSTEM -----------------------------------------------------------
+
+AlterSystemStmt:
+      ALTER SYSTEM_P SET name '=' def_arg
+        {
+            auto* n = makeNode<AlterSystemStmt>();
+            n->name = $4;
+            n->args.push_back($6);
+            n->kind = pgcpp::parser::AlterSystemStmt::Kind::kSet;
+            $$ = n;
+        }
+    | ALTER SYSTEM_P RESET name
+        {
+            auto* n = makeNode<AlterSystemStmt>();
+            n->name = $4;
+            n->kind = pgcpp::parser::AlterSystemStmt::Kind::kReset;
+            $$ = n;
+        }
+    | ALTER SYSTEM_P RESET ALL
+        {
+            auto* n = makeNode<AlterSystemStmt>();
+            n->kind = pgcpp::parser::AlterSystemStmt::Kind::kResetAll;
+            $$ = n;
+        }
 ;
 
 // SELECT statement.

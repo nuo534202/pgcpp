@@ -19,11 +19,18 @@
 #include "commands/domaincmds.hpp"
 #include "commands/explain.hpp"
 #include "commands/extensioncmds.hpp"
+#include "commands/foreigncmds.hpp"
 #include "commands/functioncmds.hpp"
 #include "commands/indexcmds.hpp"
 #include "commands/languagecmds.hpp"
+#include "commands/policycmds.hpp"
+#include "commands/publicationcmds.hpp"
+#include "commands/rulecmds.hpp"
 #include "commands/schemacmds.hpp"
+#include "commands/seclabelcmds.hpp"
 #include "commands/sequence.hpp"
+#include "commands/subscriptioncmds.hpp"
+#include "commands/systemcmds.hpp"
 #include "commands/tablecmds.hpp"
 #include "commands/tablespace.hpp"
 #include "commands/trigger.hpp"
@@ -38,14 +45,26 @@
 
 namespace pgcpp::protocol {
 
+using pgcpp::commands::AlterPolicy;
+using pgcpp::commands::AlterPublication;
+using pgcpp::commands::AlterRule;
+using pgcpp::commands::AlterServer;
+using pgcpp::commands::AlterSubscription;
+using pgcpp::commands::AlterSystem;
 using pgcpp::commands::AlterTable;
 using pgcpp::commands::AnalyzeCommand;
 using pgcpp::commands::CreateCast;
 using pgcpp::commands::createdb;
 using pgcpp::commands::CreateExtension;
+using pgcpp::commands::CreateForeignTable;
 using pgcpp::commands::CreateFunction;
 using pgcpp::commands::CreateLanguage;
+using pgcpp::commands::CreatePolicy;
+using pgcpp::commands::CreatePublication;
+using pgcpp::commands::CreateRule;
 using pgcpp::commands::CreateSchemaCommand;
+using pgcpp::commands::CreateServer;
+using pgcpp::commands::CreateSubscription;
 using pgcpp::commands::CreateTableSpace;
 using pgcpp::commands::CreateTrigger;
 using pgcpp::commands::DefineDomain;
@@ -59,24 +78,43 @@ using pgcpp::commands::DoCopy;
 using pgcpp::commands::dropdb;
 using pgcpp::commands::DropExtension;
 using pgcpp::commands::DropLanguage;
+using pgcpp::commands::DropPolicy;
+using pgcpp::commands::DropPublication;
+using pgcpp::commands::DropRule;
+using pgcpp::commands::DropServer;
+using pgcpp::commands::DropSubscription;
 using pgcpp::commands::DropTableSpace;
 using pgcpp::commands::ExecuteTruncate;
 using pgcpp::commands::ExecVacuum;
 using pgcpp::commands::ExplainQuery;
+using pgcpp::commands::ImportForeignSchema;
 using pgcpp::commands::RemoveRelations;
 using pgcpp::commands::RenameRelation;
+using pgcpp::commands::SecLabel;
 using pgcpp::nodes::NodeTag;
+using pgcpp::parser::AlterPolicyStmt;
+using pgcpp::parser::AlterPublicationStmt;
+using pgcpp::parser::AlterRuleStmt;
+using pgcpp::parser::AlterServerStmt;
+using pgcpp::parser::AlterSubscriptionStmt;
+using pgcpp::parser::AlterSystemStmt;
 using pgcpp::parser::AlterTableStmt;
 using pgcpp::parser::CopyStmt;
 using pgcpp::parser::CreateCastStmt;
 using pgcpp::parser::CreatedbStmt;
 using pgcpp::parser::CreateDomainStmt;
 using pgcpp::parser::CreateExtensionStmt;
+using pgcpp::parser::CreateForeignTableStmt;
 using pgcpp::parser::CreateFunctionStmt;
 using pgcpp::parser::CreateLanguageStmt;
+using pgcpp::parser::CreatePolicyStmt;
+using pgcpp::parser::CreatePublicationStmt;
+using pgcpp::parser::CreateRuleStmt;
 using pgcpp::parser::CreateSchemaStmt;
 using pgcpp::parser::CreateSeqStmt;
+using pgcpp::parser::CreateServerStmt;
 using pgcpp::parser::CreateStmt;
+using pgcpp::parser::CreateSubscriptionStmt;
 using pgcpp::parser::CreateTableSpaceStmt;
 using pgcpp::parser::CreateTrigStmt;
 using pgcpp::parser::CreateTypeStmt;
@@ -84,12 +122,19 @@ using pgcpp::parser::DoStmt;
 using pgcpp::parser::DropdbStmt;
 using pgcpp::parser::DropExtensionStmt;
 using pgcpp::parser::DropLanguageStmt;
+using pgcpp::parser::DropPolicyStmt;
+using pgcpp::parser::DropPublicationStmt;
+using pgcpp::parser::DropRuleStmt;
+using pgcpp::parser::DropServerStmt;
 using pgcpp::parser::DropStmt;
+using pgcpp::parser::DropSubscriptionStmt;
 using pgcpp::parser::DropTableSpaceStmt;
 using pgcpp::parser::ExplainStmt;
+using pgcpp::parser::ImportForeignSchemaStmt;
 using pgcpp::parser::IndexStmt;
 using pgcpp::parser::Node;
 using pgcpp::parser::RenameStmt;
+using pgcpp::parser::SecLabelStmt;
 using pgcpp::parser::TransactionStmt;
 using pgcpp::parser::TruncateStmt;
 using pgcpp::parser::VacuumStmt;
@@ -286,6 +331,65 @@ std::string ProcessUtility(Node* stmt, OutputSink* sink) {
         // tag alone, so they fall through to DefineRelation — which will
         // create a regular table. A future task will add distinct node
         // types or a discriminator field so these can route correctly.
+
+        // --- P3-13 SQL language remaining items -------------------------
+        case NodeTag::kCreatePolicyStmt:
+            tag = CreatePolicy(static_cast<CreatePolicyStmt*>(stmt));
+            break;
+        case NodeTag::kAlterPolicyStmt:
+            tag = AlterPolicy(static_cast<AlterPolicyStmt*>(stmt));
+            break;
+        case NodeTag::kDropPolicyStmt:
+            tag = DropPolicy(static_cast<DropPolicyStmt*>(stmt));
+            break;
+        case NodeTag::kCreatePublicationStmt:
+            tag = CreatePublication(static_cast<CreatePublicationStmt*>(stmt));
+            break;
+        case NodeTag::kAlterPublicationStmt:
+            tag = AlterPublication(static_cast<AlterPublicationStmt*>(stmt));
+            break;
+        case NodeTag::kDropPublicationStmt:
+            tag = DropPublication(static_cast<DropPublicationStmt*>(stmt));
+            break;
+        case NodeTag::kCreateSubscriptionStmt:
+            tag = CreateSubscription(static_cast<CreateSubscriptionStmt*>(stmt));
+            break;
+        case NodeTag::kAlterSubscriptionStmt:
+            tag = AlterSubscription(static_cast<AlterSubscriptionStmt*>(stmt));
+            break;
+        case NodeTag::kDropSubscriptionStmt:
+            tag = DropSubscription(static_cast<DropSubscriptionStmt*>(stmt));
+            break;
+        case NodeTag::kCreateForeignTableStmt:
+            tag = CreateForeignTable(static_cast<CreateForeignTableStmt*>(stmt));
+            break;
+        case NodeTag::kCreateServerStmt:
+            tag = CreateServer(static_cast<CreateServerStmt*>(stmt));
+            break;
+        case NodeTag::kAlterServerStmt:
+            tag = AlterServer(static_cast<AlterServerStmt*>(stmt));
+            break;
+        case NodeTag::kDropServerStmt:
+            tag = DropServer(static_cast<DropServerStmt*>(stmt));
+            break;
+        case NodeTag::kCreateRuleStmt:
+            tag = CreateRule(static_cast<CreateRuleStmt*>(stmt));
+            break;
+        case NodeTag::kAlterRuleStmt:
+            tag = AlterRule(static_cast<AlterRuleStmt*>(stmt));
+            break;
+        case NodeTag::kDropRuleStmt:
+            tag = DropRule(static_cast<DropRuleStmt*>(stmt));
+            break;
+        case NodeTag::kSecLabelStmt:
+            tag = SecLabel(static_cast<SecLabelStmt*>(stmt));
+            break;
+        case NodeTag::kAlterSystemStmt:
+            tag = AlterSystem(static_cast<AlterSystemStmt*>(stmt));
+            break;
+        case NodeTag::kImportForeignSchemaStmt:
+            tag = ImportForeignSchema(static_cast<ImportForeignSchemaStmt*>(stmt));
+            break;
         default:
             return "";
     }
@@ -393,6 +497,45 @@ std::string CreateCommandTag(Node* stmt) {
             return "CREATE DOMAIN";
         case NodeTag::kCreateCastStmt:
             return "CREATE CAST";
+        // --- P3-13 SQL language remaining items -------------------------
+        case NodeTag::kCreatePolicyStmt:
+            return "CREATE POLICY";
+        case NodeTag::kAlterPolicyStmt:
+            return "ALTER POLICY";
+        case NodeTag::kDropPolicyStmt:
+            return "DROP POLICY";
+        case NodeTag::kCreatePublicationStmt:
+            return "CREATE PUBLICATION";
+        case NodeTag::kAlterPublicationStmt:
+            return "ALTER PUBLICATION";
+        case NodeTag::kDropPublicationStmt:
+            return "DROP PUBLICATION";
+        case NodeTag::kCreateSubscriptionStmt:
+            return "CREATE SUBSCRIPTION";
+        case NodeTag::kAlterSubscriptionStmt:
+            return "ALTER SUBSCRIPTION";
+        case NodeTag::kDropSubscriptionStmt:
+            return "DROP SUBSCRIPTION";
+        case NodeTag::kCreateForeignTableStmt:
+            return "CREATE FOREIGN TABLE";
+        case NodeTag::kCreateServerStmt:
+            return "CREATE SERVER";
+        case NodeTag::kAlterServerStmt:
+            return "ALTER SERVER";
+        case NodeTag::kDropServerStmt:
+            return "DROP SERVER";
+        case NodeTag::kCreateRuleStmt:
+            return "CREATE RULE";
+        case NodeTag::kAlterRuleStmt:
+            return "ALTER RULE";
+        case NodeTag::kDropRuleStmt:
+            return "DROP RULE";
+        case NodeTag::kSecLabelStmt:
+            return "SECURITY LABEL";
+        case NodeTag::kAlterSystemStmt:
+            return "ALTER SYSTEM";
+        case NodeTag::kImportForeignSchemaStmt:
+            return "IMPORT FOREIGN SCHEMA";
         default:
             return "";
     }

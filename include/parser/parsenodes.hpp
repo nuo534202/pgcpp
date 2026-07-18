@@ -477,6 +477,26 @@ class AlterDatabaseStmt;
 class CreateTypeStmt;
 class CreateDomainStmt;
 class CreateCastStmt;
+// P3-13 SQL language remaining items
+class CreatePolicyStmt;
+class AlterPolicyStmt;
+class DropPolicyStmt;
+class CreatePublicationStmt;
+class AlterPublicationStmt;
+class DropPublicationStmt;
+class CreateSubscriptionStmt;
+class AlterSubscriptionStmt;
+class DropSubscriptionStmt;
+class CreateForeignTableStmt;
+class CreateServerStmt;
+class AlterServerStmt;
+class DropServerStmt;
+class CreateRuleStmt;
+class AlterRuleStmt;
+class DropRuleStmt;
+class SecLabelStmt;
+class AlterSystemStmt;
+class ImportForeignSchemaStmt;
 class Constraint;
 
 // ---------------------------------------------------------------------------
@@ -2240,6 +2260,358 @@ public:
     std::vector<Node*> func;         // cast function name (empty if WITHOUT FUNCTION)
     bool without_function = false;   // WITHOUT FUNCTION?
     pgcpp::catalog::CastContext context = pgcpp::catalog::CastContext::kExplicit;
+};
+
+// ===========================================================================
+// P3-13 — SQL language remaining items
+//
+// These are skeleton statement nodes for the remaining PostgreSQL DDL:
+//   * CREATE/ALTER/DROP POLICY (row-level security)
+//   * CREATE/ALTER/DROP PUBLICATION (logical replication publisher)
+//   * CREATE/ALTER/DROP SUBSCRIPTION (logical replication subscriber)
+//   * CREATE FOREIGN TABLE / CREATE/ALTER/DROP SERVER (FDW foundation)
+//   * CREATE/ALTER/DROP RULE (rewriting)
+//   * SECURITY LABEL [FOR provider] ON object IS 'label'
+//   * ALTER SYSTEM SET GUC = value
+//   * IMPORT FOREIGN SCHEMA (FDW schema import)
+//
+// The parser captures the syntax; the command handlers store metadata in
+// catalog-like in-memory stores. Actual RLS enforcement, replication
+// streaming, and FDW execution depend on P3-3/P3-4/P3-5 and are not
+// implemented here.
+// ===========================================================================
+
+// Policy command type for CreatePolicyStmt and AlterPolicyStmt.
+enum class PolicyKind : int {
+    kAll = 0,  // ALL
+    kSelect,   // AS PERMISSIVE / AS RESTRICTIVE SELECT
+    kInsert,
+    kUpdate,
+    kDelete,
+};
+
+// CreatePolicyStmt — CREATE POLICY name ON table
+//   [AS {PERMISSIVE|RESTRICTIVE}]
+//   [FOR {ALL|SELECT|INSERT|UPDATE|DELETE}]
+//   [TO role [, ...]]
+//   [USING (expr)]
+//   [WITH CHECK (expr)]
+class CreatePolicyStmt : public Node {
+public:
+    CreatePolicyStmt() : Node(pgcpp::nodes::NodeTag::kCreatePolicyStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string policy_name;            // policy name
+    RangeVar* table = nullptr;          // target table
+    bool permissive = true;             // AS PERMISSIVE (default) / AS RESTRICTIVE
+    PolicyKind cmd = PolicyKind::kAll;  // FOR clause
+    std::vector<Node*> roles;           // list of RoleSpec (empty = PUBLIC)
+    Node* qual = nullptr;               // USING expression
+    Node* with_check = nullptr;         // WITH CHECK expression
+    bool replace = false;               // OR REPLACE
+};
+
+// AlterPolicyStmt — ALTER POLICY name ON table [TO role [, ...]]
+//   [USING (expr)] [WITH CHECK (expr)]
+class AlterPolicyStmt : public Node {
+public:
+    AlterPolicyStmt() : Node(pgcpp::nodes::NodeTag::kAlterPolicyStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string policy_name;     // policy name
+    RangeVar* table = nullptr;   // target table
+    std::vector<Node*> roles;    // list of RoleSpec (empty = unchanged)
+    Node* qual = nullptr;        // USING expression (nullptr = unchanged)
+    Node* with_check = nullptr;  // WITH CHECK expression (nullptr = unchanged)
+};
+
+// DropPolicyStmt — DROP POLICY [IF EXISTS] name ON table [CASCADE|RESTRICT]
+class DropPolicyStmt : public Node {
+public:
+    DropPolicyStmt() : Node(pgcpp::nodes::NodeTag::kDropPolicyStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string policy_name;    // policy name
+    RangeVar* table = nullptr;  // target table
+    bool missing_ok = false;    // IF EXISTS
+    DropBehavior behavior = DropBehavior::kRestrict;
+};
+
+// CreatePublicationStmt — CREATE PUBLICATION name [FOR ALL TABLES]
+//   | CREATE PUBLICATION name FOR TABLE table [, ...] [(column_list)]
+//   [WITH (option = value [, ...])]
+class CreatePublicationStmt : public Node {
+public:
+    CreatePublicationStmt() : Node(pgcpp::nodes::NodeTag::kCreatePublicationStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string pubname;              // publication name
+    std::vector<Node*> publications;  // list of RangeVar (tables; empty if FOR ALL TABLES)
+    bool for_all_tables = false;      // FOR ALL TABLES
+    std::vector<Node*> options;       // list of DefElem (publish, publish_via_partition_root, ...)
+};
+
+// AlterPublicationStmt — ALTER PUBLICATION name {ADD|SET|DROP} TABLE table [, ...]
+//   | ALTER PUBLICATION name SET (option = value [, ...])
+class AlterPublicationStmt : public Node {
+public:
+    enum class Action : int { kAdd, kSet, kDrop };
+
+    AlterPublicationStmt() : Node(pgcpp::nodes::NodeTag::kAlterPublicationStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string pubname;           // publication name
+    Action action = Action::kAdd;  // ADD/SET/DROP TABLE (kSet if SET options)
+    std::vector<Node*> tables;     // list of RangeVar (table targets)
+    std::vector<Node*> options;    // list of DefElem (only for SET options form)
+};
+
+// DropPublicationStmt — DROP PUBLICATION [IF EXISTS] name [, ...] [CASCADE|RESTRICT]
+class DropPublicationStmt : public Node {
+public:
+    DropPublicationStmt() : Node(pgcpp::nodes::NodeTag::kDropPublicationStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::vector<std::string> pubnames;  // publications to drop
+    bool missing_ok = false;            // IF EXISTS
+    DropBehavior behavior = DropBehavior::kRestrict;
+};
+
+// CreateSubscriptionStmt — CREATE SUBSCRIPTION name
+//   CONNECTION 'conninfo' PUBLICATION pubname [, ...]
+//   [WITH (option = value [, ...])]
+class CreateSubscriptionStmt : public Node {
+public:
+    CreateSubscriptionStmt() : Node(pgcpp::nodes::NodeTag::kCreateSubscriptionStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string subname;                    // subscription name
+    std::string conninfo;                   // connection string
+    std::vector<std::string> publications;  // publication names to subscribe to
+    std::vector<Node*> options;             // list of DefElem (connect, create_slot, ...)
+};
+
+// AlterSubscriptionStmt — ALTER SUBSCRIPTION name {CONNECTION 'conninfo'
+//   | SET PUBLICATION pubname [, ...] [WITH (option)]
+//   | REFRESH PUBLICATION [WITH (option)]
+//   | ENABLE | DISABLE | SET (option = value)}
+class AlterSubscriptionStmt : public Node {
+public:
+    enum class Kind : int {
+        kSetOptions,          // SET (option = value)
+        kConnection,          // CONNECTION 'conninfo'
+        kSetPublication,      // SET PUBLICATION
+        kRefreshPublication,  // REFRESH PUBLICATION
+        kEnable,              // ENABLE
+        kDisable,             // DISABLE
+    };
+
+    AlterSubscriptionStmt() : Node(pgcpp::nodes::NodeTag::kAlterSubscriptionStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string subname;                    // subscription name
+    Kind kind = Kind::kSetOptions;          // alteration kind
+    std::string conninfo;                   // only for kConnection
+    std::vector<std::string> publications;  // only for kSetPublication
+    std::vector<Node*> options;  // list of DefElem (for kSetOptions / kRefreshPublication)
+};
+
+// DropSubscriptionStmt — DROP SUBSCRIPTION [IF EXISTS] name [CASCADE|RESTRICT]
+class DropSubscriptionStmt : public Node {
+public:
+    DropSubscriptionStmt() : Node(pgcpp::nodes::NodeTag::kDropSubscriptionStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string subname;      // subscription name
+    bool missing_ok = false;  // IF EXISTS
+    DropBehavior behavior = DropBehavior::kRestrict;
+};
+
+// CreateForeignTableStmt — CREATE FOREIGN TABLE name (...) SERVER server_name
+//   [OPTIONS (name 'value' [, ...])]
+//
+// Inherits the table_element_list structure of CreateStmt (column definitions
+// and table-level options). Stored separately because foreign tables have
+// server and options fields that regular tables do not.
+class CreateForeignTableStmt : public Node {
+public:
+    CreateForeignTableStmt() : Node(pgcpp::nodes::NodeTag::kCreateForeignTableStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    RangeVar* relation = nullptr;  // table name
+    std::vector<Node*> tableElts;  // list of ColumnDef
+    std::vector<Node*> options;    // list of DefElem (FDW options)
+    std::string servername;        // foreign server name
+    bool if_not_exists = false;    // IF NOT EXISTS
+};
+
+// CreateServerStmt — CREATE SERVER [IF NOT EXISTS] name [TYPE 'type']
+//   FOREIGN DATA WRAPPER fdw_name [OPTIONS (option 'value' [, ...])]
+class CreateServerStmt : public Node {
+public:
+    CreateServerStmt() : Node(pgcpp::nodes::NodeTag::kCreateServerStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string servername;      // server name
+    std::string servertype;      // TYPE 'type' (empty if not specified)
+    std::string fdwname;         // FOREIGN DATA WRAPPER name
+    std::string version;         // VERSION 'version' (empty if not specified)
+    std::vector<Node*> options;  // list of DefElem (server options)
+    bool if_not_exists = false;  // IF NOT EXISTS
+    RoleSpec* owner = nullptr;   // OWNER TO role (empty = current user)
+};
+
+// AlterServerStmt — ALTER SERVER name [VERSION 'version']
+//   [OPTIONS (ADD|SET|DROP name ['value'] [, ...])]
+//   | ALTER SERVER name OWNER TO new_owner
+class AlterServerStmt : public Node {
+public:
+    enum class Kind : int { kAlterOptions, kChangeOwner };
+
+    AlterServerStmt() : Node(pgcpp::nodes::NodeTag::kAlterServerStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string servername;  // server name
+    Kind kind = Kind::kAlterOptions;
+    std::string version;         // new VERSION (empty = unchanged)
+    std::vector<Node*> options;  // list of DefElem (ALTER OPTIONS form)
+    RoleSpec* owner = nullptr;   // new owner (kChangeOwner form)
+    bool has_version = false;    // VERSION clause present
+};
+
+// DropServerStmt — DROP SERVER [IF EXISTS] name [, ...] [CASCADE|RESTRICT]
+class DropServerStmt : public Node {
+public:
+    DropServerStmt() : Node(pgcpp::nodes::NodeTag::kDropServerStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::vector<std::string> servernames;  // servers to drop
+    bool missing_ok = false;               // IF EXISTS
+    DropBehavior behavior = DropBehavior::kRestrict;
+};
+
+// CreateRuleStmt — CREATE [OR REPLACE] RULE name AS ON {SELECT|INSERT|UPDATE|DELETE}
+//   TO table [WHERE expr] DO [INSTEAD] {NOTHING | action [, ...]}
+class CreateRuleStmt : public Node {
+public:
+    CreateRuleStmt() : Node(pgcpp::nodes::NodeTag::kCreateRuleStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    bool replace = false;          // OR REPLACE
+    std::string rule_name;         // rule name
+    RangeVar* relation = nullptr;  // relation the rule is on
+    int event = 0;                 // CMD_SELECT=1, CMD_INSERT=2, ...
+    Node* where_clause = nullptr;  // WHERE expression
+    bool instead = false;          // DO INSTEAD
+    std::vector<Node*> actions;    // list of query trees (DO action [, ...])
+    bool nothing = false;          // DO INSTEAD NOTHING
+};
+
+// AlterRuleStmt — ALTER RULE name ON table [DO NOTHING | DO INSTEAD action]
+// (Renaming a rule uses RenameStmt.)
+class AlterRuleStmt : public Node {
+public:
+    AlterRuleStmt() : Node(pgcpp::nodes::NodeTag::kAlterRuleStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string rule_name;         // rule name
+    RangeVar* relation = nullptr;  // relation the rule is on
+    Node* action = nullptr;        // new action (nullptr if DO NOTHING)
+    bool nothing = false;          // DO NOTHING
+};
+
+// DropRuleStmt — DROP [IF EXISTS] RULE name ON table [CASCADE|RESTRICT]
+class DropRuleStmt : public Node {
+public:
+    DropRuleStmt() : Node(pgcpp::nodes::NodeTag::kDropRuleStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::vector<std::string> rule_names;  // rules to drop (PG allows one at a time)
+    RangeVar* relation = nullptr;         // relation the rules are on
+    bool missing_ok = false;              // IF EXISTS
+    DropBehavior behavior = DropBehavior::kRestrict;
+};
+
+// SecLabelStmt — SECURITY LABEL [FOR provider] ON {object} IS {'label' | NULL}
+class SecLabelStmt : public Node {
+public:
+    SecLabelStmt() : Node(pgcpp::nodes::NodeTag::kSecLabelStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string provider;                     // FOR provider (empty = default)
+    ObjectType objtype = ObjectType::kTable;  // type of object
+    std::vector<Node*> object;                // object identity (list of String / Value)
+    std::string label;                        // new label (empty = NULL => remove)
+};
+
+// AlterSystemStmt — ALTER SYSTEM SET GUC = value | ALTER SYSTEM RESET GUC
+//   | ALTER SYSTEM RESET ALL
+class AlterSystemStmt : public Node {
+public:
+    AlterSystemStmt() : Node(pgcpp::nodes::NodeTag::kAlterSystemStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    // Reuse VariableSetStmt semantics: carries name, args, kind (SET/RESET/RESET_ALL).
+    std::string name;         // GUC name
+    std::vector<Node*> args;  // list of AConst / Value (for SET form)
+    enum class Kind : int { kSet, kReset, kResetAll };
+    Kind kind = Kind::kSet;
+};
+
+// ImportForeignSchemaStmt — IMPORT FOREIGN SCHEMA remote_schema
+//   [LIMIT TO (table [, ...]) | EXCEPT (table [, ...])]
+//   FROM SERVER server_name INTO local_schema [OPTIONS (option 'value' [, ...])]
+class ImportForeignSchemaStmt : public Node {
+public:
+    enum class Kind : int { kLimitTo, kExcept };
+
+    ImportForeignSchemaStmt() : Node(pgcpp::nodes::NodeTag::kImportForeignSchemaStmt) {}
+
+    Node* Clone() const override;
+    bool Equals(const Node& other) const override;
+
+    std::string remote_schema;      // remote schema name
+    std::string local_schema;       // local target schema
+    std::string server_name;        // foreign server name
+    Kind kind = Kind::kLimitTo;     // LIMIT TO or EXCEPT (none if both lists empty)
+    std::vector<Node*> table_list;  // list of RangeVar (LIMIT TO / EXCEPT list)
+    std::vector<Node*> options;     // list of DefElem (IMPORT options)
 };
 
 // ---------------------------------------------------------------------------

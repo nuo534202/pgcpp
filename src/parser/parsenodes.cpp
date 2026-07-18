@@ -1799,6 +1799,290 @@ bool CreateCastStmt::Equals(const Node& other) const {
 }
 
 // ===========================================================================
+// P3-13 — SQL language remaining items
+// ===========================================================================
+
+Node* CreatePolicyStmt::Clone() const {
+    auto* copy = makePallocNode<CreatePolicyStmt>(*this);
+    copy->table = static_cast<RangeVar*>(CloneNode(table));
+    copy->roles = CloneVec(roles);
+    copy->qual = CloneNode(qual);
+    copy->with_check = CloneNode(with_check);
+    return copy;
+}
+
+bool CreatePolicyStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreatePolicyStmt&>(other);
+    return policy_name == o.policy_name && EqNode(table, o.table) && permissive == o.permissive &&
+           cmd == o.cmd && EqVec(roles, o.roles) && EqNode(qual, o.qual) &&
+           EqNode(with_check, o.with_check) && replace == o.replace;
+}
+
+Node* AlterPolicyStmt::Clone() const {
+    auto* copy = makePallocNode<AlterPolicyStmt>(*this);
+    copy->table = static_cast<RangeVar*>(CloneNode(table));
+    copy->roles = CloneVec(roles);
+    copy->qual = CloneNode(qual);
+    copy->with_check = CloneNode(with_check);
+    return copy;
+}
+
+bool AlterPolicyStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const AlterPolicyStmt&>(other);
+    return policy_name == o.policy_name && EqNode(table, o.table) && EqVec(roles, o.roles) &&
+           EqNode(qual, o.qual) && EqNode(with_check, o.with_check);
+}
+
+Node* DropPolicyStmt::Clone() const {
+    auto* copy = makePallocNode<DropPolicyStmt>(*this);
+    copy->table = static_cast<RangeVar*>(CloneNode(table));
+    return copy;
+}
+
+bool DropPolicyStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const DropPolicyStmt&>(other);
+    return policy_name == o.policy_name && EqNode(table, o.table) && missing_ok == o.missing_ok &&
+           behavior == o.behavior;
+}
+
+Node* CreatePublicationStmt::Clone() const {
+    auto* copy = makePallocNode<CreatePublicationStmt>(*this);
+    copy->publications = CloneVec(publications);
+    copy->options = CloneVec(options);
+    return copy;
+}
+
+bool CreatePublicationStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreatePublicationStmt&>(other);
+    return pubname == o.pubname && EqVec(publications, o.publications) &&
+           for_all_tables == o.for_all_tables && EqVec(options, o.options);
+}
+
+Node* AlterPublicationStmt::Clone() const {
+    auto* copy = makePallocNode<AlterPublicationStmt>(*this);
+    copy->tables = CloneVec(tables);
+    copy->options = CloneVec(options);
+    return copy;
+}
+
+bool AlterPublicationStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const AlterPublicationStmt&>(other);
+    return pubname == o.pubname && action == o.action && EqVec(tables, o.tables) &&
+           EqVec(options, o.options);
+}
+
+Node* DropPublicationStmt::Clone() const {
+    auto* copy = makePallocNode<DropPublicationStmt>(*this);
+    return copy;
+}
+
+bool DropPublicationStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const DropPublicationStmt&>(other);
+    return pubnames == o.pubnames && missing_ok == o.missing_ok && behavior == o.behavior;
+}
+
+Node* CreateSubscriptionStmt::Clone() const {
+    auto* copy = makePallocNode<CreateSubscriptionStmt>(*this);
+    copy->options = CloneVec(options);
+    return copy;
+}
+
+bool CreateSubscriptionStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateSubscriptionStmt&>(other);
+    return subname == o.subname && conninfo == o.conninfo && publications == o.publications &&
+           EqVec(options, o.options);
+}
+
+Node* AlterSubscriptionStmt::Clone() const {
+    auto* copy = makePallocNode<AlterSubscriptionStmt>(*this);
+    copy->options = CloneVec(options);
+    return copy;
+}
+
+bool AlterSubscriptionStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const AlterSubscriptionStmt&>(other);
+    return subname == o.subname && kind == o.kind && conninfo == o.conninfo &&
+           publications == o.publications && EqVec(options, o.options);
+}
+
+Node* DropSubscriptionStmt::Clone() const {
+    auto* copy = makePallocNode<DropSubscriptionStmt>(*this);
+    return copy;
+}
+
+bool DropSubscriptionStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const DropSubscriptionStmt&>(other);
+    return subname == o.subname && missing_ok == o.missing_ok && behavior == o.behavior;
+}
+
+Node* CreateForeignTableStmt::Clone() const {
+    auto* copy = makePallocNode<CreateForeignTableStmt>(*this);
+    copy->relation = static_cast<RangeVar*>(CloneNode(relation));
+    copy->tableElts = CloneVec(tableElts);
+    copy->options = CloneVec(options);
+    return copy;
+}
+
+bool CreateForeignTableStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateForeignTableStmt&>(other);
+    return EqNode(relation, o.relation) && EqVec(tableElts, o.tableElts) &&
+           EqVec(options, o.options) && servername == o.servername &&
+           if_not_exists == o.if_not_exists;
+}
+
+Node* CreateServerStmt::Clone() const {
+    auto* copy = makePallocNode<CreateServerStmt>(*this);
+    copy->options = CloneVec(options);
+    copy->owner = static_cast<RoleSpec*>(CloneNode(owner));
+    return copy;
+}
+
+bool CreateServerStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateServerStmt&>(other);
+    return servername == o.servername && servertype == o.servertype && fdwname == o.fdwname &&
+           version == o.version && EqVec(options, o.options) && if_not_exists == o.if_not_exists &&
+           EqNode(owner, o.owner);
+}
+
+Node* AlterServerStmt::Clone() const {
+    auto* copy = makePallocNode<AlterServerStmt>(*this);
+    copy->options = CloneVec(options);
+    copy->owner = static_cast<RoleSpec*>(CloneNode(owner));
+    return copy;
+}
+
+bool AlterServerStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const AlterServerStmt&>(other);
+    return servername == o.servername && kind == o.kind && version == o.version &&
+           EqVec(options, o.options) && EqNode(owner, o.owner) && has_version == o.has_version;
+}
+
+Node* DropServerStmt::Clone() const {
+    auto* copy = makePallocNode<DropServerStmt>(*this);
+    return copy;
+}
+
+bool DropServerStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const DropServerStmt&>(other);
+    return servernames == o.servernames && missing_ok == o.missing_ok && behavior == o.behavior;
+}
+
+Node* CreateRuleStmt::Clone() const {
+    auto* copy = makePallocNode<CreateRuleStmt>(*this);
+    copy->relation = static_cast<RangeVar*>(CloneNode(relation));
+    copy->where_clause = CloneNode(where_clause);
+    copy->actions = CloneVec(actions);
+    return copy;
+}
+
+bool CreateRuleStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const CreateRuleStmt&>(other);
+    return replace == o.replace && rule_name == o.rule_name && EqNode(relation, o.relation) &&
+           event == o.event && EqNode(where_clause, o.where_clause) && instead == o.instead &&
+           EqVec(actions, o.actions) && nothing == o.nothing;
+}
+
+Node* AlterRuleStmt::Clone() const {
+    auto* copy = makePallocNode<AlterRuleStmt>(*this);
+    copy->relation = static_cast<RangeVar*>(CloneNode(relation));
+    copy->action = CloneNode(action);
+    return copy;
+}
+
+bool AlterRuleStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const AlterRuleStmt&>(other);
+    return rule_name == o.rule_name && EqNode(relation, o.relation) && EqNode(action, o.action) &&
+           nothing == o.nothing;
+}
+
+Node* DropRuleStmt::Clone() const {
+    auto* copy = makePallocNode<DropRuleStmt>(*this);
+    copy->relation = static_cast<RangeVar*>(CloneNode(relation));
+    return copy;
+}
+
+bool DropRuleStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const DropRuleStmt&>(other);
+    return rule_names == o.rule_names && EqNode(relation, o.relation) &&
+           missing_ok == o.missing_ok && behavior == o.behavior;
+}
+
+Node* SecLabelStmt::Clone() const {
+    auto* copy = makePallocNode<SecLabelStmt>(*this);
+    copy->object = CloneVec(object);
+    return copy;
+}
+
+bool SecLabelStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const SecLabelStmt&>(other);
+    return provider == o.provider && objtype == o.objtype && EqVec(object, o.object) &&
+           label == o.label;
+}
+
+Node* AlterSystemStmt::Clone() const {
+    auto* copy = makePallocNode<AlterSystemStmt>(*this);
+    copy->args = CloneVec(args);
+    return copy;
+}
+
+bool AlterSystemStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const AlterSystemStmt&>(other);
+    return name == o.name && EqVec(args, o.args) && kind == o.kind;
+}
+
+Node* ImportForeignSchemaStmt::Clone() const {
+    auto* copy = makePallocNode<ImportForeignSchemaStmt>(*this);
+    copy->table_list = CloneVec(table_list);
+    copy->options = CloneVec(options);
+    return copy;
+}
+
+bool ImportForeignSchemaStmt::Equals(const Node& other) const {
+    if (other.GetTag() != GetTag())
+        return false;
+    const auto& o = static_cast<const ImportForeignSchemaStmt&>(other);
+    return remote_schema == o.remote_schema && local_schema == o.local_schema &&
+           server_name == o.server_name && kind == o.kind && EqVec(table_list, o.table_list) &&
+           EqVec(options, o.options);
+}
+
+// ===========================================================================
 // Query tree
 // ===========================================================================
 
