@@ -82,6 +82,44 @@ std::string BuildInsertStatement(const std::string& table_name,
                                  const std::vector<std::string>& column_names,
                                  const std::vector<std::string>& values);
 
+// BuildCreateIndexStatement — emit "CREATE [UNIQUE] INDEX <name> ON <table> (<cols>);".
+// `unique` controls whether UNIQUE is emitted. `columns` is a list of column
+// names that are joined with ", ".
+std::string BuildCreateIndexStatement(const std::string& index_name, const std::string& table_name,
+                                      const std::vector<std::string>& columns, bool unique);
+
+// BuildDropIndexStatement — emit "DROP INDEX IF EXISTS <name>;".
+std::string BuildDropIndexStatement(const std::string& index_name);
+
+// BuildCreateSequenceStatement — emit "CREATE SEQUENCE <name> [AS type]
+// [START WITH n] [INCREMENT BY n] [MINVALUE n] [MAXVALUE n] [CACHE n]
+// [NO] [CYCLE];". Empty-string numeric fields are omitted.
+struct SequenceOptions {
+    std::int64_t start = 0;      // 0 = not set
+    std::int64_t increment = 0;  // 0 = not set
+    std::int64_t min_value = 0;  // 0 = not set
+    std::int64_t max_value = 0;  // 0 = not set
+    std::int64_t cache = 0;      // 0 = not set
+    bool cycle = false;
+    bool has_start = false;
+    bool has_increment = false;
+    bool has_min = false;
+    bool has_max = false;
+    bool has_cache = false;
+};
+std::string BuildCreateSequenceStatement(const std::string& seq_name, const SequenceOptions& opts);
+std::string BuildDropSequenceStatement(const std::string& seq_name);
+
+// BuildCreateViewStatement — emit "CREATE VIEW <name> AS <definition>;".
+// `definition` is the SELECT text (e.g., "SELECT * FROM t WHERE x > 0").
+std::string BuildCreateViewStatement(const std::string& view_name, const std::string& definition);
+std::string BuildDropViewStatement(const std::string& view_name);
+
+// BuildGrantStatement — emit "GRANT <privileges> ON <table> TO <role>;". An
+// empty role (matching PG's PUBLIC) is rendered as the keyword PUBLIC.
+std::string BuildGrantStatement(const std::string& privileges, const std::string& table_name,
+                                const std::string& role);
+
 // QuoteIdentifier — double-quote an identifier (doubling embedded quotes).
 std::string QuoteIdentifier(const std::string& s);
 

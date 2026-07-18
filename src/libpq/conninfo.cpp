@@ -182,7 +182,6 @@ bool ParseUri(const std::string& s, std::vector<ConnInfoOption>& out, std::strin
     // '@' that closes the userinfo.
     std::size_t at_pos = s.find('@', pos);
     std::size_t slash_pos = s.find('/', pos);
-    std::size_t colon_pos = s.find(':', pos);
     std::size_t qmark_pos = s.find('?', pos);
 
     // Find the boundaries: userinfo ends at '@', host ends at ':' (port)
@@ -204,7 +203,6 @@ bool ParseUri(const std::string& s, std::vector<ConnInfoOption>& out, std::strin
     }
 
     // Determine where host ends: next of ':', '/', '?', or end of string.
-    std::size_t host_end = s.size();
     std::size_t next_colon = s.find(':', pos);
     std::size_t next_slash = s.find('/', pos);
     std::size_t next_qmark = s.find('?', pos);

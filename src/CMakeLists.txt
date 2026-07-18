@@ -100,6 +100,10 @@ target_include_directories(pgcpp_client PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(pgcpp_client PUBLIC pgcpp_core)
 target_compile_options(pgcpp_client PRIVATE -Wall -Wextra -Wpedantic)
 
+# pg_basebackup (P3-12) uses zlib for optional gzip compression.
+find_package(ZLIB REQUIRED)
+target_link_libraries(pgcpp_client PUBLIC ZLIB::ZLIB)
+
 # ---------------------------------------------------------------------------
 # pgcpp_server — the standalone server executable (M12)
 # ---------------------------------------------------------------------------

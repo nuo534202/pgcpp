@@ -5,6 +5,7 @@
 // statements that can be replayed by psql or pg_restore.
 #include "tools/pg_dump.hpp"
 
+#include <charconv>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -20,6 +21,31 @@ bool TableNameMatches(const std::string& name, const std::string& pattern) {
     if (pattern.empty())
         return true;
     return name.find(pattern) != std::string::npos;
+}
+
+// Quote all column names in `cols` and join them with ", ".
+std::string JoinColumns(const std::vector<std::string>& cols) {
+    std::string out;
+    for (size_t i = 0; i < cols.size(); ++i) {
+        if (i > 0)
+            out += ", ";
+        out += QuoteIdentifier(cols[i]);
+    }
+    return out;
+}
+
+// Parse a base-10 signed 64-bit integer from `s`. Returns true on success.
+// Unlike std::stoll, this never throws — it returns false for malformed input.
+bool ParseInt64(const std::string& s, std::int64_t* out) {
+    const char* begin = s.data();
+    const char* end = begin + s.size();
+    auto res = std::from_chars(begin, end, *out);
+    return res.ec == std::errc{} && res.ptr == end;
+}
+
+// Parse a boolean field as returned by PostgreSQL ('t', 'true', '1').
+bool ParseBool(const std::string& s) {
+    return s == "t" || s == "true" || s == "1";
 }
 
 }  // namespace
@@ -102,6 +128,165 @@ std::string BuildInsertStatement(const std::string& table_name,
     return oss.str();
 }
 
+std::string BuildCreateIndexStatement(const std::string& index_name, const std::string& table_name,
+                                      const std::vector<std::string>& columns, bool unique) {
+    std::ostringstream oss;
+    oss << "CREATE ";
+    if (unique)
+        oss << "UNIQUE ";
+    oss << "INDEX " << QuoteIdentifier(index_name) << " ON " << QuoteIdentifier(table_name) << " ("
+        << JoinColumns(columns) << ");\n";
+    return oss.str();
+}
+
+std::string BuildDropIndexStatement(const std::string& index_name) {
+    return "DROP INDEX IF EXISTS " + QuoteIdentifier(index_name) + ";\n";
+}
+
+std::string BuildCreateSequenceStatement(const std::string& seq_name, const SequenceOptions& opts) {
+    std::ostringstream oss;
+    oss << "CREATE SEQUENCE " << QuoteIdentifier(seq_name);
+    if (opts.has_start)
+        oss << " START WITH " << opts.start;
+    if (opts.has_increment)
+        oss << " INCREMENT BY " << opts.increment;
+    if (opts.has_min)
+        oss << " MINVALUE " << opts.min_value;
+    if (opts.has_max)
+        oss << " MAXVALUE " << opts.max_value;
+    if (opts.has_cache)
+        oss << " CACHE " << opts.cache;
+    oss << (opts.cycle ? " CYCLE" : " NO CYCLE");
+    oss << ";\n";
+    return oss.str();
+}
+
+std::string BuildDropSequenceStatement(const std::string& seq_name) {
+    return "DROP SEQUENCE IF EXISTS " + QuoteIdentifier(seq_name) + ";\n";
+}
+
+std::string BuildCreateViewStatement(const std::string& view_name, const std::string& definition) {
+    return "CREATE VIEW " + QuoteIdentifier(view_name) + " AS " + definition + ";\n";
+}
+
+std::string BuildDropViewStatement(const std::string& view_name) {
+    return "DROP VIEW IF EXISTS " + QuoteIdentifier(view_name) + ";\n";
+}
+
+std::string BuildGrantStatement(const std::string& privileges, const std::string& table_name,
+                                const std::string& role) {
+    std::string r = role.empty() ? "PUBLIC" : QuoteIdentifier(role);
+    return "GRANT " + privileges + " ON " + QuoteIdentifier(table_name) + " TO " + r + ";\n";
+}
+
+namespace {
+
+// Run one catalog query and return its rows; on failure returns an empty
+// QueryResult with success=false. The client remains connected.
+QueryResult RunCatalog(PsqlClient& client, const std::string& sql) {
+    QueryResult r = client.ExecuteQuery(sql);
+    return r;
+}
+
+// Enumerate indexes for `table_name` from pg_indexes and emit CREATE INDEX.
+// Returns false on catalog error.
+bool DumpTableIndexes(PsqlClient& client, const std::string& table_name, bool clean,
+                      std::ostream& out) {
+    std::string sql =
+        "SELECT indexname, indexdef FROM pg_indexes "
+        "WHERE tablename = " +
+        QuoteLiteral(table_name) + " ORDER BY indexname";
+    QueryResult r = RunCatalog(client, sql);
+    if (!r.success)
+        return false;
+    for (const auto& row : r.rows) {
+        if (row.size() < 2)
+            continue;
+        // indexdef already contains "CREATE [UNIQUE] INDEX name ON table (...)".
+        // Prefer it as-is so we capture partial-index predicates, expression
+        // indexes, etc. When --clean is set, prefix a DROP INDEX.
+        if (clean)
+            out << BuildDropIndexStatement(row[0]);
+        out << row[1] << ";\n";
+    }
+    return true;
+}
+
+// Emit CREATE SEQUENCE for all sequences in the public schema.
+bool DumpSequences(PsqlClient& client, bool clean, std::ostream& out) {
+    std::string sql =
+        "SELECT sequencename, start_value, increment_by, min_value, max_value, "
+        "cache_size, cycle FROM pg_sequences WHERE schemaname = 'public' "
+        "ORDER BY sequencename";
+    QueryResult r = RunCatalog(client, sql);
+    if (!r.success)
+        return false;
+    for (const auto& row : r.rows) {
+        if (row.size() < 7)
+            continue;
+        SequenceOptions opts;
+        opts.has_start = true;
+        opts.has_increment = true;
+        opts.has_min = true;
+        opts.has_max = true;
+        opts.has_cache = true;
+        // Skip rows with unparseable numeric fields (no exceptions used —
+        // project rule: C++ exceptions only for ereport/PgException).
+        std::int64_t v_start = 0, v_inc = 0, v_min = 0, v_max = 0, v_cache = 0;
+        if (!ParseInt64(row[1], &v_start) || !ParseInt64(row[2], &v_inc) ||
+            !ParseInt64(row[3], &v_min) || !ParseInt64(row[4], &v_max) ||
+            !ParseInt64(row[5], &v_cache))
+            continue;
+        opts.start = v_start;
+        opts.increment = v_inc;
+        opts.min_value = v_min;
+        opts.max_value = v_max;
+        opts.cache = v_cache;
+        opts.cycle = ParseBool(row[6]);
+        if (clean)
+            out << BuildDropSequenceStatement(row[0]);
+        out << BuildCreateSequenceStatement(row[0], opts);
+    }
+    return true;
+}
+
+// Emit CREATE VIEW for all views in the public schema.
+bool DumpViews(PsqlClient& client, bool clean, std::ostream& out) {
+    std::string sql =
+        "SELECT viewname, definition FROM pg_views "
+        "WHERE schemaname = 'public' ORDER BY viewname";
+    QueryResult r = RunCatalog(client, sql);
+    if (!r.success)
+        return false;
+    for (const auto& row : r.rows) {
+        if (row.size() < 2)
+            continue;
+        if (clean)
+            out << BuildDropViewStatement(row[0]);
+        out << BuildCreateViewStatement(row[0], row[1]);
+    }
+    return true;
+}
+
+// Emit GRANT statements for `table_name` based on information_schema.role_table_grants.
+bool DumpTableGrants(PsqlClient& client, const std::string& table_name, std::ostream& out) {
+    std::string sql =
+        "SELECT privilege_type, grantee FROM information_schema.table_privileges "
+        "WHERE table_name = " +
+        QuoteLiteral(table_name) + " ORDER BY privilege_type, grantee";
+    QueryResult r = RunCatalog(client, sql);
+    if (!r.success)
+        return false;
+    for (const auto& row : r.rows) {
+        if (row.size() < 2)
+            continue;
+        out << BuildGrantStatement(row[0], table_name, row[1]);
+    }
+    return true;
+}
+
+}  // namespace
+
 DumpResult DumpDatabase(const std::string& host, int port, const DumpOptions& opts,
                         std::ostream& out) {
     PsqlClient client(host, port);
@@ -116,6 +301,9 @@ DumpResult DumpDatabase(const std::string& host, int port, const DumpOptions& op
 
     // Step 3: schema emission (skipped when --data-only).
     if (!opts.data_only) {
+        // Sequences first (so they exist before any DEFAULT nextval()).
+        DumpSequences(client, opts.clean, out);
+
         QueryResult r = client.ExecuteQuery(
             "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY 1");
         if (!r.success) {
@@ -150,6 +338,21 @@ DumpResult DumpDatabase(const std::string& host, int port, const DumpOptions& op
             }
             out << BuildCreateTableStatement(table, columns);
         }
+
+        // Views after tables (a view may reference a table).
+        DumpViews(client, opts.clean, out);
+
+        // Indexes after tables.
+        for (const auto& table : tables) {
+            if (!DumpTableIndexes(client, table, opts.clean, out)) {
+                client.Disconnect();
+                return DumpResult::kCatalogQueryFailed;
+            }
+        }
+
+        // Table-level grants last.
+        for (const auto& table : tables)
+            DumpTableGrants(client, table, out);
     }
 
     // Step 4: data emission (skipped when --schema-only).

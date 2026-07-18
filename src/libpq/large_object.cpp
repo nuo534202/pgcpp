@@ -64,17 +64,6 @@ int AllocFd() {
     return -1;
 }
 
-// Find an existing entry by OID. Returns -1 if not found.
-int FindByOid(uint32_t oid) {
-    auto& table = LoTable();
-    for (int i = 0; i < kMaxLobjFds; ++i) {
-        if (table[i].in_use && table[i].oid == oid) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 // In-memory store for created-but-not-yet-opened large objects.
 // Keyed by OID; value is the content blob.
 struct LoStore {
