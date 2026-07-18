@@ -1,0 +1,48 @@
+ text_val
+---------
+ hello   
+(1 row)
+ varchar_val
+------------
+ hello      
+(1 row)
+ char_val
+---------
+ hello   
+(1 row)
+ empty_text
+-----------
+           
+(1 row)
+ empty_varchar
+--------------
+              
+(1 row)
+ len_5
+------
+ 5    
+(1 row)
+ len_0
+------
+ 0    
+(1 row)
+ len_11
+-------
+ 11    
+(1 row)
+ERROR:  
+ERROR:  
+ERROR:  
+ERROR:  
+ char_padded
+------------
+ hi         
+(1 row)
+ char_padded_len
+----------------
+ 2              
+(1 row)
+ varchar_trunc
+--------------
+ hello world  
+(1 row)

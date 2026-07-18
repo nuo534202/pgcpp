@@ -1,0 +1,25 @@
+CREATE TABLE
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ id | dept_id | salary
+----+---------+-------
+(0 rows)
+ id | dept_id | salary
+----+---------+-------
+(0 rows)
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  SeqScan: relation not found
+ERROR:  unsupported expression type in ExecEvalExpr
+DROP TABLE
+DROP TABLE

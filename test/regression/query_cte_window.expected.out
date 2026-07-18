@@ -1,0 +1,17 @@
+ERROR:  SeqScan: relation not found
+ERROR:  table does not exist
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ERROR:  SeqScan: relation not found
+ERROR:  SeqScan: relation not found
+ERROR:  column does not exist
+ERROR:  syntax error in input SQL
+ERROR:  syntax error in input SQL
+ERROR:  syntax error in input SQL
+ERROR:  syntax error in input SQL
+ERROR:  syntax error in input SQL
+DROP TABLE

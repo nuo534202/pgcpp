@@ -1,0 +1,95 @@
+ int_pos
+--------
+ 1      
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ int_zero
+---------
+ 0       
+(1 row)
+ int_max   
+-----------
+ 2147483647
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ bigint_pos
+-----------
+ 1         
+(1 row)
+ bigint_max         
+--------------------
+ 9223372036854775807
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ smallint_pos
+-------------
+ 1           
+(1 row)
+ smallint_max
+-------------
+ 32767       
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ real_pi 
+---------
+ 3.140000
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ real_zero
+----------
+ 0.000000 
+(1 row)
+ dbl_pi           
+------------------
+ 3.141592653589793
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ dbl_zero
+---------
+ 0       
+(1 row)
+ num_plain
+----------
+ 1.5      
+(1 row)
+ num_scale2
+-----------
+ 1.5       
+(1 row)
+ num_scale5
+-----------
+ 1.5       
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ int_plus
+---------
+ 3       
+(1 row)
+ int_plus_big
+-------------
+ 3           
+(1 row)
+ int_plus_real
+--------------
+ 0.000000     
+(1 row)
+ real_plus_dbl
+--------------
+ 2            
+(1 row)
+ int_plus_num
+-------------
+ 3           
+(1 row)
+ int_div
+--------
+ 3      
+(1 row)
+ num_div
+--------
+ 3.5    
+(1 row)
+ real_div
+---------
+ 0.000000
+(1 row)

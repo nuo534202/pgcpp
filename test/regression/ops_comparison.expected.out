@@ -1,0 +1,82 @@
+ eq
+---
+ t 
+(1 row)
+ neq
+----
+ f  
+(1 row)
+ ne
+---
+ t 
+(1 row)
+ lt
+---
+ t 
+(1 row)
+ gt
+---
+ t 
+(1 row)
+ le
+---
+ t 
+(1 row)
+ ge
+---
+ t 
+(1 row)
+ str_eq
+-------
+ t     
+(1 row)
+ str_ne
+-------
+ t     
+(1 row)
+ str_lt
+-------
+ t     
+(1 row)
+ str_gt
+-------
+ t     
+(1 row)
+ int_eq_real
+------------
+ t          
+(1 row)
+ int_lt_real
+------------
+ t          
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ERROR:  unsupported expression type in transformAExpr
+ERROR:  unsupported expression type in transformAExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ null_in
+--------
+        
+(1 row)
+ null_is_null
+-------------
+ 1           
+(1 row)
+ one_is_null
+------------
+ 0          
+(1 row)
+ null_not_null
+--------------
+ 0            
+(1 row)
+ one_not_null
+-------------
+ 1           
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ERROR:  unsupported expression type in transformAExpr
+ERROR:  unsupported expression type in transformAExpr
+ERROR:  unsupported expression type in transformAExpr

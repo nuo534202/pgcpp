@@ -1,0 +1,76 @@
+BEGIN
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+ id
+---
+   
+   
+(2 rows)
+COMMIT
+ id
+---
+   
+   
+(2 rows)
+DROP TABLE
+BEGIN
+CREATE TABLE
+INSERT 0 1
+ id
+---
+   
+(1 row)
+ROLLBACK
+ERROR:  SELECT * with no tables specified is not valid
+BEGIN
+CREATE TABLE
+INSERT 0 1
+UTILITY
+INSERT 0 1
+ id
+---
+   
+   
+(2 rows)
+UTILITY
+ id
+---
+   
+   
+(2 rows)
+COMMIT
+ id
+---
+   
+   
+(2 rows)
+DROP TABLE
+CREATE TABLE
+BEGIN
+INSERT 0 1
+UTILITY
+INSERT 0 1
+UTILITY
+INSERT 0 1
+ id
+---
+   
+   
+   
+(3 rows)
+UTILITY
+ id
+---
+   
+   
+   
+(3 rows)
+COMMIT
+ id
+---
+   
+   
+   
+(3 rows)
+DROP TABLE

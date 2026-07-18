@@ -1,0 +1,82 @@
+ int
+----
+ 1  
+(1 row)
+ bigint
+-------
+ 1     
+(1 row)
+ real    
+---------
+ 1.000000
+(1 row)
+ dbl
+----
+ 1  
+(1 row)
+ numeric
+--------
+ 1      
+(1 row)
+ trunc_cast
+-----------
+ 1         
+(1 row)
+ trunc_up
+---------
+ 1       
+(1 row)
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ text_to_varchar
+----------------
+ hello          
+(1 row)
+ text_to_char
+-------------
+ hello       
+(1 row)
+ cast_int
+---------
+ 1       
+(1 row)
+ cast_str_int
+-------------
+ 42          
+(1 row)
+ cast_str_date
+--------------
+ 2023-01-15   
+(1 row)
+ cast_trunc
+-----------
+ 3         
+(1 row)
+ERROR:  cannot coerce type 23 to target type 16 in coerce_type
+ERROR:  cannot coerce type 23 to target type 16 in coerce_type
+ str_to_bool
+------------
+ t          
+(1 row)
+ str_to_date
+------------
+ 2023-01-15 
+(1 row)
+ str_to_ts          
+--------------------
+ 2023-01-15 10:30:00
+(1 row)
+ date_to_ts         
+--------------------
+ 2023-01-15 00:00:00
+(1 row)
+ERROR:  cannot coerce type 1114 to target type 1082 in coerce_type
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  
+ERROR:  
+ERROR:  unsupported expression type in ExecEvalExpr
+ mixed_cast
+-----------
+ 0.000000  
+(1 row)

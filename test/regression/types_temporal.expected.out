@@ -1,0 +1,50 @@
+ d         
+-----------
+ 2023-01-15
+(1 row)
+ d_end_year
+-----------
+ 2023-12-31
+(1 row)
+ERROR:  date field value out of range: day
+ERROR:  
+ERROR:  
+ERROR:  
+ ts                 
+--------------------
+ 2023-01-15 10:30:00
+(1 row)
+ ts_frac                   
+---------------------------
+ 2023-01-15 10:30:00.000123
+(1 row)
+ERROR:  
+ERROR:  operator does not exist for the given operand types
+ERROR:  operator does not exist for the given operand types
+ERROR:  function does not exist for the given argument types
+ERROR:  function does not exist for the given argument types
+ERROR:  function does not exist for the given argument types
+ hr
+---
+ 10
+(1 row)
+ mi
+---
+ 30
+(1 row)
+ERROR:  function does not exist for the given argument types
+ERROR:  function does not exist for the given argument types
+ERROR:  function does not exist
+ERROR:  function does not exist
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+ id | d | ts
+----+---+---
+    |   |   
+    |   |   
+(2 rows)
+ id
+---
+(0 rows)
+DROP TABLE

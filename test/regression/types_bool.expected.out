@@ -1,0 +1,106 @@
+ t
+--
+ t
+(1 row)
+ f
+--
+ f
+(1 row)
+ t_cast
+-------
+ t     
+(1 row)
+ f_cast
+-------
+ f     
+(1 row)
+ t_str
+------
+ t    
+(1 row)
+ f_str
+------
+ f    
+(1 row)
+ t_full
+-------
+ t     
+(1 row)
+ f_full
+-------
+ f     
+(1 row)
+ tt
+---
+ 1 
+(1 row)
+ tf
+---
+ 0 
+(1 row)
+ ff
+---
+ 0 
+(1 row)
+ or_tf
+------
+ 1    
+(1 row)
+ or_ff
+------
+ 0    
+(1 row)
+ not_t
+------
+ 0    
+(1 row)
+ not_f
+------
+ 1    
+(1 row)
+ERROR:  unsupported expression type in ExecEvalExpr
+ and_null
+---------
+ 1       
+(1 row)
+ and_false_null
+---------------
+ 0             
+(1 row)
+ or_null
+--------
+ 1      
+(1 row)
+ or_false_null
+--------------
+ 0            
+(1 row)
+ERROR:  unsupported expression type in ExecEvalExpr
+ eq_true
+--------
+ t      
+(1 row)
+ eq_false
+---------
+ f       
+(1 row)
+ lt_true
+--------
+ t      
+(1 row)
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+ERROR:  unsupported expression type in ExecEvalExpr
+ id
+---
+(0 rows)
+ id
+---
+(0 rows)
+ERROR:  unsupported expression type in transformAExpr
+ COUNT
+------
+ 2    
+(1 row)
+DROP TABLE

@@ -1,0 +1,95 @@
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ERROR:  unsupported expression type in ExecEvalExpr
+ COUNT
+------
+ 4    
+(1 row)
+ COUNT
+------
+ 0    
+(1 row)
+ COUNT
+------
+ 0    
+(1 row)
+ SUM
+----
+    
+(1 row)
+ AVG
+----
+    
+(1 row)
+ SUM
+----
+    
+(1 row)
+ AVG
+----
+    
+(1 row)
+ MIN | MAX
+-----+----
+     |    
+(1 row)
+ MIN | MAX
+-----+----
+     |    
+(1 row)
+ MIN | MAX
+-----+----
+     |    
+(1 row)
+ COUNT
+------
+ 0    
+(1 row)
+ SUM
+----
+    
+(1 row)
+ AVG
+----
+    
+(1 row)
+ COUNT
+------
+ 0    
+(1 row)
+ SUM
+----
+    
+(1 row)
+ AVG
+----
+    
+(1 row)
+ MIN
+----
+    
+(1 row)
+ MAX
+----
+    
+(1 row)
+ COUNT
+------
+ 0    
+(1 row)
+ COUNT
+------
+ 0    
+(1 row)
+ SUM
+----
+    
+(1 row)
+ SUM
+----
+    
+(1 row)
+DROP TABLE

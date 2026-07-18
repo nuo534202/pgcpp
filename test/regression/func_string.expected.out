@@ -1,0 +1,55 @@
+ len_5
+------
+ 5    
+(1 row)
+ len_0
+------
+ 0    
+(1 row)
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ upper
+------
+      
+(1 row)
+ lower
+------
+      
+(1 row)
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ substr_args
+------------
+            
+(1 row)
+ERROR:  function does not exist
+ERROR:  function does not exist
+ trim_both
+----------
+          
+(1 row)
+ ltrim
+------
+      
+(1 row)
+ rtrim
+------
+      
+(1 row)
+ERROR:  function does not exist
+ replace
+--------
+        
+(1 row)
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ split
+------
+      
+(1 row)

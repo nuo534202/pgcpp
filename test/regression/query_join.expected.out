@@ -1,0 +1,52 @@
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ emp_name | dept_name
+----------+----------
+          |          
+(1 row)
+ emp_name | dept_name
+----------+----------
+          |          
+(1 row)
+ emp_name | dept_name
+----------+----------
+          |          
+(1 row)
+ emp_name | dept_name
+----------+----------
+          |          
+(1 row)
+ERROR:  syntax error in input SQL
+ emp_name | dept_name
+----------+----------
+          |          
+(1 row)
+ERROR:  syntax error in input SQL
+ proj_name | emp_name
+-----------+---------
+           |         
+(1 row)
+ emp_name | dept_name
+----------+----------
+          |          
+(1 row)
+ dept_name | emp_count
+-----------+----------
+           | 0        
+(1 row)
+DROP TABLE
+DROP TABLE
+DROP TABLE

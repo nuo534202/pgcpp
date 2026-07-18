@@ -1,0 +1,53 @@
+ERROR:  
+ERROR:  syntax error in input SQL
+ERROR:  
+ERROR:  
+ERROR:  
+ like_exact
+-----------
+ t         
+(1 row)
+ like_prefix
+------------
+ t          
+(1 row)
+ like_suffix
+------------
+ t          
+(1 row)
+ like_infix
+-----------
+ t         
+(1 row)
+ like_underscore
+----------------
+ t              
+(1 row)
+ like_case
+----------
+ f        
+(1 row)
+ not_like
+---------
+ t       
+(1 row)
+ ilike_prefix
+-------------
+             
+(1 row)
+ ilike_exact
+------------
+            
+(1 row)
+ ilike_case_upper
+-----------------
+                 
+(1 row)
+ERROR:  
+ERROR:  syntax error in input SQL
+ERROR:  
+ERROR:  
+ERROR:  
+ERROR:  
+ERROR:  
+ERROR:  unsupported expression type in transformAExpr

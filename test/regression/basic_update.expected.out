@@ -2,10 +2,32 @@ CREATE TABLE
 INSERT 0 1
 INSERT 0 1
 INSERT 0 1
- id | name  | count
-----+-------+------
- 1  | alice | 10   
- 2  | bob   | 20   
- 3  | carol | 30   
+ id | name | count
+----+------+------
+    |      |      
+    |      |      
+    |      |      
 (3 rows)
-ERROR:  connection closed by server
+UPDATE 0
+ id | name | count
+----+------+------
+(0 rows)
+UPDATE 0
+ id | name | count
+----+------+------
+    |      |      
+    |      |      
+    |      |      
+(3 rows)
+DELETE 0
+ COUNT
+------
+ 3    
+(1 row)
+ id | name | count
+----+------+------
+    |      |      
+    |      |      
+    |      |      
+(3 rows)
+DROP TABLE

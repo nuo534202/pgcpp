@@ -1,0 +1,57 @@
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ region | COUNT
+--------+------
+        | 7    
+(1 row)
+ region | SUM
+--------+----
+        |    
+(1 row)
+ region | AVG
+--------+----
+        |    
+(1 row)
+ region | MIN | MAX
+--------+-----+----
+        |     |    
+(1 row)
+ region | product | COUNT
+--------+---------+------
+        |         | 7    
+(1 row)
+ region | product | SUM
+--------+---------+----
+        |         |    
+(1 row)
+ region | COUNT
+--------+------
+        | 7    
+(1 row)
+ region | SUM
+--------+----
+(0 rows)
+ region | revenue
+--------+--------
+        |        
+(1 row)
+ region | COUNT
+--------+------
+        | 0    
+(1 row)
+ region | COUNT
+--------+------
+(0 rows)
+ region | SUM
+--------+----
+(0 rows)
+ region | COUNT
+--------+------
+(0 rows)
+DROP TABLE

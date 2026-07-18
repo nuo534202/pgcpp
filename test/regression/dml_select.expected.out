@@ -1,0 +1,161 @@
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+(5 rows)
+ id | name
+----+-----
+    |     
+    |     
+    |     
+    |     
+    |     
+(5 rows)
+ id
+---
+   
+   
+   
+   
+   
+(5 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+(5 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ id | name | val
+----+------+----
+(0 rows)
+ERROR:  unsupported expression type in transformAExpr
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+(5 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+(5 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+(5 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+(5 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+(5 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+(3 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+(2 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+    |      |    
+(5 rows)
+ id | name | val
+----+------+----
+    |      |    
+    |      |    
+(2 rows)
+ val
+----
+    
+    
+    
+    
+    
+(5 rows)
+ name
+-----
+     
+     
+     
+     
+     
+(5 rows)
+ val | name
+-----+-----
+     |     
+     |     
+     |     
+     |     
+     |     
+(5 rows)
+ val
+----
+(0 rows)
+ id | name | val
+----+------+----
+(0 rows)
+DROP TABLE

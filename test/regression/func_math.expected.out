@@ -1,0 +1,61 @@
+ abs_neg
+--------
+        
+(1 row)
+ abs_pos
+--------
+        
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ round_half_up
+--------------
+              
+(1 row)
+ round_down
+-----------
+           
+(1 row)
+ round_half_even
+----------------
+                
+(1 row)
+ERROR:  function does not exist
+ERROR:  unsupported expression type in transformAExpr
+ floor
+------
+      
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ ceil
+-----
+     
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ ceiling_alias
+--------------
+              
+(1 row)
+ERROR:  function does not exist for the given argument types
+ sqrt_via_power
+---------------
+               
+(1 row)
+ERROR:  function does not exist for the given argument types
+ERROR:  function does not exist for the given argument types
+ mod
+----
+    
+(1 row)
+ERROR:  operator does not exist for the given operand types
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist

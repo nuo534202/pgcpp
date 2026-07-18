@@ -1,0 +1,73 @@
+ plus
+-----
+ 2   
+(1 row)
+ minus
+------
+ 7    
+(1 row)
+ times
+------
+ 20   
+(1 row)
+ int_div
+--------
+ 5      
+(1 row)
+ int_div_trunc
+--------------
+ 3            
+(1 row)
+ERROR:  operator does not exist for the given operand types
+ unary_minus
+------------
+ -5         
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ precedence
+-----------
+ 7         
+(1 row)
+ paren
+------
+ 9    
+(1 row)
+ left_assoc
+-----------
+ 5         
+(1 row)
+ mixed
+------
+ 26   
+(1 row)
+ fp_plus
+--------
+ 4      
+(1 row)
+ fp_minus
+---------
+ 1       
+(1 row)
+ fp_times
+---------
+ 3       
+(1 row)
+ fp_div
+-------
+ 3.5   
+(1 row)
+ num_plus
+---------
+ 4       
+(1 row)
+ num_div
+--------
+ 3      
+(1 row)
+ num_times
+----------
+ 150      
+(1 row)
+ERROR:  
+ERROR:  
+ERROR:  

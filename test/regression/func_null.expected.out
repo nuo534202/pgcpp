@@ -1,0 +1,69 @@
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  function does not exist
+ coalesce_first
+---------------
+               
+(1 row)
+ERROR:  function does not exist
+ERROR:  unsupported expression type in ExecEvalExpr
+ nullif_equal
+-------------
+             
+(1 row)
+ nullif_diff
+------------
+            
+(1 row)
+ nullif_str
+-----------
+           
+(1 row)
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  function does not exist
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ ?column?
+---------
+         
+(1 row)
+ null_eq
+--------
+        
+(1 row)
+ null_ne
+--------
+        
+(1 row)
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+CREATE TABLE
+INSERT 0 1
+ERROR:  unsupported expression type in ExecEvalExpr
+INSERT 0 1
+ERROR:  unsupported expression type in ExecEvalExpr
+ COUNT
+------
+ 2    
+(1 row)
+ COUNT
+------
+ 0    
+(1 row)
+ SUM
+----
+    
+(1 row)
+ AVG
+----
+    
+(1 row)
+ MIN | MAX
+-----+----
+     |    
+(1 row)
+ERROR:  connection closed by server

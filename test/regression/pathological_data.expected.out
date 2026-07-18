@@ -1,0 +1,36 @@
+CREATE TABLE
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ COUNT
+------
+ 0    
+(1 row)
+ COUNT
+------
+ 0    
+(1 row)
+ SUM
+----
+    
+(1 row)
+ AVG
+----
+    
+(1 row)
+ id
+---
+(0 rows)
+DROP TABLE
+ERROR:  
+ERROR:  syntax error in input SQL
+ERROR:  ModifyTable: target relation not found
+ERROR:  ModifyTable: target relation not found
+ERROR:  ModifyTable: target relation not found
+ERROR:  ModifyTable: target relation not found
+ERROR:  ModifyTable: target relation not found
+ERROR:  column does not exist
+ERROR:  column does not exist
+ERROR:  column does not exist
+ERROR:  table "path_skew" does not exist
+ERROR:  function does not exist

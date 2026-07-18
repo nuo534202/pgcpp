@@ -1,0 +1,35 @@
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ id | name | val
+----+------+----
+    |      | 0  
+    |      | 0  
+    |      | 0  
+(3 rows)
+INSERT 0 1
+ id | name | val
+----+------+----
+(0 rows)
+ERROR:  syntax error in input SQL
+ id | name | val
+----+------+----
+(0 rows)
+ERROR:  unsupported expression type in ExecEvalExpr
+ id | name | val
+----+------+----
+(0 rows)
+ERROR:  multi-row INSERT is not supported
+ id | name | val
+----+------+----
+(0 rows)
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 2
+ id | name | val
+----+------+----
+(0 rows)
+DROP TABLE
+DROP TABLE

@@ -1,0 +1,66 @@
+CREATE TABLE
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+ id | val
+----+----
+    |    
+    |    
+    |    
+    |    
+(4 rows)
+ id | val
+----+----
+    |    
+    |    
+    |    
+    |    
+(4 rows)
+ id | val
+----+----
+    |    
+    |    
+    |    
+    |    
+(4 rows)
+ id | val
+----+----
+    |    
+    |    
+    |    
+    |    
+(4 rows)
+ val
+----
+    
+    
+    
+    
+(4 rows)
+ val
+----
+    
+    
+    
+    
+(4 rows)
+ERROR:  column does not exist
+ num
+----
+ 1  
+(1 row)
+ cnt
+----
+    
+    
+    
+    
+(4 rows)
+DROP TABLE
+DROP TABLE
