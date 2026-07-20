@@ -248,9 +248,13 @@ TupleTableSlot* ModifyTableState::ExecProcNode() {
                 heap_freetuple(new_tup);
                 // P3-9: report UPDATE stats.
                 pgcpp::stats::GetStatsCollector().ReportUpdate(mt_relation->rd_id, 1);
-                // UPDATE without RETURNING produces no output row; continue
-                // to the next child tuple (see DELETE comment above).
-                continue;
+                // Return the updated slot so the protocol layer can count
+                // affected rows (RETURNING is not yet supported; the slot's
+                // values are not consumed by the caller today). Returning
+                // nullptr here — or `continue`-ing without ever returning —
+                // would make ExecutorRun's loop see zero tuples, producing
+                // the wrong "UPDATE 0" command tag.
+                return ps_ResultTupleSlot;
             }
             default:
                 return nullptr;

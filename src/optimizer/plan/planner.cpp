@@ -13,6 +13,7 @@
 #include "optimizer/planner.hpp"
 
 #include "common/containers/node.hpp"
+#include "common/containers/node_funcs.hpp"
 #include "common/memory/alloc_set.hpp"
 #include "common/memory/memory_context.hpp"
 #include "executor/plannodes.hpp"
@@ -29,17 +30,21 @@
 namespace pgcpp::optimizer {
 using pgcpp::nodes::makePallocNode;
 
+using pgcpp::catalog::Oid;
 using pgcpp::executor::Agg;
 using pgcpp::executor::ModifyTable;
 using pgcpp::executor::Plan;
+using pgcpp::nodes::exprType;
 using pgcpp::nodes::NodeTag;
 using pgcpp::parser::CmdType;
 using pgcpp::parser::FromExpr;
+using pgcpp::parser::kIndexVar;
 using pgcpp::parser::Node;
 using pgcpp::parser::Query;
 using pgcpp::parser::RangeTblRef;
 using pgcpp::parser::SortGroupClause;
 using pgcpp::parser::TargetEntry;
+using pgcpp::parser::Var;
 
 // Forward declaration — implemented in subplanner.cpp.
 Plan* subplanner(PlannerInfo* root);
@@ -78,10 +83,47 @@ Plan* planner(Query* query) {
             mt->operation = query->command_type;
             mt->resultRelid = query->result_relation;
             mt->lefttree = plan;
-            // Copy target list for RETURNING (if any).
-            for (Node* te : query->returning_list) {
-                mt->targetlist.push_back(static_cast<pgcpp::parser::TargetEntry*>(te));
+            if (!query->returning_list.empty()) {
+                // RETURNING: project the returning expressions.
+                for (Node* te : query->returning_list) {
+                    mt->targetlist.push_back(static_cast<TargetEntry*>(te));
+                }
+            } else if (query->command_type == CmdType::kInsert ||
+                       query->command_type == CmdType::kUpdate) {
+                // INSERT/UPDATE without RETURNING: build Vars referencing the
+                // child plan's output columns. ModifyTable's ExecProcNode
+                // sets ecxt_scantuple to the child slot, then ExecProject
+                // evaluates these Vars to fill the result slot (which uses
+                // the target relation's tuple descriptor). This mirrors
+                // PostgreSQL's make_modifytable, where the ModifyTable
+                // targetlist projects the subplan output into the target
+                // table's column order. Without this, ExecProject sees an
+                // empty targetlist and leaves the result slot all-NULL,
+                // causing heap_form_tuple to write a NULL tuple.
+                //
+                // For UPDATE, the child SeqScan's targetlist contains every
+                // target-table column (SET columns carry the SET expression,
+                // non-SET columns carry a Var referencing the scan tuple —
+                // see expandUpdateTargetList in parse_target.cpp). The Var
+                // projection here forwards those values unchanged into the
+                // result slot, preserving non-SET column values across the
+                // update.
+                for (size_t i = 0; i < plan->targetlist.size(); i++) {
+                    Oid col_type = exprType(plan->targetlist[i]->expr);
+                    auto* var = makePallocNode<Var>();
+                    var->varno = kIndexVar;
+                    var->varattno = static_cast<int>(i) + 1;
+                    var->vartype = col_type;
+                    var->varnosyn = kIndexVar;
+                    var->varattnosyn = static_cast<int>(i) + 1;
+                    auto* te = makePallocNode<TargetEntry>();
+                    te->expr = var;
+                    te->resno = static_cast<int>(i) + 1;
+                    mt->targetlist.push_back(te);
+                }
             }
+            // For DELETE without RETURNING, the targetlist stays empty:
+            // DELETE uses the child tuple's TID directly without projection.
             plan = mt;
             break;
         }

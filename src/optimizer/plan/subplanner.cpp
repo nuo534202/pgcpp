@@ -6,6 +6,11 @@
 // The scan is a SeqScan (or Result if no FROM clause). Aggregation wraps
 // the scan when has_aggs is set. Sort wraps the result when ORDER BY is
 // present, with Top-N optimization when LIMIT is also present.
+//
+// Task 12: SUBQUERY RTEs (used for CTE references and FROM-subqueries) are
+// planned recursively and wrapped in a SubqueryScan node. Without this, the
+// planner would emit a SeqScan for a subquery RTE, and the SeqScan executor
+// would fail with "relation not found" because the RTE has no relid.
 #include <new>
 
 #include "catalog/catalog.hpp"
@@ -26,6 +31,8 @@ using pgcpp::executor::Plan;
 using pgcpp::executor::Result;
 using pgcpp::executor::SeqScan;
 using pgcpp::executor::Sort;
+using pgcpp::executor::SubqueryScan;
+using pgcpp::executor::ValuesScan;
 using pgcpp::memory::palloc;
 using pgcpp::nodes::NodeTag;
 using pgcpp::parser::Aggref;
@@ -309,11 +316,70 @@ Plan* subplanner(PlannerInfo* root) {
     bool has_aggs = query->has_aggs || !query->group_clause.empty();
 
     int base_rel = FindBaseRelIndex(query);
+
+    // Look up the base relation's RTE (if any) so we can detect subquery
+    // RTEs. CTE references in parse_clause.cpp are wrapped as subquery RTEs
+    // pointing at the analyzed CTE Query; FROM-subqueries are likewise
+    // represented as subquery RTEs. Either way, the SeqScan executor cannot
+    // handle them (it would fail with "relation not found"), so we emit a
+    // SubqueryScan plan and recursively plan the subquery.
+    RangeTblEntry* base_rte = nullptr;
+    if (base_rel > 0) {
+        int rte_idx = base_rel - 1;  // 1-based to 0-based
+        if (rte_idx >= 0 && rte_idx < static_cast<int>(query->rtable.size())) {
+            Node* rte_node = query->rtable[rte_idx];
+            if (rte_node != nullptr && rte_node->GetTag() == NodeTag::kRangeTblEntry) {
+                base_rte = static_cast<RangeTblEntry*>(rte_node);
+            }
+        }
+    }
+
     if (base_rel == 0) {
         // No FROM clause — create a Result plan.
         plan = makePallocNode<Result>();
         plan->targetlist = targetlist;
         plan->qual = nullptr;
+    } else if (base_rte != nullptr && base_rte->rtekind == pgcpp::parser::RTEKind::kSubquery &&
+               base_rte->subquery != nullptr) {
+        // Subquery RTE (CTE reference or FROM-subquery) — recursively plan
+        // the subquery and wrap it in a SubqueryScan. The SubqueryScan's
+        // target list is built the same way as for SeqScan: for non-aggregate
+        // queries we use the query's target list directly (Vars reference
+        // the subquery's output via ecxt_scantuple); for aggregate queries
+        // we build a physical tlist of Vars so the Agg node can reference
+        // any subquery output column by varattno.
+        Plan* subplan = planner(base_rte->subquery);
+
+        std::vector<TargetEntry*> scan_tlist = targetlist;
+        if (has_aggs) {
+            // relid=0 makes BuildScanTargetList fall through to its
+            // "extract Vars from the Agg target list" fallback, which is
+            // exactly what we want for subquery RTEs.
+            scan_tlist = BuildScanTargetList(/*relid=*/0, base_rel, targetlist);
+        }
+        auto* sqscan = makePallocNode<SubqueryScan>();
+        sqscan->scanrelid = base_rel;
+        sqscan->targetlist = scan_tlist;
+        sqscan->qual = qual;
+        sqscan->lefttree = subplan;
+        plan = sqscan;
+    } else if (base_rte != nullptr && base_rte->rtekind == pgcpp::parser::RTEKind::kValues) {
+        // VALUES RTE (multi-row INSERT ... VALUES, or standalone VALUES in
+        // FROM). Each row in the RTE's values_lists is a list of expression
+        // nodes; the ValuesScan executor evaluates them per row and projects
+        // via the target list (Vars referencing scanrelid columns).
+        std::vector<TargetEntry*> scan_tlist = targetlist;
+        if (has_aggs) {
+            scan_tlist = BuildScanTargetList(/*relid=*/0, base_rel, targetlist);
+        }
+        auto* vscan = makePallocNode<ValuesScan>();
+        vscan->scanrelid = base_rel;
+        vscan->targetlist = scan_tlist;
+        vscan->qual = qual;
+        // Copy the rows from the RTE into the plan (the executor reads them
+        // from the plan, not the RTE).
+        vscan->rows = base_rte->values_lists;
+        plan = vscan;
     } else {
         // Create a SeqScan plan for the base relation.
         // For aggregate queries, the scan target list must contain only Var

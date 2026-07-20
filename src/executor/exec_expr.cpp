@@ -6,7 +6,10 @@
 // evaluation), and ExecProject (target list evaluation).
 #include "executor/exec_expr.hpp"
 
+#include <cmath>
+#include <cstdint>
 #include <cstring>
+#include <ctime>
 #include <string>
 
 #include "catalog/catalog.hpp"
@@ -19,8 +22,10 @@
 #include "jit/jit.hpp"
 #include "parser/parsenodes.hpp"
 #include "parser/primnodes.hpp"
+#include "types/builtins.hpp"
 #include "types/datetime.hpp"
 #include "types/datum.hpp"
+#include "types/math_funcs.hpp"
 #include "types/string_funcs.hpp"
 
 namespace pgcpp::executor {
@@ -39,15 +44,21 @@ using pgcpp::parser::BoolExpr;
 using pgcpp::parser::BoolExprType;
 using pgcpp::parser::CaseExpr;
 using pgcpp::parser::CaseWhen;
+using pgcpp::parser::CoalesceExpr;
 using pgcpp::parser::Const;
 using pgcpp::parser::FuncExpr;
+using pgcpp::parser::MinMaxExpr;
+using pgcpp::parser::MinMaxOp;
 using pgcpp::parser::Node;
+using pgcpp::parser::NullIfExpr;
 using pgcpp::parser::NullTest;
 using pgcpp::parser::NullTestType;
 using pgcpp::parser::OpExpr;
 using pgcpp::parser::Param;
 using pgcpp::parser::RelabelType;
 using pgcpp::parser::ScalarArrayOpExpr;
+using pgcpp::parser::SQLValueFunction;
+using pgcpp::parser::SQLValueFunctionOp;
 using pgcpp::parser::TargetEntry;
 using pgcpp::parser::Var;
 using pgcpp::types::BoolGetDatum;
@@ -492,6 +503,309 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
                 return pgcpp::types::substring(arg_values[0], arg_values[1]);
             }
 
+            // --- Task 9: Math functions ---
+            // Each branch checks the proc's argument type to dispatch to the
+            // correct overload (abs/mod have int4/int8/float8 variants).
+
+            if (fname == "abs") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                Oid argtype = proc->proargtypes.empty() ? kInvalidOid : proc->proargtypes[0];
+                *isNull = false;
+                if (argtype == kInt4Oid) {
+                    return pgcpp::types::int4_abs(arg_values[0]);
+                }
+                if (argtype == kInt8Oid) {
+                    return pgcpp::types::int8_abs(arg_values[0]);
+                }
+                if (argtype == kFloat8Oid) {
+                    return pgcpp::types::float8_abs(arg_values[0]);
+                }
+                *isNull = true;
+                return 0;
+            }
+
+            if (fname == "ceil") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::float8_ceil(arg_values[0]);
+            }
+
+            if (fname == "floor") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::float8_floor(arg_values[0]);
+            }
+
+            if (fname == "round") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::float8_round(arg_values[0]);
+            }
+
+            if (fname == "sqrt") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return Float8GetDatum(std::sqrt(DatumGetFloat8(arg_values[0])));
+            }
+
+            if (fname == "power") {
+                if (arg_nulls[0] || arg_nulls[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return Float8GetDatum(
+                    std::pow(DatumGetFloat8(arg_values[0]), DatumGetFloat8(arg_values[1])));
+            }
+
+            if (fname == "log") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::float8_ln(arg_values[0]);
+            }
+
+            if (fname == "log10") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::float8_log10(arg_values[0]);
+            }
+
+            if (fname == "exp") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::float8_exp(arg_values[0]);
+            }
+
+            if (fname == "mod") {
+                if (arg_nulls[0] || arg_nulls[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                Oid argtype = proc->proargtypes.empty() ? kInvalidOid : proc->proargtypes[0];
+                *isNull = false;
+                if (argtype == kInt8Oid) {
+                    return pgcpp::types::int8_mod(arg_values[0], arg_values[1]);
+                }
+                return pgcpp::types::int4_mod(arg_values[0], arg_values[1]);
+            }
+
+            if (fname == "sign") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::int4_sign(arg_values[0]);
+            }
+
+            if (fname == "trunc") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                if (arg_values.size() >= 2 && !arg_nulls[1]) {
+                    return pgcpp::types::float8_trunc_n(arg_values[0], arg_values[1]);
+                }
+                return pgcpp::types::float8_trunc(arg_values[0]);
+            }
+
+            // --- Task 10: String functions ---
+
+            if (fname == "substr") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                if (arg_values.size() >= 3 && !arg_nulls[2]) {
+                    return pgcpp::types::text_substr(arg_values[0], arg_values[1], arg_values[2]);
+                }
+                return pgcpp::types::text_substr_2(arg_values[0], arg_values[1]);
+            }
+
+            if (fname == "trim" || fname == "btrim") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::text_btrim(arg_values[0]);
+            }
+
+            if (fname == "ltrim") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::text_ltrim(arg_values[0]);
+            }
+
+            if (fname == "rtrim") {
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::text_rtrim(arg_values[0]);
+            }
+
+            if (fname == "replace") {
+                if (arg_nulls[0] || arg_nulls[1] || arg_nulls[2]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::text_replace(arg_values[0], arg_values[1], arg_values[2]);
+            }
+
+            if (fname == "position") {
+                if (arg_nulls[0] || arg_nulls[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::text_position(arg_values[0], arg_values[1]);
+            }
+
+            if (fname == "lpad") {
+                if (arg_nulls[0] || arg_nulls[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                if (arg_values.size() >= 3 && !arg_nulls[2]) {
+                    return pgcpp::types::text_lpad(arg_values[0], arg_values[1], arg_values[2]);
+                }
+                return pgcpp::types::text_lpad(arg_values[0], arg_values[1]);
+            }
+
+            if (fname == "rpad") {
+                if (arg_nulls[0] || arg_nulls[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                if (arg_values.size() >= 3 && !arg_nulls[2]) {
+                    return pgcpp::types::text_rpad(arg_values[0], arg_values[1], arg_values[2]);
+                }
+                return pgcpp::types::text_rpad(arg_values[0], arg_values[1]);
+            }
+
+            if (fname == "split_part") {
+                if (arg_nulls[0] || arg_nulls[1] || arg_nulls[2]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return pgcpp::types::text_split_part(arg_values[0], arg_values[1], arg_values[2]);
+            }
+
+            // --- Task 11: NULL-handling functions ---
+            // COALESCE/NULLIF/GREATEST/LEAST are emitted as FuncCall by the
+            // parser; we dispatch them here as well as via the dedicated
+            // CoalesceExpr/NullIfExpr/MinMaxExpr node cases above.
+
+            if (fname == "coalesce") {
+                for (std::size_t i = 0; i < arg_values.size(); ++i) {
+                    if (!arg_nulls[i]) {
+                        *isNull = false;
+                        return arg_values[i];
+                    }
+                }
+                *isNull = true;
+                return 0;
+            }
+
+            if (fname == "nullif") {
+                if (arg_values.size() != 2) {
+                    *isNull = true;
+                    return 0;
+                }
+                if (arg_nulls[0]) {
+                    *isNull = true;
+                    return 0;
+                }
+                if (arg_nulls[1]) {
+                    *isNull = false;
+                    return arg_values[0];
+                }
+                // Equality check by comparing Datums directly (works for
+                // pass-by-value types — int4/int8/float8). The parser
+                // currently only emits NULLIF on numeric types.
+                if (arg_values[0] == arg_values[1]) {
+                    *isNull = true;
+                    return 0;
+                }
+                *isNull = false;
+                return arg_values[0];
+            }
+
+            if (fname == "greatest" || fname == "least") {
+                bool want_max = (fname == "greatest");
+                bool have_best = false;
+                Datum best = 0;
+                Oid argtype = proc->proargtypes.empty() ? kInvalidOid : proc->proargtypes[0];
+                for (std::size_t i = 0; i < arg_values.size(); ++i) {
+                    if (arg_nulls[i]) {
+                        continue;
+                    }
+                    if (!have_best) {
+                        best = arg_values[i];
+                        have_best = true;
+                        continue;
+                    }
+                    Datum cmp = ApplyComparison(want_max ? ">" : "<", argtype, arg_values[i], false,
+                                                best, false);
+                    if (DatumGetBool(cmp)) {
+                        best = arg_values[i];
+                    }
+                }
+                *isNull = !have_best;
+                return best;
+            }
+
+            if (fname == "current_date") {
+                std::time_t now = std::time(nullptr);
+                constexpr int64_t kUnixToPgEpochSecs = 946684800LL;
+                int64_t days = (now - kUnixToPgEpochSecs) / 86400;
+                *isNull = false;
+                return Int32GetDatum(static_cast<int32_t>(days));
+            }
+
+            if (fname == "current_timestamp" || fname == "now") {
+                std::time_t now = std::time(nullptr);
+                constexpr int64_t kUnixToPgEpochSecs = 946684800LL;
+                int64_t microsecs = (now - kUnixToPgEpochSecs) * 1000000LL;
+                *isNull = false;
+                return Int64GetDatum(microsecs);
+            }
+
             *isNull = true;
             return 0;
         }
@@ -607,6 +921,122 @@ Datum ExecEvalExpr(Node* expr, ExprContext* econtext, bool* isNull) {
             // TargetEntry: evaluate the underlying expression.
             auto* te = static_cast<TargetEntry*>(expr);
             return ExecEvalExpr(te->expr, econtext, isNull);
+        }
+
+        case NodeTag::kCoalesceExpr: {
+            // COALESCE(v1, v2, ...) — return the first non-NULL argument.
+            // If all arguments are NULL, return NULL.
+            auto* ce = static_cast<CoalesceExpr*>(expr);
+            for (Node* arg_node : ce->args) {
+                bool arg_null = false;
+                Datum val = ExecEvalExpr(arg_node, econtext, &arg_null);
+                if (!arg_null) {
+                    *isNull = false;
+                    return val;
+                }
+            }
+            *isNull = true;
+            return 0;
+        }
+
+        case NodeTag::kMinMaxExpr: {
+            // GREATEST/LEAST — return the maximum (or minimum) of the
+            // non-NULL arguments. NULL inputs are skipped. If all inputs
+            // are NULL, the result is NULL.
+            auto* mm = static_cast<MinMaxExpr*>(expr);
+            if (mm->args.empty()) {
+                *isNull = true;
+                return 0;
+            }
+            bool have_best = false;
+            Datum best = 0;
+            // MinMaxExpr carries the operation (kIsGreatest / kIsLeast) in
+            // minmaxtype; the comparison type is inferred from the first
+            // argument. pgcpp's parser only emits MinMaxExpr on int4 args
+            // (see bootstrap_catalog.cpp's "greatest"/"least" entries), so
+            // defaulting to kInt4Oid is sufficient for the current SQL
+            // surface area.
+            Oid cmp_type = kInt4Oid;
+            for (Node* arg_node : mm->args) {
+                bool arg_null = false;
+                Datum val = ExecEvalExpr(arg_node, econtext, &arg_null);
+                if (arg_null) {
+                    continue;
+                }
+                if (!have_best) {
+                    best = val;
+                    have_best = true;
+                    continue;
+                }
+                Datum cmp = ApplyComparison(mm->minmaxtype == MinMaxOp::kIsGreatest ? ">" : "<",
+                                            cmp_type, val, false, best, false);
+                if (DatumGetBool(cmp)) {
+                    best = val;
+                }
+            }
+            *isNull = !have_best;
+            return best;
+        }
+
+        case NodeTag::kNullIfExpr: {
+            // NULLIF(a, b) — return NULL if a = b, otherwise return a.
+            // NULL semantics: NULLIF(NULL, x) → NULL; NULLIF(x, NULL) → x.
+            auto* ni = static_cast<NullIfExpr*>(expr);
+            if (ni->args.size() != 2) {
+                *isNull = true;
+                return 0;
+            }
+            bool a_null = false, b_null = false;
+            Datum a = ExecEvalExpr(ni->args[0], econtext, &a_null);
+            Datum b = ExecEvalExpr(ni->args[1], econtext, &b_null);
+            if (a_null) {
+                *isNull = true;
+                return 0;
+            }
+            if (b_null) {
+                *isNull = false;
+                return a;
+            }
+            const auto* oprow = GetCatalog()->GetOperatorByOid(ni->opno);
+            if (oprow == nullptr) {
+                *isNull = false;
+                return a;
+            }
+            Datum eq = ApplyComparison("=", oprow->oprleft, a, false, b, false);
+            if (DatumGetBool(eq)) {
+                *isNull = true;
+                return 0;
+            }
+            *isNull = false;
+            return a;
+        }
+
+        case NodeTag::kSQLValueFunction: {
+            // CURRENT_DATE / CURRENT_TIMESTAMP / etc. Return the current
+            // date/timestamp as a Datum of the appropriate type.
+            auto* svf = static_cast<SQLValueFunction*>(expr);
+            std::time_t now = std::time(nullptr);
+            // Unix epoch (1970-01-01) to PostgreSQL epoch (2000-01-01):
+            // 10957 days = 946684800 seconds.
+            constexpr int64_t kUnixToPgEpochSecs = 946684800LL;
+            switch (svf->op) {
+                case SQLValueFunctionOp::kCurrentDate:
+                case SQLValueFunctionOp::kLocalTimestamp: {
+                    // Days since 2000-01-01.
+                    int64_t days = (now - kUnixToPgEpochSecs) / 86400;
+                    *isNull = false;
+                    return Int32GetDatum(static_cast<int32_t>(days));
+                }
+                case SQLValueFunctionOp::kCurrentTimestamp:
+                case SQLValueFunctionOp::kLocalTime: {
+                    int64_t microsecs = (now - kUnixToPgEpochSecs) * 1000000LL;
+                    *isNull = false;
+                    return Int64GetDatum(microsecs);
+                }
+                default:
+                    *isNull = true;
+                    return 0;
+            }
         }
 
         default:

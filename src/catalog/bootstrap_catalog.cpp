@@ -369,9 +369,17 @@ void BootstrapCatalog(Catalog* cat) {
     cat->InsertProc(MakeProc(2284, "regexp_replace", kTextOid, {kTextOid, kTextOid, kTextOid}));
     cat->InsertProc(MakeProc(kInvalidOid, "regexp_replace", kTextOid,
                              {kTextOid, kTextOid, kTextOid, kTextOid}));
+    // Task 10: additional string functions.
+    cat->InsertProc(MakeProc(kInvalidOid, "trim", kTextOid, {kTextOid}));
+    cat->InsertProc(MakeProc(kInvalidOid, "lpad", kTextOid, {kTextOid, kInt4Oid}));
+    cat->InsertProc(MakeProc(kInvalidOid, "lpad", kTextOid, {kTextOid, kInt4Oid, kTextOid}));
+    cat->InsertProc(MakeProc(kInvalidOid, "rpad", kTextOid, {kTextOid, kInt4Oid}));
+    cat->InsertProc(MakeProc(kInvalidOid, "rpad", kTextOid, {kTextOid, kInt4Oid, kTextOid}));
 
     // Math functions.
     cat->InsertProc(MakeProc(1398, "abs", kInt4Oid, {kInt4Oid}));
+    cat->InsertProc(MakeProc(1796, "abs", kInt8Oid, {kInt8Oid}));
+    cat->InsertProc(MakeProc(1346, "abs", kFloat8Oid, {kFloat8Oid}));
     cat->InsertProc(MakeProc(1700, "round", kFloat8Oid, {kFloat8Oid}));
     cat->InsertProc(MakeProc(2308, "ceil", kFloat8Oid, {kFloat8Oid}));
     cat->InsertProc(MakeProc(kInvalidOid, "ceiling", kFloat8Oid, {kFloat8Oid}));
@@ -379,6 +387,14 @@ void BootstrapCatalog(Catalog* cat) {
     cat->InsertProc(MakeProc(1340, "sqrt", kFloat8Oid, {kFloat8Oid}));
     cat->InsertProc(MakeProc(1368, "power", kFloat8Oid, {kFloat8Oid, kFloat8Oid}));
     cat->InsertProc(MakeProc(941, "mod", kInt4Oid, {kInt4Oid, kInt4Oid}));
+    cat->InsertProc(MakeProc(947, "mod", kInt8Oid, {kInt8Oid, kInt8Oid}));
+    // Task 9: additional math functions (ln / log10 / exp / sign / trunc).
+    cat->InsertProc(MakeProc(1342, "log", kFloat8Oid, {kFloat8Oid}));
+    cat->InsertProc(MakeProc(1343, "log10", kFloat8Oid, {kFloat8Oid}));
+    cat->InsertProc(MakeProc(1341, "exp", kFloat8Oid, {kFloat8Oid}));
+    cat->InsertProc(MakeProc(1345, "sign", kInt4Oid, {kInt4Oid}));
+    cat->InsertProc(MakeProc(1344, "trunc", kFloat8Oid, {kFloat8Oid}));
+    cat->InsertProc(MakeProc(kInvalidOid, "trunc", kFloat8Oid, {kFloat8Oid, kInt4Oid}));
 
     // Date/time functions.
     cat->InsertProc(MakeProc(2020, "date_trunc", kTimestampOid, {kTextOid, kTimestampOid}));
@@ -397,6 +413,12 @@ void BootstrapCatalog(Catalog* cat) {
     cat->InsertProc(MakeProc(kInvalidOid, "nullif", kInt4Oid, {kInt4Oid, kInt4Oid}));
     cat->InsertProc(MakeProc(kInvalidOid, "greatest", kInt4Oid, {kInt4Oid, kInt4Oid}));
     cat->InsertProc(MakeProc(kInvalidOid, "least", kInt4Oid, {kInt4Oid, kInt4Oid}));
+
+    // Task 11: SQLValueFunction entries. The parser emits CURRENT_DATE /
+    // CURRENT_TIMESTAMP as FuncCall nodes; the executor dispatches them via
+    // the kFuncExpr branch in exec_expr.cpp.
+    cat->InsertProc(MakeProc(kInvalidOid, "current_date", kDateOid, {}));
+    cat->InsertProc(MakeProc(kInvalidOid, "current_timestamp", kTimestamptzOid, {}));
 
     // Aggregate pg_proc entries (prokind = kAggregate). These are referenced
     // by the pg_aggregate rows below via aggfnoid.
