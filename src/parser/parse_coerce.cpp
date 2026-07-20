@@ -17,6 +17,31 @@
 namespace pgcpp::parser {
 
 using pgcpp::catalog::kInvalidOid;
+using pgcpp::types::bool_in;
+using pgcpp::types::bool_out;
+using pgcpp::types::BoolGetDatum;
+using pgcpp::types::date_in;
+using pgcpp::types::date_out;
+using pgcpp::types::Datum;
+using pgcpp::types::DatumGetBool;
+using pgcpp::types::DatumGetFloat4;
+using pgcpp::types::DatumGetFloat8;
+using pgcpp::types::DatumGetInt16;
+using pgcpp::types::DatumGetInt32;
+using pgcpp::types::DatumGetInt64;
+using pgcpp::types::Float4GetDatum;
+using pgcpp::types::float8_in;
+using pgcpp::types::float8_out;
+using pgcpp::types::Float8GetDatum;
+using pgcpp::types::Int16GetDatum;
+using pgcpp::types::int2_in;
+using pgcpp::types::int2_out;
+using pgcpp::types::Int32GetDatum;
+using pgcpp::types::int4_in;
+using pgcpp::types::int4_out;
+using pgcpp::types::Int64GetDatum;
+using pgcpp::types::int8_in;
+using pgcpp::types::int8_out;
 using pgcpp::types::kBoolOid;
 using pgcpp::types::kDateOid;
 using pgcpp::types::kFloat4Oid;
@@ -24,9 +49,15 @@ using pgcpp::types::kFloat8Oid;
 using pgcpp::types::kInt2Oid;
 using pgcpp::types::kInt4Oid;
 using pgcpp::types::kInt8Oid;
+using pgcpp::types::kMicrosecsPerSec;
+using pgcpp::types::kSecsPerDay;
 using pgcpp::types::kTextOid;
 using pgcpp::types::kTimestampOid;
 using pgcpp::types::kVarcharOid;
+using pgcpp::types::text_in;
+using pgcpp::types::text_out;
+using pgcpp::types::timestamp_in;
+using pgcpp::types::timestamp_out;
 
 static constexpr Oid kUnknownOid = 705;
 
@@ -140,9 +171,12 @@ bool can_coerce_type(int nargs, const Oid* input_typeids, const Oid* target_type
                     continue;
             }
 
-            // Allow date -> timestamp
+            // Allow date <-> timestamp (both directions) for assignment casts.
+            // PostgreSQL's pg_cast defines date->timestamp as assignment-castable
+            // and timestamp->date as assignment-castable.
             if (in_cat == TypeCategory::kDatetime && tgt_cat == TypeCategory::kDatetime) {
-                if (input == kDateOid && target == kTimestampOid)
+                if ((input == kDateOid && target == kTimestampOid) ||
+                    (input == kTimestampOid && target == kDateOid))
                     continue;
             }
         }
@@ -163,6 +197,20 @@ bool can_coerce_type(int nargs, const Oid* input_typeids, const Oid* target_type
                 continue;
             // Allow datetime -> string
             if (in_cat == TypeCategory::kDatetime && tgt_cat == TypeCategory::kString)
+                continue;
+            // Allow string -> bool (e.g., 't'::boolean)
+            if (in_cat == TypeCategory::kString && tgt_cat == TypeCategory::kBoolean)
+                continue;
+            // Allow bool -> string (e.g., true::text)
+            if (in_cat == TypeCategory::kBoolean && tgt_cat == TypeCategory::kString)
+                continue;
+            // Allow int4 <-> bool (PostgreSQL only allows int4, not int2/int8)
+            if ((input == kInt4Oid && target == kBoolOid) ||
+                (input == kBoolOid && target == kInt4Oid))
+                continue;
+            // Allow timestamp <-> date for explicit casts too (redundant with
+            // assignment branch above, but kept for clarity).
+            if (in_cat == TypeCategory::kDatetime && tgt_cat == TypeCategory::kDatetime)
                 continue;
         }
 
@@ -187,6 +235,22 @@ Node* coerce_type([[maybe_unused]] ParseState* pstate, Node* node, Oid input_typ
     if (input_typeid == kUnknownOid) {
         if (node && node->GetTag() == pgcpp::nodes::NodeTag::kConst) {
             auto* con = static_cast<Const*>(node);
+            // NULL literal: parsed as AConst(isnull=true) →
+            // Const(kUnknownOid, constisnull=true, constvalue=0).
+            // String-based conversion branches below all check
+            // `if (str != nullptr)` and skip when constvalue is 0,
+            // then the function falls through to building a CoerceViaIO
+            // node — but ExecEvalExpr does not support CoerceViaIO and
+            // throws "unsupported expression type in ExecEvalExpr".
+            // For a NULL constant there is nothing to convert; just fix
+            // up the type metadata so the Const carries the target type.
+            if (con->constisnull) {
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                con->consttypmod = target_typmod;
+                return node;
+            }
             // For string constants, we can directly set the target type
             // if the target is a string type
             if (target_typeid == kTextOid || target_typeid == kVarcharOid) {
@@ -194,9 +258,28 @@ Node* coerce_type([[maybe_unused]] ParseState* pstate, Node* node, Oid input_typ
                 // The unknown-type Const stores a char* to a null-terminated
                 // string; TEXT/VARCHAR needs a varlena structure (4-byte
                 // length header + data).
+                //
+                // For VARCHAR, PostgreSQL's cast machinery routes through
+                // varchar_typmod_coerce() rather than varchar_in(): the
+                // explicit-cast flag controls whether overflow is silently
+                // truncated (kExplicit, e.g., 'hello world'::VARCHAR(5) →
+                // 'hello') or raises ERROR on non-space overflow
+                // (kImplicit/kAssignment, e.g., INSERT into a VARCHAR(5)
+                // column). varchar_in() is the cstring→varchar input
+                // converter and always errors on non-space overflow; it
+                // does not see the cast context, so it would break
+                // explicit casts.
                 const char* str = reinterpret_cast<const char*>(con->constvalue);
                 if (str != nullptr) {
-                    con->constvalue = pgcpp::types::text_in(str);
+                    if (target_typeid == kVarcharOid) {
+                        bool is_explicit = (ccontext == CoercionContext::kExplicit);
+                        Datum text_datum = pgcpp::types::text_in(str);
+                        con->constvalue = pgcpp::types::varchar_typmod_coerce(
+                            text_datum, target_typmod, is_explicit);
+                        con->consttypmod = target_typmod;
+                    } else {
+                        con->constvalue = pgcpp::types::text_in(str);
+                    }
                 }
                 con->consttype = target_typeid;
                 con->constlen = get_typlen(target_typeid);
@@ -407,9 +490,218 @@ Node* coerce_type([[maybe_unused]] ParseState* pstate, Node* node, Oid input_typ
         return cio;
     }
 
-    // String <-> numeric/datetime via I/O
+    // Bool <-> numeric (int4 <-> bool, etc.)
+    // PostgreSQL's pg_cast only allows int4<->bool, but we accept any numeric
+    // type for robustness; the value-level conversion is well-defined.
+    if ((in_cat == TypeCategory::kBoolean && tgt_cat == TypeCategory::kNumeric) ||
+        (in_cat == TypeCategory::kNumeric && tgt_cat == TypeCategory::kBoolean)) {
+        if (node != nullptr && node->GetTag() == pgcpp::nodes::NodeTag::kConst) {
+            auto* con = static_cast<Const*>(node);
+            if (con->constisnull) {
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                return node;
+            }
+            bool ok = false;
+            if (input_typeid == kBoolOid) {
+                // bool -> numeric: false = 0, true = 1
+                int64_t ival = DatumGetBool(con->constvalue) ? 1 : 0;
+                if (target_typeid == kInt2Oid) {
+                    con->constvalue = Int16GetDatum(static_cast<int16_t>(ival));
+                    ok = true;
+                } else if (target_typeid == kInt4Oid) {
+                    con->constvalue = Int32GetDatum(static_cast<int32_t>(ival));
+                    ok = true;
+                } else if (target_typeid == kInt8Oid) {
+                    con->constvalue = Int64GetDatum(ival);
+                    ok = true;
+                } else if (target_typeid == kFloat4Oid) {
+                    con->constvalue = Float4GetDatum(static_cast<float>(ival));
+                    ok = true;
+                } else if (target_typeid == kFloat8Oid) {
+                    con->constvalue = Float8GetDatum(static_cast<double>(ival));
+                    ok = true;
+                }
+            } else {
+                // numeric -> bool: 0 = false, non-zero = true
+                bool bval = false;
+                if (input_typeid == kInt2Oid) {
+                    bval = DatumGetInt16(con->constvalue) != 0;
+                } else if (input_typeid == kInt4Oid) {
+                    bval = DatumGetInt32(con->constvalue) != 0;
+                } else if (input_typeid == kInt8Oid) {
+                    bval = DatumGetInt64(con->constvalue) != 0;
+                } else if (input_typeid == kFloat4Oid) {
+                    bval = DatumGetFloat4(con->constvalue) != 0.0f;
+                } else if (input_typeid == kFloat8Oid) {
+                    bval = DatumGetFloat8(con->constvalue) != 0.0;
+                }
+                if (target_typeid == kBoolOid) {
+                    con->constvalue = BoolGetDatum(bval);
+                    ok = true;
+                }
+            }
+            if (ok) {
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                return node;
+            }
+        }
+        // Non-Const or unsupported: fall back to CoerceViaIO.
+        auto* cio = makeNode<CoerceViaIO>();
+        cio->arg = node;
+        cio->resulttype = target_typeid;
+        cio->resultcollid = 0;
+        cio->coerceformat = cformat;
+        cio->location = location;
+        return cio;
+    }
+
+    // Datetime <-> datetime (timestamp <-> date)
+    // date is int32 days since epoch; timestamp is int64 microseconds since
+    // epoch. The conversion is not binary-compatible and requires arithmetic.
+    if (in_cat == TypeCategory::kDatetime && tgt_cat == TypeCategory::kDatetime) {
+        if (node != nullptr && node->GetTag() == pgcpp::nodes::NodeTag::kConst) {
+            auto* con = static_cast<Const*>(node);
+            if (con->constisnull) {
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                return node;
+            }
+            bool ok = false;
+            if (input_typeid == kDateOid && target_typeid == kTimestampOid) {
+                // date (days since epoch) -> timestamp (microseconds since epoch)
+                int32_t days = DatumGetInt32(con->constvalue);
+                int64_t micros = static_cast<int64_t>(days) * kSecsPerDay * kMicrosecsPerSec;
+                con->constvalue = Int64GetDatum(micros);
+                ok = true;
+            } else if (input_typeid == kTimestampOid && target_typeid == kDateOid) {
+                // timestamp -> date: truncate to start of day (floor toward
+                // negative infinity for negative timestamps).
+                int64_t micros = DatumGetInt64(con->constvalue);
+                int64_t micros_per_day = kSecsPerDay * kMicrosecsPerSec;
+                int64_t days = micros / micros_per_day;
+                if (micros < 0 && (micros % micros_per_day) != 0) {
+                    days--;
+                }
+                con->constvalue = Int32GetDatum(static_cast<int32_t>(days));
+                ok = true;
+            }
+            if (ok) {
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                return node;
+            }
+        }
+        // Non-Const: fall back to CoerceViaIO.
+        auto* cio = makeNode<CoerceViaIO>();
+        cio->arg = node;
+        cio->resulttype = target_typeid;
+        cio->resultcollid = 0;
+        cio->coerceformat = cformat;
+        cio->location = location;
+        return cio;
+    }
+
+    // String <-> numeric/datetime/bool via I/O
+    // For Const inputs, fold the cast at parse time by calling the source
+    // type's output function and the target type's input function. This
+    // mirrors PostgreSQL's eval_const_expressions behavior for I/O casts and
+    // avoids needing the executor to evaluate CoerceViaIO nodes.
     if ((in_cat == TypeCategory::kString && tgt_cat != TypeCategory::kString) ||
         (in_cat != TypeCategory::kString && tgt_cat == TypeCategory::kString)) {
+        if (node != nullptr && node->GetTag() == pgcpp::nodes::NodeTag::kConst) {
+            auto* con = static_cast<Const*>(node);
+            if (con->constisnull) {
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                return node;
+            }
+            bool ok = false;
+            if (in_cat == TypeCategory::kString) {
+                // string -> X: extract C string from varlena, call target's
+                // input function. Errors (e.g., "abc"::int4) propagate via
+                // ereport(ERROR) at parse time, matching PostgreSQL.
+                char* cstr = text_out(con->constvalue);
+                Datum result = 0;
+                if (target_typeid == kInt2Oid) {
+                    result = int2_in(cstr);
+                    ok = true;
+                } else if (target_typeid == kInt4Oid) {
+                    result = int4_in(cstr);
+                    ok = true;
+                } else if (target_typeid == kInt8Oid) {
+                    result = int8_in(cstr);
+                    ok = true;
+                } else if (target_typeid == kFloat4Oid) {
+                    // No float4_in in our types layer; use float8_in and
+                    // narrow to float4.
+                    result = Float4GetDatum(static_cast<float>(DatumGetFloat8(float8_in(cstr))));
+                    ok = true;
+                } else if (target_typeid == kFloat8Oid) {
+                    result = float8_in(cstr);
+                    ok = true;
+                } else if (target_typeid == kBoolOid) {
+                    result = bool_in(cstr);
+                    ok = true;
+                } else if (target_typeid == kDateOid) {
+                    result = date_in(cstr);
+                    ok = true;
+                } else if (target_typeid == kTimestampOid) {
+                    result = timestamp_in(cstr);
+                    ok = true;
+                }
+                if (ok) {
+                    con->constvalue = result;
+                }
+            } else {
+                // X -> string: call source's output function, build a text
+                // Datum (varlena) from the resulting C string.
+                Datum val = con->constvalue;
+                char* cstr = nullptr;
+                if (input_typeid == kInt2Oid) {
+                    cstr = int2_out(val);
+                    ok = true;
+                } else if (input_typeid == kInt4Oid) {
+                    cstr = int4_out(val);
+                    ok = true;
+                } else if (input_typeid == kInt8Oid) {
+                    cstr = int8_out(val);
+                    ok = true;
+                } else if (input_typeid == kFloat4Oid) {
+                    // No float4_out; widen to float8 and use float8_out.
+                    cstr = float8_out(Float8GetDatum(static_cast<double>(DatumGetFloat4(val))));
+                    ok = true;
+                } else if (input_typeid == kFloat8Oid) {
+                    cstr = float8_out(val);
+                    ok = true;
+                } else if (input_typeid == kBoolOid) {
+                    cstr = bool_out(val);
+                    ok = true;
+                } else if (input_typeid == kDateOid) {
+                    cstr = date_out(val);
+                    ok = true;
+                } else if (input_typeid == kTimestampOid) {
+                    cstr = timestamp_out(val);
+                    ok = true;
+                }
+                if (ok) {
+                    con->constvalue = text_in(cstr);
+                }
+            }
+            if (ok) {
+                con->consttype = target_typeid;
+                con->constlen = get_typlen(target_typeid);
+                con->constbyval = get_typbyval(target_typeid);
+                return node;
+            }
+        }
+        // Non-Const or unsupported I/O cast: fall back to CoerceViaIO.
         auto* cio = makeNode<CoerceViaIO>();
         cio->arg = node;
         cio->resulttype = target_typeid;

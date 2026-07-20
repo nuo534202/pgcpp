@@ -256,54 +256,147 @@ static Query* transformInsertStmt(ParseState* pstate, InsertStmt* stmt) {
         if (nodeTag(stmt->select_stmt) == NodeTag::kSelectStmt) {
             auto* sel = static_cast<SelectStmt*>(stmt->select_stmt);
             if (!sel->values_lists.empty()) {
-                // F-4c: Multi-row INSERT (INSERT INTO t VALUES (1), (2), ...)
-                // is not yet supported — fail explicitly rather than silently
-                // dropping all rows except the first (data loss).
                 if (sel->values_lists.size() > 1) {
-                    ereport(pgcpp::error::LogLevel::kError, "multi-row INSERT is not supported");
-                }
-                // INSERT ... VALUES — convert the first row's expressions
-                // into ResTarget nodes and transform them into a target list.
-                const auto& first_row = sel->values_lists[0];
-                std::vector<Node*> target_list;
-                for (Node* expr : first_row) {
-                    auto* res = makeNode<ResTarget>();
-                    res->val = expr;
-                    target_list.push_back(res);
-                }
-                qry->target_list = transformTargetList(pstate, target_list);
+                    // Multi-row INSERT: build a VALUES RTE so the planner
+                    // can emit a ValuesScan over all rows. Each row's
+                    // expressions are coerced to the corresponding target
+                    // column type, and the query's target list becomes Vars
+                    // referencing the VALUES RTE's columns.
+                    //
+                    // Range table layout (1-based):
+                    //   [1..N]   target relation (added above)
+                    //   N+1      VALUES RTE (added here)
+                    auto* values_rte = makeNode<RangeTblEntry>();
+                    values_rte->rtekind = RTEKind::kValues;
+                    values_rte->in_from_cl = true;
+                    values_rte->lateral = false;
 
-                // Coerce each value to the corresponding target column type.
-                // This is essential for string literals (UNKNOWN type) being
-                // inserted into TEXT/VARCHAR columns — the Datum must be
-                // converted from a C string to a varlena structure.
-                if (pstate->p_target_relation != nullptr) {
-                    RangeTblEntry* rte = pstate->p_target_relation;
-                    if (GetCatalog() != nullptr && rte->relid != 0) {
-                        auto attrs = GetCatalog()->GetAttributes(rte->relid);
-                        size_t attr_idx = 0;
-                        for (Node* tle_node : qry->target_list) {
-                            if (attr_idx >= attrs.size())
-                                break;
-                            const auto* attr = attrs[attr_idx];
-                            if (attr->attnum <= 0) {
-                                ++attr_idx;
+                    // Build eref with synthetic column names (col1, col2, ...).
+                    size_t num_cols = sel->values_lists[0].size();
+                    auto* eref = makeNode<Alias>();
+                    eref->aliasname = "*VALUES*";
+                    for (size_t i = 0; i < num_cols; ++i) {
+                        eref->colnames.push_back(
+                            pgcpp::nodes::makeString("col" + std::to_string(i + 1)));
+                    }
+                    values_rte->eref = eref;
+
+                    // Coerce each row's expressions to the target column
+                    // types, then move them into the RTE.
+                    RangeTblEntry* tgt_rte = pstate->p_target_relation;
+                    std::vector<Oid> tgt_types;
+                    std::vector<int> tgt_typmods;
+                    if (tgt_rte != nullptr && GetCatalog() != nullptr && tgt_rte->relid != 0) {
+                        auto attrs = GetCatalog()->GetAttributes(tgt_rte->relid);
+                        for (const auto* attr : attrs) {
+                            if (attr->attnum <= 0)
                                 continue;
-                            }
-                            if (nodeTag(tle_node) == NodeTag::kTargetEntry) {
-                                auto* te = static_cast<TargetEntry*>(tle_node);
-                                Oid expr_type = exprType(te->expr);
-                                if (expr_type != attr->atttypid) {
+                            tgt_types.push_back(attr->atttypid);
+                            tgt_typmods.push_back(attr->atttypmod);
+                        }
+                    }
+
+                    for (auto& row : sel->values_lists) {
+                        std::vector<Node*> coerced_row;
+                        coerced_row.reserve(row.size());
+                        for (size_t i = 0; i < row.size(); ++i) {
+                            // Transform the raw parse-tree node (e.g., AConst →
+                            // Const) before coercion. The single-row INSERT
+                            // path goes through transformTargetList →
+                            // transformExpr; the multi-row path must do the
+                            // same, otherwise ValuesScan's ExecEvalExpr sees
+                            // an AConst (unsupported) and throws
+                            // "unsupported expression type in ExecEvalExpr".
+                            Node* expr =
+                                transformExpr(pstate, row[i], ParseExprKind::kInsertTarget);
+                            if (i < tgt_types.size()) {
+                                Oid expr_type = exprType(expr);
+                                if (expr_type != tgt_types[i]) {
                                     Node* coerced = coerce_to_target_type(
-                                        pstate, te->expr, expr_type, attr->atttypid,
-                                        attr->atttypmod, CoercionContext::kAssignment,
-                                        CoercionForm::kImplicit, -1);
+                                        pstate, expr, expr_type, tgt_types[i], tgt_typmods[i],
+                                        CoercionContext::kAssignment, CoercionForm::kImplicit, -1);
                                     if (coerced != nullptr) {
-                                        te->expr = coerced;
+                                        expr = coerced;
                                     }
                                 }
                             }
-                            ++attr_idx;
+                            coerced_row.push_back(expr);
+                        }
+                        values_rte->values_lists.push_back(std::move(coerced_row));
+                    }
+
+                    // Add the VALUES RTE to the range table.
+                    pstate->p_rtable.push_back(values_rte);
+                    int values_rtindex = static_cast<int>(pstate->p_rtable.size());
+
+                    // Build a FromExpr with a RangeTblRef pointing at the RTE.
+                    auto* rtr = makeNode<RangeTblRef>();
+                    rtr->rtindex = values_rtindex;
+                    auto* from_expr = makeNode<FromExpr>();
+                    from_expr->fromlist.push_back(rtr);
+                    from_expr->quals = nullptr;
+                    qry->jointree = from_expr;
+
+                    // Build the target list as Vars (varno=values_rtindex,
+                    // varattno=1..N) referencing the VALUES RTE's columns.
+                    // The Vars carry the target column types so ModifyTable's
+                    // downstream projection matches the table schema.
+                    std::vector<Node*> target_list;
+                    for (size_t i = 0; i < num_cols; ++i) {
+                        Oid col_type = (i < tgt_types.size()) ? tgt_types[i] : 0;
+                        int col_typmod = (i < tgt_typmods.size()) ? tgt_typmods[i] : -1;
+                        Var* var = makeVar(values_rtindex, static_cast<int>(i) + 1, col_type,
+                                           col_typmod, 0, 0, -1);
+                        auto* res = makeNode<ResTarget>();
+                        res->val = var;
+                        target_list.push_back(res);
+                    }
+                    qry->target_list = transformTargetList(pstate, target_list);
+                } else {
+                    // Single-row INSERT ... VALUES — convert the first row's
+                    // expressions into ResTarget nodes and transform them
+                    // into a target list.
+                    const auto& first_row = sel->values_lists[0];
+                    std::vector<Node*> target_list;
+                    for (Node* expr : first_row) {
+                        auto* res = makeNode<ResTarget>();
+                        res->val = expr;
+                        target_list.push_back(res);
+                    }
+                    qry->target_list = transformTargetList(pstate, target_list);
+
+                    // Coerce each value to the corresponding target column type.
+                    // This is essential for string literals (UNKNOWN type) being
+                    // inserted into TEXT/VARCHAR columns — the Datum must be
+                    // converted from a C string to a varlena structure.
+                    if (pstate->p_target_relation != nullptr) {
+                        RangeTblEntry* rte = pstate->p_target_relation;
+                        if (GetCatalog() != nullptr && rte->relid != 0) {
+                            auto attrs = GetCatalog()->GetAttributes(rte->relid);
+                            size_t attr_idx = 0;
+                            for (Node* tle_node : qry->target_list) {
+                                if (attr_idx >= attrs.size())
+                                    break;
+                                const auto* attr = attrs[attr_idx];
+                                if (attr->attnum <= 0) {
+                                    ++attr_idx;
+                                    continue;
+                                }
+                                if (nodeTag(tle_node) == NodeTag::kTargetEntry) {
+                                    auto* te = static_cast<TargetEntry*>(tle_node);
+                                    Oid expr_type = exprType(te->expr);
+                                    if (expr_type != attr->atttypid) {
+                                        Node* coerced = coerce_to_target_type(
+                                            pstate, te->expr, expr_type, attr->atttypid,
+                                            attr->atttypmod, CoercionContext::kAssignment,
+                                            CoercionForm::kImplicit, -1);
+                                        if (coerced != nullptr) {
+                                            te->expr = coerced;
+                                        }
+                                    }
+                                }
+                                ++attr_idx;
+                            }
                         }
                     }
                 }
@@ -380,6 +473,18 @@ static Query* transformUpdateStmt(ParseState* pstate, UpdateStmt* stmt) {
 
     // Transform the target list (SET assignments)
     qry->target_list = transformTargetList(pstate, stmt->target_list);
+
+    // Expand UPDATE's SET target list to include ALL table columns.
+    // SET columns keep their SET expression (with resno fixed to attnum);
+    // non-SET columns get a Var referencing the target table column.
+    // Without this, the SeqScan would only output SET columns (losing
+    // non-SET column values) and ModifyTable's ExecProject would have
+    // nothing to project — causing heap_update to write an all-NULL tuple.
+    // Mirrors PostgreSQL's rewriteTargetListUid in rewriteHandler.c.
+    if (pstate->p_target_relation != nullptr && qry->result_relation > 0) {
+        qry->target_list = expandUpdateTargetList(pstate, pstate->p_target_relation,
+                                                  qry->result_relation, qry->target_list);
+    }
 
     // Transform WHERE clause
     Node* qual = transformWhereClause(pstate, stmt->where_clause, ParseExprKind::kWhere, "WHERE");
