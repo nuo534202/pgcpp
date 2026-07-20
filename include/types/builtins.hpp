@@ -32,9 +32,23 @@ char* float8_out(Datum value);
 Datum text_in(const char* str);
 char* text_out(Datum value);
 
-// varchar input/output (same as text for now)
-Datum varchar_in(const char* str);
+// varchar input/output.
+//
+// `typmod` follows PostgreSQL's convention: it is VARHDRSZ (4) plus the
+// declared maximum length in characters, or -1 when no typmod is in effect.
+// When typmod >= VARHDRSZ and the input exceeds the declared length, the
+// extra characters must be spaces — otherwise ereport(ERROR) per SQL
+// semantics (mirrors PostgreSQL's varcharin/varchar_input).
+Datum varchar_in(const char* str, int32_t typmod = -1);
 char* varchar_out(Datum value);
+
+// varchar_typmod_coerce — apply a typmod to an existing varchar/text Datum.
+//
+// Mirrors PostgreSQL's varchar() SQL function: silently truncates to
+// `typmod - VARHDRSZ` characters when `is_explicit` is true; raises
+// ERROR if implicit and the overflow contains non-space characters.
+// Returns `source` unchanged when typmod is invalid or the value fits.
+Datum varchar_typmod_coerce(Datum source, int32_t typmod, bool is_explicit);
 
 // Comparison functions (return -1, 0, 1)
 int int2_cmp(Datum a, Datum b);

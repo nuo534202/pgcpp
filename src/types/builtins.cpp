@@ -14,6 +14,8 @@
 #include "common/error/elog.hpp"
 #include "common/memory/memory_context.hpp"
 #include "types/numutils.hpp"
+#include "utils/mb/mbutils.hpp"
+#include "utils/mb/wchar.hpp"
 
 namespace pgcpp::types {
 
@@ -44,6 +46,54 @@ char* PallocCString(std::string_view s) {
     }
     buf[s.size()] = '\0';
     return buf;
+}
+
+// VARHDRSZ — PostgreSQL's varlena header size, used when encoding typmods
+// for varlena string types (varchar/bpchar). Matches VARHDRSZ in postgres.h.
+constexpr int32_t kVarHdrSz = 4;
+
+// Mbcharcliplen — return the byte length of the first `char_limit` characters
+// of the multibyte string `s` (which has `byte_len` bytes). Mirrors
+// PostgreSQL's pg_mbcharcliplen(). For single-byte encodings this equals
+// min(byte_len, char_limit).
+int Mbcharcliplen(const char* s, int byte_len, int char_limit) {
+    if (s == nullptr || byte_len <= 0 || char_limit <= 0) {
+        return 0;
+    }
+    pgcpp::utils::PgEncoding enc = pgcpp::utils::GetDatabaseEncoding();
+    int clen = 0;  // byte length consumed so far
+    int nch = 0;   // character count consumed so far
+    int i = 0;
+    while (i < byte_len && s[i] != '\0') {
+        int ch_len = pgcpp::utils::PgMblen(enc, s + i);
+        if (ch_len <= 0) {
+            ch_len = 1;
+        }
+        if (i + ch_len > byte_len) {
+            // Truncated multi-byte sequence at end of buffer; stop.
+            break;
+        }
+        ++nch;
+        if (nch > char_limit) {
+            break;
+        }
+        clen += ch_len;
+        i += ch_len;
+    }
+    return clen;
+}
+
+// Build a varlena text Datum from `data` (byte_len bytes). Mirrors
+// PostgreSQL's cstring_to_text_with_len.
+Datum MakeTextWithLen(const char* data, std::size_t byte_len) {
+    std::size_t total = sizeof(int32_t) + byte_len;
+    char* buf = static_cast<char*>(palloc(total));
+    int32_t header = static_cast<int32_t>(total);
+    std::memcpy(buf, &header, sizeof(header));
+    if (byte_len > 0) {
+        std::memcpy(buf + sizeof(int32_t), data, byte_len);
+    }
+    return TextPGetDatum(buf);
 }
 
 }  // namespace
@@ -238,12 +288,81 @@ char* text_out(Datum value) {
     return result;
 }
 
-Datum varchar_in(const char* str) {
-    return text_in(str);
+Datum varchar_in(const char* str, int32_t typmod) {
+    if (str == nullptr) {
+        str = "";
+    }
+    std::size_t len = std::strlen(str);
+
+    // Apply typmod truncation. typmod encodes VARHDRSZ + max_char_len,
+    // so a valid typmod >= VARHDRSZ yields maxlen = typmod - VARHDRSZ.
+    if (typmod >= kVarHdrSz) {
+        int32_t max_chars = typmod - kVarHdrSz;
+        // Count input characters (not bytes) using the database encoding.
+        pgcpp::utils::PgEncoding enc = pgcpp::utils::GetDatabaseEncoding();
+        int char_len = pgcpp::utils::PgMbstrlenWithLen(enc, str, static_cast<int>(len));
+        if (char_len > max_chars) {
+            // Determine the byte position of the (max_chars)-th character.
+            int mbmaxlen = Mbcharcliplen(str, static_cast<int>(len), max_chars);
+            // Per SQL: trailing overflow must be spaces, else error.
+            for (int j = mbmaxlen; j < static_cast<int>(len); ++j) {
+                if (str[j] != ' ') {
+                    char errbuf[128];
+                    std::snprintf(errbuf, sizeof(errbuf),
+                                  "value too long for type character varying(%d)",
+                                  static_cast<int>(max_chars));
+                    ereport(LogLevel::kError, errbuf);
+                }
+            }
+            len = static_cast<std::size_t>(mbmaxlen);
+        }
+    }
+
+    return MakeTextWithLen(str, len);
 }
 
 char* varchar_out(Datum value) {
     return text_out(value);
+}
+
+Datum varchar_typmod_coerce(Datum source, int32_t typmod, bool is_explicit) {
+    // No work if typmod is invalid.
+    if (typmod < kVarHdrSz) {
+        return source;
+    }
+
+    int32_t max_chars = typmod - kVarHdrSz;
+    const char* text = DatumGetTextP(source);
+    int byte_len = VARSIZE_DATA(text);
+    const char* data = VARDATA(text);
+
+    // Count characters in the source value.
+    pgcpp::utils::PgEncoding enc = pgcpp::utils::GetDatabaseEncoding();
+    int char_len = pgcpp::utils::PgMbstrlenWithLen(enc, data, byte_len);
+
+    // No work if the value already fits.
+    if (char_len <= max_chars) {
+        return source;
+    }
+
+    // Truncate to the first max_chars characters (preserving multi-byte
+    // boundaries).
+    int mbmaxlen = Mbcharcliplen(data, byte_len, max_chars);
+
+    if (!is_explicit) {
+        // Implicit cast: error unless the overflow is all spaces.
+        for (int i = mbmaxlen; i < byte_len; ++i) {
+            if (data[i] != ' ') {
+                char errbuf[128];
+                std::snprintf(errbuf, sizeof(errbuf),
+                              "value too long for type character varying(%d)",
+                              static_cast<int>(max_chars));
+                ereport(LogLevel::kError, errbuf);
+            }
+        }
+    }
+
+    return MakeTextWithLen(data, static_cast<std::size_t>(mbmaxlen));
 }
 
 // ---------------------------------------------------------------------------
