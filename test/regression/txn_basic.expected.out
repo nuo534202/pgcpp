@@ -4,14 +4,14 @@ INSERT 0 1
 INSERT 0 1
  id
 ---
-   
-   
+ 1 
+ 2 
 (2 rows)
 COMMIT
  id
 ---
-   
-   
+ 1 
+ 2 
 (2 rows)
 DROP TABLE
 BEGIN
@@ -19,7 +19,7 @@ CREATE TABLE
 INSERT 0 1
  id
 ---
-   
+ 1 
 (1 row)
 ROLLBACK
 ERROR:  SELECT * with no tables specified is not valid
@@ -30,20 +30,20 @@ UTILITY
 INSERT 0 1
  id
 ---
-   
-   
+ 1 
+ 2 
 (2 rows)
 UTILITY
  id
 ---
-   
-   
+ 1 
+ 2 
 (2 rows)
 COMMIT
  id
 ---
-   
-   
+ 1 
+ 2 
 (2 rows)
 DROP TABLE
 CREATE TABLE
@@ -55,22 +55,22 @@ UTILITY
 INSERT 0 1
  id
 ---
-   
-   
-   
+ 1 
+ 2 
+ 3 
 (3 rows)
 UTILITY
  id
 ---
-   
-   
-   
+ 1 
+ 2 
+ 3 
 (3 rows)
 COMMIT
  id
 ---
-   
-   
-   
+ 1 
+ 2 
+ 3 
 (3 rows)
 DROP TABLE

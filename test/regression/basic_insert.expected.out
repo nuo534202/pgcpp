@@ -2,11 +2,11 @@ CREATE TABLE
 INSERT 0 1
 INSERT 0 1
 INSERT 0 1
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 2  | bob   | 200
+ 3  | carol | 300
 (3 rows)
  COUNT
 ------
@@ -14,6 +14,6 @@ INSERT 0 1
 (1 row)
  SUM
 ----
-    
+ 600
 (1 row)
 DROP TABLE

@@ -28,9 +28,9 @@ INSERT 0 1
 ERROR:  unsupported expression type in ExecEvalExpr
  id | category
 ----+---------
-    | -1      
-    | -1      
-    | -1      
+ 1  | 1       
+ 2  | 2       
+ 3  | 3       
 (3 rows)
  small_count | large_count
 -------------+------------
@@ -38,6 +38,6 @@ ERROR:  unsupported expression type in ExecEvalExpr
 (1 row)
  non_null_count
 ---------------
- 0             
+ 3             
 (1 row)
 DROP TABLE

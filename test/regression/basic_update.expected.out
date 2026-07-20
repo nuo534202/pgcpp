@@ -2,32 +2,32 @@ CREATE TABLE
 INSERT 0 1
 INSERT 0 1
 INSERT 0 1
- id | name | count
-----+------+------
-    |      |      
-    |      |      
-    |      |      
+ id | name  | count
+----+-------+------
+ 1  | alice | 10   
+ 2  | bob   | 20   
+ 3  | carol | 30   
 (3 rows)
-UPDATE 0
+UPDATE 1
  id | name | count
 ----+------+------
-(0 rows)
-UPDATE 0
- id | name | count
-----+------+------
-    |      |      
-    |      |      
-    |      |      
+ 2  | bob  | 25   
+(1 row)
+UPDATE 3
+ id | name  | count
+----+-------+------
+ 1  | alice | 20   
+ 2  | bob   | 50   
+ 3  | carol | 60   
 (3 rows)
 DELETE 0
  COUNT
 ------
- 3    
+ 2    
 (1 row)
- id | name | count
-----+------+------
-    |      |      
-    |      |      
-    |      |      
-(3 rows)
+ id | name  | count
+----+-------+------
+ 2  | bob   | 50   
+ 3  | carol | 60   
+(2 rows)
 DROP TABLE

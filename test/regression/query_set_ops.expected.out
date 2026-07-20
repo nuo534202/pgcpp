@@ -10,45 +10,45 @@ INSERT 0 1
 INSERT 0 1
  id | val
 ----+----
-    |    
-    |    
-    |    
-    |    
+ 1  | a  
+ 2  | b  
+ 3  | c  
+ 4  | a  
 (4 rows)
  id | val
 ----+----
-    |    
-    |    
-    |    
-    |    
+ 1  | a  
+ 2  | b  
+ 3  | c  
+ 4  | a  
 (4 rows)
  id | val
 ----+----
-    |    
-    |    
-    |    
-    |    
+ 1  | a  
+ 2  | b  
+ 3  | c  
+ 4  | a  
 (4 rows)
  id | val
 ----+----
-    |    
-    |    
-    |    
-    |    
+ 1  | a  
+ 2  | b  
+ 3  | c  
+ 4  | a  
 (4 rows)
  val
 ----
-    
-    
-    
-    
+ a  
+ a  
+ b  
+ c  
 (4 rows)
  val
 ----
-    
-    
-    
-    
+ a  
+ a  
+ b  
+ c  
 (4 rows)
 ERROR:  column does not exist
  num

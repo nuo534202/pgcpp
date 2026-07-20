@@ -4,14 +4,15 @@ INSERT 0 1
 INSERT 0 1
  id | name | val
 ----+------+----
-    |      | 0  
-    |      | 0  
-    |      | 0  
+ 1  | a    | 10 
+ 2  | b    | 20 
+ 3  | c    | 30 
 (3 rows)
 INSERT 0 1
  id | name | val
 ----+------+----
-(0 rows)
+ 4  | d    | 0  
+(1 row)
 ERROR:  syntax error in input SQL
  id | name | val
 ----+------+----
@@ -28,8 +29,10 @@ CREATE TABLE
 INSERT 0 1
 INSERT 0 1
 INSERT 0 2
- id | name | val
-----+------+----
-(0 rows)
+ id  | name | val 
+-----+------+-----
+ 100 | src1 | 1000
+ 101 | src2 | 2000
+(2 rows)
 DROP TABLE
 DROP TABLE

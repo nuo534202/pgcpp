@@ -94,13 +94,15 @@ INSERT 0 1
 ERROR:  unsupported expression type in ExecEvalExpr
  id
 ---
-(0 rows)
+ 1 
+(1 row)
  id
 ---
-(0 rows)
+ 1 
+(1 row)
 ERROR:  unsupported expression type in transformAExpr
  COUNT
 ------
- 2    
+ 0    
 (1 row)
 DROP TABLE

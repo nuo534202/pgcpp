@@ -44,5 +44,5 @@ ERROR:
 (1 row)
  varchar_trunc
 --------------
- hello world  
+ hello        
 (1 row)

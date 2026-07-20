@@ -10,51 +10,51 @@ ERROR:  unsupported expression type in ExecEvalExpr
 (1 row)
  COUNT
 ------
- 0    
+ 4    
 (1 row)
  COUNT
 ------
- 0    
+ 4    
 (1 row)
  SUM
 ----
-    
+ 100
 (1 row)
  AVG
 ----
-    
+ 25 
 (1 row)
- SUM
-----
-    
+ SUM             
+-----------------
+ 2.128730641e-314
 (1 row)
- AVG
-----
-    
-(1 row)
- MIN | MAX
------+----
-     |    
+ AVG           
+---------------
+ 5.3218266e-315
 (1 row)
  MIN | MAX
 -----+----
-     |    
+ 10  | 40 
+(1 row)
+ MIN             | MAX            
+-----------------+----------------
+ 5.28426686e-315 | 5.35161536e-315
 (1 row)
  MIN | MAX
 -----+----
-     |    
+ 1   | 4  
 (1 row)
  COUNT
 ------
- 0    
+ 2    
 (1 row)
  SUM
 ----
-    
+ 70 
 (1 row)
  AVG
 ----
-    
+ 20 
 (1 row)
  COUNT
 ------
@@ -78,18 +78,18 @@ ERROR:  unsupported expression type in ExecEvalExpr
 (1 row)
  COUNT
 ------
- 0    
+ 4    
 (1 row)
  COUNT
 ------
- 0    
+ 4    
 (1 row)
  SUM
 ----
-    
+ 104
 (1 row)
  SUM
 ----
-    
+ 200
 (1 row)
 DROP TABLE

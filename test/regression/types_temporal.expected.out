@@ -39,12 +39,13 @@ ERROR:  function does not exist
 CREATE TABLE
 INSERT 0 1
 INSERT 0 1
- id | d | ts
-----+---+---
-    |   |   
-    |   |   
+ id | d          | ts                 
+----+------------+--------------------
+ 1  | 2023-01-15 | 2023-01-15 10:30:00
+ 2  | 2023-06-01 | 2023-06-01 12:00:00
 (2 rows)
  id
 ---
-(0 rows)
+ 2 
+(1 row)
 DROP TABLE

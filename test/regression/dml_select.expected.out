@@ -4,158 +4,171 @@ INSERT 0 1
 INSERT 0 1
 INSERT 0 1
 INSERT 0 1
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-    |      |    
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 2  | bob   | 200
+ 3  | carol | 300
+ 4  | dave  | 200
+ 5  | eve   | 100
 (5 rows)
- id | name
-----+-----
-    |     
-    |     
-    |     
-    |     
-    |     
+ id | name 
+----+------
+ 1  | alice
+ 2  | bob  
+ 3  | carol
+ 4  | dave 
+ 5  | eve  
 (5 rows)
  id
 ---
-   
-   
-   
-   
-   
+ 1 
+ 2 
+ 3 
+ 4 
+ 5 
 (5 rows)
- id | name | val
-----+------+----
-(0 rows)
- id | name | val
-----+------+----
-(0 rows)
- id | name | val
-----+------+----
-(0 rows)
- id | name | val
-----+------+----
-(0 rows)
- id | name | val
-----+------+----
-(0 rows)
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-(5 rows)
- id | name | val
-----+------+----
-(0 rows)
- id | name | val
-----+------+----
-(0 rows)
- id | name | val
-----+------+----
-(0 rows)
- id | name | val
-----+------+----
-(0 rows)
-ERROR:  unsupported expression type in transformAExpr
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-(5 rows)
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-(5 rows)
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-(5 rows)
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-(5 rows)
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-(5 rows)
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
+ id | name  | val
+----+-------+----
+ 3  | carol | 300
+(1 row)
+ id | name  | val
+----+-------+----
+ 3  | carol | 300
+ 4  | dave  | 200
+ 5  | eve   | 100
 (3 rows)
  id | name | val
 ----+------+----
-    |      |    
-    |      |    
+ 2  | bob  | 200
+ 4  | dave | 200
 (2 rows)
- id | name | val
-----+------+----
-    |      |    
-    |      |    
-    |      |    
-    |      |    
-    |      |    
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+(1 row)
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 2  | bob   | 200
+ 4  | dave  | 200
+ 5  | eve   | 100
+(4 rows)
+ id | name  | val
+----+-------+----
+ 2  | bob   | 200
+ 3  | carol | 300
+ 4  | dave  | 200
+(3 rows)
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 5  | eve   | 100
+(2 rows)
+ERROR:  unsupported expression type in ExecEvalExpr
+ERROR:  unsupported expression type in ExecEvalExpr
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+(1 row)
+ERROR:  unsupported expression type in transformAExpr
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 5  | eve   | 100
+ 2  | bob   | 200
+ 4  | dave  | 200
+ 3  | carol | 300
+(5 rows)
+ id | name  | val
+----+-------+----
+ 3  | carol | 300
+ 2  | bob   | 200
+ 4  | dave  | 200
+ 1  | alice | 100
+ 5  | eve   | 100
+(5 rows)
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 5  | eve   | 100
+ 2  | bob   | 200
+ 4  | dave  | 200
+ 3  | carol | 300
+(5 rows)
+ id | name  | val
+----+-------+----
+ 3  | carol | 300
+ 2  | bob   | 200
+ 4  | dave  | 200
+ 1  | alice | 100
+ 5  | eve   | 100
+(5 rows)
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 2  | bob   | 200
+ 3  | carol | 300
+ 4  | dave  | 200
+ 5  | eve   | 100
+(5 rows)
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 2  | bob   | 200
+ 3  | carol | 300
+(3 rows)
+ id | name  | val
+----+-------+----
+ 2  | bob   | 200
+ 3  | carol | 300
+(2 rows)
+ id | name  | val
+----+-------+----
+ 1  | alice | 100
+ 2  | bob   | 200
+ 3  | carol | 300
+ 4  | dave  | 200
+ 5  | eve   | 100
 (5 rows)
  id | name | val
 ----+------+----
-    |      |    
-    |      |    
+ 4  | dave | 200
+ 5  | eve  | 100
 (2 rows)
  val
 ----
-    
-    
-    
-    
-    
+ 100
+ 100
+ 200
+ 200
+ 300
 (5 rows)
- name
------
-     
-     
-     
-     
-     
+ name 
+------
+ alice
+ bob  
+ carol
+ dave 
+ eve  
 (5 rows)
- val | name
------+-----
-     |     
-     |     
-     |     
-     |     
-     |     
+ val | name 
+-----+------
+ 100 | alice
+ 100 | eve  
+ 200 | bob  
+ 200 | dave 
+ 300 | carol
 (5 rows)
  val
 ----
-(0 rows)
+ 100
+ 200
+ 200
+ 300
+(4 rows)
  id | name | val
 ----+------+----
-(0 rows)
+ 2  | bob  | 200
+(1 row)
 DROP TABLE

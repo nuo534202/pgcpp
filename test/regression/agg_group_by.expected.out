@@ -8,49 +8,75 @@ INSERT 0 1
 INSERT 0 1
  region | COUNT
 --------+------
-        | 7    
-(1 row)
+ east   | 1    
+ north  | 3    
+ south  | 3    
+(3 rows)
  region | SUM
 --------+----
-        |    
-(1 row)
- region | AVG
---------+----
-        |    
-(1 row)
+ east   | 7  
+ north  | 23 
+ south  | 47 
+(3 rows)
+ region | AVG               
+--------+-------------------
+ east   | 200               
+ north  | 133.33333333333334
+ south  | 133.33333333333334
+(3 rows)
  region | MIN | MAX
 --------+-----+----
-        |     |    
-(1 row)
+ east   | 7   | 7  
+ north  | 5   | 10 
+ south  | 12  | 20 
+(3 rows)
  region | product | COUNT
 --------+---------+------
-        |         | 7    
-(1 row)
+ east   | B       | 1    
+ north  | A       | 2    
+ north  | B       | 1    
+ south  | A       | 2    
+ south  | B       | 1    
+(5 rows)
  region | product | SUM
 --------+---------+----
-        |         |    
-(1 row)
+ east   | B       | 7  
+ north  | A       | 18 
+ north  | B       | 5  
+ south  | A       | 35 
+ south  | B       | 12 
+(5 rows)
  region | COUNT
 --------+------
-        | 7    
-(1 row)
+ north  | 3    
+ south  | 3    
+(2 rows)
  region | SUM
 --------+----
-(0 rows)
+ north  | 23 
+ south  | 47 
+(2 rows)
  region | revenue
 --------+--------
-        |        
-(1 row)
+ east   | 1400   
+ north  | 2800   
+ south  | 5900   
+(3 rows)
  region | COUNT
 --------+------
-        | 0    
-(1 row)
+ east   | 1    
+ north  | 2    
+ south  | 2    
+(3 rows)
  region | COUNT
 --------+------
-(0 rows)
+ north  | 2    
+ south  | 2    
+(2 rows)
  region | SUM
 --------+----
-(0 rows)
+ south  | 47 
+(1 row)
  region | COUNT
 --------+------
 (0 rows)

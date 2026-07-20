@@ -52,18 +52,18 @@ ERROR:  unsupported expression type in ExecEvalExpr
 (1 row)
  COUNT
 ------
- 0    
+ 2    
 (1 row)
  SUM
 ----
-    
+ 40 
 (1 row)
  AVG
 ----
-    
+ 20 
 (1 row)
  MIN | MAX
 -----+----
-     |    
+ 10  | 30 
 (1 row)
 ERROR:  connection closed by server
