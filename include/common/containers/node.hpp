@@ -195,6 +195,16 @@ enum class NodeTag : int {
     kSetToDefault,
     // Constraint node (parsenodes.h Constraint)
     kConstraint,
+    // Transformed expression node types added for ExecEvalExpr dispatch
+    // (CoalesceExpr / MinMaxExpr / NullIfExpr / SQLValueFunction).
+    // These mirror PostgreSQL's primnodes.h node types but are constructed
+    // directly by tests in pgcpp — the parser currently emits these as
+    // FuncCall nodes (see gram.yy), so the kFuncExpr dispatch in
+    // exec_expr.cpp is what handles them at execution time.
+    kCoalesceExpr,
+    kMinMaxExpr,
+    kNullIfExpr,
+    kSQLValueFunction,
 };
 
 // Node — the abstract base class for all AST nodes.

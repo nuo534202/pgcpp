@@ -370,4 +370,183 @@ Datum text_reverse(Datum str_datum) {
     return MakeTextDatum(reversed);
 }
 
+// --- text_replace (Task 10) ---
+
+Datum text_replace(Datum source_datum, Datum from_datum, Datum to_datum) {
+    std::string source = TextDatumToString(source_datum);
+    std::string from = TextDatumToString(from_datum);
+    std::string to = TextDatumToString(to_datum);
+
+    // Empty `from` would loop forever; PostgreSQL returns the source.
+    if (from.empty()) {
+        return MakeTextDatum(source);
+    }
+
+    std::string result;
+    result.reserve(source.size());
+    std::size_t pos = 0;
+    while (pos < source.size()) {
+        std::size_t found = source.find(from, pos);
+        if (found == std::string::npos) {
+            result.append(source, pos, std::string::npos);
+            break;
+        }
+        result.append(source, pos, found - pos);
+        result.append(to);
+        pos = found + from.size();
+    }
+    return MakeTextDatum(result);
+}
+
+// --- text_position (Task 10) ---
+
+Datum text_position(Datum string_datum, Datum substring_datum) {
+    std::string haystack = TextDatumToString(string_datum);
+    std::string needle = TextDatumToString(substring_datum);
+    if (needle.empty()) {
+        // PostgreSQL: empty substring returns 1.
+        return Int32GetDatum(1);
+    }
+    std::size_t pos = haystack.find(needle);
+    if (pos == std::string::npos) {
+        return Int32GetDatum(0);
+    }
+    return Int32GetDatum(static_cast<int32_t>(pos + 1));
+}
+
+// --- text_lpad / text_rpad (Task 10) ---
+
+Datum text_lpad(Datum string_datum, Datum length_datum) {
+    return text_lpad(string_datum, length_datum, MakeTextDatum(" "));
+}
+
+Datum text_lpad(Datum string_datum, Datum length_datum, Datum fill_datum) {
+    std::string s = TextDatumToString(string_datum);
+    int32_t target = DatumGetInt32(length_datum);
+    std::string fill = TextDatumToString(fill_datum);
+
+    if (target <= 0) {
+        return MakeTextDatum("");
+    }
+
+    std::size_t target_len = static_cast<std::size_t>(target);
+    if (s.size() >= target_len) {
+        return MakeTextDatum(s.substr(0, target_len));
+    }
+
+    std::string padding;
+    if (!fill.empty()) {
+        std::size_t pad_len = target_len - s.size();
+        padding.reserve(pad_len);
+        for (std::size_t i = 0; i < pad_len; ++i) {
+            padding.push_back(fill[i % fill.size()]);
+        }
+    }
+    return MakeTextDatum(padding + s);
+}
+
+Datum text_rpad(Datum string_datum, Datum length_datum) {
+    return text_rpad(string_datum, length_datum, MakeTextDatum(" "));
+}
+
+Datum text_rpad(Datum string_datum, Datum length_datum, Datum fill_datum) {
+    std::string s = TextDatumToString(string_datum);
+    int32_t target = DatumGetInt32(length_datum);
+    std::string fill = TextDatumToString(fill_datum);
+
+    if (target <= 0) {
+        return MakeTextDatum("");
+    }
+
+    std::size_t target_len = static_cast<std::size_t>(target);
+    if (s.size() >= target_len) {
+        return MakeTextDatum(s.substr(0, target_len));
+    }
+
+    std::string result = s;
+    if (!fill.empty()) {
+        std::size_t pad_len = target_len - s.size();
+        result.reserve(target_len);
+        for (std::size_t i = 0; i < pad_len; ++i) {
+            result.push_back(fill[i % fill.size()]);
+        }
+    }
+    return MakeTextDatum(result);
+}
+
+// --- text_split_part (Task 10) ---
+
+Datum text_split_part(Datum string_datum, Datum sep_datum, Datum field_datum) {
+    std::string s = TextDatumToString(string_datum);
+    std::string sep = TextDatumToString(sep_datum);
+    int32_t field = DatumGetInt32(field_datum);
+
+    if (sep.empty()) {
+        ereport(LogLevel::kError, "split_part: separator cannot be empty");
+    }
+    if (field == 0) {
+        ereport(LogLevel::kError, "split_part: field position must not be zero");
+    }
+
+    std::vector<std::string> parts;
+    if (field > 0) {
+        // Split from left to right.
+        std::size_t start = 0;
+        while (true) {
+            std::size_t pos = s.find(sep, start);
+            if (pos == std::string::npos) {
+                parts.emplace_back(s.substr(start));
+                break;
+            }
+            parts.emplace_back(s.substr(start, pos - start));
+            start = pos + sep.size();
+        }
+        if (field > static_cast<int32_t>(parts.size())) {
+            return MakeTextDatum("");
+        }
+        return MakeTextDatum(parts[static_cast<std::size_t>(field - 1)]);
+    }
+
+    // Negative field: count from the end.
+    std::size_t end = s.size();
+    while (true) {
+        std::size_t pos = s.rfind(sep, end - 1);
+        if (pos == std::string::npos || pos > end) {
+            parts.emplace_back(s.substr(0, end));
+            break;
+        }
+        parts.emplace_back(s.substr(pos + sep.size(), end - (pos + sep.size())));
+        if (pos == 0) {
+            break;
+        }
+        end = pos;
+    }
+    int32_t idx = -field;
+    if (idx > static_cast<int32_t>(parts.size())) {
+        return MakeTextDatum("");
+    }
+    return MakeTextDatum(parts[static_cast<std::size_t>(idx - 1)]);
+}
+
+// --- text_substr_2 (Task 10) ---
+
+Datum text_substr_2(Datum str_datum, Datum start_datum) {
+    std::string s = TextDatumToString(str_datum);
+    int32_t start = DatumGetInt32(start_datum);
+    if (start < 1) {
+        start = 1;
+    }
+    std::size_t begin = static_cast<std::size_t>(start - 1);
+    if (begin >= s.size()) {
+        return MakeTextDatum("");
+    }
+    return MakeTextDatum(s.substr(begin));
+}
+
+// --- text_trim (Task 10) ---
+
+Datum text_trim(Datum str_datum) {
+    return text_btrim(str_datum);
+}
+
 }  // namespace pgcpp::types

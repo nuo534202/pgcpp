@@ -1039,7 +1039,8 @@ public:
     Node* tablefunc = nullptr;
 
     // Fields valid for a values RTE:
-    std::vector<Node*> values_lists;  // list of expression lists
+    // Each inner vector is one row's expression list (one expr per column).
+    std::vector<std::vector<Node*>> values_lists;
 
     // Fields valid for a CTE RTE:
     std::string ctename;          // name of the WITH list item

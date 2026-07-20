@@ -334,7 +334,10 @@ static void outRangeTblEntry(StringInfo* buf, const RangeTblEntry* node) {
     outNodeList(buf, "joinrightcols", node->joinrightcols);
     outNodeList(buf, "functions", node->functions);
     outBool(buf, "funcordinality", node->funcordinality);
-    outNodeList(buf, "values_lists", node->values_lists);
+    // values_lists is a vector of vectors; emit just a count marker. The
+    // nested expression structure is not round-tripped through this textual
+    // format (no current callers depend on it). Readers skip unknown fields.
+    buf->AppendPrintf(" :values_lists_count %zu", node->values_lists.size());
     outString(buf, "ctename", node->ctename);
     outInt(buf, "ctelevelsup", node->ctelevelsup);
     outBool(buf, "self_reference", node->self_reference);

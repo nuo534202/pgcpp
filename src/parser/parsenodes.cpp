@@ -549,7 +549,11 @@ Node* RangeTblEntry::Clone() const {
     copy->join_using_alias = static_cast<Alias*>(CloneNode(join_using_alias));
     copy->functions = CloneVec(functions);
     copy->tablefunc = CloneNode(tablefunc);
-    copy->values_lists = CloneVec(values_lists);
+    // values_lists is a vector of vectors — deep-copy each inner list.
+    copy->values_lists.clear();
+    for (const auto& inner : values_lists) {
+        copy->values_lists.push_back(CloneVec(inner));
+    }
     copy->coltypes = CloneVec(coltypes);
     copy->coltypmods = CloneVec(coltypmods);
     copy->colcollations = CloneVec(colcollations);
@@ -570,7 +574,17 @@ bool RangeTblEntry::Equals(const Node& other) const {
            EqVec(joinaliasvars, o.joinaliasvars) && EqVec(joinleftcols, o.joinleftcols) &&
            EqVec(joinrightcols, o.joinrightcols) && EqNode(join_using_alias, o.join_using_alias) &&
            EqVec(functions, o.functions) && funcordinality == o.funcordinality &&
-           EqNode(tablefunc, o.tablefunc) && EqVec(values_lists, o.values_lists) &&
+           EqNode(tablefunc, o.tablefunc) &&
+           // values_lists is a vector of vectors — compare each inner list.
+           [&]() {
+               if (values_lists.size() != o.values_lists.size())
+                   return false;
+               for (std::size_t i = 0; i < values_lists.size(); ++i) {
+                   if (!EqVec(values_lists[i], o.values_lists[i]))
+                       return false;
+               }
+               return true;
+           }() &&
            ctename == o.ctename && ctelevelsup == o.ctelevelsup &&
            self_reference == o.self_reference && EqVec(coltypes, o.coltypes) &&
            EqVec(coltypmods, o.coltypmods) && EqVec(colcollations, o.colcollations) &&

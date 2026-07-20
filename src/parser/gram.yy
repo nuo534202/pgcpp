@@ -6506,31 +6506,34 @@ func_expr_common_subexpr:
         }
     | NULLIF '(' a_expr ',' a_expr ')'
         {
-            std::vector<Node*> fn;
-            fn.push_back(makeString("pg_catalog"));
-            fn.push_back(makeString("nullif"));
-            $$ = makeFuncCall(std::move(fn), {$3, $5}, @1);
+            // PostgreSQL emits an A_Expr with kind=AEXPR_NULLIF; the
+            // transformAExpr kNullif case constructs a NullIfExpr node.
+            $$ = makeSimpleAExpr(AExprKind::kNullif, "=", $3, $5, @1);
         }
     | COALESCE '(' expr_list ')'
         {
-            std::vector<Node*> fn;
-            fn.push_back(makeString("pg_catalog"));
-            fn.push_back(makeString("coalesce"));
-            $$ = makeFuncCall(std::move(fn), std::move($3), @1);
+            // Directly emit a CoalesceExpr node — transformCoalesceExpr
+            // resolves the common result type and coerces arguments.
+            auto* n = makeNode<CoalesceExpr>();
+            n->args = std::move($3);
+            n->location = @1;
+            $$ = n;
         }
     | GREATEST '(' expr_list ')'
         {
-            std::vector<Node*> fn;
-            fn.push_back(makeString("pg_catalog"));
-            fn.push_back(makeString("greatest"));
-            $$ = makeFuncCall(std::move(fn), std::move($3), @1);
+            auto* n = makeNode<MinMaxExpr>();
+            n->minmaxtype = MinMaxOp::kIsGreatest;
+            n->args = std::move($3);
+            n->location = @1;
+            $$ = n;
         }
     | LEAST '(' expr_list ')'
         {
-            std::vector<Node*> fn;
-            fn.push_back(makeString("pg_catalog"));
-            fn.push_back(makeString("least"));
-            $$ = makeFuncCall(std::move(fn), std::move($3), @1);
+            auto* n = makeNode<MinMaxExpr>();
+            n->minmaxtype = MinMaxOp::kIsLeast;
+            n->args = std::move($3);
+            n->location = @1;
+            $$ = n;
         }
     | XMLCONCAT '(' expr_list ')'
         {
@@ -6716,7 +6719,14 @@ AexprConst:
     | XCONST
         { $$ = makeBitStringConst($1, @1); }
     | func_name SCONST
-        { $$ = makeStrConst($2, @2); }
+        {
+            // SQL standard "typename 'literal'" syntax (e.g. DATE '2023-01-15').
+            // Mirrors PostgreSQL's makeStringConstCast($2, $1, @2): wrap the
+            // string constant in a TypeCast so the analyzer resolves the type.
+            Node* s = makeStrConst($2, @2);
+            TypeName* tn = makeTypeName(std::move($1), @1);
+            $$ = makeTypeCast(s, tn, @2);
+        }
     | TRUE_P
         { $$ = makeBoolAConst(true, @1); }
     | FALSE_P

@@ -412,6 +412,152 @@ public:
 };
 
 // ---------------------------------------------------------------------------
+// CoalesceExpr — COALESCE(v1, v2, ...) expression.
+// Returns the first non-NULL argument, or NULL if all are NULL.
+// ---------------------------------------------------------------------------
+
+class CoalesceExpr : public Expr {
+public:
+    CoalesceExpr() : Expr(pgcpp::nodes::NodeTag::kCoalesceExpr) {}
+
+    Node* Clone() const override {
+        auto* copy = pgcpp::nodes::makePallocNode<CoalesceExpr>(*this);
+        copy->args.clear();
+        for (Node* n : args) {
+            copy->args.push_back(n == nullptr ? nullptr : pgcpp::nodes::copyObject(n));
+        }
+        return copy;
+    }
+    bool Equals(const Node& other) const override {
+        if (GetTag() != other.GetTag())
+            return false;
+        const auto& o = static_cast<const CoalesceExpr&>(other);
+        if (coalescetype != o.coalescetype || args.size() != o.args.size())
+            return false;
+        for (std::size_t i = 0; i < args.size(); ++i) {
+            if (!pgcpp::nodes::equal(args[i], o.args[i]))
+                return false;
+        }
+        return location == o.location;
+    }
+
+    Oid coalescetype = 0;     // type of result
+    Oid coalescecollid = 0;   // collation of result
+    std::vector<Node*> args;  // arguments
+    int location = -1;
+};
+
+enum class MinMaxOp {
+    kIsGreatest,
+    kIsLeast,
+};
+
+class MinMaxExpr : public Expr {
+public:
+    MinMaxExpr() : Expr(pgcpp::nodes::NodeTag::kMinMaxExpr) {}
+
+    Node* Clone() const override {
+        auto* copy = pgcpp::nodes::makePallocNode<MinMaxExpr>(*this);
+        copy->args.clear();
+        for (Node* n : args) {
+            copy->args.push_back(n == nullptr ? nullptr : pgcpp::nodes::copyObject(n));
+        }
+        return copy;
+    }
+    bool Equals(const Node& other) const override {
+        if (GetTag() != other.GetTag())
+            return false;
+        const auto& o = static_cast<const MinMaxExpr&>(other);
+        if (minmaxtype != o.minmaxtype || minmaxcollid != o.minmaxcollid ||
+            args.size() != o.args.size())
+            return false;
+        for (std::size_t i = 0; i < args.size(); ++i) {
+            if (!pgcpp::nodes::equal(args[i], o.args[i]))
+                return false;
+        }
+        return location == o.location;
+    }
+
+    MinMaxOp minmaxtype = MinMaxOp::kIsGreatest;
+    Oid minmaxcollid = 0;
+    Oid inputcollid = 0;
+    std::vector<Node*> args;
+    int location = -1;
+};
+
+class NullIfExpr : public Expr {
+public:
+    NullIfExpr() : Expr(pgcpp::nodes::NodeTag::kNullIfExpr) {}
+
+    Node* Clone() const override {
+        auto* copy = pgcpp::nodes::makePallocNode<NullIfExpr>(*this);
+        copy->args.clear();
+        for (Node* n : args) {
+            copy->args.push_back(n == nullptr ? nullptr : pgcpp::nodes::copyObject(n));
+        }
+        return copy;
+    }
+    bool Equals(const Node& other) const override {
+        if (GetTag() != other.GetTag())
+            return false;
+        const auto& o = static_cast<const NullIfExpr&>(other);
+        if (opno != o.opno || opresulttype != o.opresulttype || opretset != o.opretset ||
+            opcollid != o.opcollid || inputcollid != o.inputcollid || args.size() != o.args.size())
+            return false;
+        for (std::size_t i = 0; i < args.size(); ++i) {
+            if (!pgcpp::nodes::equal(args[i], o.args[i]))
+                return false;
+        }
+        return location == o.location;
+    }
+
+    Oid opno = 0;          // underlying operator OID
+    Oid opresulttype = 0;  // result type
+    bool opretset = false;
+    Oid opcollid = 0;
+    Oid inputcollid = 0;
+    std::vector<Node*> args;
+    int location = -1;
+};
+
+// SQLValueFunctionOp — enum identifying which current_date/time variant
+// a SQLValueFunction represents. Mirrors PostgreSQL's SQLValueFunctionOp.
+enum class SQLValueFunctionOp {
+    kCurrentDate,
+    kCurrentTime,
+    kCurrentTimeN,
+    kCurrentTimestamp,
+    kCurrentTimestampN,
+    kLocalTime,
+    kLocalTimeN,
+    kLocalTimestamp,
+    kLocalTimestampN,
+    kCurrentRole,
+    kCurrentUser,
+    kSessionUser,
+    kUser,
+    kCurrentCatalog,
+    kCurrentSchema,
+};
+
+class SQLValueFunction : public Expr {
+public:
+    SQLValueFunction() : Expr(pgcpp::nodes::NodeTag::kSQLValueFunction) {}
+
+    Node* Clone() const override { return pgcpp::nodes::makePallocNode<SQLValueFunction>(*this); }
+    bool Equals(const Node& other) const override {
+        if (GetTag() != other.GetTag())
+            return false;
+        const auto& o = static_cast<const SQLValueFunction&>(other);
+        return op == o.op && type == o.type && location == o.location;
+    }
+
+    SQLValueFunctionOp op = SQLValueFunctionOp::kCurrentDate;
+    Oid type = 0;  // result type OID
+    int location = -1;
+};
+
+// ---------------------------------------------------------------------------
 // TargetEntry — one entry in the target list (SELECT output column).
 // ---------------------------------------------------------------------------
 

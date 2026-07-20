@@ -26,6 +26,14 @@ TargetEntry* transformTargetEntry(ParseState* pstate, ResTarget* res, ParseExprK
 // expandTargetList — expand * and table.* in the target list.
 std::vector<Node*> expandTargetList(ParseState* pstate, const std::vector<Node*>& targetlist);
 
+// expandUpdateTargetList — expand UPDATE's SET target list to include ALL
+// table columns. SET columns keep their SET expression (with resno fixed to
+// the column's attnum); non-SET columns get a Var referencing the target
+// table's corresponding column. Mirrors PostgreSQL's rewriteTargetListUid.
+std::vector<Node*> expandUpdateTargetList(ParseState* pstate, RangeTblEntry* target_rte,
+                                          int target_rtindex,
+                                          const std::vector<Node*>& set_targetlist);
+
 // markTargetListOrigins — mark the origin table/column for each target entry.
 void markTargetListOrigins(ParseState* pstate, std::vector<Node*>& targetlist);
 

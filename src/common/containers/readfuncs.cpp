@@ -514,9 +514,12 @@ static Node* readRangeTblEntry(ReadContext& ctx) {
             node->functions = readNodeListValue(ctx);
         else if (field == "funcordinality")
             node->funcordinality = readBoolValue(ctx);
-        else if (field == "values_lists")
-            node->values_lists = readNodeListValue(ctx);
-        else if (field == "ctename")
+        else if (field == "values_lists_count") {
+            // values_lists is serialized as a count only (nested expression
+            // structure is not round-tripped). Consume the integer and leave
+            // values_lists empty.
+            (void)readIntValue(ctx);
+        } else if (field == "ctename")
             node->ctename = readStringValue(ctx);
         else if (field == "ctelevelsup")
             node->ctelevelsup = readIntValue(ctx);

@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "catalog/catalog.hpp"
+#include "catalog/pg_attribute.hpp"
 #include "common/containers/node.hpp"
 #include "common/error/elog.hpp"
 #include "parser/parse_coerce.hpp"
@@ -294,6 +296,90 @@ std::vector<Node*> expandTargetList([[maybe_unused]] ParseState* pstate,
                                     const std::vector<Node*>& targetlist) {
     // Star expansion is already handled in transformTargetList.
     return targetlist;
+}
+
+// ---------------------------------------------------------------------------
+// expandUpdateTargetList — expand UPDATE's SET target list to include ALL
+// table columns. SET columns keep their SET expression (with resno fixed to
+// the column's attnum); non-SET columns get a Var referencing the target
+// table's corresponding column.
+//
+// Mirrors PostgreSQL's rewriteTargetListUid / expandTargetList in
+// rewriteHandler.c. Without this expansion, the SeqScan's targetlist would
+// only carry SET columns (losing non-SET column values), and ModifyTable's
+// ExecProject would have nothing to project — causing heap_form_tuple to
+// build an all-NULL tuple and heap_update to destroy the row.
+//
+// `target_rte` is the target relation's RTE; `target_rtindex` is its 1-based
+// index in pstate->p_rtable (used as the Var's varno).
+// ---------------------------------------------------------------------------
+
+std::vector<Node*> expandUpdateTargetList(ParseState* pstate, RangeTblEntry* target_rte,
+                                          int target_rtindex,
+                                          const std::vector<Node*>& set_targetlist) {
+    if (target_rte == nullptr || target_rte->relid == 0 ||
+        pgcpp::catalog::GetCatalog() == nullptr) {
+        return set_targetlist;
+    }
+
+    auto attrs = pgcpp::catalog::GetCatalog()->GetAttributes(static_cast<Oid>(target_rte->relid));
+
+    // Build the expanded target list in table column order (attnum 1..N).
+    // For each column: if a SET entry exists (matched by resname), reuse its
+    // expr but fix resno to the column's attnum; otherwise create a Var TE
+    // referencing the target table column.
+    std::vector<Node*> expanded;
+    for (const pgcpp::catalog::FormData_pg_attribute* attr : attrs) {
+        if (attr->attnum < 1) {
+            continue;  // skip system columns
+        }
+
+        // Search for a matching SET entry by column name.
+        TargetEntry* matched_te = nullptr;
+        for (Node* node : set_targetlist) {
+            if (nodeTag(node) != NodeTag::kTargetEntry)
+                continue;
+            auto* te = static_cast<TargetEntry*>(node);
+            if (te->resname == attr->attname) {
+                matched_te = te;
+                break;
+            }
+        }
+
+        if (matched_te != nullptr) {
+            // SET column: reuse the SET expression, fix resno to attnum.
+            matched_te->resno = attr->attnum;
+            expanded.push_back(matched_te);
+        } else {
+            // Non-SET column: create a Var referencing the target table.
+            auto* var = makeNode<Var>();
+            var->varno = target_rtindex;
+            var->varattno = attr->attnum;
+            var->vartype = attr->atttypid;
+            var->vartypmod = attr->atttypmod;
+            var->varcollid = attr->attcollation;
+            var->varnosyn = target_rtindex;
+            var->varattnosyn = attr->attnum;
+
+            auto* te = makeNode<TargetEntry>();
+            te->expr = var;
+            te->resno = attr->attnum;
+            te->resname = attr->attname;
+            te->ressortgroupref = 0;
+            te->resorigtbl = static_cast<Oid>(target_rte->relid);
+            te->resorigcol = attr->attnum;
+            te->resjunk = false;
+            expanded.push_back(te);
+        }
+    }
+
+    // If the catalog has no attributes for the relation (e.g., synthetic test
+    // OID), fall back to the original SET targetlist.
+    if (expanded.empty()) {
+        return set_targetlist;
+    }
+    (void)pstate;  // currently unused; reserved for future ParseState needs.
+    return expanded;
 }
 
 // ---------------------------------------------------------------------------

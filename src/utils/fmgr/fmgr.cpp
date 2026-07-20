@@ -14,11 +14,13 @@
 #include "utils/fmgr.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #include "catalog/catalog.hpp"
 #include "catalog/pg_proc.hpp"
 #include "pl/pl_handler.hpp"
 #include "types/builtins.hpp"
+#include "types/math_funcs.hpp"
 #include "types/string_funcs.hpp"
 
 namespace pgcpp::fmgr {
@@ -124,6 +126,49 @@ static Datum fmgr_int4_gt(FunctionCallInfo& fc) {
     return pgcpp::types::int4_gt(fc.arg[0], fc.arg[1]);
 }
 
+// --- Task 9: math function wrappers ---
+
+static Datum fmgr_int8_abs(FunctionCallInfo& fc) {
+    return pgcpp::types::int8_abs(fc.arg[0]);
+}
+
+static Datum fmgr_float8_abs(FunctionCallInfo& fc) {
+    return pgcpp::types::float8_abs(fc.arg[0]);
+}
+
+static Datum fmgr_float8_sqrt(FunctionCallInfo& fc) {
+    return pgcpp::types::Float8GetDatum(std::sqrt(pgcpp::types::DatumGetFloat8(fc.arg[0])));
+}
+
+static Datum fmgr_float8_power(FunctionCallInfo& fc) {
+    return pgcpp::types::Float8GetDatum(
+        std::pow(pgcpp::types::DatumGetFloat8(fc.arg[0]), pgcpp::types::DatumGetFloat8(fc.arg[1])));
+}
+
+static Datum fmgr_float8_ln(FunctionCallInfo& fc) {
+    return pgcpp::types::float8_ln(fc.arg[0]);
+}
+
+static Datum fmgr_float8_log10(FunctionCallInfo& fc) {
+    return pgcpp::types::float8_log10(fc.arg[0]);
+}
+
+static Datum fmgr_float8_exp(FunctionCallInfo& fc) {
+    return pgcpp::types::float8_exp(fc.arg[0]);
+}
+
+static Datum fmgr_float8_trunc(FunctionCallInfo& fc) {
+    return pgcpp::types::float8_trunc(fc.arg[0]);
+}
+
+static Datum fmgr_int8_mod(FunctionCallInfo& fc) {
+    return pgcpp::types::int8_mod(fc.arg[0], fc.arg[1]);
+}
+
+static Datum fmgr_int4_sign(FunctionCallInfo& fc) {
+    return pgcpp::types::int4_sign(fc.arg[0]);
+}
+
 // --- Builtin function table ---
 //
 // Maps pg_proc OIDs to their C function wrappers. The OIDs must match the
@@ -150,12 +195,24 @@ static const BuiltinEntry kBuiltinTable[] = {
     {613, fmgr_float8_mi, "float8mi"},
     {614, fmgr_float8_mul, "float8mul"},
     {615, fmgr_float8_div, "float8div"},
-    // Math functions
+    // Math functions — abs / round / ceil / floor
     {1398, fmgr_int4_abs, "abs"},
-    {941, fmgr_int4_mod, "mod"},
+    {1796, fmgr_int8_abs, "abs"},
+    {1346, fmgr_float8_abs, "abs"},
     {1700, fmgr_float8_round, "round"},
     {2308, fmgr_float8_ceil, "ceil"},
     {2311, fmgr_float8_floor, "floor"},
+    // Math functions — sqrt / power / log / log10 / exp / sign / trunc
+    {1340, fmgr_float8_sqrt, "sqrt"},
+    {1368, fmgr_float8_power, "power"},
+    {1342, fmgr_float8_ln, "log"},
+    {1343, fmgr_float8_log10, "log10"},
+    {1341, fmgr_float8_exp, "exp"},
+    {1345, fmgr_int4_sign, "sign"},
+    {1344, fmgr_float8_trunc, "trunc"},
+    // Math functions — mod (int4 / int8)
+    {941, fmgr_int4_mod, "mod"},
+    {947, fmgr_int8_mod, "mod"},
     // Comparison
     {350, fmgr_int4_eq, "int4eq"},
     {97, fmgr_int4_lt, "int4lt"},

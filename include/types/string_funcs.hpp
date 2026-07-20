@@ -75,4 +75,43 @@ Datum text_repeat(Datum str, Datum n);
 // text_reverse(str) — reverse the string.
 Datum text_reverse(Datum str);
 
+// --- Task 10 additions (replace / position / lpad / rpad / split_part /
+// substr 2-arg / trim 2-arg variants) ---
+
+// text_replace(source, from, to) — replace every occurrence of `from` in
+// `source` with `to`. Empty `from` is a no-op (returns source unchanged).
+Datum text_replace(Datum source, Datum from, Datum to);
+
+// text_position(string, substring) — 1-based index of the first occurrence
+// of `substring` in `string`, or 0 if not found.
+Datum text_position(Datum string, Datum substring);
+
+// text_lpad(string, length) — left-pad `string` with spaces to `length`
+// characters. If `string` is already longer, it is truncated to `length`.
+Datum text_lpad(Datum string, Datum length);
+
+// text_lpad(string, length, fill) — left-pad `string` with `fill` to
+// `length` characters.
+Datum text_lpad(Datum string, Datum length, Datum fill);
+
+// text_rpad(string, length) — right-pad `string` with spaces to `length`
+// characters.
+Datum text_rpad(Datum string, Datum length);
+
+// text_rpad(string, length, fill) — right-pad `string` with `fill` to
+// `length` characters.
+Datum text_rpad(Datum string, Datum length, Datum fill);
+
+// text_split_part(string, sep, field) — return the `field`-th field
+// (1-based) of `string` split on `sep`. Negative `field` counts from the
+// end. Out-of-range returns the empty string.
+Datum text_split_part(Datum string, Datum sep, Datum field);
+
+// text_substr_2(str, start) — substring starting at 1-based `start` to
+// the end of the string. Negative `start` is treated as 1.
+Datum text_substr_2(Datum str, Datum start);
+
+// text_trim(str) — alias of text_btrim; trims whitespace from both ends.
+Datum text_trim(Datum str);
+
 }  // namespace pgcpp::types
