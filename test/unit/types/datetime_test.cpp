@@ -25,6 +25,8 @@ using pgcpp::types::DatumGetInt64;
 using pgcpp::types::extract;
 using pgcpp::types::Int32GetDatum;
 using pgcpp::types::Int64GetDatum;
+using pgcpp::types::kMicrosecsPerSec;
+using pgcpp::types::kSecsPerDay;
 using pgcpp::types::PartsToTimestamp;
 using pgcpp::types::Timestamp;
 using pgcpp::types::timestamp_cmp;
@@ -383,6 +385,105 @@ TEST_F(DatetimeTest, ClickBenchExtractMinute) {
     Datum ts = timestamp_in("2013-07-15 10:30:45");
     Datum result = extract("minute", ts);
     EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 30.0);
+}
+
+// ===========================================================================
+// Date literal scenarios (Task 4: date 'literal' SQL syntax support)
+//
+// The SQL `date 'YYYY-MM-DD'` syntax parses the string via date_in() at
+// analysis time. These tests cover the underlying functions exercised by
+// that syntax, plus EXTRACT(field FROM date 'literal') which converts the
+// Date to a Timestamp before calling extract().
+// ===========================================================================
+
+// Helper: convert a Date datum to a Timestamp datum (midnight on that day).
+static Datum DateToTimestampDatum(Datum date_datum) {
+    Date d = DatumGetInt32(date_datum);
+    Timestamp ts = static_cast<Timestamp>(d) * kSecsPerDay * kMicrosecsPerSec;
+    return Int64GetDatum(ts);
+}
+
+TEST_F(DatetimeTest, DateLiteralParsesBasic) {
+    // date '2023-01-15' -> Date datum whose date_out() is "2023-01-15".
+    Datum d = date_in("2023-01-15");
+    char* out = date_out(d);
+    EXPECT_STREQ(out, "2023-01-15");
+}
+
+TEST_F(DatetimeTest, DateLiteralParsesEndOfYear) {
+    Datum d = date_in("2023-12-31");
+    char* out = date_out(d);
+    EXPECT_STREQ(out, "2023-12-31");
+}
+
+TEST_F(DatetimeTest, DateLiteralParsesLeapYear) {
+    // 2024 is a leap year, so Feb 29 is valid.
+    Datum d = date_in("2024-02-29");
+    char* out = date_out(d);
+    EXPECT_STREQ(out, "2024-02-29");
+}
+
+TEST_F(DatetimeTest, DateLiteralRejectsInvalidMonth) {
+    EXPECT_TRUE(RaisesError([] { date_in("2023-13-45"); }));
+}
+
+TEST_F(DatetimeTest, DateLiteralRejectsNonLeapYearFeb29) {
+    // 2023 is not a leap year, so Feb 29 must be rejected.
+    EXPECT_TRUE(RaisesError([] { date_in("2023-02-29"); }));
+}
+
+TEST_F(DatetimeTest, DateLiteralRejectsDayOutOfRange) {
+    EXPECT_TRUE(RaisesError([] { date_in("2023-01-32"); }));
+    EXPECT_TRUE(RaisesError([] { date_in("2023-04-31"); }));  // April has 30 days
+}
+
+TEST_F(DatetimeTest, ExtractDayFromDate) {
+    // EXTRACT(DAY FROM date '2023-01-15') -> 15
+    Datum d = date_in("2023-01-15");
+    Datum ts = DateToTimestampDatum(d);
+    Datum result = extract("day", ts);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 15.0);
+}
+
+TEST_F(DatetimeTest, ExtractMonthFromDate) {
+    // EXTRACT(MONTH FROM date '2023-01-15') -> 1
+    Datum d = date_in("2023-01-15");
+    Datum ts = DateToTimestampDatum(d);
+    Datum result = extract("month", ts);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 1.0);
+}
+
+TEST_F(DatetimeTest, ExtractYearFromDate) {
+    // EXTRACT(YEAR FROM date '2023-01-15') -> 2023
+    Datum d = date_in("2023-01-15");
+    Datum ts = DateToTimestampDatum(d);
+    Datum result = extract("year", ts);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 2023.0);
+}
+
+TEST_F(DatetimeTest, ExtractDowFromDate) {
+    // 2023-01-15 was a Sunday (dow=0).
+    Datum d = date_in("2023-01-15");
+    Datum ts = DateToTimestampDatum(d);
+    Datum result = extract("dow", ts);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 0.0);
+}
+
+TEST_F(DatetimeTest, ExtractDoyFromDate) {
+    // 2023-01-15 is day 15 of the year.
+    Datum d = date_in("2023-01-15");
+    Datum ts = DateToTimestampDatum(d);
+    Datum result = extract("doy", ts);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(result), 15.0);
+}
+
+TEST_F(DatetimeTest, ExtractFromLeapYearDate) {
+    // EXTRACT(DAY/MONTH/YEAR FROM date '2024-02-29')
+    Datum d = date_in("2024-02-29");
+    Datum ts = DateToTimestampDatum(d);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(extract("day", ts)), 29.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(extract("month", ts)), 2.0);
+    EXPECT_DOUBLE_EQ(pgcpp::types::DatumGetFloat8(extract("year", ts)), 2024.0);
 }
 
 }  // namespace
