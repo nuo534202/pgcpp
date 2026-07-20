@@ -339,11 +339,34 @@ void WindowAggState::StoreAggregates() {
     wa_AggSlot->tts_isempty = false;
 }
 
+void WindowAggState::AccumulateFullPartition() {
+    // wa_output_index was already incremented past the current row in
+    // ExecProcNode. The current row lives at wa_output_index - 1. Scan
+    // forward from there through the rest of the partition (rows are
+    // contiguous because the child is sorted on PARTITION BY), accumulating
+    // every row so wa_running ends up holding the partition's final
+    // aggregate value.
+    if (wa_output_index == 0)
+        return;
+    size_t start = wa_output_index - 1;
+    for (size_t i = start; i < wa_tuples.size(); ++i) {
+        TupleTableSlot* r = wa_tuples[i];
+        if (i > start && !SamePartition(r))
+            break;
+        AccumulateRow(r);
+    }
+}
+
 void WindowAggState::ExecInit() {
     auto* wplan = static_cast<WindowAgg*>(plan);
     wa_partColIdx = wplan->partColIdx;
     wa_ordColIdx = wplan->ordColIdx;
     wa_ordReverse = wplan->ordReverse;
+    // PostgreSQL semantics: when ORDER BY is absent, the default window
+    // frame is the whole partition (every row gets the same aggregate
+    // value). When ORDER BY is present, the default frame is RANGE/ROWS
+    // BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW (running aggregate).
+    wa_full_partition = wplan->ordColIdx.empty();
 
     CollectAggrefs();
 
@@ -424,10 +447,22 @@ TupleTableSlot* WindowAggState::ExecProcNode() {
             wa_last_part_key[i] = row->tts_values[attno - 1];
             wa_last_part_null[i] = row->tts_isnull[attno - 1];
         }
+        // In full-partition mode (no ORDER BY), the frame spans the whole
+        // partition. Scan ahead and accumulate every row in this partition
+        // now so wa_running holds the partition's final aggregate value;
+        // every row in the partition then emits that same value below. In
+        // running mode (ORDER BY present), accumulate just the current row
+        // per call so each row sees the running total up to and including
+        // itself.
+        if (wa_full_partition)
+            AccumulateFullPartition();
     }
 
-    // Accumulate this row's contribution to the running aggregate state.
-    AccumulateRow(row);
+    // In running mode, accumulate the current row on every call. In
+    // full-partition mode, the partition was already fully accumulated at
+    // partition-start, so skip this.
+    if (!wa_full_partition)
+        AccumulateRow(row);
 
     // Write aggregate values into the aggregates slot for projection.
     StoreAggregates();

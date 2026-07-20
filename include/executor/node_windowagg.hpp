@@ -32,6 +32,12 @@ public:
     // partitions: reset when the partition key changes.
     AggGroupState wa_running;
     bool wa_running_init = false;
+    // When true (no ORDER BY in window definition), the entire partition is
+    // the frame: every row in the partition gets the same aggregate value
+    // (computed over all rows in the partition). When false (ORDER BY
+    // present), running aggregates (ROWS UNBOUNDED PRECEDING .. CURRENT ROW)
+    // are computed — the existing behavior.
+    bool wa_full_partition = false;
     // Slot holding the current row's aggregate values, used by ExecProject.
     TupleTableSlot* wa_AggSlot = nullptr;
     // Last partition-key tuple (for detecting partition changes).
@@ -51,6 +57,11 @@ private:
     void ResetForNewPartition();
     bool SamePartition(TupleTableSlot* row);
     void StoreAggregates();
+    // Scan ahead from wa_output_index-1 (the current row) through the end of
+    // the current partition, accumulating every row into wa_running. Used when
+    // wa_full_partition is true so every row in the partition emits the same
+    // (final) aggregate value.
+    void AccumulateFullPartition();
 };
 
 }  // namespace pgcpp::executor
